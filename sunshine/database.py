@@ -16,13 +16,13 @@ db_session = scoped_session(sessionmaker(bind=engine,
 Base = declarative_base()
 
 def init_db(sess=None, eng=None):
-    import models
+    import sunshine.models
     Base.metadata.create_all(bind=engine)
 
     if DEFAULT_USER:
         name = DEFAULT_USER['name']
         email = DEFAULT_USER['email']
         password = DEFAULT_USER['password']
-        user = models.User(name, email, password)
+        user = sunshine.models.User(name, email, password)
         db_session.add(user)
         db_session.commit()

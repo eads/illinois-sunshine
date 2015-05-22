@@ -1,4 +1,4 @@
-from template import create_app
+from sunshine import create_app
 
 app = create_app()
 

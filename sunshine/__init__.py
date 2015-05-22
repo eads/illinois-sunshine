@@ -1,7 +1,7 @@
 from flask import Flask
-from template.views import views
-from template.models import bcrypt
-from template.auth import auth, login_manager
+from sunshine.views import views
+from sunshine.models import bcrypt
+from sunshine.auth import auth, login_manager
 
 def create_app():
     app = Flask(__name__)
