@@ -1,7 +1,0 @@
-Flask==0.10.1
-SQLAlchemy<1.0
-psycopg2<2.7
-Flask-Bcrypt<0.7
-Flask-Login<0.3
-Flask-WTF<0.12
-pytz==2014.10
