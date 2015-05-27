@@ -124,6 +124,90 @@ class Officer(Base):
     def __repr__(self):
         return '<Officer %r %r>' % (self.first_name, self.last_name)
 
+class FiledDoc(Base):
+    __tablename__ = 'filed_docs'
+    id = sa.Column(sa.Integer, primary_key=True)
+
+    committee_id = sa.Column(sa.Integer, sa.ForeignKey('committees.id'))
+    committee = sa.orm.relationship('Committee', backref='filed_docs')
+    
+    doc_type = sa.Column(sa.String(10))
+    doc_name = sa.Column(sa.String(30))
+    amended = sa.Column(sa.Boolean)
+    comment = sa.Column(sa.String(100))
+    page_count = sa.Column(sa.Integer)
+    election_type = sa.Column(sa.String)
+    election_year = sa.Column(sa.Integer)
+    reporting_period_begin = sa.Column(sa.DateTime)
+    reporting_period_end = sa.Column(sa.DateTime)
+    received_at = sa.Column(sa.String)
+    received_datetime = sa.Column(sa.DateTime)
+    source = sa.Column(sa.String)
+    provider = sa.Column(sa.String)
+    signer_last_name = sa.Column(sa.String)
+    signer_first_name = sa.Column(sa.String)
+    submitter_last_name = sa.Column(sa.String)
+    submitter_first_name = sa.Column(sa.String)
+    submitter_address1 = sa.Column(sa.String)
+    submitter_address2 = sa.Column(sa.String)
+    submitter_city = sa.Column(sa.String)
+    submitter_state = sa.Column(sa.String)
+    submitter_zip = sa.Column(sa.String)
+    b9_signer_last_name = sa.Column(sa.String)
+    b9_signer_first_name = sa.Column(sa.String)
+    archived = sa.Column(sa.Boolean)
+    clarification = sa.Column(sa.Text)
+    redaction_requested = sa.Column(sa.Boolean)
+
+    def __repr__(self):
+        return '<FiledDoc %r>' % (self.id)
+
+class D2Report(Base):
+    __tablename__ = 'd2_reports'
+    id = sa.Column(sa.Integer, primary_key=True)
+    
+    # Not making an explicit relations here because there are reports
+    # that have related filed_docs and committees that don't exist, apparently
+    committee_id = sa.Column(sa.Integer)
+    filed_doc_id = sa.Column(sa.Integer)
+    
+    beginning_funds_avail = sa.Column(DOUBLE_PRECISION)
+    individual_itemized_contrib = sa.Column(DOUBLE_PRECISION)
+    individual_non_itemized_contrib = sa.Column(DOUBLE_PRECISION)
+    transfer_in_itemized = sa.Column(DOUBLE_PRECISION)
+    transfer_in_non_itemized = sa.Column(DOUBLE_PRECISION)
+    loan_received_itemized = sa.Column(DOUBLE_PRECISION)
+    loan_received_non_itemized = sa.Column(DOUBLE_PRECISION)
+    other_receipts_itemized = sa.Column(DOUBLE_PRECISION)
+    other_receipts_non_itemized = sa.Column(DOUBLE_PRECISION)
+    total_receipts = sa.Column(DOUBLE_PRECISION)
+    inkind_itemized = sa.Column(DOUBLE_PRECISION)
+    inkind_non_itemized = sa.Column(DOUBLE_PRECISION)
+    total_inkind = sa.Column(DOUBLE_PRECISION)
+    transfer_out_itemized = sa.Column(DOUBLE_PRECISION)
+    transfer_out_non_itemized = sa.Column(DOUBLE_PRECISION)
+    loan_made_itemized = sa.Column(DOUBLE_PRECISION)
+    loan_made_non_itemized = sa.Column(DOUBLE_PRECISION)
+    expenditures_itemized = sa.Column(DOUBLE_PRECISION)
+    expenditures_non_itemized = sa.Column(DOUBLE_PRECISION)
+    independent_expenditures_itemized = sa.Column(DOUBLE_PRECISION)
+    independent_expenditures_non_itemized = sa.Column(DOUBLE_PRECISION)
+    total_expenditures = sa.Column(DOUBLE_PRECISION)
+    debts_itemized = sa.Column(DOUBLE_PRECISION)
+    debts_non_itemized = sa.Column(DOUBLE_PRECISION)
+    total_debts = sa.Column(DOUBLE_PRECISION)
+    total_investments = sa.Column(DOUBLE_PRECISION)
+    end_funds_available = sa.Column(DOUBLE_PRECISION)
+    archived = sa.Column(sa.Boolean)
+
+    def __repr__(self):
+        return '<D2Report %r>' % (self.id)
+
+
+#class Receipts(Base):
+#    __tablename__ = 'receipts'
+
+
 class User(Base):
     __tablename__ = 'app_user'
     id = sa.Column(sa.Integer, primary_key=True)

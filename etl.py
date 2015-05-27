@@ -1,4 +1,5 @@
-from sunshine.models import Committee, Candidate, Officer, Candidacy
+from sunshine.models import Committee, Candidate, Officer, Candidacy, \
+    D2Report, FiledDoc
 import ftplib
 from io import BytesIO
 import os
@@ -8,7 +9,8 @@ from datetime import date
 from hashlib import md5
 import sqlalchemy as sa
 import csv
-
+from csvkit.cleanup import RowChecker
+from collections import OrderedDict
 
 class SunshineExtract(object):
     
@@ -152,7 +154,16 @@ class SunshineTransformLoad(object):
             conn.execute('DROP TABLE temp_{0}'.format(self.table_name))
 
     def transform(self):
-        raise NotImplementedError
+        with open(self.file_path, 'r', encoding='latin1') as f:
+            reader = csv.reader(f, delimiter='\t')
+            checker = RowChecker(reader)
+            for row in checker.checked_rows():
+                if row:
+                    for idx, cell in enumerate(row):
+                        row[idx] = cell.strip()
+                        if not row[idx]:
+                            row[idx] = None
+                    yield OrderedDict(zip(self.header, row))
 
     def load(self):
         self.createTempTable()
@@ -220,19 +231,6 @@ class SunshineCandidates(SunshineTransformLoad):
     header = [f for f in Candidate.__table__.columns.keys() \
               if f not in ['date_added', 'last_update', 'ocd_id']]
     filename = 'Candidates.txt_latest.txt'
-    
-    def transform(self):
-        with open(self.file_path, 'r', encoding='latin1') as f:
-            reader = csv.reader(f, delimiter='\t')
-            header = next(reader)
-            for row in reader:
-                if row:
-                    for idx, cell in enumerate(row):
-                        row[idx] = cell.strip()
-                        if not cell:
-                            row[idx] = None
-
-                    yield dict(zip(self.header, row))
     
     @property
     def upsert(self):
@@ -458,6 +456,17 @@ class SunshineOfficerCommittees(SunshineTransformLoad):
               WHERE officers.id = subq.officer_id
         '''.format(self.table_name)
 
+class SunshineD2Reports(SunshineTransformLoad):
+    table_name = 'd2_reports'
+    header = D2Report.__table__.columns.keys()
+    filename = 'D2Totals.txt_latest.txt'
+    
+
+class SunshineFiledDocs(SunshineTransformLoad):
+    table_name = 'filed_docs'
+    header = FiledDoc.__table__.columns.keys()
+    filename = 'FiledDocs.txt_latest.txt'
+
 if __name__ == "__main__":
     import sys
     from sunshine import app_config 
@@ -470,37 +479,39 @@ if __name__ == "__main__":
                               aws_key=app_config.AWS_KEY,
                               aws_secret=app_config.AWS_SECRET)
     
-    committees = SunshineCommittees(engine, 
-                                    Base.metadata)
+    committees = SunshineCommittees(engine, Base.metadata)
     committees.load()
     committees.update()
     
-    candidates = SunshineCandidates(engine, 
-                                    Base.metadata)
+    candidates = SunshineCandidates(engine, Base.metadata)
     candidates.load()
     candidates.update()
     
-    officers = SunshineOfficers(engine, 
-                                Base.metadata)
+    officers = SunshineOfficers(engine, Base.metadata)
     officers.load()
     officers.update()
     
-    prev_off = SunshinePrevOfficers(engine, 
-                                    Base.metadata)
+    prev_off = SunshinePrevOfficers(engine, Base.metadata)
     prev_off.load()
     prev_off.update()
     
-    candidacy = SunshineCandidacy(engine, 
-                                  Base.metadata)
+    candidacy = SunshineCandidacy(engine, Base.metadata)
     candidacy.load()
     candidacy.update()
     
-    can_cmte_xwalk = SunshineCandidateCommittees(engine, 
-                                                 Base.metadata)
+    can_cmte_xwalk = SunshineCandidateCommittees(engine, Base.metadata)
     can_cmte_xwalk.load()
     can_cmte_xwalk.update()
     
-    off_cmte_xwalk = SunshineOfficerCommittees(engine, 
-                                               Base.metadata)
+    off_cmte_xwalk = SunshineOfficerCommittees(engine, Base.metadata)
     off_cmte_xwalk.load()
     off_cmte_xwalk.update()
+    
+    filed_docs = SunshineFiledDocs(engine, Base.metadata)
+    filed_docs.load()
+    filed_docs.update()
+    
+    d2_reports = SunshineD2Reports(engine, Base.metadata)
+    d2_reports.load()
+    d2_reports.update()
+    
