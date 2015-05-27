@@ -33,34 +33,25 @@ class Candidate(Base):
 class Candidacy(Base):
     __tablename__ = 'candidacies'
     id = sa.Column(sa.Integer, primary_key=True)
+    
+    candidate_id = sa.Column(sa.Integer, sa.ForeignKey('candidates.id'))
+    candidate = sa.orm.relationship('Candidate', backref='candidacies')
+    
+    election_type = sa.Column(sa.String)
+    election_year = sa.Column(sa.Integer)
     # Incumbent, challenger, open seat
-    race_type = sa.Column(ENUM('incumbent', 'challenger', 'open seat', 
+    race_type = sa.Column(ENUM('incumbent', 'challenger', 'open seat', 'retired',
                             name='candidacy_race_type'))
     outcome = sa.Column(ENUM('won', 'lost', name='candidacy_outcome'))
     fair_campaign = sa.Column(sa.Boolean)
     limits_off = sa.Column(sa.Boolean)
     limits_off_reason = sa.Column(sa.String)
-    
-    candidate_id = sa.Column(sa.Integer, sa.ForeignKey('candidates.id'))
-    candidate = sa.orm.relationship('Candidate', backref='candidacies')
-
-    election_id = sa.Column(sa.Integer, sa.ForeignKey('elections.id'))
-    election = sa.orm.relationship('Election', backref='candidacies')
 
     def __repr__(self):
         return '<Candidacy %r %r, (%r %r)>' % (self.candidate.first_name, 
                                                self.candidate.last_name, 
-                                               self.election.year,
+                                               self.election_year,
                                                self.election_type)
-
-class Election(Base):
-    __tablename__ = 'elections'
-    id = sa.Column(sa.Integer, primary_key=True)
-    election_type = sa.Column(sa.String)
-    election_year = sa.Column(sa.Integer)
-
-    def __repr__(self):
-        return '<Election %r %r>' % (self.election_year, self.election_type)
 
 candidate_committees = sa.Table('candidate_committees', Base.metadata,
                        sa.Column('candidate_id', sa.Integer, sa.ForeignKey('candidates.id')),

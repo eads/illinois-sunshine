@@ -1,4 +1,4 @@
-from sunshine.models import Committee, Candidate, Officer
+from sunshine.models import Committee, Candidate, Officer, Candidacy
 import ftplib
 from io import BytesIO
 import os
@@ -186,7 +186,6 @@ class SunshineCommittees(SunshineTransformLoad):
         with open(self.file_path, 'r', encoding='latin1') as f:
             reader = csv.reader(f, delimiter='\t')
             header = next(reader)
-            rows = []
             for row in reader:
                 if row:
                     for idx, cell in enumerate(row):
@@ -223,7 +222,6 @@ class SunshineCandidates(SunshineTransformLoad):
         with open(self.file_path, 'r', encoding='latin1') as f:
             reader = csv.reader(f, delimiter='\t')
             header = next(reader)
-            rows = []
             for row in reader:
                 if row:
                     for idx, cell in enumerate(row):
@@ -265,7 +263,7 @@ class SunshineCandidates(SunshineTransformLoad):
 
 class SunshineOfficers(SunshineTransformLoad):
     table_name = 'officers'
-    header = [f for f in Officer.__table__.columns.keys()]
+    header = Officer.__table__.columns.keys()
     filename = 'Officers.txt_latest.txt'
     current = True
 
@@ -273,7 +271,6 @@ class SunshineOfficers(SunshineTransformLoad):
         with open(self.file_path, 'r', encoding='latin1') as f:
             reader = csv.reader(f, delimiter='\t')
             header = next(reader)
-            rows = []
             for row in reader:
                 if row:
                     for idx, cell in enumerate(row):
@@ -293,6 +290,55 @@ class SunshineOfficers(SunshineTransformLoad):
 class SunshinePrevOfficers(SunshineOfficers):
     filename = 'PrevOfficers.txt_latest.txt'
     current = False
+
+class SunshineCandidacy(SunshineTransformLoad):
+    table_name = 'candidacies'
+    header = Candidacy.__table__.columns.keys()
+    filename = 'CanElections.txt_latest.txt'
+    
+    election_types = {
+        'CE': 'Consolidated Election',
+        'GP': 'General Primary',
+        'GE': 'General Election',
+        'CP': 'Consolidated Primary',
+        'NE': None,
+        'SE': 'Special Election'
+    }
+
+    race_types = {
+        'Inc': 'incumbent',
+        'Open': 'open seat',
+        'Chal': 'challenger',
+        'Ret': 'retired',
+    }
+
+    def transform(self):
+        with open(self.file_path, 'r', encoding='latin1') as f:
+            reader = csv.reader(f, delimiter='\t')
+            header = next(reader)
+            for row in reader:
+                if row:
+                    for idx, cell in enumerate(row):
+                        row[idx] = cell.strip()
+                        if not cell:
+                            row[idx] = None
+
+                    # Get election type
+                    row[2] = self.election_types.get(row[2])
+                    
+                    # Get race type
+                    row[4] = self.race_types.get(row[4])
+                    
+                    # Get outcome
+                    if row[5] == 'Won':
+                        row[5] = 'won'
+                    elif row[5] == 'Lost':
+                        row[5] = 'lost'
+                    else:
+                        row[5] = None
+
+                    yield dict(zip(self.header, row))
+
 
 if __name__ == "__main__":
     import sys
@@ -329,3 +375,9 @@ if __name__ == "__main__":
                                     chunk_size=10000)
     prev_off.load()
     prev_off.update()
+    
+    candidacy = SunshineCandidacy(engine, 
+                                  Base.metadata,
+                                  chunk_size=10000)
+    candidacy.load()
+    candidacy.update()
