@@ -10,8 +10,8 @@ class Candidate(Base):
     __tablename__ = 'candidates'
     id = sa.Column(sa.Integer, primary_key=True)
     ocd_id = sa.Column(sa.String)
-    first_name = sa.Column(sa.String)
     last_name = sa.Column(sa.String)
+    first_name = sa.Column(sa.String)
     address_1 = sa.Column(sa.String)
     address_2 = sa.Column(sa.String)
     city = sa.Column(sa.String)
@@ -129,8 +129,9 @@ class Officer(Base):
     zipcode = sa.Column(sa.String)
     title = sa.Column(sa.String)
     phone = sa.Column(sa.String)
+    resign_date = sa.Column(sa.DateTime)
     redaction_requested = sa.Column(sa.Boolean)
-    
+
     current = sa.Column(sa.Boolean)
 
     def __repr__(self):

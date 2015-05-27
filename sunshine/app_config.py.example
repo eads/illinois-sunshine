@@ -19,7 +19,7 @@ DB_CONN='postgresql+psycopg2://{0}:{1}@{2}:{3}/{4}'\
 SECRET_KEY = 'super secret key'
 
 FTP_HOST = ''
-FTP_START = ''
+FTP_PATH = ''
 FTP_USER = ''
 FTP_PW = ''
 
