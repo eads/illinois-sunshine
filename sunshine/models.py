@@ -58,11 +58,6 @@ candidate_committees = sa.Table('candidate_committees', Base.metadata,
                        sa.Column('committee_id', sa.Integer, sa.ForeignKey('committees.id'))
 )
 
-officer_committees = sa.Table('officer_committees', Base.metadata,
-                     sa.Column('officer_id', sa.Integer, sa.ForeignKey('officers.id')),
-                     sa.Column('committee_id', sa.Integer, sa.ForeignKey('committees.id'))
-)
-
 class Committee(Base):
     __tablename__ = 'committees'
     id = sa.Column(sa.Integer, primary_key=True)
@@ -101,9 +96,6 @@ class Committee(Base):
     candidates = sa.orm.relationship('Candidate', 
                                      secondary=candidate_committees, 
                                      backref='committees')
-    officers = sa.orm.relationship('Officer',
-                                   secondary=officer_committees,
-                                   backref='committees')
 
     def __repr__(self):
         return '<Committee %r>' % self.name
@@ -111,8 +103,12 @@ class Committee(Base):
 class Officer(Base):
     __tablename__ = 'officers'
     id = sa.Column(sa.Integer, primary_key=True)
-    first_name = sa.Column(sa.String)
+    
+    committee_id = sa.Column(sa.Integer, sa.ForeignKey('committees.id'))
+    committee = sa.orm.relationship('Committee', backref='officers')
+    
     last_name = sa.Column(sa.String)
+    first_name = sa.Column(sa.String)
     address1 = sa.Column(sa.String)
     address2 = sa.Column(sa.String)
     city = sa.Column(sa.String)

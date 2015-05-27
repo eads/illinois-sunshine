@@ -9,6 +9,7 @@ from hashlib import md5
 import sqlalchemy as sa
 import csv
 
+
 class SunshineExtract(object):
     
     def __init__(self, 
@@ -85,7 +86,7 @@ class SunshineTransformLoad(object):
         self.chunk_size = chunk_size
 
         self.initializeDB()
-        self.createTempTable()
+
         
         self.file_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 
                                       'downloads', 
@@ -154,6 +155,8 @@ class SunshineTransformLoad(object):
         raise NotImplementedError
 
     def load(self):
+        self.createTempTable()
+        
         insert = ''' 
             INSERT INTO temp_{0} ({1}) VALUES ({2})
         '''.format(self.table_name,
@@ -273,23 +276,48 @@ class SunshineOfficers(SunshineTransformLoad):
             header = next(reader)
             for row in reader:
                 if row:
+                    
+                    for idx, cell in enumerate(row):
+                        row[idx] = cell.strip()
+                        
+                        if not cell:
+                            row[idx] = None
+                    
+                    # Add empty committee_id
+                    row.insert(1, None)
+
+                    # Add empty resign date
+                    row.insert(11, None)
+
+                    # Add current flag
+                    row.append(self.current)
+                    
+                    yield dict(zip(self.header, row))
+    
+class SunshinePrevOfficers(SunshineTransformLoad):
+    table_name = 'officers'
+    header = Officer.__table__.columns.keys()
+    filename = 'PrevOfficers.txt_latest.txt'
+    current = False
+    
+    def transform(self):
+        with open(self.file_path, 'r', encoding='latin1') as f:
+            reader = csv.reader(f, delimiter='\t')
+            header = next(reader)
+            for row in reader:
+                if row:
                     for idx, cell in enumerate(row):
                         row[idx] = cell.strip()
                         if not cell:
                             row[idx] = None
                     
-                    # Add resign_date where needed
-                    if len(row) < 12:
-                        row.insert(10, None)
+                    # Add empty phone
+                    row.insert(10, None)
 
                     # Add current flag
                     row.append(self.current)
 
                     yield dict(zip(self.header, row))
-    
-class SunshinePrevOfficers(SunshineOfficers):
-    filename = 'PrevOfficers.txt_latest.txt'
-    current = False
 
 class SunshineCandidacy(SunshineTransformLoad):
     table_name = 'candidacies'
@@ -340,6 +368,96 @@ class SunshineCandidacy(SunshineTransformLoad):
                     yield dict(zip(self.header, row))
 
 
+class SunshineCandidateCommittees(SunshineTransformLoad):
+    table_name = 'candidate_committees'
+    header = ['committee_id', 'candidate_id']
+    filename = 'CmteCandidateLinks.txt_latest.txt'
+    
+    def transform(self):
+        with open(self.file_path, 'r', encoding='latin1') as f:
+            reader = csv.reader(f, delimiter='\t')
+            header = next(reader)
+            for row in reader:
+                if row:
+                    for idx, cell in enumerate(row):
+                        row[idx] = cell.strip()
+                        if not cell:
+                            row[idx] = None
+                    row.pop(0)
+                    yield dict(zip(self.header, row))
+
+    @property
+    def upsert(self):
+        field_format = '{1} = subq.{1}'
+        
+        update_fields = [field_format.format(self.table_name,f) \
+                             for f in self.header]
+        
+        where_clause = ''' 
+            WHERE {0}.{1} = subq.{1}
+              AND {0}.{2} = subq.{2}
+        '''.format(self.table_name, 
+                   self.header[0], 
+                   self.header[1])
+
+        return ''' 
+            WITH upsert AS (
+              UPDATE {0} SET 
+                {1}
+              FROM (
+                SELECT * FROM temp_{0}
+              ) AS subq
+              {2}
+              RETURNING *
+            )
+            INSERT INTO {0} 
+              SELECT * FROM temp_{0}
+            WHERE NOT EXISTS (SELECT * FROM upsert)
+        '''.format(self.table_name, 
+                   ','.join(update_fields),
+                   where_clause)
+
+class SunshineOfficerCommittees(SunshineTransformLoad):
+    table_name = 'officers'
+    header = ['committee_id', 'officer_id']
+    filename = 'CmteOfficerLinks.txt_latest.txt'
+    
+    def transform(self):
+        with open(self.file_path, 'r', encoding='latin1') as f:
+            reader = csv.reader(f, delimiter='\t')
+            header = next(reader)
+            for row in reader:
+                if row:
+                    for idx, cell in enumerate(row):
+                        row[idx] = cell.strip()
+                        if not cell:
+                            row[idx] = None
+                    row.pop(0)
+                    yield dict(zip(self.header, row))
+
+    def createTempTable(self):
+        create = ''' 
+            CREATE TABLE temp_{0} (
+              committee_id INTEGER, 
+              officer_id INTEGER
+            )
+        '''.format(self.table_name)
+        with self.engine.begin() as conn:
+            conn.execute('DROP TABLE IF EXISTS temp_{0}'.format(self.table_name))
+            conn.execute(create)
+    
+    @property
+    def upsert(self):
+
+        return ''' 
+              UPDATE officers SET 
+                committee_id = subq.committee_id
+              FROM (
+                SELECT * FROM temp_{0}
+              ) AS subq
+              WHERE officers.id = subq.officer_id
+        '''.format(self.table_name)
+
 if __name__ == "__main__":
     import sys
     from sunshine import app_config 
@@ -353,31 +471,36 @@ if __name__ == "__main__":
                               aws_secret=app_config.AWS_SECRET)
     
     committees = SunshineCommittees(engine, 
-                                    Base.metadata,
-                                    chunk_size=10000)
+                                    Base.metadata)
     committees.load()
     committees.update()
     
     candidates = SunshineCandidates(engine, 
-                                    Base.metadata,
-                                    chunk_size=10000)
+                                    Base.metadata)
     candidates.load()
     candidates.update()
     
     officers = SunshineOfficers(engine, 
-                                Base.metadata,
-                                chunk_size=10000)
+                                Base.metadata)
     officers.load()
     officers.update()
     
     prev_off = SunshinePrevOfficers(engine, 
-                                    Base.metadata,
-                                    chunk_size=10000)
+                                    Base.metadata)
     prev_off.load()
     prev_off.update()
     
     candidacy = SunshineCandidacy(engine, 
-                                  Base.metadata,
-                                  chunk_size=10000)
+                                  Base.metadata)
     candidacy.load()
     candidacy.update()
+    
+    can_cmte_xwalk = SunshineCandidateCommittees(engine, 
+                                                 Base.metadata)
+    can_cmte_xwalk.load()
+    can_cmte_xwalk.update()
+    
+    off_cmte_xwalk = SunshineOfficerCommittees(engine, 
+                                               Base.metadata)
+    off_cmte_xwalk.load()
+    off_cmte_xwalk.update()
