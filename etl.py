@@ -34,45 +34,56 @@ class SunshineExtract(object):
         self.bucket_name = 'il-elections'
         self.download_path = download_path
     
-    def cacheOnS3(self):
-        keys = []
+    def downloadRaw(self):
+        fpaths = []
         with ftplib.FTP(self.ftp_host) as ftp:
             ftp.login(self.ftp_user, self.ftp_pw)
-            files = ftp.nlst(self.ftp_start)
+            files = ftp.nlst(self.ftp_path)
             for f in files:
-                print('working on %s' % f)
-                fobj = BytesIO()
-                fpath ='%s/%s' % (self.ftp_path, f)
-                ftp.retrbinary('RETR %s' % fpath, fobj.write)
+                print('downloading %s' % f)
+                fname, fext = f.rsplit('.', 1)
                 
-                fobj.seek(0)
+                remote_path ='%s/%s' % (self.ftp_path, f)
+                local_path = '%s/%s' % (self.download_path, f)
 
-                conn = S3Connection(self.aws_key, self.aws_secret)
-                bucket = conn.get_bucket(self.bucket_name)
+                with open(local_path, 'wb') as fobj:
+                    ftp.retrbinary('RETR %s' % remote_path, fobj.write)
                 
-                k = Key(bucket)
-                keyname = 'sunshine/%s_%s.%s' % (f, date.today().isoformat(), f.rsplit('.', 1)[-1])
-                k.key = keyname
-                k.set_contents_from_file(fobj)
-                k.make_public()
-                
-                keys.append(keyname)
-                
-                bucket.copy_key('sunshine/%s_latest.txt' % (f), 
-                                self.bucket_name,
-                                keyname,
-                                preserve_acl=True)
-        return keys
+                fpaths.append(local_path)
+        
+        return fpaths
+
+    def cacheOnS3(self, fpath):
+        
+        fname, fext = fpath.rsplit('/', 1)[1].rsplit('.', 1)
+        
+        print('caching %s.%s' % (fname, fext))
+
+        conn = S3Connection(self.aws_key, self.aws_secret)
+        bucket = conn.get_bucket(self.bucket_name)
+        
+        k = Key(bucket)
+        keyname = 'sunshine/%s_%s.%s' % (fname, 
+                                         date.today().isoformat(), 
+                                         fext)
+        k.key = keyname
+        
+        with open(fpath, 'rb') as fobj:
+            k.set_contents_from_file(fobj)
+        
+        k.make_public()
+        
+        bucket.copy_key('sunshine/%s_latest.%s' % (fname, fext), 
+                        self.bucket_name,
+                        keyname,
+                        preserve_acl=True)
     
-    def getLatestFiles():
-        latest_files = []
-        conn = S3Connection(app_config.AWS_KEY, app_config.AWS_SECRET)
-        bucket = conn.get_bucket('il-elections')
-        for key in bucket.list(prefix='sunshine'):
-            if key.name.endswith('latest.txt'):
-                fpath = 'downloads/%s' % key.name.replace('sunshine/', '')
-                latest_files.append((fpath, key.etag))
-        return latest_files
+    def download(self, cache=True):
+        fpaths = self.downloadRaw()
+        
+        if cache:
+            for path in fpaths:
+                self.cacheOnS3(path)
 
 class SunshineTransformLoad(object):
 
@@ -195,7 +206,7 @@ class SunshineCommittees(SunshineTransformLoad):
     
     table_name = 'committees'
     header = Committee.__table__.columns.keys()
-    filename = 'Committees.txt_latest.txt'
+    filename = 'Committees.txt'
     
     def transform(self):
         with open(self.file_path, 'r', encoding='latin1') as f:
@@ -231,7 +242,7 @@ class SunshineCandidates(SunshineTransformLoad):
     table_name = 'candidates'
     header = [f for f in Candidate.__table__.columns.keys() \
               if f not in ['date_added', 'last_update', 'ocd_id']]
-    filename = 'Candidates.txt_latest.txt'
+    filename = 'Candidates.txt'
     
     @property
     def upsert(self):
@@ -266,7 +277,7 @@ class SunshineCandidates(SunshineTransformLoad):
 class SunshineOfficers(SunshineTransformLoad):
     table_name = 'officers'
     header = Officer.__table__.columns.keys()
-    filename = 'Officers.txt_latest.txt'
+    filename = 'Officers.txt'
     current = True
 
     def transform(self):
@@ -296,7 +307,7 @@ class SunshineOfficers(SunshineTransformLoad):
 class SunshinePrevOfficers(SunshineTransformLoad):
     table_name = 'officers'
     header = Officer.__table__.columns.keys()
-    filename = 'PrevOfficers.txt_latest.txt'
+    filename = 'PrevOfficers.txt'
     current = False
     
     def transform(self):
@@ -321,7 +332,7 @@ class SunshinePrevOfficers(SunshineTransformLoad):
 class SunshineCandidacy(SunshineTransformLoad):
     table_name = 'candidacies'
     header = Candidacy.__table__.columns.keys()
-    filename = 'CanElections.txt_latest.txt'
+    filename = 'CanElections.txt'
     
     election_types = {
         'CE': 'Consolidated Election',
@@ -370,7 +381,7 @@ class SunshineCandidacy(SunshineTransformLoad):
 class SunshineCandidateCommittees(SunshineTransformLoad):
     table_name = 'candidate_committees'
     header = ['committee_id', 'candidate_id']
-    filename = 'CmteCandidateLinks.txt_latest.txt'
+    filename = 'CmteCandidateLinks.txt'
     
     def transform(self):
         with open(self.file_path, 'r', encoding='latin1') as f:
@@ -419,7 +430,7 @@ class SunshineCandidateCommittees(SunshineTransformLoad):
 class SunshineOfficerCommittees(SunshineTransformLoad):
     table_name = 'officers'
     header = ['committee_id', 'officer_id']
-    filename = 'CmteOfficerLinks.txt_latest.txt'
+    filename = 'CmteOfficerLinks.txt'
     
     def transform(self):
         with open(self.file_path, 'r', encoding='latin1') as f:
@@ -460,41 +471,42 @@ class SunshineOfficerCommittees(SunshineTransformLoad):
 class SunshineD2Reports(SunshineTransformLoad):
     table_name = 'd2_reports'
     header = D2Report.__table__.columns.keys()
-    filename = 'D2Totals.txt_latest.txt'
-    
+    filename = 'D2Totals.txt'
 
 class SunshineFiledDocs(SunshineTransformLoad):
     table_name = 'filed_docs'
     header = FiledDoc.__table__.columns.keys()
-    filename = 'FiledDocs.txt_latest.txt'
+    filename = 'FiledDocs.txt'
 
 class SunshineReceipts(SunshineTransformLoad):
     table_name = 'receipts'
     header = Receipt.__table__.columns.keys()
-    filename = 'Receipts.txt_latest.txt'
+    filename = 'Receipts.txt'
     
 class SunshineExpenditures(SunshineTransformLoad):
     table_name = 'expenditures'
     header = Expenditure.__table__.columns.keys()
-    filename = 'Expenditures.txt_latest.txt'
+    filename = 'Expenditures.txt'
 
 class SunshineInvestments(SunshineTransformLoad):
     table_name = 'investments'
     header = Investment.__table__.columns.keys()
-    filename = 'Investments.txt_latest.txt'
+    filename = 'Investments.txt'
 
 if __name__ == "__main__":
     import sys
     from sunshine import app_config 
     from sunshine.database import engine, Base
 
-    # extract = SunshineExtract(ftp_host=app_config.FTP_HOST,
-    #                           ftp_path=app_config.FTP_PATH,
-    #                           ftp_user=app_config.FTP_USER,
-    #                           ftp_pw=app_config.FTP_PW,
-    #                           aws_key=app_config.AWS_KEY,
-    #                           aws_secret=app_config.AWS_SECRET)
-    # 
+    extract = SunshineExtract(ftp_host=app_config.FTP_HOST,
+                              ftp_path=app_config.FTP_PATH,
+                              ftp_user=app_config.FTP_USER,
+                              ftp_pw=app_config.FTP_PW,
+                              aws_key=app_config.AWS_KEY,
+                              aws_secret=app_config.AWS_SECRET)
+    
+    extract.download()
+
     committees = SunshineCommittees(engine, Base.metadata)
     committees.load()
     committees.update()
