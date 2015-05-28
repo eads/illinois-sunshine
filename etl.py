@@ -1,5 +1,5 @@
 from sunshine.models import Committee, Candidate, Officer, Candidacy, \
-    D2Report, FiledDoc
+    D2Report, FiledDoc, Receipt, Expenditure, Investment
 import ftplib
 from io import BytesIO
 import os
@@ -79,7 +79,7 @@ class SunshineTransformLoad(object):
     def __init__(self, 
                  engine,
                  metadata,
-                 chunk_size=10000):
+                 chunk_size=50000):
 
         
         self.engine = engine
@@ -155,7 +155,8 @@ class SunshineTransformLoad(object):
 
     def transform(self):
         with open(self.file_path, 'r', encoding='latin1') as f:
-            reader = csv.reader(f, delimiter='\t')
+            reader = csv.reader(f, delimiter='\t', 
+                                quoting=csv.QUOTE_NONE)
             checker = RowChecker(reader)
             for row in checker.checked_rows():
                 if row:
@@ -222,7 +223,7 @@ class SunshineCommittees(SunshineTransformLoad):
                         else:
                             row[idx] = None
                     
-                    yield dict(zip(self.header, row))
+                    yield OrderedDict(zip(self.header, row))
     
 
 class SunshineCandidates(SunshineTransformLoad):
@@ -290,7 +291,7 @@ class SunshineOfficers(SunshineTransformLoad):
                     # Add current flag
                     row.append(self.current)
                     
-                    yield dict(zip(self.header, row))
+                    yield OrderedDict(zip(self.header, row))
     
 class SunshinePrevOfficers(SunshineTransformLoad):
     table_name = 'officers'
@@ -315,7 +316,7 @@ class SunshinePrevOfficers(SunshineTransformLoad):
                     # Add current flag
                     row.append(self.current)
 
-                    yield dict(zip(self.header, row))
+                    yield OrderedDict(zip(self.header, row))
 
 class SunshineCandidacy(SunshineTransformLoad):
     table_name = 'candidacies'
@@ -363,7 +364,7 @@ class SunshineCandidacy(SunshineTransformLoad):
                     else:
                         row[5] = None
 
-                    yield dict(zip(self.header, row))
+                    yield OrderedDict(zip(self.header, row))
 
 
 class SunshineCandidateCommittees(SunshineTransformLoad):
@@ -382,7 +383,7 @@ class SunshineCandidateCommittees(SunshineTransformLoad):
                         if not cell:
                             row[idx] = None
                     row.pop(0)
-                    yield dict(zip(self.header, row))
+                    yield OrderedDict(zip(self.header, row))
 
     @property
     def upsert(self):
@@ -431,7 +432,7 @@ class SunshineOfficerCommittees(SunshineTransformLoad):
                         if not cell:
                             row[idx] = None
                     row.pop(0)
-                    yield dict(zip(self.header, row))
+                    yield OrderedDict(zip(self.header, row))
 
     def createTempTable(self):
         create = ''' 
@@ -467,18 +468,33 @@ class SunshineFiledDocs(SunshineTransformLoad):
     header = FiledDoc.__table__.columns.keys()
     filename = 'FiledDocs.txt_latest.txt'
 
+class SunshineReceipts(SunshineTransformLoad):
+    table_name = 'receipts'
+    header = Receipt.__table__.columns.keys()
+    filename = 'Receipts.txt_latest.txt'
+    
+class SunshineExpenditures(SunshineTransformLoad):
+    table_name = 'expenditures'
+    header = Expenditure.__table__.columns.keys()
+    filename = 'Expenditures.txt_latest.txt'
+
+class SunshineInvestments(SunshineTransformLoad):
+    table_name = 'investments'
+    header = Investment.__table__.columns.keys()
+    filename = 'Investments.txt_latest.txt'
+
 if __name__ == "__main__":
     import sys
     from sunshine import app_config 
     from sunshine.database import engine, Base
 
-    extract = SunshineExtract(ftp_host=app_config.FTP_HOST,
-                              ftp_path=app_config.FTP_PATH,
-                              ftp_user=app_config.FTP_USER,
-                              ftp_pw=app_config.FTP_PW,
-                              aws_key=app_config.AWS_KEY,
-                              aws_secret=app_config.AWS_SECRET)
-    
+    # extract = SunshineExtract(ftp_host=app_config.FTP_HOST,
+    #                           ftp_path=app_config.FTP_PATH,
+    #                           ftp_user=app_config.FTP_USER,
+    #                           ftp_pw=app_config.FTP_PW,
+    #                           aws_key=app_config.AWS_KEY,
+    #                           aws_secret=app_config.AWS_SECRET)
+    # 
     committees = SunshineCommittees(engine, Base.metadata)
     committees.load()
     committees.update()
@@ -515,3 +531,14 @@ if __name__ == "__main__":
     d2_reports.load()
     d2_reports.update()
     
+    receipts = SunshineReceipts(engine, Base.metadata)
+    receipts.load()
+    receipts.update()
+    
+    expenditures = SunshineExpenditures(engine, Base.metadata)
+    expenditures.load()
+    expenditures.update()
+    
+    investments = SunshineInvestments(engine, Base.metadata)
+    investments.load()
+    investments.update()

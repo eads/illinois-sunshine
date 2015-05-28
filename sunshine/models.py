@@ -204,8 +204,109 @@ class D2Report(Base):
         return '<D2Report %r>' % (self.id)
 
 
-#class Receipts(Base):
-#    __tablename__ = 'receipts'
+class Receipt(Base):
+    __tablename__ = 'receipts'
+    id = sa.Column(sa.Integer, primary_key=True)
+    
+    committee_id = sa.Column(sa.Integer, sa.ForeignKey('committees.id'))
+    committee = sa.orm.relationship('Committee', backref='receipts')
+    
+    filed_doc_id = sa.Column(sa.Integer, sa.ForeignKey('filed_docs.id'))
+    filed_doc = sa.orm.relationship('FiledDoc', backref='receipts')
+    
+    etrans_id = sa.Column(sa.String)
+    last_name = sa.Column(sa.String)
+    first_name = sa.Column(sa.String)
+    received_date = sa.Column(sa.DateTime)
+    amount = sa.Column(DOUBLE_PRECISION)
+    aggregate_amount = sa.Column(DOUBLE_PRECISION)
+    loan_amount = sa.Column(DOUBLE_PRECISION)
+    occupation = sa.Column(sa.String)
+    employer = sa.Column(sa.String)
+    address1 = sa.Column(sa.String)
+    address2 = sa.Column(sa.String)
+    city = sa.Column(sa.String)
+    state = sa.Column(sa.String)
+    zipcode = sa.Column(sa.String)
+    d2_part = sa.Column(sa.String)
+    description = sa.Column(sa.Text)
+    vendor_last_name = sa.Column(sa.String)
+    vendor_first_name = sa.Column(sa.String)
+    vendor_address1 = sa.Column(sa.String)
+    vendor_address2 = sa.Column(sa.String)
+    vendor_city = sa.Column(sa.String)
+    vendor_state = sa.Column(sa.String)
+    vendor_zipcode = sa.Column(sa.String)
+    archived = sa.Column(sa.Boolean)
+    country = sa.Column(sa.String)
+    redaction_requested = sa.Column(sa.Boolean)
+
+    def __repr__(self):
+        return '<Receipt %r>' % self.id
+
+class Expenditure(Base):
+    __tablename__ = 'expenditures'
+    id = sa.Column(sa.Integer, primary_key=True)
+    
+    committee_id = sa.Column(sa.Integer, sa.ForeignKey('committees.id'))
+    committee = sa.orm.relationship('Committee', backref='expenditures')
+    
+    filed_doc_id = sa.Column(sa.Integer, sa.ForeignKey('filed_docs.id'))
+    filed_doc = sa.orm.relationship('FiledDoc', backref='expenditures')
+
+    etrans_id = sa.Column(sa.String)
+    last_name = sa.Column(sa.String)
+    first_name = sa.Column(sa.String)
+    expended_date = sa.Column(sa.DateTime)
+    amount = sa.Column(DOUBLE_PRECISION)
+    aggregate_amount = sa.Column(DOUBLE_PRECISION)
+    address1 = sa.Column(sa.String)
+    address2 = sa.Column(sa.String)
+    city = sa.Column(sa.String)
+    state = sa.Column(sa.String)
+    zipcode = sa.Column(sa.String)
+    d2_part = sa.Column(sa.String)
+    purpose = sa.Column(sa.String)
+    candidate_name = sa.Column(sa.String)
+    office = sa.Column(sa.String)
+    supporting = sa.Column(sa.Boolean)
+    opposing = sa.Column(sa.Boolean)
+    archived = sa.Column(sa.Boolean)
+    country = sa.Column(sa.String)
+    redaction_requested = sa.Column(sa.Boolean)
+
+    def __repr__(self):
+        return '<Expenditure %r>' % self.id
+
+class Investment(Base):
+    __tablename__ = 'investments'
+    id = sa.Column(sa.Integer, primary_key=True)
+    
+    committee_id = sa.Column(sa.Integer, sa.ForeignKey('committees.id'))
+    committee = sa.orm.relationship('Committee', backref='investments')
+    
+    filed_doc_id = sa.Column(sa.Integer, sa.ForeignKey('filed_docs.id'))
+    filed_doc = sa.orm.relationship('FiledDoc', backref='investments')
+
+    description = sa.Column(sa.String)
+    purchase_date = sa.Column(sa.Date)
+    purchase_shares = sa.Column(sa.Integer)
+    purchase_price = sa.Column(DOUBLE_PRECISION)
+    current_value = sa.Column(DOUBLE_PRECISION)
+    liquid_value = sa.Column(DOUBLE_PRECISION)
+    liquid_date = sa.Column(sa.Date)
+    last_name = sa.Column(sa.String)
+    first_name = sa.Column(sa.String)
+    address1 = sa.Column(sa.String)
+    address2 = sa.Column(sa.String)
+    city = sa.Column(sa.String)
+    state = sa.Column(sa.String)
+    zipcode = sa.Column(sa.String)
+    archived = sa.Column(sa.Boolean)
+    country = sa.Column(sa.String)
+
+    def __repr__(self):
+        return '<Investment %r>' % self.id
 
 
 class User(Base):
