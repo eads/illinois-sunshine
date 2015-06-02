@@ -29,6 +29,11 @@ class Candidate(Base):
 
     def __repr__(self):
         return '<Candidate %r %r>' % (self.first_name, self.last_name)
+    
+    def as_dict(self):
+        d = {c.name: getattr(self, c.name) for c in self.__table__.columns}
+        d['candidacies'] = [c.as_dict() for c in self.candidacies]
+        return d
 
 class Candidacy(Base):
     __tablename__ = 'candidacies'
@@ -52,6 +57,9 @@ class Candidacy(Base):
                                                self.candidate.last_name, 
                                                self.election_year,
                                                self.election_type)
+    
+    def as_dict(self):
+        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
 
 candidate_committees = sa.Table('candidate_committees', Base.metadata,
                        sa.Column('candidate_id', sa.Integer, sa.ForeignKey('candidates.id')),
@@ -100,6 +108,10 @@ class Committee(Base):
     def __repr__(self):
         return '<Committee %r>' % self.name
 
+    def as_dict(self):
+        d = {c.name: getattr(self, c.name) for c in self.__table__.columns}
+        d['officers'] = [o.as_dict() for o in self.officers]
+
 class Officer(Base):
     __tablename__ = 'officers'
     id = sa.Column(sa.Integer, primary_key=True)
@@ -123,6 +135,9 @@ class Officer(Base):
 
     def __repr__(self):
         return '<Officer %r %r>' % (self.first_name, self.last_name)
+    
+    def as_dict(self):
+        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
 
 class FiledDoc(Base):
     __tablename__ = 'filed_docs'
