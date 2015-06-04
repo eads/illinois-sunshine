@@ -26,7 +26,10 @@ def committees():
         limit = 500
     valid_query, query_clauses, resp, status_code = make_query(committee_table, raw_query_params)
     if valid_query:
-        base_query = db_session.query(committee_table, candidates_table)\
+        committee_cols = [c.label('committee_%s' % c.name) for c in committee_table.columns]
+        candidate_cols = [c.label('candidate_%s' % c.name) for c in candidates_table.columns]
+        all_columns = committee_cols + candidate_cols
+        base_query = db_session.query(*all_columns)\
                 .join(candidate_committees)\
                 .join(candidates_table)
         for clause in query_clauses:
@@ -35,12 +38,20 @@ def committees():
         base_query = base_query.order_by(getattr(order_by_col, sort_order)())
         base_query = base_query.limit(limit)
         objs = []
-        fieldnames = committee_table.columns.keys() + candidates_table.columns.keys()
-        rows = sorted(list(base_query.all()), key=attrgetter('id'))
-        for committee, grouping in groupby(rows, attrgetter('id')):
-            # NEed to get committee info as keys and add candidates as list
-            comm_d = {field:getattr(committee, field) for field in committee_table.columns.keys()}
-            comm_d['candidates'] = []
+        committee_fields = committee_table.columns.keys() 
+        candidate_fields = candidates_table.columns.keys()
+        rows = sorted(list(base_query.all()), key=attrgetter('committee_id'))
+        for committee, grouping in groupby(rows, attrgetter('committee_id')):
+            rows = list(grouping)
+            committee_values = rows[0][:len(committee_fields)]
+            committee_info = OrderedDict(zip(committee_fields, committee_values))
+            candidates = []
+            for row in rows:
+                candidate_values = row[len(committee_fields):]
+                candidate_info = OrderedDict(zip(candidate_fields, candidate_values))
+                candidates.append(candidate_info)
+            committee_info['candidates'] = candidates
+            objs.append(committee_info)
         resp['objects'] = objs
         resp['meta']['query'].update({
             'limit': limit,
