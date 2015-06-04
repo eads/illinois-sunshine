@@ -499,25 +499,21 @@ class SunshineViews(object):
         self.engine = engine
 
     def makeAllViews(self):
-        self.candidateMoney()
+        self.incumbentMoney()
+        self.committeeMoney()
     
-    def candidateMoney(self, 
-                       outcome='won', 
-                       election_year=2014,
-                       committee_type='Candidate',
-                       doc_name='Quarterly'):
-        
+    def committeeMoney(self):
         conn = self.engine.connect()
         trans = conn.begin()
         try:
-            conn.execute('REFRESH MATERIALIZED VIEW quarterly_filings')
+            conn.execute('REFRESH MATERIALIZED VIEW all_quarterly_filings')
             trans.commit()
         except sa.exc.ProgrammingError:
             trans.rollback()
             conn = self.engine.connect()
             trans = conn.begin()
             create = '''
-               CREATE MATERIALIZED VIEW quarterly_filings AS (
+               CREATE MATERIALIZED VIEW all_quarterly_filings AS (
                  SELECT * FROM (
                    SELECT DISTINCT ON (doc.doc_name, committee.id, committee.candidate_id)
                      d2.end_funds_available,
@@ -528,7 +524,9 @@ class SunshineViews(object):
                      doc.reporting_period_begin,
                      committee.candidate_id, 
                      committee.candidate_last_name,
-                     committee.candidate_first_name
+                     committee.candidate_first_name,
+                     committee.candidate_office,
+                     committee.candidate_district
                    FROM d2_reports AS d2
                    JOIN (
                      SELECT 
@@ -536,15 +534,76 @@ class SunshineViews(object):
                        cm.name,
                        cand.id AS candidate_id,
                        cand.first_name AS candidate_first_name,
-                       cand.last_name AS candidate_last_name
+                       cand.last_name AS candidate_last_name,
+                       cand.office AS candidate_office,
+                       cand.district AS candidate_district
+                     FROM committees AS cm
+                     JOIN candidate_committees AS cc
+                       ON cm.id = cc.committee_id
+                     JOIN candidates AS cand
+                       ON cc.candidate_id = cand.id
+                   ) AS committee
+                     ON d2.committee_id = committee.id
+                   JOIN filed_docs AS doc
+                     ON d2.filed_doc_id = doc.id
+                   WHERE doc.doc_name = :doc_name
+                   ORDER BY doc.doc_name, 
+                            committee.id,
+                            committee.candidate_id,
+                            doc.received_datetime DESC
+                 ) AS rows 
+                 ORDER BY end_funds_available DESC
+               )
+            '''
+            conn.execute(sa.text(create), doc_name='Quarterly')
+            trans.commit()
+
+    def incumbentMoney(self, 
+                       outcome='won', 
+                       election_year=2014,
+                       committee_type='Candidate',
+                       doc_name='Quarterly'):
+        
+        conn = self.engine.connect()
+        trans = conn.begin()
+        try:
+            conn.execute('REFRESH MATERIALIZED VIEW incumbent_quarterly_filings')
+            trans.commit()
+        except sa.exc.ProgrammingError:
+            trans.rollback()
+            conn = self.engine.connect()
+            trans = conn.begin()
+            create = '''
+               CREATE MATERIALIZED VIEW incumbent_quarterly_filings AS (
+                 SELECT * FROM (
+                   SELECT DISTINCT ON (doc.doc_name, committee.id, committee.candidate_id)
+                     d2.end_funds_available,
+                     committee.id AS committee_id,
+                     committee.name AS committee_name,
+                     doc.received_datetime,
+                     doc.reporting_period_end,
+                     doc.reporting_period_begin,
+                     committee.candidate_id, 
+                     committee.candidate_last_name,
+                     committee.candidate_first_name,
+                     committee.candidate_office,
+                     committee.candidate_district
+                   FROM d2_reports AS d2
+                   JOIN (
+                     SELECT 
+                       cm.id,
+                       cm.name,
+                       cand.id AS candidate_id,
+                       cand.first_name AS candidate_first_name,
+                       cand.last_name AS candidate_last_name,
+                       cand.office AS candidate_office,
+                       cand.district AS candidate_district
                      FROM committees AS cm
                      JOIN candidate_committees AS cc
                        ON cm.id = cc.committee_id
                      JOIN (
                        SELECT DISTINCT ON (cd.district, cd.office)
-                         cd.id,
-                         cd.first_name, 
-                         cd.last_name
+                         cd.*
                        FROM candidates AS cd
                        JOIN candidacies AS cs
                          ON cd.id = cs.candidate_id

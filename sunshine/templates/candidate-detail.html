@@ -3,7 +3,50 @@
 {% block content %}
 <div class="row">
     <div class="col-sm-12">
-        {{candidate}}
+        <h1>
+            {{ candidate.first_name }} {{ candidate.last_name }}
+            <small>{{ candidate.party }}</small>
+        </h1>
+        <p>
+            {{ candidate.address_1 }}
+            {% if candidate.address_2 %}
+                {{ candidate.address_2 }}
+            {% endif %}
+            &middot;
+            {{ candidate.city }},
+            {{ candidate.state }}
+            {{ candidate.zipcode }}
+        </p>
+        <hr />
+        {% if candidate.committees|length > 1 %}
+            <h3>Committees</h3>
+        {% else %}
+            <h3>Committee</h3>
+        {% endif %}
+        <table class="table table-bordered table-condensed">
+            <tbody>
+                {% for committee in candidate.committees %}
+                    {% if committee.active %}
+                        <tr>
+                            <td><a href="{{ url_for('views.committee', committee_id=committee.id ) }}">{{ committee.name }}</a></td>
+                            <td>
+                                {{ committee.address1 }}
+                                {% if committee.address2 %}
+                                    {{ committee.address2 }}
+                                {% endif %}
+                                {% if committee.address3 %}
+                                    {{ committee.address3 }}
+                                {% endif %}
+                                &middot;
+                                {{ committee.city }},
+                                {{ committee.state }}
+                                {{ committee.zipcode }}
+                            </td>
+                        </tr>
+                    {% endif %}
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
 </div>
 

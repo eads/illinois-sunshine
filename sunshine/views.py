@@ -20,13 +20,13 @@ def candidates():
           filings.*,
           (filings.end_funds_available + additional.amount) AS total,
           additional.last_receipt_date
-        FROM quarterly_filings AS filings
+        FROM all_quarterly_filings AS filings
         JOIN (
           SELECT
             SUM(receipts.amount) AS amount,
             MAX(receipts.received_date) AS last_receipt_date,
             q.committee_id
-          FROM quarterly_filings AS q
+          FROM all_quarterly_filings AS q
           JOIN receipts
             USING(committee_id)
           JOIN filed_docs as f
@@ -63,6 +63,64 @@ def committee(committee_id):
     except ValueError:
         return abort(404)
     committee = db_session.query(Committee).get(committee_id)
+    
     if not committee:
         return abort(404)
-    return render_template('committee-detail.html', committee=committee)
+    
+    reports = ''' 
+        SELECT DISTINCT ON(f.id) 
+          f.doc_name, 
+          money.amount,
+          f.received_datetime 
+        FROM filed_docs AS f 
+        JOIN (
+          SELECT 
+            amount,
+            filed_doc_id 
+          FROM receipts 
+          WHERE committee_id = :committee_id 
+          UNION ALL 
+          SELECT 
+            end_funds_available AS amount, 
+            filed_doc_id
+          FROM d2_reports 
+          WHERE committee_id = :committee_id
+        ) AS money 
+          ON f.id = money.filed_doc_id 
+        WHERE f.committee_id = :committee_id 
+        ORDER BY f.id DESC, f.reporting_period_end DESC
+    '''
+    
+    engine = db_session.bind
+    reports = engine.execute(sa.text(reports), committee_id=committee_id)
+    
+    money = ''' 
+        SELECT 
+          filings.*,
+          (filings.end_funds_available + additional.amount) AS total,
+          additional.last_receipt_date
+        FROM all_quarterly_filings AS filings
+        JOIN (
+          SELECT
+            SUM(receipts.amount) AS amount,
+            MAX(receipts.received_date) AS last_receipt_date,
+            q.committee_id
+          FROM all_quarterly_filings AS q
+          JOIN receipts
+            USING(committee_id)
+          JOIN filed_docs as f
+            ON receipts.filed_doc_id = f.id
+          WHERE f.reporting_period_begin > q.reporting_period_end
+          GROUP BY q.committee_id
+        ) AS additional
+          USING(committee_id)
+        WHERE filings.committee_id = :committee_id
+        ORDER BY total DESC
+    '''
+    
+    money = engine.execute(sa.text(money), committee_id=committee_id)
+    
+    return render_template('committee-detail.html', 
+                           committee=committee, 
+                           reports=reports,
+                           money=money)

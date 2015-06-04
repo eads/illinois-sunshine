@@ -3,7 +3,38 @@
 {% block content %}
 <div class="row">
     <div class="col-sm-12">
-        {{committee}}
+        <h1>
+            {{ committee.name }}
+            <small>{{ committee.type }}</small>
+        </h1>
+        <p>
+            {{ committee.address1 }}
+            {% if committee.address2 %}
+                {{ committee.address2 }}
+            {% endif %}
+            {% if committee.address3 %}
+                {{ committee.address3 }}
+            {% endif %}
+            &middot;
+            {{ committee.city }},
+            {{ committee.state }}
+            {{ committee.zipcode }}
+        </p>
+        <h3>Total money: {{ money.first().total|format_money }}</h3>
+        <hr />
+        <h3>Reports</h3>
+        <table class="table table-bordered table-condensed">
+            <tbody>
+                {% for report in reports %}
+                    <tr>
+                        <td>{{ report.doc_name }}</td>
+                        <td>{{ report.amount|format_money }}</td>
+                        <td>{{ report.received_datetime }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
     </div>
 </div>
 
