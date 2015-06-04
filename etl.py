@@ -493,6 +493,90 @@ class SunshineInvestments(SunshineTransformLoad):
     header = Investment.__table__.columns.keys()
     filename = 'Investments.txt'
 
+class SunshineViews(object):
+    
+    def __init__(self, engine):
+        self.engine = engine
+
+    def makeAllViews(self):
+        self.candidateMoney()
+    
+    def candidateMoney(self, 
+                       outcome='won', 
+                       election_year=2014,
+                       committee_type='Candidate',
+                       doc_name='Quarterly'):
+        
+        conn = self.engine.connect()
+        trans = conn.begin()
+        try:
+            conn.execute('REFRESH MATERIALIZED VIEW quarterly_filings')
+            trans.commit()
+        except sa.exc.ProgrammingError:
+            trans.rollback()
+            conn = self.engine.connect()
+            trans = conn.begin()
+            create = '''
+               CREATE MATERIALIZED VIEW quarterly_filings AS (
+                 SELECT * FROM (
+                   SELECT DISTINCT ON (doc.doc_name, committee.id, committee.candidate_id)
+                     d2.end_funds_available,
+                     committee.id AS committee_id,
+                     committee.name AS committee_name,
+                     doc.received_datetime,
+                     doc.reporting_period_end,
+                     doc.reporting_period_begin,
+                     committee.candidate_id, 
+                     committee.candidate_last_name,
+                     committee.candidate_first_name
+                   FROM d2_reports AS d2
+                   JOIN (
+                     SELECT 
+                       cm.id,
+                       cm.name,
+                       cand.id AS candidate_id,
+                       cand.first_name AS candidate_first_name,
+                       cand.last_name AS candidate_last_name
+                     FROM committees AS cm
+                     JOIN candidate_committees AS cc
+                       ON cm.id = cc.committee_id
+                     JOIN (
+                       SELECT DISTINCT ON (cd.district, cd.office)
+                         cd.id,
+                         cd.first_name, 
+                         cd.last_name
+                       FROM candidates AS cd
+                       JOIN candidacies AS cs
+                         ON cd.id = cs.candidate_id
+                       WHERE cs.outcome = :outcome
+                         AND cs.election_year >= :year
+                       ORDER BY cd.district, cd.office, cs.id DESC
+                     ) AS cand
+                       ON cc.candidate_id = cand.id
+                     WHERE cm.type = :committee_type
+                   ) AS committee
+                     ON d2.committee_id = committee.id
+                   JOIN filed_docs AS doc
+                     ON d2.filed_doc_id = doc.id
+                   WHERE doc.doc_name = :doc_name
+                   ORDER BY doc.doc_name, 
+                            committee.id,
+                            committee.candidate_id,
+                            doc.received_datetime DESC
+                 ) AS rows 
+                 ORDER BY end_funds_available DESC
+               )
+            '''
+            params = {
+                'doc_name': doc_name,
+                'year': election_year,
+                'outcome': outcome,
+                'committee_type': committee_type,
+            }
+            conn.execute(sa.text(create), **params)
+            trans.commit()
+
+
 if __name__ == "__main__":
     import sys
     from sunshine import app_config 
@@ -554,3 +638,6 @@ if __name__ == "__main__":
     investments = SunshineInvestments(engine, Base.metadata)
     investments.load()
     investments.update()
+
+    views = SunshineViews(engine)
+    views.makeAllViews()
