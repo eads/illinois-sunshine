@@ -3,7 +3,33 @@
 {% block content %}
 <div class="row">
     <div class="col-sm-12">
-
+        <table class="table table-bordered table-condensed">
+            <thead>
+                <tr>
+                    {% set fields = rows._cursor_description() %}
+                    <th>Name</th>
+                    {% for field in fields %}
+                        {% if field.name not in ['candidate_first_name', 'candidate_last_name'] %}
+                            <th>{{ field.name }}</th>
+                        {% endif %}
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for record in rows %}
+                    <tr>
+                        {% set committee_id = record|attr('id') %}
+                        {% set candidate_id = record|attr('candidate_id') %}
+                        <td><a href="{{ url_for('views.candidate', candidate_id=candidate_id ) }}">{{ record.candidate_first_name }} {{ record.candidate_last_name }}</a></td>
+                        {% for field in fields %}
+                            {% if field.name not in ['candidate_first_name', 'candidate_last_name'] %}
+                                <td>{{ record|attr(field.name) }}</td>
+                            {% endif %}
+                        {% endfor %}
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
 </div>
 
