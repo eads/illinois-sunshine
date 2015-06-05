@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% block title %}Sunshine Database | {{ receipt.last_name }}, {{ receipt.first_name }}{% endblock %}
+{% block content %}
+<div class="row">
+    <div class="col-sm-12">
+        <h1>
+            {% if receipt.first_name %}
+                {{ receipt.first_name }}
+            {% endif %}
+            {{ receipt.last_name }}
+            <br />
+            <small>{{ receipt.committee.name }}</small>
+        </h1>
+        <p>
+            {{ receipt.address1 }}
+            {% if receipt.address2 %}
+                {{ receipt.address2 }}
+            {% endif %}
+            &middot;
+            {{ receipt.city }},
+            {{ receipt.state }}
+            {{ receipt.zipcode }}
+        </p>
+        <hr />
+    </div>
+</div>
+
+
+{% endblock %}

@@ -20,21 +20,53 @@
             {{ committee.state }}
             {{ committee.zipcode }}
         </p>
-        <h3>Total money: {{ money.first().total|format_money }}</h3>
+        <h3>Total money: {{ controlled_amount|format_money }}</h3>
+        <p>{{ money }}</p>
         <hr />
-        <h3>Reports</h3>
+        <h3>Latest quarterly report</h3>
         <table class="table table-bordered table-condensed">
+            <thead>
+                <th>Ending funds</th>
+                <th>Reporting period begin</th>
+                <th>Reporting period end</th>
+            </thead>
             <tbody>
-                {% for report in reports %}
-                    <tr>
-                        <td>{{ report.doc_name }}</td>
-                        <td>{{ report.amount|format_money }}</td>
-                        <td>{{ report.received_datetime }}</td>
-                    </tr>
-                {% endfor %}
+                <tr>
+                    <td>{{ latest_quarterly.end_funds_available|format_money }}</td>
+                    <td>{{ latest_quarterly.reporting_period_begin }}</td>
+                    <td>{{ latest_quarterly.reporting_period_end }}</td>
+                </tr>
             </tbody>
         </table>
-
+        {% if recent_receipts %}
+            <h3>
+                Receipts after last quarterly report
+                <small>({{ recent_total|format_money }} Total)</small>
+            </h3>
+            <table class="table table-bordered table-condensed">
+                <thead>
+                    <th>Report type</th>
+                    <th>Donator</th>
+                    <th>Amount</th>
+                    <th>Received date</th>
+                </thead>
+                <tbody>
+                    {% for receipt in recent_receipts|sort(attribute='received_datetime', reverse=True) %}
+                        <tr>
+                            <td><a href="{{ url_for('views.contribution', receipt_id=receipt.id )}}">{{ receipt.doc_name }}</a></td>
+                            <td>
+                                {% if receipt.first_name %}
+                                    {{ receipt.first_name }}
+                                {% endif %}
+                                {{ receipt.last_name }}
+                            </td>
+                            <td>{{ receipt.amount|format_money }}</td>
+                            <td>{{ receipt.received_datetime }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% endif %}
     </div>
 </div>
 

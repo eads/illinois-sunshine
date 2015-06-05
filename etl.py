@@ -522,6 +522,7 @@ class SunshineViews(object):
                      doc.received_datetime,
                      doc.reporting_period_end,
                      doc.reporting_period_begin,
+                     doc.id AS filed_doc_id,
                      committee.candidate_id, 
                      committee.candidate_last_name,
                      committee.candidate_first_name,
@@ -634,7 +635,29 @@ class SunshineViews(object):
             }
             conn.execute(sa.text(create), **params)
             trans.commit()
-
+    
+    def committeeToCommittee(self):
+        conn = self.engine.connect()
+        trans = conn.begin()
+        try:
+            conn.execute('REFRESH MATERIALIZED VIEW committee_to_committee')
+            trans.commit()
+        except sa.exc.ProgrammingError:
+            trans.rollback()
+            conn = self.engine.connect()
+            trans = conn.begin()
+            create = '''
+               CREATE MATERIALIZED VIEW committee_to_committee AS (
+                 SELECT
+                   comm.*,
+                   receipts.*
+                 FROM committees AS comm
+                 JOIN receipts
+                   ON comm.name = receipts.last_name
+               )
+            '''
+            conn.execute(sa.text(create))
+            trans.commit()
 
 if __name__ == "__main__":
     import sys
@@ -648,7 +671,7 @@ if __name__ == "__main__":
                               aws_key=app_config.AWS_KEY,
                               aws_secret=app_config.AWS_SECRET)
     
-    extract.download()
+    extract.download(cache=False)
 
     committees = SunshineCommittees(engine, Base.metadata)
     committees.load()
