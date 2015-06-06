@@ -113,6 +113,13 @@ def committee(committee_id):
                            latest_quarterly=latest_quarterly,
                            controlled_amount=controlled_amount)
 
+@views.route('/contributions/')
+def contributions():
+    contributions = db_session.query(Receipt)\
+                        .order_by(Receipt.received_date.desc())\
+                        .limit(100)
+    return render_template('contributions.html', contributions=contributions)
+
 @views.route('/contribution/<receipt_id>/')
 def contribution(receipt_id):
     try:

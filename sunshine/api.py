@@ -13,6 +13,72 @@ api = Blueprint('api', __name__)
 
 dthandler = lambda obj: obj.isoformat() if isinstance(obj, date) else None
 
+@api.route('/search/')
+def search():
+    term = request.args.get('term')
+    tables = request.args.get('tables')
+    resp = {
+        'status': 'ok',
+        'message': '',
+        'objects': [],
+    }
+    status_code = 200
+    if term:
+        if tables:
+            tables = tables.split(',')
+        results = ''' 
+            SELECT 
+              s.id, 
+              s.last_name,
+              s.first_name,
+              s.employer,
+              s.description, 
+              s.vendor_last_name, 
+              s.vendor_first_name,
+              s.amount,
+              s.rank,
+              s.received_date,
+              c.id AS committee_id,
+              c.name AS committee_name
+            FROM (
+              SELECT 
+                id, 
+                last_name, 
+                first_name, 
+                employer, 
+                description,
+                vendor_last_name, 
+                vendor_first_name,
+                amount,
+                received_date,
+                ts_rank_cd(search_index, query) AS rank,
+                query,
+                committee_id
+              FROM receipts, 
+                   to_tsquery(:term) AS query
+              WHERE search_index @@ query
+              ORDER BY rank DESC
+            ) AS s
+            JOIN committees AS c
+              ON s.committee_id = c.id
+            ORDER BY received_date DESC, rank DESC, amount DESC
+            LIMIT 10
+        '''
+        engine = db_session.bind
+        term = ' & '.join(term.split(' '))
+        results = engine.execute(sa.text(results), term=term)
+        fields = [c.name for c in results._cursor_description()]
+        resp['objects'] = [OrderedDict(zip(fields, r)) for r in results]
+    else:
+        resp['status'] = 'error'
+        resp['message'] = 'Search term required'
+        status_code = 401
+
+    response_str = json.dumps(resp, default=dthandler, sort_keys=False)
+    response = make_response(response_str)
+    response.headers['Content-Type'] = 'application/json'
+    return response
+
 @api.route('/committees/')
 def committees():
     committee_table = Committee.__table__
@@ -62,10 +128,6 @@ def committees():
     response = make_response(json.dumps(resp, default=dthandler, sort_keys=False))
     response.headers['Content-Type'] = 'application/json'
     return response
-
-@api.route('/about/')
-def about():
-    return render_template('about.html')
 
 def make_query(table, raw_query_params):
     table_keys = table.columns.keys()

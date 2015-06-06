@@ -659,6 +659,82 @@ class SunshineViews(object):
             conn.execute(sa.text(create))
             trans.commit()
 
+class SunshineIndexes(object):
+    def __init__(self, engine):
+        self.engine = engine
+
+    def makeAllIndexes(self):
+        self.receiptsSearch()
+
+    def nameSearch(self):
+        ''' 
+        Search names across all tables
+        '''
+        pass
+
+    def receiptsSearch(self):
+        
+        alter = '''
+            ALTER TABLE receipts ADD COLUMN search_index tsvector
+        '''
+
+        conn = self.engine.connect()
+        trans = conn.begin()
+        try:
+            conn.execute(alter)
+            trans.commit()
+        except sa.exc.ProgrammingError as e:
+            print(e)
+            trans.rollback()
+            return
+
+        update = ''' 
+            UPDATE receipts SET
+              search_index = to_tsvector('english', 
+                                         COALESCE(last_name, '') || 
+                                         ' ' ||
+                                         COALESCE(first_name, '') || 
+                                         ' ' || 
+                                         COALESCE(employer, '') || 
+                                         ' ' ||
+                                         COALESCE(description, '') ||
+                                         ' ' ||
+                                         COALESCE(vendor_last_name, '') ||
+                                         ' ' ||
+                                         COALESCE(vendor_first_name, ''))
+        '''
+
+        with self.engine.begin() as conn:
+            print('update')
+            conn.execute(update)
+
+        index = ''' 
+            CREATE INDEX receipts_search_idx ON receipts 
+            USING gin(search_index)
+        '''
+        
+        with self.engine.begin() as conn:
+            print('index')
+            conn.execute(index)
+
+        trigger = ''' 
+            CREATE TRIGGER receipts_search_update
+            BEFORE INSERT OR UPDATE ON receipts
+            FOR EACH ROW EXECUTE PROCEDURE
+            tsvector_update_trigger(search_index, 
+                                    'pg_catalog.english',
+                                    last_name, 
+                                    first_name, 
+                                    employer, 
+                                    description,
+                                    vendor_last_name, 
+                                    vedor_first_name)
+        '''
+        
+        with self.engine.begin() as conn:
+            print('trigger')
+            conn.execute(trigger)
+
 if __name__ == "__main__":
     import sys
     from sunshine import app_config 

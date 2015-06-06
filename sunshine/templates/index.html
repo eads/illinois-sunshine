@@ -3,18 +3,78 @@
 {% block content %}
 <div class="row">
     <div class="col-sm-12">
-        <div class='jumbotron'>
-        {% if current_user.is_authenticated() %}
-          <h3>Hi there {{ current_user.name }}</h3>
-        {% endif %}
-        </div>
-
-        <p class='text-center'>
-
-        </p>
-
+        <form>
+            <div class="form-group">
+                <div class="input-group input-group-lg">
+                    <input type="text" class="form-control" placeholder="Search for...">
+                    <span class="input-group-btn">
+                        <button class="btn btn-default" type="button">Go!</button>
+                    </span>
+                </div>
+            </div>
+            <div class="form-group">
+                <p>
+                    Limit search to:
+                    <label class="checkbox-inline">
+                        <input type="checkbox" value="candidates,officers"> People
+                    </label>
+                    <label class="checkbox-inline">
+                        <input type="checkbox" value="committees"> Committees
+                    </label>
+                    <label class="checkbox-inline">
+                        <input type="checkbox" value="receipts"> Contributions
+                    </label>
+                </p>
+            </div>
+        </form>
     </div>
 </div>
-
-
+<div class="row">
+    <div class="col-sm-12" id="search-results"></div>
+</div>
+{% endblock %}
+{% block extra_javascript %}
+    <script src="{{ url_for('static', filename='js/ejs_production.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/accounting.min.js') }}"></script>
+    <script type="text/EJS" id="searchResult">
+        <div class="search-result">
+            <p>
+                <strong>
+                    <a href="/contribution/<%= result.id %>/"><%= result.first_name %> <%= result.last_name %></a>
+                </strong> gave&nbsp;
+                <strong><%= accounting.formatMoney(result.amount) %></strong> to&nbsp;
+                <strong>
+                    <a href="/committee/<%= result.committee_id %>/"><%= result.committee_name %></a>
+                </strong> on&nbsp;
+                <%= moment(result.received_date).format('MMMM D, YYYY') %>
+            </p>
+        </div>
+    </script>
+    <script type="text/javascript">
+        $(document).ready(function(){
+            $('button.btn').on('click', function(e){
+                e.preventDefault();
+                $('#search-results').html('')
+                var term = $('input[type="text"]').val();
+                var tables = [];
+                $.each($('input[type="checkbox"]'), function(i, checkbox){
+                    if ($(checkbox).is(':checked')){
+                        tables.push($(checkbox).val())
+                    }
+                });
+                tables = tables.join(',');
+                var params = {'term': term}
+                if (tables){
+                    params['tables'] = tables;
+                }
+                $.getJSON('{{ url_for("api.search") }}', params, function(resp){
+                    $.each(resp.objects, function(i, result){
+                        var template = new EJS({'text': $('#searchResult').html()});
+                        var contents = template.render({result:result});
+                        $('#search-results').append(contents)
+                    })
+                })
+            })
+        })
+    </script>
 {% endblock %}
