@@ -62,7 +62,7 @@ def search():
             JOIN committees AS c
               ON s.committee_id = c.id
             ORDER BY received_date DESC, rank DESC, amount DESC
-            LIMIT 10
+            LIMIT 100
         '''
         engine = db_session.bind
         term = ' & '.join(term.split(' '))
