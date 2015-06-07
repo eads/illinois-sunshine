@@ -501,7 +501,8 @@ class SunshineViews(object):
     def makeAllViews(self):
         self.incumbentMoney()
         self.committeeMoney()
-    
+        self.namesView()
+
     def committeeMoney(self):
         conn = self.engine.connect()
         trans = conn.begin()
@@ -636,28 +637,67 @@ class SunshineViews(object):
             conn.execute(sa.text(create), **params)
             trans.commit()
     
-    def committeeToCommittee(self):
+    def namesView(self):
         conn = self.engine.connect()
         trans = conn.begin()
         try:
-            conn.execute('REFRESH MATERIALIZED VIEW committee_to_committee')
+            conn.execute('REFRESH MATERIALIZED VIEW all_names')
             trans.commit()
         except sa.exc.ProgrammingError:
             trans.rollback()
             conn = self.engine.connect()
             trans = conn.begin()
-            create = '''
-               CREATE MATERIALIZED VIEW committee_to_committee AS (
-                 SELECT
-                   comm.*,
-                   receipts.*
-                 FROM committees AS comm
-                 JOIN receipts
-                   ON comm.name = receipts.last_name
-               )
+            
+            # This should aggregate by name and 
+            # return the tables that name appears in with the ids
+
+            create = ''' 
+                CREATE MATERIALIZED VIEW all_names AS (
+                    SELECT 
+                      array_agg(table_id) AS table_ids, 
+                      name, 
+                      table_name
+                    FROM (
+                        SELECT 
+                          id AS table_id,
+                          COALESCE(first_name, '') || ' ' ||
+                          COALESCE(last_name, '') AS name,
+                          'candidates' AS table_name
+                        FROM candidates
+                        UNION ALL
+                          SELECT
+                            id AS table_id,
+                            name,
+                            'committees' AS table_name
+                          FROM committees
+                        UNION ALL
+                          SELECT
+                            id AS table_id,
+                            COALESCE(first_name, '') || ' ' ||
+                            COALESCE(last_name, '') AS name,
+                            'receipts' AS table_name
+                          FROM receipts
+                        UNION ALL
+                          SELECT
+                            id AS table_id,
+                            COALESCE(first_name, '') || ' ' ||
+                            COALESCE(last_name, '') AS name,
+                            'expenditures' AS table_name
+                          FROM expenditures
+                        UNION ALL
+                          SELECT
+                            id AS table_id,
+                            COALESCE(first_name, '') || ' ' ||
+                            COALESCE(last_name, '') AS name,
+                            'officers' AS table_name
+                          FROM officers
+                    ) AS s
+                    GROUP BY name, table_name
+                )
             '''
             conn.execute(sa.text(create))
             trans.commit()
+
 
 class SunshineIndexes(object):
     def __init__(self, engine):
@@ -665,12 +705,25 @@ class SunshineIndexes(object):
 
     def makeAllIndexes(self):
         self.receiptsSearch()
+        self.nameSearch()
 
     def nameSearch(self):
         ''' 
         Search names across all tables
         '''
-        pass
+        index = ''' 
+            CREATE INDEX name_index ON all_names
+            USING gin(to_tsvector('english', name))
+        '''
+        conn = self.engine.connect()
+        trans = conn.begin()
+        try:
+            conn.execute(index)
+            trans.commit()
+        except sa.exc.ProgrammingError as e:
+            print(e)
+            trans.rollback()
+            return
 
     def receiptsSearch(self):
         
@@ -684,7 +737,6 @@ class SunshineIndexes(object):
             conn.execute(alter)
             trans.commit()
         except sa.exc.ProgrammingError as e:
-            print(e)
             trans.rollback()
             return
 

@@ -1,7 +1,8 @@
-from flask import Blueprint, render_template, abort
+from flask import Blueprint, render_template, abort, request, make_response
 from sunshine.database import db_session
 from sunshine.models import Candidate, Committee, Receipt
 import sqlalchemy as sa
+import json
 
 views = Blueprint('views', __name__)
 
@@ -12,6 +13,45 @@ def index():
 @views.route('/about/')
 def about():
     return render_template('about.html')
+
+@views.route('/names-autocomplete/')
+def names_autocomplete():
+    term = request.args.get('term')
+    if not term:
+        return abort(400)
+    results = ''' 
+        SELECT
+          name,
+          array_agg(table_name) AS table_names,
+          array_agg(table_ids) AS ids,
+          MAX(ts_rank_cd(to_tsvector('english', name), query)) AS rank
+        FROM all_names,
+             to_tsquery('english', :term) AS query
+        WHERE query @@ to_tsvector('english', name)
+        GROUP BY name
+        ORDER BY rank DESC
+        LIMIT 20
+    '''
+    engine = db_session.bind
+    
+    term = '%s:*' % ' & '.join(term.split())
+    results = engine.execute(sa.text(results), term=term)
+    
+    resp = []
+
+    for result in results:
+        obj = {'name': result.name}
+        for idx, table_name in enumerate(result.table_names):
+            try:
+                obj[table_name].extend(result.ids[idx])
+            except KeyError:
+                obj[table_name] = [result.ids[idx]]
+        resp.append(obj)
+    response_str = json.dumps(resp)
+    response = make_response(response_str)
+    response.headers['Content-Type'] = 'application/json'
+    return response
+
 
 @views.route('/candidates/')
 def candidates():

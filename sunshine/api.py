@@ -13,10 +13,9 @@ api = Blueprint('api', __name__)
 
 dthandler = lambda obj: obj.isoformat() if isinstance(obj, date) else None
 
-@api.route('/search/')
-def search():
+@api.route('/receipts-search/')
+def receipts_search():
     term = request.args.get('term')
-    tables = request.args.get('tables')
     resp = {
         'status': 'ok',
         'message': '',
@@ -24,8 +23,6 @@ def search():
     }
     status_code = 200
     if term:
-        if tables:
-            tables = tables.split(',')
         results = ''' 
             SELECT 
               s.id, 
@@ -65,7 +62,7 @@ def search():
             LIMIT 100
         '''
         engine = db_session.bind
-        term = ' & '.join(term.split(' '))
+        term = ' & '.join(term.strip().split(' '))
         results = engine.execute(sa.text(results), term=term)
         fields = [c.name for c in results._cursor_description()]
         resp['objects'] = [OrderedDict(zip(fields, r)) for r in results]
