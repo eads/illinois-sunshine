@@ -23,48 +23,48 @@
 </div>
 {% endblock %}
 {% block extra_javascript %}
-    <script src="{{ url_for('static', filename='js/jquery-ui.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/spin.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/jquery.spin.js') }}"></script>
     <script src="{{ url_for('static', filename='js/ejs_production.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/accounting.min.js') }}"></script>
     <script type="text/EJS" id="searchResult">
         <div class="search-result">
+            <h3><%= result.name %></h3>
             <p>
-                <strong>
-                    <a href="/contribution/<%= result.id %>/"><%= result.first_name %> <%= result.last_name %></a>
-                </strong> gave&nbsp;
-                <strong><%= accounting.formatMoney(result.amount) %></strong> to&nbsp;
-                <strong>
-                    <a href="/committee/<%= result.committee_id %>/"><%= result.committee_name %></a>
-                </strong> on&nbsp;
-                <%= moment(result.received_date).format('MMMM D, YYYY') %>
-            </p>
+                <% if (typeof result.committees !== 'undefined'){ %>
+                    <strong><%= result.committees.length %></strong> committees <br />
+                <% } %>
+                <% if (typeof result.candidates !== 'undefined'){ %>
+                    <strong><%= result.candidates.length %></strong> candidates <br />
+                <% } %>
+                <% if (typeof result.officers !== 'undefined'){ %>
+                    <strong><%= result.officers.length %></strong> officers <br />
+                <% } %>
+                <% if (typeof result.receipts !== 'undefined'){ %>
+                    <strong><%= result.receipts.length %></strong> receipts <br />
+                <% } %>
+                <% if (typeof result.expenditures !== 'undefined'){ %>
+                    <strong><%= result.expenditures.length %></strong> expenditures <br />
+                <% } %>
+                <% if (typeof result.investments !== 'undefined'){ %>
+                    <strong><%= result.investments.length %></strong> investments
+                <% } %>
         </div>
     </script>
     <script type="text/javascript">
         $(document).ready(function(){
             $('button.btn').on('click', function(e){
                 e.preventDefault();
-                console.log($('#search').data())
+                $('#search-results').empty();
+                $('#search-results').spin('large');
+                var term = $('#search').val();
+                $.getJSON("{{ url_for('api.name_search') }}", {'term': term}, function(resp){
+                    $('#search-results').spin(false);
+                    var template = new EJS({'text': $('#searchResult').html()});
+                    $.each(resp, function(i, result){
+                        $('#search-results').append(template.render({'result': result}));
+                    })
+                })
             })
-            $('#search').autocomplete({
-                source: "{{ url_for('views.names_autocomplete') }}",
-                minLength: 2,
-                select: function(event, ui){
-                    $('#search').val(ui.item.name);
-                    $('#search').data('table_name', ui.item.table_name);
-                    $('#search').data('ids', ui.item.ids);
-                    return false
-                },
-                focus: function(event, ui){
-                    $('#search').val(ui.item.name);
-                    return false
-                }
-            })
-            .data('ui-autocomplete')._renderItem = function(ul, item){
-                return $('<li>')
-                    .append('<a>' + item.name + ' (' + item.table_name + ')</a>')
-                    .appendTo(ul);
-            };
         })
     </script>
 {% endblock %}

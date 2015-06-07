@@ -6,12 +6,70 @@ from flask import Blueprint, render_template, request, make_response
 import json
 from datetime import datetime, date
 from collections import OrderedDict
-from operator import attrgetter
+from operator import attrgetter, itemgetter
 from itertools import groupby
+from string import punctuation
+import re
 
 api = Blueprint('api', __name__)
 
 dthandler = lambda obj: obj.isoformat() if isinstance(obj, date) else None
+
+@api.route('/name-search/')
+def name_search():
+    term = request.args.get('term')
+    table_names = request.args.get('table_names')
+    if table_names:
+        table_names = tuple(table_names.split(','))
+    else:
+        table_names = (
+            'candidates', 
+            'committees', 
+            'officers',
+            'investments',
+            'receipts',
+            'expenditures',
+        )
+    if not term:
+        return abort(400)
+    results = ''' 
+        SELECT
+          name,
+          table_name,
+          table_ids
+        FROM all_names,
+             to_tsquery('english', :term) AS query
+        WHERE query @@ to_tsvector('english', name)
+          AND table_name IN :table_names
+        GROUP BY name, table_name, table_ids
+        ORDER BY name
+    '''
+    engine = db_session.bind
+    
+    punc = re.compile('[%s]' % re.escape(punctuation))
+    term = punc.sub('', term)
+
+    term = ' & '.join(['%s:*' % t for t in term.split()])
+    results = engine.execute(sa.text(results), 
+                             term=term, 
+                             table_names=table_names)
+    
+    resp = []
+
+    for name, grouping in groupby(results, key=attrgetter('name')):
+        obj = OrderedDict([('name', name,)])
+        obj['total_results'] = 0
+        for thing in grouping:
+            obj[thing.table_name] = thing.table_ids
+            obj['total_results'] += len(thing.table_ids)
+        resp.append(obj)
+    
+    resp = sorted(resp, key=itemgetter('total_results'), reverse=True)
+    
+    response_str = json.dumps(resp, sort_keys=False)
+    response = make_response(response_str)
+    response.headers['Content-Type'] = 'application/json'
+    return response
 
 @api.route('/receipts-search/')
 def receipts_search():

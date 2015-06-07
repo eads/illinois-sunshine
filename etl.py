@@ -655,42 +655,49 @@ class SunshineViews(object):
                 CREATE MATERIALIZED VIEW all_names AS (
                     SELECT 
                       array_agg(table_id) AS table_ids, 
-                      name, 
+                      TRIM(name) AS name, 
                       table_name
                     FROM (
                         SELECT 
                           id AS table_id,
-                          COALESCE(TRANSLATE(TRIM(first_name), '.,-/', ''), '') || ' ' ||
-                          COALESCE(TRANSLATE(TRIM(last_name), '.,-/', ''), '') AS name,
+                          COALESCE(TRIM(TRANSLATE(first_name, '.,-/', '')), '') || ' ' ||
+                          COALESCE(TRIM(TRANSLATE(last_name, '.,-/', '')), '') AS name,
                           'candidates' AS table_name
                         FROM candidates
                         UNION ALL
                           SELECT
                             id AS table_id,
-                            name,
+                            COALESCE(TRIM(TRANSLATE(name, '.,-/', '')), '') AS name,
                             'committees' AS table_name
                           FROM committees
                         UNION ALL
                           SELECT
                             id AS table_id,
-                            COALESCE(TRANSLATE(TRIM(first_name), '.,-/', ''), '') || ' ' ||
-                            COALESCE(TRANSLATE(TRIM(last_name), '.,-/', ''), '') AS name,
+                            COALESCE(TRIM(TRANSLATE(first_name, '.,-/', '')), '') || ' ' ||
+                            COALESCE(TRIM(TRANSLATE(last_name, '.,-/', '')), '') AS name,
                             'receipts' AS table_name
                           FROM receipts
                         UNION ALL
                           SELECT
                             id AS table_id,
-                            COALESCE(TRANSLATE(TRIM(first_name), '.,-/', ''), '') || ' ' ||
-                            COALESCE(TRANSLATE(TRIM(last_name), '.,-/', ''), '') AS name,
+                            COALESCE(TRIM(TRANSLATE(first_name, '.,-/', '')), '') || ' ' ||
+                            COALESCE(TRIM(TRANSLATE(last_name, '.,-/', '')), '') AS name,
                             'expenditures' AS table_name
                           FROM expenditures
                         UNION ALL
                           SELECT
                             id AS table_id,
-                            COALESCE(TRANSLATE(TRIM(first_name), '.,-/', ''), '') || ' ' ||
-                            COALESCE(TRANSLATE(TRIM(last_name), '.,-/', ''), '') AS name,
+                            COALESCE(TRIM(TRANSLATE(first_name, '.,-/', '')), '') || ' ' ||
+                            COALESCE(TRIM(TRANSLATE(last_name, '.,-/', '')), '') AS name,
                             'officers' AS table_name
                           FROM officers
+                        UNION ALL
+                          SELECT
+                            id AS table_id,
+                            COALESCE(TRIM(TRANSLATE(first_name, '.,-/', '')), '') || ' ' ||
+                            COALESCE(TRIM(TRANSLATE(last_name, '.,-/', '')), '') AS name,
+                            'investments' AS table_name
+                          FROM investments
                     ) AS s
                     GROUP BY name, table_name
                 )
@@ -757,7 +764,6 @@ class SunshineIndexes(object):
         '''
 
         with self.engine.begin() as conn:
-            print('update')
             conn.execute(update)
 
         index = ''' 
@@ -766,7 +772,6 @@ class SunshineIndexes(object):
         '''
         
         with self.engine.begin() as conn:
-            print('index')
             conn.execute(index)
 
         trigger = ''' 
@@ -784,7 +789,6 @@ class SunshineIndexes(object):
         '''
         
         with self.engine.begin() as conn:
-            print('trigger')
             conn.execute(trigger)
 
 if __name__ == "__main__":
