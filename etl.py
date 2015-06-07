@@ -660,8 +660,8 @@ class SunshineViews(object):
                     FROM (
                         SELECT 
                           id AS table_id,
-                          COALESCE(first_name, '') || ' ' ||
-                          COALESCE(last_name, '') AS name,
+                          COALESCE(TRANSLATE(TRIM(first_name), '.,-/', ''), '') || ' ' ||
+                          COALESCE(TRANSLATE(TRIM(last_name), '.,-/', ''), '') AS name,
                           'candidates' AS table_name
                         FROM candidates
                         UNION ALL
@@ -673,22 +673,22 @@ class SunshineViews(object):
                         UNION ALL
                           SELECT
                             id AS table_id,
-                            COALESCE(first_name, '') || ' ' ||
-                            COALESCE(last_name, '') AS name,
+                            COALESCE(TRANSLATE(TRIM(first_name), '.,-/', ''), '') || ' ' ||
+                            COALESCE(TRANSLATE(TRIM(last_name), '.,-/', ''), '') AS name,
                             'receipts' AS table_name
                           FROM receipts
                         UNION ALL
                           SELECT
                             id AS table_id,
-                            COALESCE(first_name, '') || ' ' ||
-                            COALESCE(last_name, '') AS name,
+                            COALESCE(TRANSLATE(TRIM(first_name), '.,-/', ''), '') || ' ' ||
+                            COALESCE(TRANSLATE(TRIM(last_name), '.,-/', ''), '') AS name,
                             'expenditures' AS table_name
                           FROM expenditures
                         UNION ALL
                           SELECT
                             id AS table_id,
-                            COALESCE(first_name, '') || ' ' ||
-                            COALESCE(last_name, '') AS name,
+                            COALESCE(TRANSLATE(TRIM(first_name), '.,-/', ''), '') || ' ' ||
+                            COALESCE(TRANSLATE(TRIM(last_name), '.,-/', ''), '') AS name,
                             'officers' AS table_name
                           FROM officers
                     ) AS s

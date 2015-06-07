@@ -22,8 +22,8 @@ def names_autocomplete():
     results = ''' 
         SELECT
           name,
-          array_agg(table_name) AS table_names,
-          array_agg(table_ids) AS ids,
+          json_agg(table_name) AS table_names,
+          json_agg(table_ids) AS ids,
           MAX(ts_rank_cd(to_tsvector('english', name), query)) AS rank
         FROM all_names,
              to_tsquery('english', :term) AS query
@@ -34,7 +34,7 @@ def names_autocomplete():
     '''
     engine = db_session.bind
     
-    term = '%s:*' % ' & '.join(term.split())
+    term = ' & '.join(term.split())
     results = engine.execute(sa.text(results), term=term)
     
     resp = []
