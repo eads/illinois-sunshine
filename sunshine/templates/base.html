@@ -40,11 +40,6 @@
             <li class="{% if request.path == url_for('views.about') %}active{% endif %}"><a href='{{ url_for('views.about') }}'>About</a></li>
             <li class="{% if request.path == url_for('views.candidates') %}active{% endif %}"><a href='{{ url_for('views.candidates') }}'>Candidates</a></li>
             <li class="{% if request.path == url_for('views.committees') %}active{% endif %}"><a href='{{ url_for('views.committees') }}'>Committees</a></li>
-            {% if current_user.is_authenticated() %}
-            <li><a href='{{ url_for('auth.logout') }}'>Logout</a></li>
-            {% else %}
-            <li><a href='{{ url_for('auth.login') }}'>Login</a></li>
-            {% endif %}
           </ul>
         </div><!--/.nav-collapse -->
       </div>

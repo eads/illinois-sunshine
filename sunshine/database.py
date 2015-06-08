@@ -3,7 +3,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, scoped_session
 from sqlalchemy.ext.declarative import declarative_base
 
-from .app_config import DEFAULT_USER, DB_CONN
+from .app_config import DB_CONN
 
 engine = create_engine(DB_CONN, 
                        convert_unicode=True, 
@@ -19,10 +19,3 @@ def init_db(sess=None, eng=None):
     import sunshine.models
     Base.metadata.create_all(bind=engine)
 
-    if DEFAULT_USER:
-        name = DEFAULT_USER['name']
-        email = DEFAULT_USER['email']
-        password = DEFAULT_USER['password']
-        user = sunshine.models.User(name, email, password)
-        db_session.add(user)
-        db_session.commit()
