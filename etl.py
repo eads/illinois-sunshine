@@ -855,3 +855,6 @@ if __name__ == "__main__":
 
     views = SunshineViews(engine)
     views.makeAllViews()
+    
+    indexes = SunshineIndexes(engine)
+    indexes.makeAllIndexes()
