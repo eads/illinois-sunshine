@@ -43,6 +43,10 @@ def candidates():
     rows = engine.execute(sa.text(money))
     return render_template('candidates.html', rows=rows)
 
+@views.route('/search/')
+def search():
+    return render_template('search.html')
+
 @views.route('/candidate/<candidate_id>/')
 def candidate(candidate_id):
     try:

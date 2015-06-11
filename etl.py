@@ -500,21 +500,21 @@ class SunshineViews(object):
 
     def makeAllViews(self):
         self.incumbentMoney()
-        self.committeeMoney()
+        self.candidateMoney()
         self.namesView()
 
-    def committeeMoney(self):
+    def candidateMoney(self):
         conn = self.engine.connect()
         trans = conn.begin()
         try:
-            conn.execute('REFRESH MATERIALIZED VIEW all_quarterly_filings')
+            conn.execute('REFRESH MATERIALIZED VIEW candidate_quarterly_filings')
             trans.commit()
         except sa.exc.ProgrammingError:
             trans.rollback()
             conn = self.engine.connect()
             trans = conn.begin()
             create = '''
-               CREATE MATERIALIZED VIEW all_quarterly_filings AS (
+               CREATE MATERIALIZED VIEW candidate_quarterly_filings AS (
                  SELECT * FROM (
                    SELECT DISTINCT ON (doc.doc_name, committee.id, committee.candidate_id)
                      d2.end_funds_available,
@@ -728,7 +728,6 @@ class SunshineIndexes(object):
             conn.execute(index)
             trans.commit()
         except sa.exc.ProgrammingError as e:
-            print(e)
             trans.rollback()
             return
 
@@ -785,7 +784,7 @@ class SunshineIndexes(object):
                                     employer, 
                                     description,
                                     vendor_last_name, 
-                                    vedor_first_name)
+                                    vendor_first_name)
         '''
         
         with self.engine.begin() as conn:
