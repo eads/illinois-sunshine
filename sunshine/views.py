@@ -21,13 +21,13 @@ def candidates():
           filings.*,
           (filings.end_funds_available + additional.amount) AS total,
           additional.last_receipt_date
-        FROM all_quarterly_filings AS filings
+        FROM candidate_quarterly_filings AS filings
         JOIN (
           SELECT
             SUM(receipts.amount) AS amount,
             MAX(receipts.received_date) AS last_receipt_date,
             q.committee_id
-          FROM all_quarterly_filings AS q
+          FROM candidate_quarterly_filings AS q
           JOIN receipts
             USING(committee_id)
           JOIN filed_docs as f

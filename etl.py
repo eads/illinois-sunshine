@@ -141,28 +141,31 @@ class SunshineTransformLoad(object):
                              for f in self.header]
         
         return ''' 
-            WITH upsert AS (
+            WITH data_update AS (
               UPDATE {0} SET 
                 {1}
               FROM (
                 SELECT * FROM temp_{0}
               ) AS subq
               WHERE {0}.id = subq.id
-              RETURNING *
             )
             INSERT INTO {0} 
-              SELECT * FROM temp_{0}
-            WHERE NOT EXISTS (SELECT * FROM upsert)
+              SELECT temp.* FROM temp_{0} AS temp
+              LEFT JOIN {0} AS data
+                USING(id)
+              WHERE data.id IS NULL
+            RETURNING *
         '''.format(self.table_name, 
                    ','.join(update_fields))
 
     def update(self):
 
         with self.engine.begin() as conn:
-            conn.execute(sa.text(self.upsert))
+            inserted = list(conn.execute(sa.text(self.upsert)))
+            print('inserted %s %s' % (len(inserted), self.table_name))
 
-        with self.engine.begin() as conn:
-            conn.execute('DROP TABLE temp_{0}'.format(self.table_name))
+        # with self.engine.begin() as conn:
+        #     conn.execute('DROP TABLE temp_{0}'.format(self.table_name))
 
     def transform(self):
         with open(self.file_path, 'r', encoding='latin1') as f:
@@ -260,19 +263,21 @@ class SunshineCandidates(SunshineTransformLoad):
                 SELECT * FROM temp_{0}
               ) AS subq
               WHERE {0}.id = subq.id
-              RETURNING *
             )
             INSERT INTO {0} ({2})
               SELECT 
                 {3},
                 NOW() AS last_update,
                 NOW() AS date_added
-              FROM temp_{0}
-            WHERE NOT EXISTS (SELECT * FROM upsert)
+              FROM temp_{0} AS temp
+              LEFT JOIN {0} AS data
+                USING(id)
+              WHERE data.id IS NULL
+            RETURNING *
         '''.format(self.table_name, 
                    ','.join(update_fields),
                    ','.join(self.header + ['last_update', 'date_added']),
-                   ','.join(self.header))
+                   ','.join(['temp.{0}'.format(f) for f in self.header]))
 
 class SunshineOfficers(SunshineTransformLoad):
     table_name = 'officers'
@@ -303,8 +308,40 @@ class SunshineOfficers(SunshineTransformLoad):
                     row.append(self.current)
                     
                     yield OrderedDict(zip(self.header, row))
+
+    @property
+    def upsert(self):
+        field_format = '{1} = subq.{1}'
+        
+        update_fields = [field_format.format(self.table_name,f) \
+                             for f in self.header]
+        
+        return ''' 
+            WITH upsert AS (
+              UPDATE {0} SET 
+                {1}
+              FROM (
+                SELECT * FROM temp_{0}
+              ) AS subq
+              WHERE officers.id = subq.id
+                AND officers.current = subq.current
+            )
+            INSERT INTO {0} ({2})
+              SELECT 
+                {3}
+              FROM temp_{0} AS temp
+              LEFT JOIN {0} AS data
+                ON temp.id = data.id 
+                AND temp.current = data.current
+              WHERE data.id IS NULL
+                AND data.current IS NULL
+            RETURNING *
+        '''.format(self.table_name, 
+                   ','.join(update_fields),
+                   ','.join(self.header),
+                   ','.join(['temp.{0}'.format(f) for f in self.header]))
     
-class SunshinePrevOfficers(SunshineTransformLoad):
+class SunshinePrevOfficers(SunshineOfficers):
     table_name = 'officers'
     header = Officer.__table__.columns.keys()
     filename = 'PrevOfficers.txt'
@@ -421,8 +458,14 @@ class SunshineCandidateCommittees(SunshineTransformLoad):
               RETURNING *
             )
             INSERT INTO {0} 
-              SELECT * FROM temp_{0}
-            WHERE NOT EXISTS (SELECT * FROM upsert)
+              SELECT temp.* 
+              FROM temp_{0} AS temp
+              LEFT JOIN {0} AS data
+                ON temp.candidate_id = data.candidate_id
+                AND temp.committee_id = data.committee_id
+              WHERE data.candidate_id IS NULL
+                AND data.committee_id IS NULL
+            RETURNING *
         '''.format(self.table_name, 
                    ','.join(update_fields),
                    where_clause)
@@ -466,6 +509,8 @@ class SunshineOfficerCommittees(SunshineTransformLoad):
                 SELECT * FROM temp_{0}
               ) AS subq
               WHERE officers.id = subq.officer_id
+                AND officers.current = TRUE
+              RETURNING *
         '''.format(self.table_name)
 
 class SunshineD2Reports(SunshineTransformLoad):
@@ -499,9 +544,41 @@ class SunshineViews(object):
         self.engine = engine
 
     def makeAllViews(self):
-        self.incumbentMoney()
+        self.incumbentCandidates()
         self.candidateMoney()
-        self.namesView()
+        self.fullSearchView()
+
+    def incumbentCandidates(self):
+        conn = self.engine.connect()
+        trans = conn.begin()
+        try:
+            conn.execute('REFRESH MATERIALIZED VIEW incumbent_candidates')
+            trans.commit()
+        except sa.exc.ProgrammingError:
+            trans.rollback()
+            conn = self.engine.connect()
+            trans = conn.begin()
+            incumbents = '''
+                CREATE MATERIALIZED VIEW incumbent_candidates AS (
+                  SELECT DISTINCT ON (cd.district, cd.office)
+                    cd.*,
+                    cs.election_year AS last_election_year,
+                    cs.election_type AS last_election_type,
+                    cs.race_type AS last_race_type
+                  FROM candidates AS cd
+                  JOIN candidacies AS cs
+                    ON cd.id = cs.candidate_id
+                  WHERE cs.outcome = :outcome
+                    AND cs.election_year >= :year
+                  ORDER BY cd.district, cd.office, cs.id DESC
+                )
+            '''
+            
+            conn.execute(sa.text(incumbents), 
+                         outcome='won',
+                         year=2014)
+
+            trans.commit()
 
     def candidateMoney(self):
         conn = self.engine.connect()
@@ -559,147 +636,94 @@ class SunshineViews(object):
             '''
             conn.execute(sa.text(create), doc_name='Quarterly')
             trans.commit()
-
-    def incumbentMoney(self, 
-                       outcome='won', 
-                       election_year=2014,
-                       committee_type='Candidate',
-                       doc_name='Quarterly'):
-        
-        conn = self.engine.connect()
-        trans = conn.begin()
-        try:
-            conn.execute('REFRESH MATERIALIZED VIEW incumbent_quarterly_filings')
-            trans.commit()
-        except sa.exc.ProgrammingError:
-            trans.rollback()
-            conn = self.engine.connect()
-            trans = conn.begin()
-            create = '''
-               CREATE MATERIALIZED VIEW incumbent_quarterly_filings AS (
-                 SELECT * FROM (
-                   SELECT DISTINCT ON (doc.doc_name, committee.id, committee.candidate_id)
-                     d2.end_funds_available,
-                     committee.id AS committee_id,
-                     committee.name AS committee_name,
-                     doc.received_datetime,
-                     doc.reporting_period_end,
-                     doc.reporting_period_begin,
-                     committee.candidate_id, 
-                     committee.candidate_last_name,
-                     committee.candidate_first_name,
-                     committee.candidate_office,
-                     committee.candidate_district
-                   FROM d2_reports AS d2
-                   JOIN (
-                     SELECT 
-                       cm.id,
-                       cm.name,
-                       cand.id AS candidate_id,
-                       cand.first_name AS candidate_first_name,
-                       cand.last_name AS candidate_last_name,
-                       cand.office AS candidate_office,
-                       cand.district AS candidate_district
-                     FROM committees AS cm
-                     JOIN candidate_committees AS cc
-                       ON cm.id = cc.committee_id
-                     JOIN (
-                       SELECT DISTINCT ON (cd.district, cd.office)
-                         cd.*
-                       FROM candidates AS cd
-                       JOIN candidacies AS cs
-                         ON cd.id = cs.candidate_id
-                       WHERE cs.outcome = :outcome
-                         AND cs.election_year >= :year
-                       ORDER BY cd.district, cd.office, cs.id DESC
-                     ) AS cand
-                       ON cc.candidate_id = cand.id
-                     WHERE cm.type = :committee_type
-                   ) AS committee
-                     ON d2.committee_id = committee.id
-                   JOIN filed_docs AS doc
-                     ON d2.filed_doc_id = doc.id
-                   WHERE doc.doc_name = :doc_name
-                   ORDER BY doc.doc_name, 
-                            committee.id,
-                            committee.candidate_id,
-                            doc.received_datetime DESC
-                 ) AS rows 
-                 ORDER BY end_funds_available DESC
-               )
-            '''
-            params = {
-                'doc_name': doc_name,
-                'year': election_year,
-                'outcome': outcome,
-                'committee_type': committee_type,
-            }
-            conn.execute(sa.text(create), **params)
-            trans.commit()
     
-    def namesView(self):
+    def fullSearchView(self):
         conn = self.engine.connect()
         trans = conn.begin()
         try:
-            conn.execute('REFRESH MATERIALIZED VIEW all_names')
+            conn.execute('REFRESH MATERIALIZED VIEW full_search')
             trans.commit()
         except sa.exc.ProgrammingError:
             trans.rollback()
             conn = self.engine.connect()
             trans = conn.begin()
             
-            # This should aggregate by name and 
-            # return the tables that name appears in with the ids
-
             create = ''' 
-                CREATE MATERIALIZED VIEW all_names AS (
+                CREATE MATERIALIZED VIEW full_search AS (
+                  SELECT 
+                    id, 
+                    name,
+                    address,
+                    city,
+                    state,
+                    zipcode,
+                    table_name
+                  FROM (
                     SELECT 
-                      array_agg(table_id) AS table_ids, 
-                      TRIM(name) AS name, 
-                      table_name
-                    FROM (
-                        SELECT 
-                          id AS table_id,
-                          COALESCE(TRIM(TRANSLATE(first_name, '.,-/', '')), '') || ' ' ||
-                          COALESCE(TRIM(TRANSLATE(last_name, '.,-/', '')), '') AS name,
-                          'candidates' AS table_name
-                        FROM candidates
-                        UNION ALL
-                          SELECT
-                            id AS table_id,
-                            COALESCE(TRIM(TRANSLATE(name, '.,-/', '')), '') AS name,
-                            'committees' AS table_name
-                          FROM committees
-                        UNION ALL
-                          SELECT
-                            id AS table_id,
-                            COALESCE(TRIM(TRANSLATE(first_name, '.,-/', '')), '') || ' ' ||
-                            COALESCE(TRIM(TRANSLATE(last_name, '.,-/', '')), '') AS name,
-                            'receipts' AS table_name
-                          FROM receipts
-                        UNION ALL
-                          SELECT
-                            id AS table_id,
-                            COALESCE(TRIM(TRANSLATE(first_name, '.,-/', '')), '') || ' ' ||
-                            COALESCE(TRIM(TRANSLATE(last_name, '.,-/', '')), '') AS name,
-                            'expenditures' AS table_name
-                          FROM expenditures
-                        UNION ALL
-                          SELECT
-                            id AS table_id,
-                            COALESCE(TRIM(TRANSLATE(first_name, '.,-/', '')), '') || ' ' ||
-                            COALESCE(TRIM(TRANSLATE(last_name, '.,-/', '')), '') AS name,
-                            'officers' AS table_name
-                          FROM officers
-                        UNION ALL
-                          SELECT
-                            id AS table_id,
-                            COALESCE(TRIM(TRANSLATE(first_name, '.,-/', '')), '') || ' ' ||
-                            COALESCE(TRIM(TRANSLATE(last_name, '.,-/', '')), '') AS name,
-                            'investments' AS table_name
-                          FROM investments
-                    ) AS s
-                    GROUP BY name, table_name
+                      id,
+                      COALESCE(TRIM(TRANSLATE(first_name, '.,-/', '')), '') || ' ' ||
+                      COALESCE(TRIM(TRANSLATE(last_name, '.,-/', '')), '') AS name,
+                      address_1 AS address,
+                      city,
+                      state,
+                      zipcode,
+                      'candidates' AS table_name
+                    FROM candidates
+                    UNION ALL
+                      SELECT
+                        id,
+                        name,
+                        address1 AS address,
+                        city,
+                        state,
+                        zipcode,
+                        'committees' AS table_name
+                      FROM committees
+                    UNION ALL
+                      SELECT
+                        id,
+                        COALESCE(TRIM(TRANSLATE(first_name, '.,-/', '')), '') || ' ' ||
+                        COALESCE(TRIM(TRANSLATE(last_name, '.,-/', '')), '') AS name,
+                        address1 AS address,
+                        city,
+                        state,
+                        zipcode,
+                        'receipts' AS table_name
+                      FROM receipts
+                    UNION ALL
+                      SELECT
+                        id,
+                        COALESCE(TRIM(TRANSLATE(first_name, '.,-/', '')), '') || ' ' ||
+                        COALESCE(TRIM(TRANSLATE(last_name, '.,-/', '')), '') AS name,
+                        address1 AS address,
+                        city,
+                        state,
+                        zipcode,
+                        'expenditures' AS table_name
+                      FROM expenditures
+                    UNION ALL
+                      SELECT
+                        id,
+                        COALESCE(TRIM(TRANSLATE(first_name, '.,-/', '')), '') || ' ' ||
+                        COALESCE(TRIM(TRANSLATE(last_name, '.,-/', '')), '') AS name,
+                        address1 AS address,
+                        city,
+                        state,
+                        zipcode,
+                        'officers' AS table_name
+                      FROM officers
+                    UNION ALL
+                      SELECT
+                        id,
+                        COALESCE(TRIM(TRANSLATE(first_name, '.,-/', '')), '') || ' ' ||
+                        COALESCE(TRIM(TRANSLATE(last_name, '.,-/', '')), '') AS name,
+                        address1 AS address,
+                        city,
+                        state,
+                        zipcode,
+                        'investments' AS table_name
+                      FROM investments
+                  ) AS s
                 )
             '''
             conn.execute(sa.text(create))
@@ -711,15 +735,14 @@ class SunshineIndexes(object):
         self.engine = engine
 
     def makeAllIndexes(self):
-        self.receiptsSearch()
-        self.nameSearch()
+        self.fullSearchIndex()
 
-    def nameSearch(self):
+    def fullSearchIndex(self):
         ''' 
         Search names across all tables
         '''
         index = ''' 
-            CREATE INDEX name_index ON all_names
+            CREATE INDEX name_index ON full_search
             USING gin(to_tsvector('english', name))
         '''
         conn = self.engine.connect()
@@ -731,78 +754,19 @@ class SunshineIndexes(object):
             trans.rollback()
             return
 
-    def receiptsSearch(self):
-        
-        alter = '''
-            ALTER TABLE receipts ADD COLUMN search_index tsvector
-        '''
-
-        conn = self.engine.connect()
-        trans = conn.begin()
-        try:
-            conn.execute(alter)
-            trans.commit()
-        except sa.exc.ProgrammingError as e:
-            trans.rollback()
-            return
-
-        update = ''' 
-            UPDATE receipts SET
-              search_index = to_tsvector('english', 
-                                         COALESCE(last_name, '') || 
-                                         ' ' ||
-                                         COALESCE(first_name, '') || 
-                                         ' ' || 
-                                         COALESCE(employer, '') || 
-                                         ' ' ||
-                                         COALESCE(description, '') ||
-                                         ' ' ||
-                                         COALESCE(vendor_last_name, '') ||
-                                         ' ' ||
-                                         COALESCE(vendor_first_name, ''))
-        '''
-
-        with self.engine.begin() as conn:
-            conn.execute(update)
-
-        index = ''' 
-            CREATE INDEX receipts_search_idx ON receipts 
-            USING gin(search_index)
-        '''
-        
-        with self.engine.begin() as conn:
-            conn.execute(index)
-
-        trigger = ''' 
-            CREATE TRIGGER receipts_search_update
-            BEFORE INSERT OR UPDATE ON receipts
-            FOR EACH ROW EXECUTE PROCEDURE
-            tsvector_update_trigger(search_index, 
-                                    'pg_catalog.english',
-                                    last_name, 
-                                    first_name, 
-                                    employer, 
-                                    description,
-                                    vendor_last_name, 
-                                    vendor_first_name)
-        '''
-        
-        with self.engine.begin() as conn:
-            conn.execute(trigger)
-
 if __name__ == "__main__":
     import sys
     from sunshine import app_config 
     from sunshine.database import engine, Base
 
-    extract = SunshineExtract(ftp_host=app_config.FTP_HOST,
-                              ftp_path=app_config.FTP_PATH,
-                              ftp_user=app_config.FTP_USER,
-                              ftp_pw=app_config.FTP_PW,
-                              aws_key=app_config.AWS_KEY,
-                              aws_secret=app_config.AWS_SECRET)
-    
-    extract.download(cache=False)
+    # extract = SunshineExtract(ftp_host=app_config.FTP_HOST,
+    #                           ftp_path=app_config.FTP_PATH,
+    #                           ftp_user=app_config.FTP_USER,
+    #                           ftp_pw=app_config.FTP_PW,
+    #                           aws_key=app_config.AWS_KEY,
+    #                           aws_secret=app_config.AWS_SECRET)
+    # 
+    # extract.download(cache=False)
 
     committees = SunshineCommittees(engine, Base.metadata)
     committees.load()

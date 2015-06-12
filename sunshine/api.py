@@ -26,23 +26,22 @@ def name_search():
             'candidates', 
             'committees', 
             'officers',
-            'investments',
-            'receipts',
-            'expenditures',
         )
     if not term:
         return abort(400)
     results = ''' 
         SELECT
-          name,
-          table_name,
-          table_ids
-        FROM all_names,
-             to_tsquery('english', :term) AS query
-        WHERE query @@ to_tsvector('english', name)
+          results.id,
+          results.name,
+          results.table_name,
+          ts_rank_cd(search_vector, query) AS rank
+        FROM full_search AS results,
+             to_tsquery('english', :term) AS query,
+             to_tsvector('english', name) AS search_vector
+        WHERE query @@ search_vector
           AND table_name IN :table_names
-        GROUP BY name, table_name, table_ids
-        ORDER BY name
+        ORDER BY rank DESC
+        LIMIT 100
     '''
     engine = db_session.bind
     
@@ -58,13 +57,11 @@ def name_search():
 
     for name, grouping in groupby(results, key=attrgetter('name')):
         obj = OrderedDict([('name', name,)])
-        obj['total_results'] = 0
-        for thing in grouping:
-            obj[thing.table_name] = thing.table_ids
-            obj['total_results'] += len(thing.table_ids)
+        obj[name] = {}
+        table_sort = sorted(list(grouping), key=attrgetter('table_name'))
+        for table_name, table_grouping in groupby(table_sort, key=attrgetter('table_name')):
+            obj[name][table_name] = [t.id for t in table_grouping]
         resp.append(obj)
-    
-    resp = sorted(resp, key=itemgetter('total_results'), reverse=True)
     
     response_str = json.dumps(resp, sort_keys=False)
     response = make_response(response_str)

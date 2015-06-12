@@ -128,7 +128,7 @@ class Officer(Base):
     resign_date = sa.Column(sa.DateTime)
     redaction_requested = sa.Column(sa.Boolean)
 
-    current = sa.Column(sa.Boolean)
+    current = sa.Column(sa.Boolean, primary_key=True)
 
     def __repr__(self):
         return '<Officer %r %r>' % (self.first_name, self.last_name)
