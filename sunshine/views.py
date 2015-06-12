@@ -3,12 +3,18 @@ from sunshine.database import db_session
 from sunshine.models import Candidate, Committee, Receipt
 import sqlalchemy as sa
 import json
+from datetime import datetime, timedelta
+
 
 views = Blueprint('views', __name__)
 
 @views.route('/')
 def index():
-    return render_template('index.html')
+    week_ago = datetime.now() - timedelta(days=7)
+    recent_donations = db_session.query(Receipt)\
+                                 .filter(Receipt.received_date > week_ago)\
+                                 .order_by(Receipt.received_date.desc())
+    return render_template('index.html', recent_donations=recent_donations)
 
 @views.route('/about/')
 def about():

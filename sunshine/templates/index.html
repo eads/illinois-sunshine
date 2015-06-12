@@ -6,20 +6,31 @@
 {% block content %}
 <div class="row">
     <div class="col-sm-12">
-        <form>
-            <div class="form-group">
-                <div class="input-group input-group-lg">
-                    <input id="search" type="text" class="form-control" placeholder="Search for...">
-                    <span class="input-group-btn">
-                        <button class="btn btn-default" type="submit">Go!</button>
-                    </span>
-                </div>
-            </div>
-        </form>
+        <table class="table table-bordered table-condensed">
+            <thead>
+                <tr>
+                    <th>Committee name</th>
+                    <th>Donor name</th>
+                    <th>Amount</th>
+                    <th>Received date</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for donation in recent_donations %}
+                    <tr>
+                        <td>
+                            <a href="{{ url_for('views.committee', committee_id=donation.committee_id )}}">{{ donation.committee.name }}</a>
+                        </td>
+                        <td>
+                            {% if donation.first_name %}{{ donation.first_name }}{% endif %} {{ donation.last_name }}
+                        </td>
+                        <td>{{ donation.amount|format_money }}</td>
+                        <td>{{ donation.received_date.strftime('%m-%d-%Y %H:%M:%S') }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
-</div>
-<div class="row">
-    <div class="col-sm-12" id="search-results"></div>
 </div>
 {% endblock %}
 {% block extra_javascript %}
