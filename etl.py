@@ -584,54 +584,69 @@ class SunshineViews(object):
         conn = self.engine.connect()
         trans = conn.begin()
         try:
-            conn.execute('REFRESH MATERIALIZED VIEW candidate_quarterly_filings')
+            conn.execute('REFRESH MATERIALIZED VIEW candidate_money')
             trans.commit()
         except sa.exc.ProgrammingError:
             trans.rollback()
             conn = self.engine.connect()
             trans = conn.begin()
             create = '''
-               CREATE MATERIALIZED VIEW candidate_quarterly_filings AS (
-                 SELECT * FROM (
-                   SELECT DISTINCT ON (doc.doc_name, committee.id, committee.candidate_id)
-                     d2.end_funds_available,
-                     committee.id AS committee_id,
-                     committee.name AS committee_name,
-                     doc.received_datetime,
-                     doc.reporting_period_end,
-                     doc.reporting_period_begin,
-                     doc.id AS filed_doc_id,
-                     committee.candidate_id, 
-                     committee.candidate_last_name,
-                     committee.candidate_first_name,
-                     committee.candidate_office,
-                     committee.candidate_district
-                   FROM d2_reports AS d2
-                   JOIN (
-                     SELECT 
-                       cm.id,
-                       cm.name,
-                       cand.id AS candidate_id,
-                       cand.first_name AS candidate_first_name,
-                       cand.last_name AS candidate_last_name,
-                       cand.office AS candidate_office,
-                       cand.district AS candidate_district
-                     FROM committees AS cm
-                     JOIN candidate_committees AS cc
-                       ON cm.id = cc.committee_id
-                     JOIN candidates AS cand
-                       ON cc.candidate_id = cand.id
-                   ) AS committee
-                     ON d2.committee_id = committee.id
-                   JOIN filed_docs AS doc
-                     ON d2.filed_doc_id = doc.id
-                   WHERE doc.doc_name = :doc_name
-                   ORDER BY doc.doc_name, 
-                            committee.id,
-                            committee.candidate_id,
-                            doc.received_datetime DESC
-                 ) AS rows 
-                 ORDER BY end_funds_available DESC
+               CREATE MATERIALIZED VIEW candidate_money AS (
+                 SELECT 
+                   MAX(filings.end_funds_available) AS end_funds_available,
+                   MAX(filings.first_name) AS candidate_first_name,
+                   MAX(filings.last_name) AS candidate_last_name,
+                   MAX(filings.candidate_id) AS candidate_id,
+                   MAX(filings.candidate_office) AS candidate_office,
+                   MAX(filings.committee_name) AS committee_name,
+                   MAX(filings.committee_id) AS committee_id,
+                   MAX(filings.doc_name) AS doc_name,
+                   MAX(filings.reporting_period_end) AS reporting_period_end,
+                   MAX(filings.reporting_period_begin) AS reporting_period_begin,
+                   (SUM(receipts.amount) + MAX(filings.end_funds_available)) AS total,
+                   MAX(receipts_fd.received_datetime) AS last_receipt_date
+                 FROM (
+                   SELECT 
+                     d2.end_funds_available, 
+                     cn.first_name, 
+                     cn.last_name,
+                     cn.id AS candidate_id,
+                     cn.office AS candidate_office,
+                     cm.name AS committee_name, 
+                     cm.id AS committee_id,
+                     fd.doc_name, 
+                     fd.reporting_period_end,
+                     fd.reporting_period_begin,
+                     fd.received_datetime
+                   FROM candidates AS cn 
+                   JOIN candidate_committees AS cc 
+                     ON cn.id = cc.candidate_id 
+                   JOIN committees AS cm 
+                     ON cm.id = cc.committee_id 
+                   LEFT JOIN (
+                     SELECT DISTINCT ON (committee_id) 
+                       id, 
+                       committee_id, 
+                       doc_name, 
+                       reporting_period_end,
+                       reporting_period_begin,
+                       received_datetime
+                     FROM filed_docs 
+                     WHERE doc_name IN ('Quarterly', 'Final', 'Semiannual') 
+                     ORDER BY committee_id, received_datetime DESC
+                   ) AS fd 
+                     ON fd.committee_id = cm.id 
+                   JOIN d2_reports AS d2 
+                     ON fd.id = d2.filed_doc_id 
+                   WHERE cm.type = 'Candidate'
+                 ) AS filings
+                 JOIN receipts
+                   ON receipts.committee_id = filings.committee_id
+                   AND receipts.received_date > filings.reporting_period_end
+                 JOIN filed_docs AS receipts_fd
+                   ON receipts.filed_doc_id = receipts_fd.id
+                 GROUP BY receipts.committee_id
+                 ORDER BY total DESC
                )
             '''
             conn.execute(sa.text(create), doc_name='Quarterly')
@@ -759,14 +774,14 @@ if __name__ == "__main__":
     from sunshine import app_config 
     from sunshine.database import engine, Base
 
-    # extract = SunshineExtract(ftp_host=app_config.FTP_HOST,
-    #                           ftp_path=app_config.FTP_PATH,
-    #                           ftp_user=app_config.FTP_USER,
-    #                           ftp_pw=app_config.FTP_PW,
-    #                           aws_key=app_config.AWS_KEY,
-    #                           aws_secret=app_config.AWS_SECRET)
-    # 
-    # extract.download(cache=False)
+    extract = SunshineExtract(ftp_host=app_config.FTP_HOST,
+                              ftp_path=app_config.FTP_PATH,
+                              ftp_user=app_config.FTP_USER,
+                              ftp_pw=app_config.FTP_PW,
+                              aws_key=app_config.AWS_KEY,
+                              aws_secret=app_config.AWS_SECRET)
+    
+    extract.download(cache=False)
 
     committees = SunshineCommittees(engine, Base.metadata)
     committees.load()

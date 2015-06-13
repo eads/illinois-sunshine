@@ -10,10 +10,12 @@ views = Blueprint('views', __name__)
 
 @views.route('/')
 def index():
-    week_ago = datetime.now() - timedelta(days=7)
+    two_days_ago = datetime.now() - timedelta(days=3)
+    
     recent_donations = db_session.query(Receipt)\
-                                 .filter(Receipt.received_date > week_ago)\
+                                 .filter(Receipt.received_date >= two_days_ago)\
                                  .order_by(Receipt.received_date.desc())
+
     return render_template('index.html', recent_donations=recent_donations)
 
 @views.route('/about/')
@@ -22,28 +24,8 @@ def about():
 
 @views.route('/candidates/')
 def candidates():
-    money = ''' 
-        SELECT 
-          filings.*,
-          (filings.end_funds_available + additional.amount) AS total,
-          additional.last_receipt_date
-        FROM candidate_quarterly_filings AS filings
-        JOIN (
-          SELECT
-            SUM(receipts.amount) AS amount,
-            MAX(receipts.received_date) AS last_receipt_date,
-            q.committee_id
-          FROM candidate_quarterly_filings AS q
-          JOIN receipts
-            USING(committee_id)
-          JOIN filed_docs as f
-            ON receipts.filed_doc_id = f.id
-          WHERE f.reporting_period_begin > q.reporting_period_end
-          GROUP BY q.committee_id
-        ) AS additional
-          USING(committee_id)
-        ORDER BY total DESC
-        LIMIT 50
+    money = '''
+        SELECT * FROM candidate_money LIMIT 10
     '''
     engine = db_session.bind
     rows = engine.execute(sa.text(money))
@@ -82,33 +64,42 @@ def committee(committee_id):
     engine = db_session.bind
     
     latest_quarterly = ''' 
-        SELECT * FROM all_quarterly_filings
-        WHERE committee_id = :committee_id
+        SELECT 
+          d2.end_funds_available,
+          fd.reporting_period_begin,
+          fd.reporting_period_end
+        FROM d2_reports AS d2
+        JOIN filed_docs AS fd
+          ON d2.filed_doc_id = fd.id
+        WHERE d2.committee_id = :committee_id
+          AND fd.doc_name = :type
+        ORDER BY fd.received_datetime DESC
+        LIMIT 1
     '''
 
     latest_quarterly = engine.execute(sa.text(latest_quarterly), 
-                                      committee_id=committee_id).first()
+                                      committee_id=committee_id,
+                                      type='Quarterly').first()
 
     recent_receipts = ''' 
-        SELECT DISTINCT ON (receipts.id)
+        SELECT 
           receipts.id,
           receipts.amount,
           receipts.first_name,
           receipts.last_name,
           filed.doc_name,
           filed.received_datetime
-        FROM all_quarterly_filings AS quarterly
-        LEFT JOIN receipts
-          USING(committee_id)
+        FROM receipts
         JOIN filed_docs AS filed
           ON receipts.filed_doc_id = filed.id
-        WHERE quarterly.committee_id = :committee_id
-          AND receipts.received_date > quarterly.reporting_period_end
-        ORDER BY receipts.id, receipts.received_date DESC
+        WHERE receipts.committee_id = :committee_id
+          AND receipts.received_date > :end_date
+        ORDER BY receipts.received_date DESC
     '''
     
     recent_receipts = list(engine.execute(sa.text(recent_receipts), 
-                                          committee_id=committee_id))
+                                          committee_id=committee_id,
+                                          end_date=latest_quarterly.reporting_period_end))
     
     controlled_amount = latest_quarterly.end_funds_available
     recent_total = None
