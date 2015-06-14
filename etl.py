@@ -545,6 +545,7 @@ class SunshineViews(object):
 
     def makeAllViews(self):
         self.incumbentCandidates()
+        self.mostRecentFilings()
         self.candidateMoney()
         self.fullSearchView()
 
@@ -580,6 +581,61 @@ class SunshineViews(object):
 
             trans.commit()
 
+    def mostRecentFilings(self):
+        conn = self.engine.connect()
+        trans = conn.begin()
+        try:
+            conn.execute('REFRESH MATERIALIZED VIEW most_recent_filings')
+            trans.commit()
+        except sa.exc.ProgrammingError:
+            trans.rollback()
+            conn = self.engine.connect()
+            trans = conn.begin()
+            create = '''
+               CREATE MATERIALIZED VIEW most_recent_filings AS (
+                 SELECT 
+                   d2.end_funds_available, 
+                   cn.first_name, 
+                   cn.last_name,
+                   cn.id AS candidate_id,
+                   cn.office AS candidate_office,
+                   cm.name AS committee_name, 
+                   cm.id AS committee_id,
+                   cm.type AS committee_type,
+                   fd.doc_name, 
+                   fd.reporting_period_end,
+                   fd.reporting_period_begin,
+                   fd.received_datetime
+                 FROM committees AS cm 
+                 LEFT JOIN candidate_committees AS cc 
+                   ON cm.id = cc.candidate_id 
+                 LEFT JOIN candidates AS cn
+                   ON cn.id = cc.committee_id 
+                 LEFT JOIN (
+                   SELECT DISTINCT ON (committee_id) 
+                     id, 
+                     committee_id, 
+                     doc_name, 
+                     reporting_period_end,
+                     reporting_period_begin,
+                     received_datetime
+                   FROM filed_docs 
+                   WHERE doc_name NOT IN (
+                     'A-1', 
+                     'Statement of Organization', 
+                     'Letter/Correspondence',
+                     'B-1'
+                   ) 
+                   ORDER BY committee_id, received_datetime DESC
+                 ) AS fd 
+                   ON fd.committee_id = cm.id 
+                 LEFT JOIN d2_reports AS d2 
+                   ON fd.id = d2.filed_doc_id 
+               )
+            '''
+            conn.execute(sa.text(create))
+            trans.commit()
+
     def candidateMoney(self):
         conn = self.engine.connect()
         trans = conn.begin()
@@ -605,51 +661,18 @@ class SunshineViews(object):
                    MAX(filings.reporting_period_begin) AS reporting_period_begin,
                    (SUM(receipts.amount) + MAX(filings.end_funds_available)) AS total,
                    MAX(receipts_fd.received_datetime) AS last_receipt_date
-                 FROM (
-                   SELECT 
-                     d2.end_funds_available, 
-                     cn.first_name, 
-                     cn.last_name,
-                     cn.id AS candidate_id,
-                     cn.office AS candidate_office,
-                     cm.name AS committee_name, 
-                     cm.id AS committee_id,
-                     fd.doc_name, 
-                     fd.reporting_period_end,
-                     fd.reporting_period_begin,
-                     fd.received_datetime
-                   FROM candidates AS cn 
-                   JOIN candidate_committees AS cc 
-                     ON cn.id = cc.candidate_id 
-                   JOIN committees AS cm 
-                     ON cm.id = cc.committee_id 
-                   LEFT JOIN (
-                     SELECT DISTINCT ON (committee_id) 
-                       id, 
-                       committee_id, 
-                       doc_name, 
-                       reporting_period_end,
-                       reporting_period_begin,
-                       received_datetime
-                     FROM filed_docs 
-                     WHERE doc_name IN ('Quarterly', 'Final', 'Semiannual') 
-                     ORDER BY committee_id, received_datetime DESC
-                   ) AS fd 
-                     ON fd.committee_id = cm.id 
-                   JOIN d2_reports AS d2 
-                     ON fd.id = d2.filed_doc_id 
-                   WHERE cm.type = 'Candidate'
-                 ) AS filings
+                 FROM most_recent_filings AS filings
                  JOIN receipts
                    ON receipts.committee_id = filings.committee_id
                    AND receipts.received_date > filings.reporting_period_end
                  JOIN filed_docs AS receipts_fd
                    ON receipts.filed_doc_id = receipts_fd.id
+                 WHERE filings.committee_type = 'Candidate'
                  GROUP BY receipts.committee_id
                  ORDER BY total DESC
                )
             '''
-            conn.execute(sa.text(create), doc_name='Quarterly')
+            conn.execute(sa.text(create))
             trans.commit()
     
     def fullSearchView(self):

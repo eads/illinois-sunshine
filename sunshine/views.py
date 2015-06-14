@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, abort, request, make_response
 from sunshine.database import db_session
-from sunshine.models import Candidate, Committee, Receipt
+from sunshine.models import Candidate, Committee, Receipt, FiledDoc
 import sqlalchemy as sa
 import json
 from datetime import datetime, timedelta
@@ -13,10 +13,20 @@ def index():
     two_days_ago = datetime.now() - timedelta(days=3)
     
     recent_donations = db_session.query(Receipt)\
+                                 .join(FiledDoc)\
                                  .filter(Receipt.received_date >= two_days_ago)\
-                                 .order_by(Receipt.received_date.desc())
+                                 .order_by(FiledDoc.received_datetime.desc())
+    
+    top_ten = ''' 
+        SELECT * FROM candidate_money LIMIT 10;
+    '''
+    
+    engine = db_session.bind
+    top_ten = engine.execute(sa.text(top_ten))
 
-    return render_template('index.html', recent_donations=recent_donations)
+    return render_template('index.html', 
+                           recent_donations=recent_donations,
+                           top_ten=top_ten)
 
 @views.route('/about/')
 def about():
@@ -63,46 +73,60 @@ def committee(committee_id):
     
     engine = db_session.bind
     
-    latest_quarterly = ''' 
-        SELECT 
-          d2.end_funds_available,
-          fd.reporting_period_begin,
-          fd.reporting_period_end
-        FROM d2_reports AS d2
-        JOIN filed_docs AS fd
-          ON d2.filed_doc_id = fd.id
-        WHERE d2.committee_id = :committee_id
-          AND fd.doc_name = :type
-        ORDER BY fd.received_datetime DESC
+    latest_filing = ''' 
+        SELECT * FROM most_recent_filings
+        WHERE committee_id = :committee_id
+        ORDER BY received_datetime
         LIMIT 1
     '''
 
-    latest_quarterly = engine.execute(sa.text(latest_quarterly), 
-                                      committee_id=committee_id,
-                                      type='Quarterly').first()
+    latest_filing = engine.execute(sa.text(latest_filing), 
+                                   committee_id=committee_id).first()
+    
+    params = {'committee_id': committee_id}
 
-    recent_receipts = ''' 
-        SELECT 
-          receipts.id,
-          receipts.amount,
-          receipts.first_name,
-          receipts.last_name,
-          filed.doc_name,
-          filed.received_datetime
-        FROM receipts
-        JOIN filed_docs AS filed
-          ON receipts.filed_doc_id = filed.id
-        WHERE receipts.committee_id = :committee_id
-          AND receipts.received_date > :end_date
-        ORDER BY receipts.received_date DESC
-    '''
-    
-    recent_receipts = list(engine.execute(sa.text(recent_receipts), 
-                                          committee_id=committee_id,
-                                          end_date=latest_quarterly.reporting_period_end))
-    
-    controlled_amount = latest_quarterly.end_funds_available
-    recent_total = None
+    if latest_filing:
+
+        recent_receipts = ''' 
+            SELECT 
+              receipts.id,
+              receipts.amount,
+              receipts.first_name,
+              receipts.last_name,
+              filed.doc_name,
+              filed.received_datetime
+            FROM receipts
+            JOIN filed_docs AS filed
+              ON receipts.filed_doc_id = filed.id
+            WHERE receipts.committee_id = :committee_id
+              AND receipts.received_date > :end_date
+            ORDER BY receipts.received_date DESC
+        '''
+        controlled_amount = latest_filing.end_funds_available
+        params['end_date'] = latest_filing.reporting_period_end
+
+    else:
+
+        recent_receipts = ''' 
+            SELECT 
+              receipts.id,
+              receipts.amount,
+              receipts.first_name,
+              receipts.last_name,
+              filed.doc_name,
+              filed.received_datetime
+            FROM receipts
+            JOIN filed_docs AS filed
+              ON receipts.filed_doc_id = filed.id
+            WHERE receipts.committee_id = :committee_id
+            ORDER BY receipts.received_date DESC
+        '''
+        
+        controlled_amount = 0
+
+    recent_receipts = list(engine.execute(sa.text(recent_receipts),**params))
+        
+    recent_total = 0
 
     if recent_receipts:
         recent_total = sum([r.amount for r in recent_receipts])
@@ -112,7 +136,7 @@ def committee(committee_id):
                            committee=committee, 
                            recent_receipts=recent_receipts,
                            recent_total=recent_total,
-                           latest_quarterly=latest_quarterly,
+                           latest_filing=latest_filing,
                            controlled_amount=controlled_amount)
 
 @views.route('/contributions/')

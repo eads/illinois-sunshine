@@ -23,21 +23,43 @@
         <h3>Total money: {{ controlled_amount|format_money }}</h3>
         <p>{{ money }}</p>
         <hr />
-        <h3>Latest quarterly report</h3>
-        <table class="table table-bordered table-condensed">
-            <thead>
-                <th>Ending funds</th>
-                <th>Reporting period begin</th>
-                <th>Reporting period end</th>
-            </thead>
-            <tbody>
-                <tr>
-                    <td>{{ latest_quarterly.end_funds_available|format_money }}</td>
-                    <td>{{ latest_quarterly.reporting_period_begin }}</td>
-                    <td>{{ latest_quarterly.reporting_period_end }}</td>
-                </tr>
-            </tbody>
-        </table>
+        {% if committee.candidates %}
+            <h3>
+                Supported candidates
+            </h3>
+            <table class="table table-bordered table-condensed">
+                <thead>
+                    <th>Name</th>
+                    <th>Office</th>
+                </thead>
+                <tbody>
+                    {% for candidate in committee.candidates %}
+                        <tr>
+                            <td><a href="{{ url_for('views.candidate', candidate_id=candidate.id )}}">{{ candidate.first_name }} {{ candidate.last_name }}</a></td>
+                            <td>{{ candidate.office }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+        {% endif %}
+        {% if latest_filing %}
+            <h3>Latest report filed</h3>
+            <table class="table table-bordered table-condensed">
+                <thead>
+                    <th>Ending funds</th>
+                    <th>Reporting period begin</th>
+                    <th>Reporting period end</th>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>{{ latest_filing.end_funds_available|format_money }}</td>
+                        <td>{{ latest_filing.reporting_period_begin }}</td>
+                        <td>{{ latest_filing.reporting_period_end }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        {% endif %}
         {% if recent_receipts %}
             <h3>
                 Receipts after last quarterly report

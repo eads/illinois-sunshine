@@ -7,7 +7,6 @@
             <thead>
                 <tr>
                     <th>Name</th>
-                    <th>Office held</th>
                     <th>Total controlled</th>
                     <th>Committee</th>
                     <th>Last receipt date</th>
@@ -17,9 +16,6 @@
                 {% for record in rows %}
                     <tr>
                         <td><a href="{{ url_for('views.candidate', candidate_id=record.candidate_id ) }}">{{ record.candidate_first_name }} {{ record.candidate_last_name }}</a></td>
-                        <td>
-                            {{ record.candidate_office }}
-                        </td>
                         <td>{{ record.total|format_money }}</td>
                         <td><a href="{{ url_for('views.committee', committee_id=record.committee_id ) }}">{{ record.committee_name }}</a></td>
                         <td>{{ record.last_receipt_date }}</td>
