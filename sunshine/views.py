@@ -18,7 +18,7 @@ def index():
                                  .limit(10)
     
     top_ten = ''' 
-        SELECT * FROM candidate_money LIMIT 10;
+        SELECT * FROM candidate_money LIMIT 5;
     '''
     
     engine = db_session.bind

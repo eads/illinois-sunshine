@@ -4,12 +4,12 @@
     <link href="{{ url_for('static', filename='css/jquery-ui.min.css') }}" rel="stylesheet">
 {% endblock %}
 {% block content %}
-<div class='well'>
-    <p class='lead'><strong></strong> Keep an eye on money in Illinois politics.</p>
+<div class='jumbotron'>
+    <p>Keep an eye on money in Illinois politics. Some catchy tagline goes here.</p>
 </div>
-<h3>Recent political contributions</h3>
-<p>The 10 most recent reported contributions. <a href='{{ url_for('views.recent_contributions') }}'>See more &raquo;</a></p>
-<table class="table table-bordered table-condensed">
+<h3>Recent political donations</h3>
+<p>Most recent reported contributions. <a href='{{ url_for('views.recent_contributions') }}'>See more &raquo;</a></p>
+<table class="table table-hover">
     <thead>
         <tr>
             <th>Contribution</th>
@@ -31,12 +31,15 @@
     </tbody>
 </table>
 
+<p><a class='btn btn-primary' href='{{ url_for('views.recent_contributions') }}'>All recent contributions &raquo;</a></p>
+<br /><br />
+
 <h3>Candidates with the most money</h3>
-<p>The 10 candidates with the most money available in their committees.</p>
-<table class="table table-bordered table-condensed">
+<p>The 5 candidates with the most money available in their committees.</p>
+<table class="table table-hover">
     <thead>
         <tr>
-            <th>#</th>
+            <th>Rank</th>
             <th>Candidate</th>
             <th>Campaign funds</th>
         </tr>
@@ -51,6 +54,10 @@
         {% endfor %}
     </tbody>
 </table>
+
+<p><a class='btn btn-primary' href='{{ url_for('views.candidates') }}'>Search candidates &raquo;</a></p>
+<br /><br />
+
 {% endblock %}
 {% block extra_javascript %}
     <script src="{{ url_for('static', filename='js/spin.min.js') }}"></script>
