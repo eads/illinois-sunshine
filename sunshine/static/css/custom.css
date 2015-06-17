@@ -11,6 +11,11 @@ a, a:active, a:hover, a:focus { color: #48d; }
 table, label,.control-label,.help-block,.checkbox,.radio { font-size: 14px; }
 .alert { font-size: 1em; font-weight: 500; }
 
+.fa-spin-slow {
+  -webkit-animation: fa-spin 8s infinite linear;
+  animation: fa-spin 8s infinite linear;
+}
+
 .navbar-default {
   height: 60px;
   background-color: #FFCB08;

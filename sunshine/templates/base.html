@@ -35,14 +35,14 @@
               <span class="icon-bar"></span>
               <span class="icon-bar"></span>
             </button>
-            <a class="navbar-brand" href="/">Illinois Sunshine</a>
+            <a class="navbar-brand" href="/"><i class='fa fa-spin-slow fa-sun-o'></i> Illinois Sunshine</a>
           </div>
           <div class="navbar-collapse collapse pull-right">
             <ul class="nav navbar-nav">
-              <li class="{% if request.path == url_for('views.candidates') %}active{% endif %}"><a href='{{ url_for('views.recent_contributions') }}'>Recent contributions</a></li>
-              <li class="{% if request.path == url_for('views.candidates') %}active{% endif %}"><a href='{{ url_for('views.candidates') }}'>Candidates</a></li>
-              <li class="{% if request.path == url_for('views.committees') %}active{% endif %}"><a href='{{ url_for('views.committees') }}'>Committees</a></li>
-              <li class="{% if request.path == url_for('views.about') %}active{% endif %}"><a href='{{ url_for('views.about') }}'>About</a></li>
+              <li class="{% if request.path == url_for('views.candidates') %}active{% endif %}"><a href='{{ url_for('views.recent_contributions') }}'><i class='fa fa-clock-o fa-fw'></i> Recent contributions</a></li>
+              <li class="{% if request.path == url_for('views.candidates') %}active{% endif %}"><a href='{{ url_for('views.candidates') }}'><i class='fa fa-user fa-fw'></i> Candidates</a></li>
+              <li class="{% if request.path == url_for('views.committees') %}active{% endif %}"><a href='{{ url_for('views.committees') }}'><i class='fa fa-group fa-fw'></i> Committees</a></li>
+              <li class="{% if request.path == url_for('views.about') %}active{% endif %}"><a href='{{ url_for('views.about') }}'><i class='fa fa-info-circle fa-fw'></i> About</a></li>
             </ul>
           </div><!--/.nav-collapse -->
         </div>

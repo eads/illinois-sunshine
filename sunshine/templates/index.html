@@ -6,26 +6,32 @@
 {% block content %}
 <div class='jumbotron'>
     <p>Keep an eye on money in Illinois politics. Some catchy tagline goes here.</p>
+
+    <div class="input-group input-group-lg">
+        <input type="text" class="form-control" placeholder="Search for candidates, committees and donors in Illinois">
+        <span class="input-group-btn">
+            <button class="btn btn-default" type="button"><i class='fa fa-search'></i> Search</button>
+        </span>
+    </div>
 </div>
-<h3>Recent political donations</h3>
+<h3><i class='fa fa-clock-o fa-fw'></i> Recent political donations</h3>
 <p>Most recent reported contributions. <a href='{{ url_for('views.recent_contributions') }}'>See more &raquo;</a></p>
 <table class="table table-hover">
-    <thead>
-        <tr>
-            <th>Contribution</th>
-            <th>Amount</th>
-            <th>Received</th>
-        </tr>
-    </thead>
     <tbody>
         {% for donation in recent_donations %}
             <tr>
                 <td>
-                    <strong>{% if donation.first_name %}{{ donation.first_name }}{% endif %} {{ donation.last_name }}</strong> donated to
+                    <a href="{{ url_for('views.contribution', receipt_id=donation.id )}}">{% if donation.first_name %}{{ donation.first_name }}{% endif %} {{ donation.last_name }}</a>
+                </td>
+                <td>
+                    donated <strong>{{ donation.amount|format_money }}</strong> to
+                </td>
+                <td>
                     <a href="{{ url_for('views.committee', committee_id=donation.committee_id )}}">{{ donation.committee.name }}</a>
                 </td>
-                <td>{{ donation.amount|format_money }}</td>
-                <td>{{ donation.filed_doc.received_datetime.strftime('%b %d, %Y %-I:%M%p') }}</td>
+                <td>
+                    on {{ donation.filed_doc.received_datetime.strftime('%b %d, %Y at %-I:%M%p') }}
+                </td>
             </tr>
         {% endfor %}
     </tbody>
@@ -34,7 +40,7 @@
 <p><a class='btn btn-primary' href='{{ url_for('views.recent_contributions') }}'>All recent contributions &raquo;</a></p>
 <br /><br />
 
-<h3>Candidates with the most money</h3>
+<h3><i class='fa fa-dollar fa-fw'></i> Candidates with the most money</h3>
 <p>The 5 candidates with the most money available in their committees.</p>
 <table class="table table-hover">
     <thead>
