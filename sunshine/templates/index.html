@@ -1,61 +1,56 @@
 {% extends 'base.html' %}
-{% block title %}Sunshine Database - 2.0{% endblock %}
+{% block title %}Keep an eye on money in Illinois politics{% endblock %}
 {% block extra_styles %}
     <link href="{{ url_for('static', filename='css/jquery-ui.min.css') }}" rel="stylesheet">
 {% endblock %}
 {% block content %}
-<div class="row">
-    <div class="col-sm-6">
-        <h3>Recent contributions</h3>
-        <table class="table table-bordered table-condensed">
-            <thead>
-                <tr>
-                    <th>Committee name</th>
-                    <th>Donor name</th>
-                    <th>Amount</th>
-                    <th>Received date</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for donation in recent_donations %}
-                    <tr>
-                        <td>
-                            <a href="{{ url_for('views.committee', committee_id=donation.committee_id )}}">{{ donation.committee.name }}</a>
-                        </td>
-                        <td>
-                            {% if donation.first_name %}{{ donation.first_name }}{% endif %} {{ donation.last_name }}
-                        </td>
-                        <td>{{ donation.amount|format_money }}</td>
-                        <td>{{ donation.filed_doc.received_datetime.strftime('%m-%d-%Y %H:%M:%S') }}</td>
-                    </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-    <div class="col-sm-6">
-        <h3>Top ten candidates</h3>
-        <table class="table table-bordered table-condensed">
-            <thead>
-                <tr>
-                    <th>Name</th>
-                    <th>Total controlled</th>
-                    <th>Committee</th>
-                    <th>Last receipt date</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for record in top_ten %}
-                    <tr>
-                        <td><a href="{{ url_for('views.candidate', candidate_id=record.candidate_id ) }}">{{ record.candidate_first_name }} {{ record.candidate_last_name }}</a></td>
-                        <td>{{ record.total|format_money }}</td>
-                        <td><a href="{{ url_for('views.committee', committee_id=record.committee_id ) }}">{{ record.committee_name }}</a></td>
-                        <td>{{ record.last_receipt_date }}</td>
-                    </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
+<div class='well'>
+    <p class='lead'><strong></strong> Keep an eye on money in Illinois politics.</p>
 </div>
+<h3>Recent political contributions</h3>
+<p>The 10 most recent reported contributions. <a href='{{ url_for('views.recent_contributions') }}'>See more &raquo;</a></p>
+<table class="table table-bordered table-condensed">
+    <thead>
+        <tr>
+            <th>Contribution</th>
+            <th>Amount</th>
+            <th>Received</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for donation in recent_donations %}
+            <tr>
+                <td>
+                    <strong>{% if donation.first_name %}{{ donation.first_name }}{% endif %} {{ donation.last_name }}</strong> donated to
+                    <a href="{{ url_for('views.committee', committee_id=donation.committee_id )}}">{{ donation.committee.name }}</a>
+                </td>
+                <td>{{ donation.amount|format_money }}</td>
+                <td>{{ donation.filed_doc.received_datetime.strftime('%b %d, %Y %-I:%M%p') }}</td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<h3>Candidates with the most money</h3>
+<p>The 10 candidates with the most money available in their committees.</p>
+<table class="table table-bordered table-condensed">
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>Candidate</th>
+            <th>Campaign funds</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for record in top_ten %}
+            <tr>
+                <td>{{ loop.index }}</td>
+                <td><a href="{{ url_for('views.candidate', candidate_id=record.candidate_id ) }}">{{ record.candidate_first_name }} {{ record.candidate_last_name }}</a></td>
+                <td>{{ record.total|format_money }}</td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
 {% endblock %}
 {% block extra_javascript %}
     <script src="{{ url_for('static', filename='js/spin.min.js') }}"></script>

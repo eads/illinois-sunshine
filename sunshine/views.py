@@ -14,7 +14,8 @@ def index():
     recent_donations = db_session.query(Receipt)\
                                  .join(FiledDoc)\
                                  .filter(Receipt.received_date >= two_days_ago)\
-                                 .order_by(FiledDoc.received_datetime.desc())
+                                 .order_by(FiledDoc.received_datetime.desc())\
+                                 .limit(10)
     
     top_ten = ''' 
         SELECT * FROM candidate_money LIMIT 10;
@@ -26,6 +27,18 @@ def index():
     return render_template('index.html', 
                            recent_donations=recent_donations,
                            top_ten=top_ten)
+
+@views.route('/recent-contributions')
+def recent_contributions():
+    seven_days_ago = datetime.now() - timedelta(days=8)
+    
+    recent_donations = db_session.query(Receipt)\
+                                 .join(FiledDoc)\
+                                 .filter(Receipt.received_date >= seven_days_ago)\
+                                 .order_by(FiledDoc.received_datetime.desc())
+
+    return render_template('recent-contributions.html', 
+                           recent_donations=recent_donations)
 
 @views.route('/about/')
 def about():
