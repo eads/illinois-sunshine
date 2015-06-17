@@ -546,6 +546,7 @@ class SunshineViews(object):
     def makeAllViews(self):
         self.incumbentCandidates()
         self.mostRecentFilings()
+        self.committeeMoney()
         self.candidateMoney()
         self.fullSearchView()
 
@@ -595,10 +596,6 @@ class SunshineViews(object):
                CREATE MATERIALIZED VIEW most_recent_filings AS (
                  SELECT 
                    d2.end_funds_available, 
-                   cn.first_name, 
-                   cn.last_name,
-                   cn.id AS candidate_id,
-                   cn.office AS candidate_office,
                    cm.name AS committee_name, 
                    cm.id AS committee_id,
                    cm.type AS committee_type,
@@ -607,10 +604,6 @@ class SunshineViews(object):
                    fd.reporting_period_begin,
                    fd.received_datetime
                  FROM committees AS cm 
-                 LEFT JOIN candidate_committees AS cc 
-                   ON cm.id = cc.candidate_id 
-                 LEFT JOIN candidates AS cn
-                   ON cn.id = cc.committee_id 
                  LEFT JOIN (
                    SELECT DISTINCT ON (committee_id) 
                      id, 
@@ -636,6 +629,39 @@ class SunshineViews(object):
             conn.execute(sa.text(create))
             trans.commit()
 
+    def committeeMoney(self):
+        conn = self.engine.connect()
+        trans = conn.begin()
+        try:
+            conn.execute('REFRESH MATERIALIZED VIEW committee_money')
+            trans.commit()
+        except sa.exc.ProgrammingError:
+            trans.rollback()
+            conn = self.engine.connect()
+            trans = conn.begin()
+            create = '''
+               CREATE MATERIALIZED VIEW committee_money AS (
+                 SELECT 
+                   MAX(filings.end_funds_available) AS end_funds_available,
+                   MAX(filings.committee_name) AS committee_name,
+                   MAX(filings.committee_id) AS committee_id,
+                   MAX(filings.committee_type) AS committee_type,
+                   MAX(filings.doc_name) AS doc_name,
+                   MAX(filings.reporting_period_end) AS reporting_period_end,
+                   MAX(filings.reporting_period_begin) AS reporting_period_begin,
+                   (SUM(receipts.amount) + MAX(filings.end_funds_available)) AS total,
+                   MAX(filings.received_datetime) AS last_receipt_date
+                 FROM most_recent_filings AS filings
+                 LEFT JOIN receipts
+                   ON receipts.committee_id = filings.committee_id
+                   AND receipts.received_date > filings.reporting_period_end
+                 GROUP BY filings.committee_id
+                 ORDER BY total DESC NULLS LAST
+               )
+            '''
+            conn.execute(sa.text(create))
+            trans.commit()
+    
     def candidateMoney(self):
         conn = self.engine.connect()
         trans = conn.begin()
@@ -647,30 +673,24 @@ class SunshineViews(object):
             conn = self.engine.connect()
             trans = conn.begin()
             create = '''
-               CREATE MATERIALIZED VIEW candidate_money AS (
-                 SELECT 
-                   MAX(filings.end_funds_available) AS end_funds_available,
-                   MAX(filings.first_name) AS candidate_first_name,
-                   MAX(filings.last_name) AS candidate_last_name,
-                   MAX(filings.candidate_id) AS candidate_id,
-                   MAX(filings.candidate_office) AS candidate_office,
-                   MAX(filings.committee_name) AS committee_name,
-                   MAX(filings.committee_id) AS committee_id,
-                   MAX(filings.doc_name) AS doc_name,
-                   MAX(filings.reporting_period_end) AS reporting_period_end,
-                   MAX(filings.reporting_period_begin) AS reporting_period_begin,
-                   (SUM(receipts.amount) + MAX(filings.end_funds_available)) AS total,
-                   MAX(receipts_fd.received_datetime) AS last_receipt_date
-                 FROM most_recent_filings AS filings
-                 JOIN receipts
-                   ON receipts.committee_id = filings.committee_id
-                   AND receipts.received_date > filings.reporting_period_end
-                 JOIN filed_docs AS receipts_fd
-                   ON receipts.filed_doc_id = receipts_fd.id
-                 WHERE filings.committee_type = 'Candidate'
-                 GROUP BY receipts.committee_id
-                 ORDER BY total DESC
-               )
+                CREATE MATERIALIZED VIEW candidate_money AS (
+                  SELECT
+                    cd.id AS candidate_id,
+                    cd.first_name AS candidate_first_name,
+                    cd.last_name AS candidate_last_name,
+                    cm.id AS committee_id,
+                    cm.name AS committee_name,
+                    cm.type AS committee_type,
+                    m.total
+                  FROM candidates AS cd
+                  JOIN candidate_committees AS cc
+                    ON cd.id = cc.candidate_id
+                  JOIN committees AS cm
+                    ON cc.committee_id = cm.id
+                  JOIN committee_money AS m
+                    ON cm.id = m.committee_id
+                  ORDER BY m.total DESC NULLS LAST
+                )
             '''
             conn.execute(sa.text(create))
             trans.commit()

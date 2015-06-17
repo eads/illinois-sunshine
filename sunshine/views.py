@@ -18,7 +18,16 @@ def index():
                                  .limit(10)
     
     top_ten = ''' 
-        SELECT * FROM candidate_money LIMIT 5;
+        SELECT * FROM (
+          SELECT DISTINCT ON(candidate_first_name, candidate_last_name)
+            * 
+          FROM candidate_money 
+          WHERE total IS NOT NULL
+            AND committee_type = 'Candidate'
+          ORDER BY candidate_first_name, candidate_last_name
+        ) AS rows
+        ORDER BY rows.total DESC
+        LIMIT 5
     '''
     
     engine = db_session.bind
@@ -97,7 +106,7 @@ def committee(committee_id):
     
     params = {'committee_id': committee_id}
 
-    if latest_filing:
+    if latest_filing.end_funds_available:
 
         recent_receipts = ''' 
             SELECT 

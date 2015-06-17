@@ -20,7 +20,7 @@
             {{ committee.state }}
             {{ committee.zipcode }}
         </p>
-        <h3>Total money: {{ controlled_amount|format_money }}</h3>
+        <h3>Total money: {% if controlled_amount %}{{ controlled_amount|format_money }}{% else %}$0{% endif %}</h3>
         <p>{{ money }}</p>
         <hr />
         {% if committee.candidates %}
@@ -43,7 +43,7 @@
             </table>
 
         {% endif %}
-        {% if latest_filing %}
+        {% if latest_filing.end_funds_available %}
             <h3>Latest report filed</h3>
             <table class="table table-bordered table-condensed">
                 <thead>
