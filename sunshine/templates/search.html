@@ -6,35 +6,34 @@
         <h1>
             Advanced search
         </h1>
-        <form action="{{ url_for('views.search') }}" method='get'>
+        <form>
             <div class="form-group">
-                <label for="Name">Name</label>
-                <input type="text" class="form-control" name="name" placeholder="">
+                <input type="text" class="form-control" name="term" placeholder="Search term">
             </div>
             <div class="form-group">
-                <label class="checkbox-inline">
-                    <input type="checkbox" name="candidates" value="candidates"> Candidates
+                <label class="checkbox-inline" for="table_name">
+                    <input type="checkbox" name="table_name" value="candidates"> Candidates
                 </label>
-                <label class="checkbox-inline">
-                    <input type="checkbox" name="committees" value="committees"> Committees
+                <label class="checkbox-inline" for="table_name">
+                    <input type="checkbox" name="table_name" value="committees"> Committees
                 </label>
-                <label class="checkbox-inline">
-                    <input type="checkbox" name="officers" value="officers"> Committee officers
+                <label class="checkbox-inline" for="table_name">
+                    <input type="checkbox" name="table_name" value="officers"> Committee officers
                 </label>
-                <label class="checkbox-inline">
-                    <input type="checkbox" name="donors" value="receipts"> Donors
+                <label class="checkbox-inline" for="table_name">
+                    <input type="checkbox" name="table_name" value="receipts"> Donors
                 </label>
-                <label class="checkbox-inline">
-                    <input type="checkbox" name="donors" value="expenditures"> Expenditures
+                <label class="checkbox-inline" for="table_name">
+                    <input type="checkbox" name="table_name" value="expenditures"> Expenditures
                 </label>
-                <label class="checkbox-inline">
-                    <input type="checkbox" name="donors" value="investments"> Investments
+                <label class="checkbox-inline" for="table_name">
+                    <input type="checkbox" name="table_name" value="investments"> Investments
                 </label>
             </div>
-            <!-- This should only show if searching by candidates -->
             <div class="form-group">
                 <div class="row">
                     <div class="col-sm-6">
+                        <label for="election_type">Election type</label>
                         <select class="form-control" name="election_type">
                             <option value="">------</option>
                             <option value="General Election">General Election</option>
@@ -45,36 +44,16 @@
                         </select>
                     </div>
                     <div class="col-sm-6">
-                        <select class="form-control" name="election_type">
+                        <label for="election_year">Election year</label>
+                        <select class="form-control" name="election_year">
                             <option value="">------</option>
-                            <option value="2018">2018</option>
-                            <option value="2017">2017</option>
-                            <option value="2016">2016</option>
-                            <option value="2015" selected=true>2015</option>
-                            <option value="2014">2014</option>
-                            <option value="2013">2013</option>
-                            <option value="2012">2012</option>
-                            <option value="2011">2011</option>
-                            <option value="2010">2010</option>
-                            <option value="2009">2009</option>
-                            <option value="2008">2008</option>
-                            <option value="2007">2007</option>
-                            <option value="2006">2006</option>
-                            <option value="2005">2005</option>
-                            <option value="2004">2004</option>
-                            <option value="2003">2003</option>
-                            <option value="2002">2002</option>
-                            <option value="2001">2001</option>
-                            <option value="2000">2000</option>
-                            <option value="1999">1999</option>
-                            <option value="1998">1998</option>
-                            <option value="1997">1997</option>
-                            <option value="1996">1996</option>
-                            <option value="1995">1995</option>
-                            <option value="1994">1994</option>
-                            <option value="1993">1993</option>
-                            <option value="1992">1992</option>
-                            <option value="1991">1991</option>
+                            {% for year in range(2018, 1979, -1)%}
+                                {% if year == now.year %}
+                                    <option value="{{ year }}" selected=true>{{ year }}</option>
+                                {% else %}
+                                    <option value="{{ year }}">{{ year }}</option>
+                                {% endif %}
+                            {% endfor %}
                         </select>
                     </div>
                 </div>
@@ -82,23 +61,38 @@
             <div class="form-group">
                 <div class="row">
                     <div class="col-sm-3">
-                        <select class="form-control" name="election_type">
+                        <label for="contribution_operator">Operator</label>
+                        <select class="form-control" name="contribution_operator">
                             <option value="">------</option>
                             <option value="greater_than">Greater than</option>
                             <option value="less_than">Less than</option>
-                            <option value="Consolidated Election">Consolidated Election</option>
-                            <option value="Consolidated Primary">Consolidated Primary</option>
-                            <option value="Special Primary">Special Primary</option>
+                            <option value="equal_to">Equal to</option>
                         </select>
                     </div>
+                    <div class="col-sm-9">
+                        <label for="contribution_amount">Contribution amount</label>
+                        <input type="text" class="form-control" name="contribution_amount" placeholder="">
+                    </div>
                 </div>
-                <label for="Name">Name</label>
-                <input type="text" class="form-control" name="name" placeholder="">
             </div>
             <button type="submit" class="btn btn-default">Submit</button>
         </form>
     </div>
 </div>
 
-
+{% endblock %}
+{% block extra_javascript %}
+<script type="text/javascript">
+    $(document).ready(function(){
+        $('form').on('submit', function(e){
+            e.preventDefault();
+            var params = $(this).serialize();
+            $.when($.getJSON("{{ url_for('api.advanced_search') }}" + '?' + params)).then(
+                function(resp){
+                    console.log(resp)
+                }
+            )
+        })
+    })
+</script>
 {% endblock %}

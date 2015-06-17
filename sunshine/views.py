@@ -5,7 +5,6 @@ import sqlalchemy as sa
 import json
 from datetime import datetime, timedelta
 
-
 views = Blueprint('views', __name__)
 
 @views.route('/')

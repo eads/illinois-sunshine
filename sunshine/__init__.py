@@ -3,6 +3,8 @@ from sunshine.views import views
 from sunshine.api import api
 import locale
 from dateutil import parser
+from sunshine.app_config import TIME_ZONE
+from datetime import datetime
 
 def create_app():
     app = Flask(__name__)
@@ -19,5 +21,9 @@ def create_app():
     def format_money(s):
         locale.setlocale( locale.LC_ALL, '' )
         return locale.currency(s, grouping=True)
+    
+    @app.context_processor
+    def inject_date():
+        return dict(now=datetime.now().replace(tzinfo=TIME_ZONE))
     
     return app

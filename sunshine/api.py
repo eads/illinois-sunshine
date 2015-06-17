@@ -15,6 +15,77 @@ api = Blueprint('api', __name__)
 
 dthandler = lambda obj: obj.isoformat() if isinstance(obj, date) else None
 
+@api.route('/advanced-search/')
+def advanced_search():
+    resp = {
+        'status': 'ok',
+        'message': '',
+        'meta': {},
+        'objects': {},
+    }
+    
+    status_code = 200
+    valid = True
+
+    term = request.args.get('term')
+    
+    if not term:
+        resp['status'] = 'error'
+        resp['message'] = 'A search term is required'
+        status_code = 400
+        valid = False
+    
+    if valid:
+        results = ''' 
+            SELECT
+              results.table_name, 
+              array_agg(results.id) AS result_ids,
+              AVG(ts_rank_cd(search_vector, query)) AS rank
+            FROM full_search AS results,
+                 to_tsquery('english', :term) AS query,
+                 to_tsvector('english', name) AS search_vector
+            WHERE query @@ search_vector
+        '''
+        
+        q_params = {}
+
+        table_names = request.args.getlist('table_name')
+        
+        if table_names:
+            q_params['table_names'] = tuple(table_names)
+            results = '{0} AND table_name IN :table_names'.format(results)
+
+        results = '''
+            {0}
+            GROUP BY results.table_name
+            ORDER BY rank DESC
+            LIMIT 100
+        '''.format(results)
+
+        engine = db_session.bind
+        
+        punc = re.compile('[%s]' % re.escape(punctuation))
+        term = punc.sub('', term)
+
+        q_params['term'] = ' & '.join(['%s:*' % t for t in term.split()])
+        results = engine.execute(sa.text(results), **q_params)
+
+        for result in results:
+            matching_rows = ''' 
+                SELECT * FROM {0} WHERE id IN :result_ids
+            '''.format(result.table_name)
+
+            matching_rows = engine.execute(sa.text(matching_rows), 
+                                result_ids=tuple(result.result_ids))
+            
+            resp['objects'][result.table_name] = \
+                    [OrderedDict(zip(r.keys(), r.values())) for r in matching_rows]
+
+    response_str = json.dumps(resp, sort_keys=False, default=dthandler)
+    response = make_response(response_str, status_code)
+    response.headers['Content-Type'] = 'application/json'
+    return response
+
 @api.route('/name-search/')
 def name_search():
     term = request.args.get('term')
