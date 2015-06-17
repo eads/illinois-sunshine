@@ -8,7 +8,7 @@
         </h1>
         <form>
             <div class="form-group">
-                <input type="text" class="form-control" name="term" placeholder="Search term">
+                <input type="text" class="form-control" name="term" placeholder="Search term" {% if term %}value="{{term}}"{% endif %}>
             </div>
             <div class="form-group">
                 <label class="checkbox-inline" for="table_name">
@@ -280,16 +280,23 @@
             $('#search-results').spin('large')
             e.preventDefault();
             var params = $(this).serialize();
-            $.when($.getJSON("{{ url_for('api.advanced_search') }}" + '?' + params)).then(
-                function(resp){
-                    $('#search-results').spin(false);
-                    $.each(resp.objects, function(table_name, results){
-                        var template = new EJS({'text': $('#' + table_name + 'Result').html()});
-                        $('#search-results').append(template.render({'results': results}));
-                    })
-                }
-            )
-        })
+            do_query(params);
+        });
+        if ($('input[name="term"]').val() != ''){
+            var params = 'term=' + $('input[name="term"]').val();
+            do_query(params);
+        }
     })
+    function do_query(params){
+        $.when($.getJSON("{{ url_for('api.advanced_search') }}" + '?' + params)).then(
+            function(resp){
+                $('#search-results').spin(false);
+                $.each(resp.objects, function(table_name, results){
+                    var template = new EJS({'text': $('#' + table_name + 'Result').html()});
+                    $('#search-results').append(template.render({'results': results}));
+                })
+            }
+        )
+    }
 </script>
 {% endblock %}

@@ -54,7 +54,7 @@ def advanced_search():
         if table_names:
             q_params['table_names'] = tuple(table_names)
             results = '{0} AND table_name IN :table_names'.format(results)
-
+        
         results = '''
             {0}
             GROUP BY results.table_name
@@ -68,6 +68,11 @@ def advanced_search():
 
         q_params['term'] = ' & '.join(['%s:*' % t for t in term.split()])
         results = engine.execute(sa.text(results), **q_params)
+        
+        # This part right here is super inefficient. The only reason why it
+        # might be necessary is because we need to get join back in the other
+        # details from the original tables. If we're OK with just name, address
+        # and then just linking to the detail pages from there, we can skip this.
 
         for result in results:
             matching_rows = ''' 
@@ -76,7 +81,7 @@ def advanced_search():
 
             matching_rows = engine.execute(sa.text(matching_rows), 
                                 result_ids=tuple(result.result_ids))
-            
+
             resp['objects'][result.table_name] = \
                     [OrderedDict(zip(r.keys(), r.values())) for r in matching_rows]
 

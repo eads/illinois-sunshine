@@ -56,7 +56,16 @@ def about():
 @views.route('/candidates/')
 def candidates():
     money = '''
-        SELECT * FROM candidate_money LIMIT 10
+        SELECT * FROM (
+          SELECT DISTINCT ON(candidate_first_name, candidate_last_name)
+            * 
+          FROM candidate_money 
+          WHERE total IS NOT NULL
+            AND committee_type = 'Candidate'
+          ORDER BY candidate_first_name, candidate_last_name
+        ) AS rows
+        ORDER BY rows.total DESC
+        LIMIT 50
     '''
     engine = db_session.bind
     rows = engine.execute(sa.text(money))
@@ -64,7 +73,8 @@ def candidates():
 
 @views.route('/search/')
 def search():
-    return render_template('search.html')
+    term = request.args.get('term')
+    return render_template('search.html', term=term)
 
 @views.route('/candidates/<candidate_id>/')
 def candidate(candidate_id):
