@@ -543,6 +543,14 @@ class SunshineViews(object):
     def __init__(self, engine):
         self.engine = engine
 
+    def dropViews(self):
+        with self.engine.begin() as conn:
+            conn.execute('DROP MATERIALIZED VIEW IF EXISTS incumbent_candidates')
+        with self.engine.begin() as conn:
+            conn.execute('DROP MATERIALIZED VIEW IF EXISTS most_recent_filings CASCADE')
+        with self.engine.begin() as conn:
+            conn.execute('DROP MATERIALIZED VIEW IF EXISTS full_search')
+
     def makeAllViews(self):
         self.incumbentCandidates()
         self.mostRecentFilings()
@@ -822,6 +830,15 @@ if __name__ == "__main__":
     parser.add_argument('--download', action='store_true',
                    help='Downloading fresh data')
 
+    parser.add_argument('--cache', action='store_true',
+                   help='Cache downloaded files to S3')
+
+    parser.add_argument('--load_data', action='store_true',
+                   help='Load data into database')
+
+    parser.add_argument('--recreate_views', action='store_true',
+                   help='Recreate database views')
+
     args = parser.parse_args()
 
     extract = SunshineExtract(ftp_host=app_config.FTP_HOST,
@@ -833,60 +850,72 @@ if __name__ == "__main__":
     
     if args.download:
         print("downloading ...")
-        extract.download(cache=False)
+        extract.download(cache=args.cache)
     else:
         print("skipping download")
 
-    committees = SunshineCommittees(engine, Base.metadata)
-    committees.load()
-    committees.update()
-    
-    candidates = SunshineCandidates(engine, Base.metadata)
-    candidates.load()
-    candidates.update()
-    
-    officers = SunshineOfficers(engine, Base.metadata)
-    officers.load()
-    officers.update()
-    
-    prev_off = SunshinePrevOfficers(engine, Base.metadata)
-    prev_off.load()
-    prev_off.update()
-    
-    candidacy = SunshineCandidacy(engine, Base.metadata)
-    candidacy.load()
-    candidacy.update()
-    
-    can_cmte_xwalk = SunshineCandidateCommittees(engine, Base.metadata)
-    can_cmte_xwalk.load()
-    can_cmte_xwalk.update()
-    
-    off_cmte_xwalk = SunshineOfficerCommittees(engine, Base.metadata)
-    off_cmte_xwalk.load()
-    off_cmte_xwalk.update()
-    
-    filed_docs = SunshineFiledDocs(engine, Base.metadata)
-    filed_docs.load()
-    filed_docs.update()
-    
-    d2_reports = SunshineD2Reports(engine, Base.metadata)
-    d2_reports.load()
-    d2_reports.update()
-    
-    receipts = SunshineReceipts(engine, Base.metadata)
-    receipts.load()
-    receipts.update()
-    
-    expenditures = SunshineExpenditures(engine, Base.metadata)
-    expenditures.load()
-    expenditures.update()
-    
-    investments = SunshineInvestments(engine, Base.metadata)
-    investments.load()
-    investments.update()
+    if args.load_data:
+        print("loading data ...")
+
+        committees = SunshineCommittees(engine, Base.metadata)
+        committees.load()
+        committees.update()
+        
+        candidates = SunshineCandidates(engine, Base.metadata)
+        candidates.load()
+        candidates.update()
+        
+        officers = SunshineOfficers(engine, Base.metadata)
+        officers.load()
+        officers.update()
+        
+        prev_off = SunshinePrevOfficers(engine, Base.metadata)
+        prev_off.load()
+        prev_off.update()
+        
+        candidacy = SunshineCandidacy(engine, Base.metadata)
+        candidacy.load()
+        candidacy.update()
+        
+        can_cmte_xwalk = SunshineCandidateCommittees(engine, Base.metadata)
+        can_cmte_xwalk.load()
+        can_cmte_xwalk.update()
+        
+        off_cmte_xwalk = SunshineOfficerCommittees(engine, Base.metadata)
+        off_cmte_xwalk.load()
+        off_cmte_xwalk.update()
+        
+        filed_docs = SunshineFiledDocs(engine, Base.metadata)
+        filed_docs.load()
+        filed_docs.update()
+        
+        d2_reports = SunshineD2Reports(engine, Base.metadata)
+        d2_reports.load()
+        d2_reports.update()
+        
+        receipts = SunshineReceipts(engine, Base.metadata)
+        receipts.load()
+        receipts.update()
+        
+        expenditures = SunshineExpenditures(engine, Base.metadata)
+        expenditures.load()
+        expenditures.update()
+        
+        investments = SunshineInvestments(engine, Base.metadata)
+        investments.load()
+        investments.update()
+    else:
+        print("skipping load")
 
     views = SunshineViews(engine)
+
+    if args.recreate_views:
+        print("dropping views")
+        views.dropViews()
+
+    print("creating views ...")
     views.makeAllViews()
     
+    print("creating indexes ...")
     indexes = SunshineIndexes(engine)
     indexes.makeAllIndexes()
