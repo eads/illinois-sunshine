@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+{% block title %}Sunshine Database | Contributions{% endblock %}
+{% block content %}
+<div class="row">
+    <div class="col-sm-12">
+        <table class="table table-bordered table-condensed">
+            <thead>
+                <tr>
+                    <th>Expense name</th>
+                    <th>Committee name</th>
+                    <th>Amount given</th>
+                    <th>Date received</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for record in expenditures %}
+                    <tr>
+                        <td>{{ record.first_name }} {{ record.last_name }}</a></td>
+                        <td>
+                            <a href="{{ url_for('views.committee', committee_id=record.committee.id) }}">
+                                {{ record.committee.name }}
+                            </a>
+                        </td>
+                        <td>{{ record.amount|format_money }}</td>
+                        <td>{{ record.expended_date.strftime('%B %d, %Y') }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+    </div>
+</div>
+{% endblock %}
