@@ -80,16 +80,213 @@
     </div>
 </div>
 
+<hr />
+
+<div class="row">
+    <div class="col-sm-12">
+        <div class="panel-group" id="search-results" role="tab-list" aria-multiselectable=true></div>
+    </div>
+</div>
+
 {% endblock %}
 {% block extra_javascript %}
+    <script src="{{ url_for('static', filename='js/spin.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/jquery.spin.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/ejs_production.js') }}"></script>
+    <script type="text/EJS" id="committeesResult">
+        <div class="panel panel-default">
+            <div class="panel-heading" role="tab" id="committees">
+                <h1 class="panel-title">
+                    <a role="button"
+                       data-toggle="collapse"
+                       data-parent="search-results"
+                       href="#collapseCommittees"
+                       aria-expanded="false"
+                       aria-controls="collapseCommittees">
+
+                       Commiteee results
+
+                    </a>
+                </h1>
+            </div>
+            <div id="collapseCommittees"
+                 class="panel-collapse collapse in"
+                 role="tabpanel"
+                 aria-labelledby="committees">
+
+                <div class="panel-body">
+                    <% $.each(results, function(i, result){ %>
+                        <h3><a href="/committees/<%= result.id %>"><%= result.name %></a></h3>
+                    <% }) %>
+                </div>
+
+            </div>
+        </div>
+    </script>
+    <script type="text/EJS" id="candidatesResult">
+        <div class="panel panel-default">
+            <div class="panel-heading" role="tab" id="candidates">
+                <h1 class="panel-title">
+                    <a role="button"
+                       data-toggle="collapse"
+                       data-parent="search-results"
+                       href="#collapseCandidates"
+                       aria-expanded="false"
+                       aria-controls="collapseCandidates">
+
+                       Candidate results
+
+                    </a>
+                </h1>
+            </div>
+            <div id="collapseCandidates"
+                 class="panel-collapse collapse in"
+                 role="tabpanel"
+                 aria-labelledby="candidates">
+
+                <div class="panel-body">
+                    <% $.each(results, function(i, result){ %>
+                        <h3><a href="/candidates/<%= result.id %>"><%= result.first_name %> <%= result.last_name %></a></h3>
+                    <% }) %>
+                </div>
+
+            </div>
+        </div>
+    </script>
+    <script type="text/EJS" id="receiptsResult">
+        <div class="panel panel-default">
+            <div class="panel-heading" role="tab" id="receipts">
+                <h1 class="panel-title">
+                    <a role="button"
+                       data-toggle="collapse"
+                       data-parent="search-results"
+                       href="#collapseReceipts"
+                       aria-expanded="false"
+                       aria-controls="collapseReceipts">
+
+                       Donation results
+
+                    </a>
+                </h1>
+            </div>
+            <div id="collapseReceipts"
+                 class="panel-collapse collapse in"
+                 role="tabpanel"
+                 aria-labelledby="receipts">
+
+                <div class="panel-body">
+                    <% $.each(results, function(i, result){ %>
+                        <h3><a href="/contributions/<%= result.id %>"><%= result.first_name %> <%= result.last_name %></a></h3>
+                    <% }) %>
+                </div>
+
+            </div>
+        </div>
+    </script>
+    <script type="text/EJS" id="officersResult">
+        <div class="panel panel-default">
+            <div class="panel-heading" role="tab" id="officers">
+                <h1 class="panel-title">
+                    <a role="button"
+                       data-toggle="collapse"
+                       data-parent="search-results"
+                       href="#collapseOfficers"
+                       aria-expanded="false"
+                       aria-controls="collapseOfficers">
+
+                       Committee officer results
+
+                    </a>
+                </h1>
+            </div>
+            <div id="collapseOfficers"
+                 class="panel-collapse collapse in"
+                 role="tabpanel"
+                 aria-labelledby="officers">
+
+                <div class="panel-body">
+                    <% $.each(results, function(i, result){ %>
+                        <h3><a href="/committees/<%= result.committee_id %>"><%= result.first_name %> <%= result.last_name %></a></h3>
+                    <% }) %>
+                </div>
+
+            </div>
+        </div>
+    </script>
+    <script type="text/EJS" id="expendituresResult">
+        <div class="panel panel-default">
+            <div class="panel-heading" role="tab" id="expenditures">
+                <h1 class="panel-title">
+                    <a role="button"
+                       data-toggle="collapse"
+                       data-parent="search-results"
+                       href="#collapseExpenditures"
+                       aria-expanded="false"
+                       aria-controls="collapseExpenditures">
+
+                       Expenditures results
+
+                    </a>
+                </h1>
+            </div>
+            <div id="collapseExpenditures"
+                 class="panel-collapse collapse in"
+                 role="tabpanel"
+                 aria-labelledby="expenditures">
+
+                <div class="panel-body">
+                    <% $.each(results, function(i, result){ %>
+                        <h3><a href="/expenditures/<%= result.committee_id %>"><%= result.first_name %> <%= result.last_name %></a></h3>
+                    <% }) %>
+                </div>
+
+            </div>
+        </div>
+    </script>
+    <script type="text/EJS" id="investmentsResult">
+        <div class="panel panel-default">
+            <div class="panel-heading" role="tab" id="investments">
+                <h1 class="panel-title">
+                    <a role="button"
+                       data-toggle="collapse"
+                       data-parent="search-results"
+                       href="#collapseInvestments"
+                       aria-expanded="false"
+                       aria-controls="collapseInvestments">
+
+                       Investments results
+
+                    </a>
+                </h1>
+            </div>
+            <div id="collapseInvestments"
+                 class="panel-collapse collapse in"
+                 role="tabpanel"
+                 aria-labelledby="investments">
+
+                <div class="panel-body">
+                    <% $.each(results, function(i, result){ %>
+                        <h3><a href="/committees/<%= result.committee_id %>"><%= result.first_name %> <%= result.last_name %></a></h3>
+                    <% }) %>
+                </div>
+
+            </div>
+        </div>
+    </script>
 <script type="text/javascript">
     $(document).ready(function(){
         $('form').on('submit', function(e){
+            $('#search-results').empty();
+            $('#search-results').spin('large')
             e.preventDefault();
             var params = $(this).serialize();
             $.when($.getJSON("{{ url_for('api.advanced_search') }}" + '?' + params)).then(
                 function(resp){
-                    console.log(resp)
+                    $('#search-results').spin(false);
+                    $.each(resp.objects, function(table_name, results){
+                        var template = new EJS({'text': $('#' + table_name + 'Result').html()});
+                        $('#search-results').append(template.render({'results': results}));
+                    })
                 }
             )
         })

@@ -59,7 +59,6 @@ def advanced_search():
             {0}
             GROUP BY results.table_name
             ORDER BY rank DESC
-            LIMIT 100
         '''.format(results)
 
         engine = db_session.bind

@@ -57,7 +57,7 @@ def candidates():
 def search():
     return render_template('search.html')
 
-@views.route('/candidate/<candidate_id>/')
+@views.route('/candidates/<candidate_id>/')
 def candidate(candidate_id):
     try:
         candidate_id = int(candidate_id)
@@ -72,7 +72,7 @@ def candidate(candidate_id):
 def committees():
     return render_template('committees.html')
 
-@views.route('/committee/<committee_id>/')
+@views.route('/committees/<committee_id>/')
 def committee(committee_id):
     try:
         committee_id = int(committee_id)
@@ -158,7 +158,7 @@ def contributions():
                         .limit(100)
     return render_template('contributions.html', contributions=contributions)
 
-@views.route('/contribution/<receipt_id>/')
+@views.route('/contributions/<receipt_id>/')
 def contribution(receipt_id):
     try:
         receipt_id = int(receipt_id)
@@ -168,3 +168,21 @@ def contribution(receipt_id):
     if not receipt:
         return abort(404)
     return render_template('contribution-detail.html', receipt=receipt)
+
+@views.route('/expenditures/')
+def expenditures():
+    expenditures = db_session.query(Expenditures)\
+                        .order_by(Expenditures.expended_date.desc())\
+                        .limit(100)
+    return render_template('expenditures.html', expenditures=expenditures)
+
+@views.route('/expenditures/<expense_id>/')
+def expense(expense_id):
+    try:
+        expense_id = int(expense_id)
+    except ValueError:
+        return abort(404)
+    expense = db_session.query(Expenditure).get(expense_id)
+    if not expense:
+        return abort(404)
+    return render_template('expense-detail.html', expense=expense)
