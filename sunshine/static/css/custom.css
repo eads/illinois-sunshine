@@ -36,6 +36,10 @@ table, label,.control-label,.help-block,.checkbox,.radio { font-size: 14px; }
 
 .navbar-default .navbar-nav > li > a:hover { color: #000; } 
 
+.navbar-default .navbar-nav > .active > a, 
+.navbar-default .navbar-nav > .active > a:hover, 
+.navbar-default .navbar-nav > .active > a:focus { color: #000; }
+
 .btn-primary, .btn-primary:hover {
   background-image: none;
   background-color: #FFCB08;

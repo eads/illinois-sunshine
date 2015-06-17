@@ -56,6 +56,10 @@ def recent_contributions():
 def about():
     return render_template('about.html')
 
+@views.route('/data/')
+def data():
+    return render_template('data.html')
+
 @views.route('/candidates/')
 def candidates():
     money = '''
