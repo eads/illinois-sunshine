@@ -794,8 +794,15 @@ class SunshineIndexes(object):
 
 if __name__ == "__main__":
     import sys
+    import argparse
     from sunshine import app_config 
     from sunshine.database import engine, Base
+
+    parser = argparse.ArgumentParser(description='Download and import campaign disclosure data from the IL State Board of Elections.')
+    parser.add_argument('--download', action='store_true',
+                   help='Downloading fresh data')
+
+    args = parser.parse_args()
 
     extract = SunshineExtract(ftp_host=app_config.FTP_HOST,
                               ftp_path=app_config.FTP_PATH,
@@ -804,7 +811,11 @@ if __name__ == "__main__":
                               aws_key=app_config.AWS_KEY,
                               aws_secret=app_config.AWS_SECRET)
     
-    extract.download(cache=False)
+    if args.download:
+        print("downloading ...")
+        extract.download(cache=False)
+    else:
+        print("skipping download")
 
     committees = SunshineCommittees(engine, Base.metadata)
     committees.load()
