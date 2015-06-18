@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% block title %}Elections | {{ election_year }} {{ election_type }}{% endblock %}
+{% block content %}
+<div class="row">
+    <div class="col-sm-12">
+        {% for race in all_races %}
+            {% for office_name, districts in race.items() %}
+                {% for district, candidates in districts.items() %}
+                <h2>{{ office_name }} {{ district }}</h2>
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Candidate name</th>
+                            <th>Race type</th>
+                            <th>Outcome</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                            {% for candidate in candidates %}
+                            <tr>
+                                <td>
+                                    {{ candidate.candidate_first_name }} {{ candidate.candidate_last_name }}
+                                </td>
+                                <td>
+                                    {{ candidate.race_type }}
+                                </td>
+                                <td>
+                                    {{ candidate.outcome }}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                    </tbody>
+                </table>
+                {% endfor %}
+            {% endfor %}
+        {% endfor %}
+    </div>
+</div>
+
+
+{% endblock %}

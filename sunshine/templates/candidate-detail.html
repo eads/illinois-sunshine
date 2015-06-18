@@ -23,7 +23,7 @@
         {% else %}
             <h3>Committee</h3>
         {% endif %}
-        <table class="table table-bordered table-condensed">
+        <table class="table table-hover">
             <tbody>
                 {% for committee in candidate.committees %}
                     {% if committee.active %}
@@ -44,6 +44,34 @@
                             </td>
                         </tr>
                     {% endif %}
+                {% endfor %}
+            </tbody>
+        </table>
+        {% if candidate.candidacies|length > 1 %}
+            <h3>Candidacies</h3>
+        {% else %}
+            <h3>Candidacy</h3>
+        {% endif %}
+        <table class="table table-hover">
+            <tbody>
+                <thead>
+                    <th>Election</th>
+                    <th>Race type</th>
+                    <th>Outcome</th>
+                </thead>
+                {% for candidacy in candidate.candidacies|sort(attribute='election_year', reverse=True) %}
+                    <tr>
+                        <td><a href="{{ url_for('views.election', election_year=candidacy.election_year, election_type=candidacy.election_type ) }}">
+                                {{ candidacy.election_year }} {{ candidacy.election_type }}
+                            </a>
+                        </td>
+                        <td>
+                            {{ candidacy.race_type if candidacy.race_type else '' }}
+                        </td>
+                        <td>
+                            {{ candidacy.outcome if candidacy.outcome else '' }}
+                        </td>
+                    </tr>
                 {% endfor %}
             </tbody>
         </table>

@@ -4,6 +4,9 @@ from sunshine.models import Candidate, Committee, Receipt, FiledDoc, Expenditure
 import sqlalchemy as sa
 import json
 from datetime import datetime, timedelta
+from itertools import groupby
+from operator import attrgetter
+
 
 views = Blueprint('views', __name__)
 
@@ -205,3 +208,48 @@ def expense(expense_id):
     if not expense:
         return abort(404)
     return render_template('expense-detail.html', expense=expense)
+
+@views.route('/elections/')
+def elections():
+    return render_template('elections.html')
+
+@views.route('/elections/<election_year>/<election_type>/')
+def election(election_year, election_type):
+    races = ''' 
+        SELECT 
+          c.id AS candidate_id, 
+          c.last_name AS candidate_last_name, 
+          c.first_name AS candidate_first_name,
+          COALESCE(c.office, '') AS office,
+          COALESCE(c.district, '') AS district,
+          c.district_type,
+          c.party,
+          cc.race_type,
+          cc.outcome
+        FROM candidates AS c
+        JOIN candidacies AS cc
+          ON c.id = cc.candidate_id
+        WHERE cc.election_type = :election_type
+          AND cc.election_year = :election_year
+    '''
+    
+    engine = db_session.bind
+    races = engine.execute(sa.text(races), 
+                           election_type=election_type, 
+                           election_year=election_year)
+
+    all_races = []
+    races = sorted(races, key=attrgetter('office'))
+
+    for office, office_grouping in groupby(races, key=attrgetter('office')):
+        grouping = sorted(office_grouping, key=attrgetter('district'))
+        d = {office: {}}
+        for district, district_group in groupby(grouping, key=attrgetter('district')):
+            d[office][district] = list(district_group)
+        all_races.append(d)
+
+    return render_template('election-detail.html', 
+                           all_races=all_races,
+                           election_year=election_year,
+                           election_type=election_type)
+

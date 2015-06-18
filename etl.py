@@ -719,7 +719,7 @@ class SunshineViews(object):
                   SELECT 
                     name,
                     table_name,
-                    array_agg(record_json) AS records
+                    json_agg(record_json) AS records
                   FROM (
                     SELECT 
                       COALESCE(TRIM(TRANSLATE(first_name, '.,-/', '')), '') || ' ' ||
@@ -747,7 +747,6 @@ class SunshineViews(object):
                       FROM receipts AS r
                       JOIN committees AS c
                         ON r.committee_id = c.id
-                      ORDER BY r.received_date DESC
                     ) AS rec
                     UNION ALL
                     SELECT
@@ -763,7 +762,6 @@ class SunshineViews(object):
                       FROM expenditures AS e
                       JOIN committees AS c
                         ON e.committee_id = c.id
-                      ORDER BY e.expended_date DESC
                     ) AS exp
                     UNION ALL
                     SELECT
@@ -794,7 +792,6 @@ class SunshineViews(object):
                       FROM investments AS i
                       JOIN committees AS c
                         ON i.committee_id = c.id
-                      ORDER BY i.purchase_date DESC
                     ) AS inv
                   ) AS s
                   GROUP BY table_name, name

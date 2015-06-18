@@ -60,7 +60,7 @@ def advanced_search():
         punc = re.compile('[%s]' % re.escape(punctuation))
         term = punc.sub('', term)
 
-        q_params['term'] = ' & '.join(['%s:*' % t for t in term.split()])
+        q_params['term'] = ' & '.join([t for t in term.split()])
 
         results = engine.execute(sa.text(results), **q_params)
         
@@ -68,59 +68,6 @@ def advanced_search():
 
     response_str = json.dumps(resp, sort_keys=False, default=dthandler)
     response = make_response(response_str, status_code)
-    response.headers['Content-Type'] = 'application/json'
-    return response
-
-@api.route('/name-search/')
-def name_search():
-    term = request.args.get('term')
-    table_names = request.args.get('table_names')
-    if table_names:
-        table_names = tuple(table_names.split(','))
-    else:
-        table_names = (
-            'candidates', 
-            'committees', 
-            'officers',
-        )
-    if not term:
-        return abort(400)
-    results = ''' 
-        SELECT
-          results.id,
-          results.name,
-          results.table_name,
-          ts_rank_cd(search_vector, query) AS rank
-        FROM full_search AS results,
-             to_tsquery('english', :term) AS query,
-             to_tsvector('english', name) AS search_vector
-        WHERE query @@ search_vector
-          AND table_name IN :table_names
-        ORDER BY rank DESC
-        LIMIT 100
-    '''
-    engine = db_session.bind
-    
-    punc = re.compile('[%s]' % re.escape(punctuation))
-    term = punc.sub('', term)
-
-    term = ' & '.join(['%s:*' % t for t in term.split()])
-    results = engine.execute(sa.text(results), 
-                             term=term, 
-                             table_names=table_names)
-    
-    resp = []
-
-    for name, grouping in groupby(results, key=attrgetter('name')):
-        obj = OrderedDict([('name', name,)])
-        obj[name] = {}
-        table_sort = sorted(list(grouping), key=attrgetter('table_name'))
-        for table_name, table_grouping in groupby(table_sort, key=attrgetter('table_name')):
-            obj[name][table_name] = [t.id for t in table_grouping]
-        resp.append(obj)
-    
-    response_str = json.dumps(resp, sort_keys=False)
-    response = make_response(response_str)
     response.headers['Content-Type'] = 'application/json'
     return response
 
