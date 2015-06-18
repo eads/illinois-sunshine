@@ -21,7 +21,7 @@ def advanced_search():
         'status': 'ok',
         'message': '',
         'meta': {},
-        'objects': {},
+        'objects': [],
     }
     
     status_code = 200
@@ -40,7 +40,7 @@ def advanced_search():
             SELECT
               results.table_name,
               results.name,
-              results.records[1:10]
+              results.records
             FROM full_search AS results,
                  to_tsquery('english', :term) AS query,
                  to_tsvector('english', name) AS search_vector
@@ -64,7 +64,16 @@ def advanced_search():
 
         results = engine.execute(sa.text(results), **q_params)
         
-        resp['objects'] = [OrderedDict(zip(r.keys(), r.values())) for r in results]
+        for result in results:
+            d = OrderedDict(zip(result.keys(), result.values()))
+            if result.table_name == 'receipts':
+                d['records'] = sorted(result.records, key=itemgetter('received_date'), reverse=True)[:10]
+            elif result.table_name == 'expenditures':
+                d['records'] = sorted(result.records, key=itemgetter('expended_date'), reverse=True)[:10]
+            elif result.table_name == 'investments':
+                d['records'] = sorted(result.records, key=itemgetter('purchase_date'), reverse=True)[:10]
+            resp['objects'].append(d)
+
 
     response_str = json.dumps(resp, sort_keys=False, default=dthandler)
     response = make_response(response_str, status_code)

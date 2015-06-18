@@ -166,8 +166,65 @@ def committee(committee_id):
         recent_total = sum([r.amount for r in recent_receipts])
         controlled_amount += recent_total
 
+    related_committees = ''' 
+        SELECT
+          name,
+          id,
+          type,
+          active,
+          money,
+          reason
+        FROM (
+          (SELECT 
+            cm.name, 
+            cm.id,
+            cm.type,
+            cm.active,
+            m.total AS money,
+            'Supported candidates in common' AS reason 
+          FROM committees AS cm
+          LEFT JOIN candidate_committees AS cc
+            ON cm.id = cc.committee_id
+          LEFT JOIN candidates AS cd
+            ON cc.candidate_id = cd.id
+          LEFT JOIN committee_money AS m
+            ON cm.id = m.committee_id
+          WHERE cd.id IN :candidate_ids)
+          UNION
+          (SELECT
+             oc.name,
+             oc.id,
+             oc.type,
+             oc.active,
+             m.total AS money,
+             'Officer with same name as supported candidate' AS reason
+           FROM candidates AS cd
+           LEFT JOIN officers AS o
+             ON cd.first_name = o.first_name
+             AND cd.last_name = o.last_name
+           LEFT JOIN committees AS oc
+             ON o.committee_id = oc.id
+           LEFT JOIN committee_money AS m
+             ON oc.id = m.committee_id
+           WHERE cd.id IN :candidate_ids
+          )
+        ) AS s
+        WHERE id != :committee_id
+          AND active = TRUE
+    '''
+    
+    candidate_ids = tuple(c.id for c in committee.candidates)
+
+    if candidate_ids:
+        related_committees = list(engine.execute(sa.text(related_committees), 
+                                            candidate_ids=candidate_ids, 
+                                            committee_id=committee_id))
+    else:
+        related_committees = None
+
     return render_template('committee-detail.html', 
                            committee=committee, 
+                           related_committees=related_committees,
                            recent_receipts=recent_receipts,
                            recent_total=recent_total,
                            latest_filing=latest_filing,

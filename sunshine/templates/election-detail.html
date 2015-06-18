@@ -19,7 +19,9 @@
                             {% for candidate in candidates %}
                             <tr>
                                 <td>
+                                    <a href="{{ url_for('views.candidate', candidate_id=candidate.candidate_id) }}">
                                     {{ candidate.candidate_first_name }} {{ candidate.candidate_last_name }}
+                                    </a>
                                 </td>
                                 <td>
                                     {{ candidate.race_type }}

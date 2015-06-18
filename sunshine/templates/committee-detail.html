@@ -23,6 +23,21 @@
         <h3>Total money: {% if controlled_amount %}{{ controlled_amount|format_money }}{% else %}$0{% endif %}</h3>
         <p>{{ money }}</p>
         <hr />
+        <h3>Officers</h3>
+        <table class="table table-bordered table-condensed">
+            <thead>
+                <th>Name</th>
+                <th>Title</th>
+            </thead>
+            <tbody>
+                {% for officer in committee.officers %}
+                    <tr>
+                        <td>{{ officer.first_name }} {{ officer.last_name }}</a></td>
+                        <td>{{ officer.title }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
         {% if committee.candidates %}
             <h3>
                 Supported candidates
@@ -37,6 +52,30 @@
                         <tr>
                             <td><a href="{{ url_for('views.candidate', candidate_id=candidate.id )}}">{{ candidate.first_name }} {{ candidate.last_name }}</a></td>
                             <td>{{ candidate.office }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+        {% endif %}
+        {% if related_committees %}
+            <h3>
+                Related committees
+            </h3>
+            <table class="table table-bordered table-condensed">
+                <thead>
+                    <th>Name</th>
+                    <th>Committee type</th>
+                    <th>Money controlled</th>
+                    <th>Reason for relation</th>
+                </thead>
+                <tbody>
+                    {% for committee in related_committees %}
+                        <tr>
+                            <td><a href="{{ url_for('views.committee', committee_id=committee.id )}}">{{ committee.name }}</a></td>
+                            <td>{{ committee.type if committee.type else '' }}</td>
+                            <td>{{ committee.money|format_money if committee.money else ''}}</td>
+                            <td>{{ committee.reason }}</td>
                         </tr>
                     {% endfor %}
                 </tbody>
