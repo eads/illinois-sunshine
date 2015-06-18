@@ -38,9 +38,9 @@ def advanced_search():
     if valid:
         results = ''' 
             SELECT
-              results.table_name, 
-              array_agg(results.id) AS result_ids,
-              AVG(ts_rank_cd(search_vector, query)) AS rank
+              results.table_name,
+              results.name,
+              results.records[1:10]
             FROM full_search AS results,
                  to_tsquery('english', :term) AS query,
                  to_tsvector('english', name) AS search_vector
@@ -55,35 +55,16 @@ def advanced_search():
             q_params['table_names'] = tuple(table_names)
             results = '{0} AND table_name IN :table_names'.format(results)
         
-        results = '''
-            {0}
-            GROUP BY results.table_name
-            ORDER BY rank DESC
-        '''.format(results)
-
         engine = db_session.bind
         
         punc = re.compile('[%s]' % re.escape(punctuation))
         term = punc.sub('', term)
 
         q_params['term'] = ' & '.join(['%s:*' % t for t in term.split()])
+
         results = engine.execute(sa.text(results), **q_params)
         
-        # This part right here is super inefficient. The only reason why it
-        # might be necessary is because we need to get join back in the other
-        # details from the original tables. If we're OK with just name, address
-        # and then just linking to the detail pages from there, we can skip this.
-
-        for result in results:
-            matching_rows = ''' 
-                SELECT * FROM {0} WHERE id IN :result_ids
-            '''.format(result.table_name)
-
-            matching_rows = engine.execute(sa.text(matching_rows), 
-                                result_ids=tuple(result.result_ids))
-
-            resp['objects'][result.table_name] = \
-                    [OrderedDict(zip(r.keys(), r.values())) for r in matching_rows]
+        resp['objects'] = [OrderedDict(zip(r.keys(), r.values())) for r in results]
 
     response_str = json.dumps(resp, sort_keys=False, default=dthandler)
     response = make_response(response_str, status_code)

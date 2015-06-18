@@ -1,0 +1,161 @@
+{% extends 'base.html' %}
+{% block title %}{{ expense.last_name }}, {{ expense.first_name }}{% endblock %}
+{% block content %}
+<div class="row">
+    <div class="col-sm-12">
+        <h2>
+            <strong>{{ expense.amount|format_money }}</strong> to
+            {% if expense.first_name %}
+                {{ expense.first_name }}
+            {% endif %}
+            {{ expense.last_name }}
+            <strong> from {{ expense.committee.name }}</strong>
+            {% if expense.expended_date %}
+                on {{ expense.expended_date.strftime('%B %-m, %Y') }}
+            {% endif %}
+        </h2>
+        <hr />
+    </div>
+</div>
+<div class="row">
+    <div class="col-sm-12">
+        <h4>Expense info</h4>
+        <table class="table table-bordered table-condensed">
+            <thead>
+                <tr>
+                    <th>Candidate name</th>
+                    <th>Office</th>
+                    <th>Position</th>
+                    <th>Purpose</th>
+                    <th>Amount</th>
+                    <th>Expended date</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>{{ expense.candidate_name if expense.candidate_name else '' }}</td>
+                    <td>{{ expense.office if expense.office else '' }}</td>
+                    {% if expense.supporting %}
+                        <td>Supporting</td>
+                    {% elif expense.opposing %}
+                        <td>Opposing</td>
+                    {% else %}
+                        <td></td>
+                    {% endif %}
+                    <td>{{ expense.purpose if expense.purpose else '' }}</td>
+                    <td>{{ expense.amount|format_money }}</td>
+                    <td>{{ expense.expended_date.strftime('%B %-m, %Y') }}</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+<div class="row">
+    <div class="col-sm-12">
+        <h4>Donor info</h4>
+        <table class="table table-bordered table-condensed">
+            <tbody>
+                <tr>
+                    <td><strong>Name</strong></td>
+                    <td>
+                        <a href="{{ url_for('views.committee', committee_id=expense.committee.id ) }}">
+                            {{ expense.committee.name }}
+                        </a>
+                    </td>
+                </tr>
+                <tr>
+                    <td><strong>Address</strong></td>
+                    <td>
+                        {{ expense.committee.address1 }}
+                        {% if expense.committee.address2 %}
+                            &nbsp;{{ expense.committee.address2 }}
+                        {% endif %}
+                        {% if expense.committee.address3 %}
+                            &nbsp;{{ expense.committee.address3 }}
+                        {% endif %}
+                        &middot;
+                        {{ expense.committee.city }},
+                        {{ expense.committee.state }}
+                        {{ expense.committee.zipcode }}
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <hr />
+</div>
+<div class="row">
+    <div class="col-sm-12">
+        <h4>Recipient info</h4>
+        <table class="table table-bordered table-condensed">
+            <tbody>
+                <tr>
+                    <td><strong>Name</strong></td>
+                    <td>
+                        {% if expense.first_name %}
+                            {{ expense.first_name }}
+                        {% endif %}
+                        {{ expense.last_name }}
+                    </td>
+                </tr>
+                <tr>
+                    <td><strong>Address</strong></td>
+                    <td>
+                        {{ expense.address1 }}
+                        {% if expense.address2 %}
+                            &nbsp;{{ expense.address2 }}
+                        {% endif %}
+                        &middot;
+                        {{ expense.city }},
+                        {{ expense.state }}
+                        {{ expense.zipcode }}
+                    </td>
+                </tr>
+                {% if expense.description %}
+                    <tr>
+                        <td><strong>Description</strong></td>
+                        <td>{{ expense.description }}</td>
+                    </tr>
+                {% endif %}
+                {% if expense.occupation %}
+                    <tr>
+                        <td><strong>Occupation</strong></td>
+                        <td>{{ expense.occupation }}</td>
+                    </tr>
+                {% endif %}
+                {% if expense.employer %}
+                    <tr>
+                        <td><strong>Employer</strong></td>
+                        <td>{{ expense.employer }}</td>
+                    </tr>
+                {% endif %}
+                {% if expense.vendor_last_name %}
+                    <tr>
+                        <td><strong>Vendor name</strong></td>
+                        <td>
+                            {% if expense.vendor_first_name %}
+                                {{ expense.vendor_first_name }}
+                            {% endif %}
+                            {{ expense.vendor_last_name }}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>Vendor address</strong></td>
+                        <td>
+                            {{ expense.vendor_address1 }}
+                            {% if expense.vendor_address2 %}
+                                &nbsp;{{ expense.vendor_address2 }}
+                            {% endif %}
+                            &middot;
+                            {{ expense.vendor_city }},
+                            {{ expense.vendor_state }}
+                            {{ expense.vendor_zipcode }}
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% endblock %}

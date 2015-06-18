@@ -717,79 +717,87 @@ class SunshineViews(object):
             create = ''' 
                 CREATE MATERIALIZED VIEW full_search AS (
                   SELECT 
-                    id, 
                     name,
-                    address,
-                    city,
-                    state,
-                    zipcode,
-                    table_name
+                    table_name,
+                    array_agg(record_json) AS records
                   FROM (
                     SELECT 
-                      id,
                       COALESCE(TRIM(TRANSLATE(first_name, '.,-/', '')), '') || ' ' ||
                       COALESCE(TRIM(TRANSLATE(last_name, '.,-/', '')), '') AS name,
-                      address_1 AS address,
-                      city,
-                      state,
-                      zipcode,
-                      'candidates' AS table_name
-                    FROM candidates
+                      'candidates' AS table_name,
+                      row_to_json(cand) AS record_json
+                    FROM candidates AS cand
                     UNION ALL
-                      SELECT
-                        id,
-                        name,
-                        address1 AS address,
-                        city,
-                        state,
-                        zipcode,
-                        'committees' AS table_name
-                      FROM committees
+                    SELECT
+                      name,
+                      'committees' AS table_name,
+                      row_to_json(comm) AS record_json
+                    FROM committees AS comm
                     UNION ALL
+                    SELECT
+                      COALESCE(TRIM(TRANSLATE(first_name, '.,-/', '')), '') || ' ' ||
+                      COALESCE(TRIM(TRANSLATE(last_name, '.,-/', '')), '') AS name,
+                      'receipts' AS table_name,
+                      row_to_json(rec) AS record_json
+                    FROM (
                       SELECT
-                        id,
-                        COALESCE(TRIM(TRANSLATE(first_name, '.,-/', '')), '') || ' ' ||
-                        COALESCE(TRIM(TRANSLATE(last_name, '.,-/', '')), '') AS name,
-                        address1 AS address,
-                        city,
-                        state,
-                        zipcode,
-                        'receipts' AS table_name
-                      FROM receipts
+                        r.*,
+                        c.name AS committee_name,
+                        c.type AS committee_type
+                      FROM receipts AS r
+                      JOIN committees AS c
+                        ON r.committee_id = c.id
+                      ORDER BY r.received_date DESC
+                    ) AS rec
                     UNION ALL
+                    SELECT
+                      COALESCE(TRIM(TRANSLATE(first_name, '.,-/', '')), '') || ' ' ||
+                      COALESCE(TRIM(TRANSLATE(last_name, '.,-/', '')), '') AS name,
+                      'expenditures' AS table_name,
+                      row_to_json(exp) AS record_json
+                    FROM (
                       SELECT
-                        id,
-                        COALESCE(TRIM(TRANSLATE(first_name, '.,-/', '')), '') || ' ' ||
-                        COALESCE(TRIM(TRANSLATE(last_name, '.,-/', '')), '') AS name,
-                        address1 AS address,
-                        city,
-                        state,
-                        zipcode,
-                        'expenditures' AS table_name
-                      FROM expenditures
+                        e.*,
+                        c.name AS committee_name,
+                        c.type AS committee_type
+                      FROM expenditures AS e
+                      JOIN committees AS c
+                        ON e.committee_id = c.id
+                      ORDER BY e.expended_date DESC
+                    ) AS exp
                     UNION ALL
+                    SELECT
+                      COALESCE(TRIM(TRANSLATE(first_name, '.,-/', '')), '') || ' ' ||
+                      COALESCE(TRIM(TRANSLATE(last_name, '.,-/', '')), '') AS name,
+                      'officers' AS table_name,
+                      row_to_json(off) AS record_json
+                    FROM (
                       SELECT
-                        id,
-                        COALESCE(TRIM(TRANSLATE(first_name, '.,-/', '')), '') || ' ' ||
-                        COALESCE(TRIM(TRANSLATE(last_name, '.,-/', '')), '') AS name,
-                        address1 AS address,
-                        city,
-                        state,
-                        zipcode,
-                        'officers' AS table_name
-                      FROM officers
+                        o.*,
+                        c.name AS committee_name,
+                        c.type AS committee_type
+                      FROM officers AS o
+                      JOIN committees AS c
+                        ON o.committee_id = c.id
+                    ) AS off
                     UNION ALL
+                    SELECT
+                      COALESCE(TRIM(TRANSLATE(first_name, '.,-/', '')), '') || ' ' ||
+                      COALESCE(TRIM(TRANSLATE(last_name, '.,-/', '')), '') AS name,
+                      'investments' AS table_name,
+                      row_to_json(inv) AS record_json
+                    FROM (
                       SELECT
-                        id,
-                        COALESCE(TRIM(TRANSLATE(first_name, '.,-/', '')), '') || ' ' ||
-                        COALESCE(TRIM(TRANSLATE(last_name, '.,-/', '')), '') AS name,
-                        address1 AS address,
-                        city,
-                        state,
-                        zipcode,
-                        'investments' AS table_name
-                      FROM investments
+                        i.*,
+                        c.name AS committee_name,
+                        c.type AS committee_type
+                      FROM investments AS i
+                      JOIN committees AS c
+                        ON i.committee_id = c.id
+                      ORDER BY i.purchase_date DESC
+                    ) AS inv
                   ) AS s
+                  GROUP BY table_name, name
                 )
             '''
             conn.execute(sa.text(create))

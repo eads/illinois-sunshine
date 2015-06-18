@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, abort, request, make_response
 from sunshine.database import db_session
-from sunshine.models import Candidate, Committee, Receipt, FiledDoc
+from sunshine.models import Candidate, Committee, Receipt, FiledDoc, Expenditure
 import sqlalchemy as sa
 import json
 from datetime import datetime, timedelta
