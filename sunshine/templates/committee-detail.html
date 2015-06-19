@@ -28,12 +28,14 @@
             <thead>
                 <th>Name</th>
                 <th>Title</th>
+                <th>Current member</th>
             </thead>
             <tbody>
                 {% for officer in committee.officers %}
                     <tr>
                         <td>{{ officer.first_name }} {{ officer.last_name }}</a></td>
                         <td>{{ officer.title }}</td>
+                        <td>{{ officer.current }}</td>
                     </tr>
                 {% endfor %}
             </tbody>
