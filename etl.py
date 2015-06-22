@@ -658,7 +658,7 @@ class SunshineViews(object):
                    MAX(filings.reporting_period_end) AS reporting_period_end,
                    MAX(filings.reporting_period_begin) AS reporting_period_begin,
                    (SUM(receipts.amount) + MAX(filings.end_funds_available)) AS total,
-                   MAX(filings.received_datetime) AS last_receipt_date
+                   MAX(receipts.received_date) AS last_receipt_date
                  FROM most_recent_filings AS filings
                  LEFT JOIN receipts
                    ON receipts.committee_id = filings.committee_id
@@ -686,10 +686,12 @@ class SunshineViews(object):
                     cd.id AS candidate_id,
                     cd.first_name AS candidate_first_name,
                     cd.last_name AS candidate_last_name,
+                    cd.office AS candidate_office,
                     cm.id AS committee_id,
                     cm.name AS committee_name,
                     cm.type AS committee_type,
-                    m.total
+                    m.total,
+                    m.last_receipt_date
                   FROM candidates AS cd
                   JOIN candidate_committees AS cc
                     ON cd.id = cc.candidate_id
