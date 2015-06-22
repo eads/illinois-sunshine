@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+{% block title %}Recent contributions{% endblock %}
+{% block content %}
+
+    <h3>Recent political donations</h3>
+    <table class="table table-striped">
+        <tbody>
+            {% for donation in recent_donations %}
+                <tr>
+                    <td>
+                        {% if donation.first_name %}{{ donation.first_name }}{% endif %} {{ donation.last_name }}
+                    </td>
+                    <td class='nowrap'>
+                        <a href="{{ url_for('views.contribution', receipt_id=donation.id )}}">donated <strong>{{ donation.amount|format_money }}</strong></a> to
+                    </td>
+                    <td>
+                        <a href="{{ url_for('views.committee', committee_id=donation.committee_id )}}">{{ donation.committee.name }}</a>
+                    </td>
+                    <td class='nowrap'>
+                        on {{ donation.filed_doc.received_datetime.strftime('%b %d, %Y at %-I:%M%p') }}
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}

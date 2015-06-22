@@ -11,26 +11,27 @@
                 <input type="text" class="form-control" name="term" placeholder="Search term" {% if term %}value="{{term}}"{% endif %}>
             </div>
             <div class="form-group">
-                <label class="checkbox-inline">
-                    <input type="checkbox" name="table_name" value="candidates"> Candidates
-                </label>
-                <label class="checkbox-inline">
-                    <input type="checkbox" name="table_name" value="committees"> Committees
-                </label>
-                <label class="checkbox-inline">
-                    <input type="checkbox" name="table_name" value="officers"> Committee officers
-                </label>
-                <label class="checkbox-inline">
-                    <input type="checkbox" name="table_name" value="receipts"> Donors
-                </label>
-                <label class="checkbox-inline">
-                    <input type="checkbox" name="table_name" value="expenditures"> Expenditures
-                </label>
-                <label class="checkbox-inline">
-                    <input type="checkbox" name="table_name" value="investments"> Investments
+                <p>Filter by result type:</p>
+                <label>
+                    <input type="checkbox" name="table_name" value="candidates" checked='checked'> Candidates - <small>Any person who seeks nomination for election, election to, or retention in public office</small>
+                </label><br />
+                <label>
+                    <input type="checkbox" name="table_name" value="committees" checked='checked'> Committees - <small>Includes committees for political candidates, political parties, political action committees (PACs), and ballot initiatives</small>
+                </label><br />
+                <label>
+                    <input type="checkbox" name="table_name" value="officers" checked='checked'> Committee officers - <small>Chairmen and treasurerers for political committees</small>
+                </label><br />
+                <label>
+                    <input type="checkbox" name="table_name" value="receipts" checked='checked'> Donors - <small>Any person or organization who has given to a political committee</small>
+                </label><br />
+                <label>
+                    <input type="checkbox" name="table_name" value="expenditures" checked='checked'> Expenditures - <small>any payment, distribution, purchase, loan, advance, deposit, gift of money or anything of value, or any transfer of funds between political committees, made to support or oppose a candidate or proposition</small>
+                </label><br />
+                <label>
+                    <input type="checkbox" name="table_name" value="investments" checked='checked'> Investments - <small>funds invested by political committees</small>
                 </label>
             </div>
-            <div class="form-group">
+            <!-- <div class="form-group">
                 <div class="row">
                     <div class="col-sm-6">
                         <label for="election_type">Election type</label>
@@ -74,7 +75,7 @@
                         <input type="text" class="form-control" name="contribution_amount" placeholder="">
                     </div>
                 </div>
-            </div>
+            </div> -->
             <button type="submit" class="btn btn-default"><i class='fa fa-search'></i> Search</button>
         </form>
     </div>
@@ -305,10 +306,11 @@
         });
         // Need to figure this out so that it doesn't trigger all the time.
         //
-        // if ($('input[name="term"]').val() != ''){
-        //     var params = 'term=' + $('input[name="term"]').val();
-        //     do_query(params);
-        // }
+        if ('{{term}}' != ''){
+            var params = 'term={{term}}';
+            $('#search-results').spin('large');
+            do_query(params);
+        }
     })
     function do_query(params){
         $.when($.getJSON("{{ url_for('api.advanced_search') }}" + '?' + params)).then(

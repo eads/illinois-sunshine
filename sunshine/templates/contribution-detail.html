@@ -4,14 +4,17 @@
 <div class="row">
     <div class="col-sm-12">
         <h2>
-            <strong>{{ receipt.amount|format_money }}</strong> from
             {% if receipt.first_name %}
                 {{ receipt.first_name }}
             {% endif %}
             {{ receipt.last_name }}
-            <strong> to {{ receipt.committee.name }}</strong>
+            <br />
+            donated <strong>{{ receipt.amount|format_money }}</strong> to
+            <br />
+            <strong>{{ receipt.committee.name }}</strong>
+            <br />
             {% if receipt.received_date %}
-                on {{ receipt.received_date.strftime('%B %-m, %Y') }}
+                on {{ receipt.received_date.strftime('%b %d, %Y at %-I:%M%p') }}
             {% endif %}
         </h2>
         <hr />

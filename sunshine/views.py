@@ -40,8 +40,8 @@ def index():
                            recent_donations=recent_donations,
                            top_ten=top_ten)
 
-@views.route('/recent-contributions')
-def recent_contributions():
+@views.route('/donations')
+def donations():
     seven_days_ago = datetime.now() - timedelta(days=8)
     
     recent_donations = db_session.query(Receipt)\
@@ -49,16 +49,12 @@ def recent_contributions():
                                  .filter(Receipt.received_date >= seven_days_ago)\
                                  .order_by(FiledDoc.received_datetime.desc())
 
-    return render_template('recent-contributions.html', 
+    return render_template('donations.html', 
                            recent_donations=recent_donations)
 
 @views.route('/about/')
 def about():
     return render_template('about.html')
-
-@views.route('/data/')
-def data():
-    return render_template('data.html')
 
 @views.route('/candidates/')
 def candidates():
