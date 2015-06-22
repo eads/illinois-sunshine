@@ -868,49 +868,74 @@ if __name__ == "__main__":
         committees.load()
         committees.update()
         
+        del committees
+
         candidates = SunshineCandidates(engine, Base.metadata)
         candidates.load()
         candidates.update()
         
+        del candidates
+
         officers = SunshineOfficers(engine, Base.metadata)
         officers.load()
         officers.update()
         
+        del officers
+
         prev_off = SunshinePrevOfficers(engine, Base.metadata)
         prev_off.load()
         prev_off.update()
         
+        del prev_off
+
         candidacy = SunshineCandidacy(engine, Base.metadata)
         candidacy.load()
         candidacy.update()
         
+        del candidacy
+
         can_cmte_xwalk = SunshineCandidateCommittees(engine, Base.metadata)
         can_cmte_xwalk.load()
         can_cmte_xwalk.update()
         
+        del can_cmte_xwalk
+
         off_cmte_xwalk = SunshineOfficerCommittees(engine, Base.metadata)
         off_cmte_xwalk.load()
         off_cmte_xwalk.update()
         
+        del off_cmte_xwalk
+
         filed_docs = SunshineFiledDocs(engine, Base.metadata)
         filed_docs.load()
         filed_docs.update()
         
+        del filed_docs
+
         d2_reports = SunshineD2Reports(engine, Base.metadata)
         d2_reports.load()
         d2_reports.update()
         
+        del d2_reports
+
         receipts = SunshineReceipts(engine, Base.metadata)
         receipts.load()
         receipts.update()
         
+        del receipts
+
         expenditures = SunshineExpenditures(engine, Base.metadata)
         expenditures.load()
         expenditures.update()
         
+        del expenditures
+
         investments = SunshineInvestments(engine, Base.metadata)
         investments.load()
         investments.update()
+        
+        del investments
+
     else:
         print("skipping load")
 
