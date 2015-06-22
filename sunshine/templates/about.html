@@ -7,6 +7,12 @@
     <h3>About</h3>
     <ol>
       <li><a href='#what-is-this'>What is this?</a></li>
+      <li><a href='#who-has-to-report-campaign-finance'>Who has to report campaign finance?</a></li>
+      <li><a href='#what-gets-reported'>What gets reported?</a></li>
+      <li><a href='#how-is-campaign-finance-disclosed'>How is campaign finance disclosed?</a></li>
+      <li><a href='#data-quality'>Data quality</a></li>
+      <li><a href='#more-resources'>More resources</a></li>
+      <li><a href='#data'>Data</a></li>
       <li><a href='#code'>We're open source!</a></li>
       <li><a href='#team-and-credits'>Team and credits</a></li>
       <li><a href='#contact-us'>Contact us</a></li>
@@ -16,15 +22,246 @@
 <div class="col-md-9">
   <h3 id='what-is-this'>What is this?</h3>
 
+  <p><strong>Illinois Sunshine</strong> is a tool for browsing political contributions in the state of Illinois.</p>
+
+  <p>The data comes from the Illinois State Board of Elections, which has been collecting this data electronically since 1994. We built Illinois Sunshine to give journalists, activists and citizens better access to and documentation for this data.</p>
+
+  <h3 id='who-has-to-report-campaign-finance'>Who has to report campaign finance?</h3>
+  <p>Any political committee that exceeds $5,000 in either receipts or expenditures over the period of a year (this is the filing threshold). Once a committee exceeds the filing threshold, they are covered by the <a href='http://www.elections.il.gov/Downloads/CampaignDisclosure/PDF/CampDiscAct.pdf'>Illinois Campaign Disclosure Act</a> (PDF) and are required to report contributions and expenditures accordingly.</p>
+
+  <h3 id='what-gets-reported'>What gets reported?</h3>
+  <p><i>Hover for additional details on how campaign finance is reported.</i></p>
+  <table id="disclosure-explain" class="table">
+    <thead>
+      <tr>
+        <th width='25%'>Finance Type</th>
+
+        <th width='30%'>Amount</th>
+
+        <th width='15%' style="text-align:center"><span data-content="Lowest level of disclosure: included in summary totals in reports (disclosed quarterly)">Summary Totals</span></th>
+
+        <th width='15%' style="text-align:center"><span data-content="Moderate level of disclosure: itemized in reports (disclosed quarterly)">Itemized Disclosure</span></th>
+
+        <th width='15%' style="text-align:center"><span data-content="Highest level of disclosure: reported in a separate form from quarterly reports (disclosed as the contributions/expenditures are made)">Detailed Disclosure</span></th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <th rowspan="3">Contributions</th>
+        <td>$0 - $150</td>
+
+        <td style="text-align:center"><span data-content="Included in summary totals in Schedule D-2 (reported quarterly)"><i class='fa fa-check'></i></span></td>
+
+        <td></td>
+        <td></td>
+      </tr>
+      <tr>
+        <td>$150 - $1,000</td>
+
+        <td style="text-align:center"><span data-content="Included in summary totals in Schedule D-2 (reported quarterly)"><i class='fa fa-check'></i></span></td>
+
+        <td style="text-align:center"><span data-content="Itemized in Schedule A (reported quarterly)"><i class='fa fa-check'></i></span></td>
+
+        <td></td>
+      </tr>
+      <tr>
+        <td>$1,000+</td>
+
+        <td style="text-align:center"><span data-content="Included in summary totals in Schedule D-2 (reported quarterly)"><i class='fa fa-check'></i></span></td>
+
+        <td style="text-align:center"><span data-content="Itemized in Schedule A (reported quarterly)"><i class='fa fa-check'></i></span></td>
+
+        <td style="text-align:center"><span data-content="A contribution over $1,000 from a single source must be disclosed in its own Schedule A-1 (reported as the contribution is received)"><i class='fa fa-check'></i></span></td>
+      </tr>
+      <tr>
+        <th rowspan="2">Non-independent expenditures</th>
+        <td>$0 - $150</td>
+
+        <td style="text-align:center"><span data-content="Included in summary totals in Schedule D-2 (reported quarterly)"><i class='fa fa-check'></i></span></td>
+
+        <td></td>
+        <td></td>
+      </tr>
+      <tr>
+        <td>$150+</td>
+
+        <td style="text-align:center"><span data-content="Included in summary totals in Schedule D-2 (reported quarterly)"><i class='fa fa-check'></i></span></td>
+
+        <td style="text-align:center"><span data-content="Itemized in Schedule B (reported quarterly)"><i class='fa fa-check'></i></span></td>
+
+        <td></td>
+      </tr>
+      <tr>
+        <th rowspan="3"><span data-content="An independent expenditure is an expenditure made without coordination between a spender and a candidate">Independent expenditures</span></td>
+        <td>$0 - $150</th>
+
+        <td style="text-align:center"><span data-content="Included in summary totals in Schedule D-2 (reported quarterly)"><i class='fa fa-check'></i></span></td>
+
+        <td></td>
+        <td></td>
+      </tr>
+      <tr>
+        <td>$150 - $1,000</td>
+
+        <td style="text-align:center"><span data-content="Included in summary totals in Schedule D-2 (reported quarterly)"><i class='fa fa-check'></i></span></td>
+
+        <td style="text-align:center"><span data-content="Itemized in Schedule B-9 (reported quarterly)"><i class='fa fa-check'></i></span></td>
+
+        <td></td>
+      </tr>
+      <tr>
+        <td>$1,000+</td>
+
+        <td style="text-align:center"><span data-content="Included in summary totals in Schedule D-2 (reported quarterly)"><i class='fa fa-check'></i></span></td>
+
+        <td style="text-align:center"><span data-content="Itemized in Schedule B (reported quarterly)"><i class='fa fa-check'></i></span></td>
+
+        <td style="text-align:center"><span data-content="If an independent expenditure over $1,000 is made within 30 days before an election, it must be disclosed in Schedule B-1 (reported as the independent expenditure is made)"><i class='fa fa-asterisk'></i></span></td>
+      </tr>
+
+    </tbody>
+  </table>
+
+
+  <h3 id='how-is-campaign-finance-disclosed'>How is campaign finance disclosed?</h3>
+  <p><i>The following are campaign disclosure forms required under the Illinois Campaign Disclosure Act:</i></p>
+  <table id="form-explainer" class="table">
+    <thead>
+      <tr>
+        <th width='20%'>Campaign Disclosure Form</th>
+        <th>Disclosure type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr id="d-1">
+        <td>D-1 Form (Statement of Organization)</td>
+        <td>
+          <span class='label label-info'>Committees</span>
+        </td>
+        <td>A form providing <strong>basic committee information</strong>, registering a political committee with the Illinois State Board of Elections. This form is filed after a political committee has exceeded $5,000 in either receipts or expenditures over a year (the filing threshold), at which point they are covered by the Illinois Campaign Disclosure law and thus are required to report contributions and expenditures accordingly.</td>
+      </tr>
+      <tr id="d-1-a">
+        <td>D-1-A Form</td>
+        <td>
+          <span class='label label-info'>Committees</span>
+        </td>
+        <td>A <strong>supplement to the D-1 Form</strong>, only required if the political committee indicated is a legislative caucus committee established by 5+ members in the same Senate caucus or 10+ members in the same House of Representatives caucus.</td>
+      </tr>
+      <tr id="d-2">
+        <td>D-2 Form (Report of Campaign Contributions and Expenditures)</td>
+        <td>
+          <span class='label label-danger'>Expenditures</span><br /><br />
+          <span class='label label-success'>Contributions</span>
+        </td>
+        <td>A form for filing a quarterly report, a final report, or an amendment to a report. These reports include <strong>summary totals</strong> of a political committee's contributions, expenditures, debts, fund balances, and investments over a given reporting period.</td>
+      </tr>
+      <tr id="schedule-a">
+        <td>Schedule A</td>
+        <td>
+          <span class='label label-success'>Contributions</span>
+        </td>
+        <td>A form for reporting all <strong>itemized contributions</strong> to a political committee over $150. These itemized contributions are reported quarterly.</td>
+      </tr>
+      <tr id="schedule-a-1">
+        <td>Schedule A-1</td>
+        <td>
+          <span class='label label-success'>Contributions</span>
+        </td>
+        <td>A form for reporting a <strong>contribution of $1,000 or more</strong> from a single source.</td>
+      </tr>
+      <tr id="schedule-b">
+        <td>Schedule B</td>
+        <td>
+          <span class='label label-danger'>Expenditures</span>
+        </td>
+        <td>A form for reporting all <strong>itemized expenditures</strong> from a political committee over $150. These itemized expenditures are reported quarterly.</td>
+      </tr>
+      <tr id="schedule-b-1">
+        <td>Schedule B-1</td>
+        <td>
+          <span class='label label-danger'>Ind. Expenditures</span>
+        </td>
+        <td>A form for reporting an <strong>independent expenditure of $1,000 or more within 30 days of an election</strong>. (An independent expenditure is an expenditure made without coordination between a spender and a candidate.)</td>
+      </tr>
+      <tr id="schedule-b-9">
+        <td>Schedule B-9</td>
+        <td>
+          <span class='label label-danger'>Ind. Expenditures</span>
+        </td>
+        <td>A form for reporting all <strong>itemized independent expenditures</strong> from a political committee over $150. (An independent expenditure is an expenditure made without coordination between a spender and a candidate.)</td>
+      </tr>
+      <tr id="schedule-c">
+        <td>Schedule C</td>
+        <td>
+          <span class='label label-success'>Contributions</span>
+        </td>
+        <td>A form for reporting all <strong>itemized outstanding debts and obligations</strong> of a political committee over $150</td>
+      </tr>
+      <tr id="schedule-i">
+        <td>Schedule I</td>
+        <td>
+          <span class='label label-success'>Contributions</span>
+        </td>
+        <td>A form for reporting all <strong>itemized in-kind contributions</strong> to a political committee over $150.</td>
+      </tr>
+    </tbody>
+
+  </table>
+
+  <h3 id='data-quality'>Data quality</h3>
+  <p>We make available all raw candidate, committee and contribution data from the <a href='http://www.elections.il.gov/'>Illinois State Board of Elections</a>. However, prior to July 1999, when electronic filing was introduced, much of the data is incorrect or missing. Keep this in mind when working with the data.</p>
+  <div id="quality_chart" style="height: 150px; margin: 0 auto"></div>
+
+  <h3 id='more-resources'>More resources</h3>
+  <p>Interested in learning more about campaign finance disclosure in Illinois? Here are a few useful resources:</p>
+
+  <ul>
+    <li><a href='http://www.elections.il.gov/downloads/campaigndisclosure/pdf/campdiscguide.pdf'>Official Guide to Campaign Disclosure</a> (PDF)</li>
+    <li><a href='http://www.elections.il.gov/Downloads/CampaignDisclosure/PDF/CampDiscAct.pdf'>Illinois Campaign Disclosure Act</a> (PDF)</li>
+    <li><a href='http://www.elections.il.gov/Downloads/CampaignDisclosure/PDF/Contribution%20Limits.pdf'>Illinois Campaign Financing Act - Contribution Limits</a> (PDF)</li>
+    <li><a href='http://www.elections.il.gov/CampaignDisclosure/GlossaryAE.aspx'>Campaign Disclosure Glossary</a></li>
+    <li><a href='http://www.elections.il.gov/CampaignDisclosure/faq.aspx'>Frequently Asked Questions about Campaign Disclosure</a></li>
+  </ul>
+
+  <h3 id='data'>Download the data</h3>
+
+  <p>Download Data from the Illinois State Board of Elections</p>
+
+  <p>Interested in downloading <strong>everything</strong>? We make available all the data we get from the <a href='http://www.elections.il.gov'>Illinois State Board of Elections</a> going back to 1994 in a handy zip file:</p>
+
+  <a class='btn btn-success btn-lg' href='http://il-elections.s3.amazonaws.com/IL_Elections_latest.zip'>
+    <i class='fa fa-download'></i> Download <small>(170mb zip)</small>
+  </a>
+
   <h3 id='code'>We're open source!</h3>
+
+  <p>All the code for this site is open source on <a href='https://github.com/datamade/sunshine-database-2.0'>GitHub</a>. It was built with:</p>
+
+  <ul>
+    <li><a href='http://flask.pocoo.org/'>Flask</a> - python web framework</li>
+    <li><a href='aws.amazon.com/s3/'>Amazon Web Services</a> - servers and file storage</li>
+    <li><a href='http://getbootstrap.com'>Bootstrap</a> - HTML and CSS scaffolding</li>
+    <li><a href='http://datatables.net'>Datatables</a> - searchable, sortable HTML tables</li>
+  </ul>
 
   <h3 id='team-and-credits'>Team and credits</h3>
 
+  <p>This is a project by the <a href='http://www.ilcampaign.org/'>Illinois Campaign for Political Reform</a> (ICPR) and built by <a href='http://datamade.us'>DataMade</a>.</p>
+
   <h3 id='contact-us'>Contact us</h3>
 
-  <p>
-    Notice a bug or want to contribute to this project? <a href='https://github.com/datamade/election-transcriber'>Get involved on GitHub</a>.
-  </p>
+  <p>Found a bug? Report it on our <a href='https://github.com/datamade/sunshine-database-2.0'>issue tracker</a>.</p>
+
+  <p>Have a suggestion? <a href='mailto:outreach@ilcampaign.org'>Contact ICPR</a>.</p>
 </div>
+
+{% endblock %}
+
+{% block extra_javascript %}
+
+  <script src="http://code.highcharts.com/highcharts.js"></script>
+  <script src="/static/js/quality-chart.js"></script>
+  <script>$('#disclosure-explain span').popover({trigger: "hover", placement: "top"})</script>
 
 {% endblock %}
