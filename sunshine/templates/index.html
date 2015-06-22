@@ -49,6 +49,7 @@
         <tr>
             <th>Rank</th>
             <th>Candidate</th>
+            <th>Committee(s)</th>
             <th>Campaign funds</th>
         </tr>
     </thead>
@@ -57,7 +58,8 @@
             <tr>
                 <td>{{ loop.index }}</td>
                 <td><a href="{{ url_for('views.candidate', candidate_id=record.candidate_id ) }}">{{ record.candidate_first_name }} {{ record.candidate_last_name }}</a></td>
-                <td><a href="{{ url_for('views.committee', committee_id=record.committee_id ) }}">{{ record.total|format_money }}</a></td>
+                <td><a href="{{ url_for('views.committee', committee_id=record.committee_id ) }}">{{ record.committee_name }}</a></td>
+                <td>{{ record.total|format_money }}</td>
             </tr>
         {% endfor %}
     </tbody>

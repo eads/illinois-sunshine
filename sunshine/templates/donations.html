@@ -1,8 +1,9 @@
 {% extends 'base.html' %}
-{% block title %}Recent contributions{% endblock %}
+{% block title %}Donations{% endblock %}
 {% block content %}
 
-    <h3>Recent political donations</h3>
+    <h1>Donations</h1>
+    <p>Recent political donations</p>
     <table class="table table-striped">
         <tbody>
             {% for donation in recent_donations %}
