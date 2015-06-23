@@ -3,11 +3,16 @@
 {% block content %}
 
     <h1><i class='fa fa-dollar fa-fw'></i> Donations</h1>
-    <h3>All political donations in Illinois since July 1, 1994</h3>
     <div id='donation-chart'></div>
 
     <br />
-    <h3>Donations between <strong>{{start_date.strftime('%b %d, %Y')}}</strong> and <strong>{{end_date.strftime('%b %d, %Y')}}</strong> </h3>
+    <h3>
+        Donations between <strong>{{start_date.strftime('%b %d, %Y')}}</strong> and <strong>{{end_date.strftime('%b %d, %Y')}}</strong>
+        <span class='pull-right'>
+            <a href='/donations?start_date=&end_date={{start_date.strftime('%Y-%m-%d')}}' class='btn btn-sm btn-primary'>&laquo; Prev week</a>
+            <a href='/donations?start_date={{end_date.strftime('%Y-%m-%d')}}&end_date=' class='btn btn-sm btn-primary'>Next week &raquo;</a>
+        </span>
+    </h3>
     <table class="table table-striped">
         <tbody>
             {% for donation in recent_donations %}
