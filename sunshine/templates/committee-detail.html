@@ -28,10 +28,12 @@
                 <th>Amount</th>
             </thead>
             <tbody>
-                <tr>
-                    <td>{{ latest_filing.reporting_period_end.strftime('%b %d, %Y') }} quarterly report</td>
-                    <td>{{ latest_filing.end_funds_available|format_money }}</td>
-                </tr>
+                {% if latest_filing and latest_filing.reporting_period_end %}
+                    <tr>
+                        <td>{{ latest_filing.reporting_period_end.strftime('%b %d, %Y') }} quarterly report</td>
+                        <td>{{ latest_filing.end_funds_available|format_money }}</td>
+                    </tr>
+                {% endif %}
                 <tr>
                     <td>Receipts after last quarterly report</td>
                     <td>{{ recent_total|format_money }}</td>
