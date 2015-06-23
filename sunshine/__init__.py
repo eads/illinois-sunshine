@@ -1,5 +1,5 @@
 from flask import Flask, render_template
-from sunshine.views import views
+from sunshine.views import views, cache
 from sunshine.api import api
 import locale
 from dateutil import parser
@@ -12,6 +12,7 @@ def create_app():
     app.config.from_object(config)
     app.register_blueprint(views)
     app.register_blueprint(api, url_prefix='/api')
+    cache.init_app(app)
     
     @app.errorhandler(404)
     def page_not_found(e):

@@ -20,3 +20,9 @@ FTP_PW = ''
 
 AWS_KEY = ''
 AWS_SECRET = ''
+
+# See: https://pythonhosted.org/Flask-Cache/#configuring-flask-cache
+# for config options
+CACHE_CONFIG = {
+    'CACHE_TYPE': 'simple',
+}

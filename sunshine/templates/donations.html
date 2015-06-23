@@ -3,11 +3,11 @@
 {% block content %}
 
     <h1><i class='fa fa-dollar fa-fw'></i> Donations</h1>
-    <h3>All donations in Illinois since May 1994</h3>
+    <h3>All political donations in Illinois since July 1, 1994</h3>
     <div id='donation-chart'></div>
 
     <br />
-    <h3>Donations between <strong>June 16, 2015</strong> and <strong>June 23, 2015</strong> </h3>
+    <h3>Donations between <strong>{{start_date.strftime('%b %d, %Y')}}</strong> and <strong>{{end_date.strftime('%b %d, %Y')}}</strong> </h3>
     <table class="table table-striped">
         <tbody>
             {% for donation in recent_donations %}
@@ -32,11 +32,12 @@
 
 {% block extra_javascript %}
     <script src="http://code.highcharts.com/highcharts.js"></script>
+    <script src="/static/js/moment.min.js"></script>
     <script src="/static/js/chart_helper.js"></script>
     <script>
-        var startDate = Date.UTC(2010, 5, 23)
+        var startDate = Date.UTC(1994, 6, 1)
         var money = {{ donations_by_week|tojson|safe }}
-        ChartHelper.create('donation-chart', 'Campaign donations', '', 'Donations', money, startDate, 'week', 'money', '#007F00');
+        ChartHelper.create('donation-chart', 'Campaign donations', '', 'Donations', money, startDate, 'week', 'money', '#007F00', '{{start_date}}');
     </script>
 
 {% endblock %}

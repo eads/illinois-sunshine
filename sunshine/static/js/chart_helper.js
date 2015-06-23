@@ -1,5 +1,5 @@
 var ChartHelper = {};
-ChartHelper.create = function(el, title, sourceTxt, yaxisLabel, data, startDate, pointInterval, dataType, color) {
+ChartHelper.create = function(el, title, sourceTxt, yaxisLabel, data, startDate, pointInterval, dataType, color, start_date) {
   // console.log("rendering to: #chart_" + iteration);
   // console.log("title: " + title);
   // console.log("sourceTxt: " + sourceTxt);
@@ -7,6 +7,7 @@ ChartHelper.create = function(el, title, sourceTxt, yaxisLabel, data, startDate,
   // console.log(dataArray);
   // console.log("startDate: " + startDate);
   // console.log("pointInterval: " + pointInterval);
+  console.log(start_date);
   
   var seriesData;
   seriesData = [{
@@ -14,7 +15,7 @@ ChartHelper.create = function(el, title, sourceTxt, yaxisLabel, data, startDate,
     data: data,
     showInLegend: false,
     name: "Raw",
-    lineWidth: 3
+    lineWidth: 2
   }];
 
   //$("#charts").append("<div class='chart' id='chart_grouping_" + iteration + "'></div>")
@@ -42,10 +43,22 @@ ChartHelper.create = function(el, title, sourceTxt, yaxisLabel, data, startDate,
           type: "datetime"
       },
       yAxis: {
-          title: null
+          title: null,
+          min: 0
       },
       plotOptions: {
         series: {
+          point: {
+            events: {
+              click: function() {
+                var start_date = moment.utc(new Date(this.x)).format('YYYY-MM-DD');
+                var end_date = moment.utc(new Date(this.x)).add(7, 'days').format('YYYY-MM-DD');
+                console.log(start_date);
+                console.log(end_date);
+                window.location.href = '/donations?start_date=' + start_date + '&end_date=' + end_date;
+              }
+            }
+          },
           marker: {
             fillColor: color,
             radius: 0,
@@ -61,7 +74,7 @@ ChartHelper.create = function(el, title, sourceTxt, yaxisLabel, data, startDate,
           shadow: false,
           states: {
              hover: {
-                lineWidth: 3
+                lineWidth: 2
              }
           }
         }
@@ -74,9 +87,9 @@ ChartHelper.create = function(el, title, sourceTxt, yaxisLabel, data, startDate,
               if (dataType == 'percent')
                 s += "<br /><span style='color: " + point.series.color + "'>" + point.series.name + ":</span> " + point.y + "%";
               else if (dataType == 'money')
-                s += "<br /><span style='color: " + point.series.color + "'>" + point.series.name + ":</span> $" + Highcharts.numberFormat(point.y, 0);
+                s += "<br /><span style='color: " + point.series.color + "'>" + point.series.name + ":</span> $" + Highcharts.numberFormat(point.y, 0, '.', ',');
               else
-                s += "<br /><span style='color: " + point.series.color + "'>" + point.series.name + ":</span> " + Highcharts.numberFormat(point.y, 0);
+                s += "<br /><span style='color: " + point.series.color + "'>" + point.series.name + ":</span> " + Highcharts.numberFormat(point.y, 0, '.', ',');
             });
             return s;
           },

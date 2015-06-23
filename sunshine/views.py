@@ -1,16 +1,27 @@
 from flask import Blueprint, render_template, abort, request, make_response
+from flask.ext.cache import Cache
 from sunshine.database import db_session
 from sunshine.models import Candidate, Committee, Receipt, FiledDoc, Expenditure
+from sunshine.app_config import CACHE_CONFIG
 import sqlalchemy as sa
 import json
 from datetime import datetime, timedelta
 from itertools import groupby
 from operator import attrgetter
-
+from dateutil.parser import parse
 
 views = Blueprint('views', __name__)
+cache = Cache(config=CACHE_CONFIG)
+CACHE_TIMEOUT = 60*60*6
+
+def make_cache_key(*args, **kwargs):
+    path = request.path
+    args = str(hash(frozenset(request.args.items())))
+    # print 'cache_key:', (path+args)
+    return (path + args).encode('utf-8')
 
 @views.route('/')
+@cache.cached(timeout=CACHE_TIMEOUT, key_prefix=make_cache_key)
 def index():
     two_days_ago = datetime.now() - timedelta(days=3)
     
@@ -41,14 +52,22 @@ def index():
                            top_five=top_five)
 
 @views.route('/donations')
+@cache.cached(timeout=CACHE_TIMEOUT, key_prefix=make_cache_key)
 def donations():
 
-    # add pagination
-    seven_days_ago = datetime.now() - timedelta(days=8)
+    start_date = datetime.now().date() - timedelta(days=8)
+    end_date = datetime.now().date()
+
+    if request.args.get('start_date'):
+      start_date = parse(request.args.get('start_date'))
+    
+    if request.args.get('end_date'):
+      end_date = parse(request.args.get('end_date'))
     
     recent_donations = db_session.query(Receipt)\
                                  .join(FiledDoc, Receipt.filed_doc_id == FiledDoc.id)\
-                                 .filter(Receipt.received_date >= seven_days_ago)\
+                                 .filter(Receipt.received_date >= start_date)\
+                                 .filter(Receipt.received_date <= end_date)\
                                  .order_by(FiledDoc.received_datetime.desc())
     
     donations_by_week = ''' 
@@ -56,7 +75,7 @@ def donations():
           date_trunc('week', received_date) AS week,
           SUM(amount) AS amount
         FROM receipts
-        WHERE received_date >= '2010-06-23'
+        WHERE received_date >= '1994-07-01'
         GROUP BY date_trunc('week', received_date)
         ORDER BY week
     '''
@@ -66,13 +85,16 @@ def donations():
 
     return render_template('donations.html', 
                            recent_donations=recent_donations,
-                           donations_by_week=donations_by_week)
+                           donations_by_week=donations_by_week,
+                           start_date=start_date,
+                           end_date=end_date)
 
 @views.route('/about/')
 def about():
     return render_template('about.html')
 
 @views.route('/candidates/')
+@cache.cached(timeout=CACHE_TIMEOUT, key_prefix=make_cache_key)
 def candidates():
     # add pagination
     money = '''
