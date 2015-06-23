@@ -323,10 +323,15 @@ def committee(committee_id):
     receipts_by_week = ''' 
         SELECT * FROM committee_receipts_by_week
         WHERE committee_id = :committee_id
+        ORDER BY week
     '''
 
-    receipts_by_week = engine.execute(sa.text(receipts_by_week), 
-                                      committee_id=committee_id)
+    receipts = list(engine.execute(sa.text(receipts_by_week), 
+                                      committee_id=committee_id))
+
+    receipts_by_week = [d.total_amount for d in receipts]
+
+    oldest_week = min([d.week for d in receipts])
 
     return render_template('committee-detail.html', 
                            committee=committee, 
@@ -336,7 +341,8 @@ def committee(committee_id):
                            recent_total=recent_total,
                            latest_filing=latest_filing,
                            controlled_amount=controlled_amount,
-                           receipts_by_week=receipts_by_week)
+                           receipts_by_week=receipts_by_week,
+                           oldest_week=oldest_week)
 
 @views.route('/contributions/')
 def contributions():
