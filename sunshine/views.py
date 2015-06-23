@@ -317,8 +317,11 @@ def committee(committee_id):
     
     related_committees = list(engine.execute(sa.text(related_committees),**params))
 
+    current_officers = [officer for officer in committee.officers if officer.current]
+
     return render_template('committee-detail.html', 
                            committee=committee, 
+                           current_officers=current_officers,
                            related_committees=related_committees,
                            recent_receipts=recent_receipts,
                            recent_total=recent_total,

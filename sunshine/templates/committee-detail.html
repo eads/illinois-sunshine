@@ -2,10 +2,10 @@
 {% block title %}{{ committee.name }}{% endblock %}
 {% block content %}
 <div class="row">
-    <div class="col-sm-12">
+    <div class="col-sm-8">
         <h1>
             {{ committee.name }}
-            <small>{{ committee.type }}</small>
+            <small>{{ committee.type }} Committee</small>
         </h1>
         <p>
             {{ committee.address1 }}
@@ -20,116 +20,119 @@
             {{ committee.state }}
             {{ committee.zipcode }}
         </p>
-        <h3>Total money: {% if controlled_amount %}{{ controlled_amount|format_money }}{% else %}$0{% endif %}</h3>
-        <p>{{ money }}</p>
-        <hr />
-        <h3>Officers</h3>
-        <table class="table table-bordered table-condensed">
+
+        <h3>Funds controlled: {% if controlled_amount %}{{ controlled_amount|format_money }}{% else %}$0{% endif %}</h3>
+        <table class="table table-striped">
             <thead>
-                <th>Name</th>
-                <th>Title</th>
-                <th>Current member</th>
+                <th>Funds report</th>
+                <th>Amount</th>
             </thead>
             <tbody>
-                {% for officer in committee.officers %}
-                    <tr>
-                        <td>{{ officer.first_name }} {{ officer.last_name }}</a></td>
-                        <td>{{ officer.title }}</td>
-                        <td>{{ officer.current }}</td>
-                    </tr>
-                {% endfor %}
+                <tr>
+                    <td>{{ latest_filing.reporting_period_end.strftime('%b %d, %Y') }} quarterly report</td>
+                    <td>{{ latest_filing.end_funds_available|format_money }}</td>
+                </tr>
+                <tr>
+                    <td>Receipts after last quarterly report</td>
+                    <td>{{ recent_total|format_money }}</td>
+                </tr>
             </tbody>
+            <tfoot>
+                <tr>
+                    <td><strong>Total funds</strong></td>
+                    <td><strong>{% if controlled_amount %}{{ controlled_amount|format_money }}{% else %}$0{% endif %}</strong></td>
+                </tr>
+            </tfoot>
         </table>
-        {% if committee.candidates %}
-            <h3>
-                Supported candidates
-            </h3>
-            <table class="table table-bordered table-condensed">
-                <thead>
-                    <th>Name</th>
-                    <th>Office</th>
-                </thead>
-                <tbody>
-                    {% for candidate in committee.candidates %}
-                        <tr>
-                            <td><a href="{{ url_for('views.candidate', candidate_id=candidate.id )}}">{{ candidate.first_name }} {{ candidate.last_name }}</a></td>
-                            <td>{{ candidate.office }}</td>
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
 
-        {% endif %}
         {% if related_committees %}
-            <h3>
-                Related committees
-            </h3>
-            <table class="table table-bordered table-condensed">
-                <thead>
-                    <th>Name</th>
-                    <th>Committee type</th>
-                    <th>Money controlled</th>
-                    <th>Reason for relation</th>
-                </thead>
-                <tbody>
-                    {% for committee in related_committees %}
-                        <tr>
-                            <td><a href="{{ url_for('views.committee', committee_id=committee.id )}}">{{ committee.name }}</a></td>
-                            <td>{{ committee.type if committee.type else '' }}</td>
-                            <td>{{ committee.money|format_money if committee.money else ''}}</td>
-                            <td>{{ committee.reason }}</td>
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+                <h3>
+                    Related committees
+                </h3>
+                <table class="table table-striped">
+                    <thead>
+                        <th>Name</th>
+                        <th>Committee type</th>
+                        <th>Funds controlled</th>
+                        <th>Reason for relation</th>
+                    </thead>
+                    <tbody>
+                        {% for committee in related_committees %}
+                            <tr>
+                                <td><a href="{{ url_for('views.committee', committee_id=committee.id )}}">{{ committee.name }}</a></td>
+                                <td>{{ committee.type if committee.type else '' }}</td>
+                                <td>{{ committee.money|format_money if committee.money else ''}}</td>
+                                <td>{{ committee.reason }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
 
-        {% endif %}
-        {% if latest_filing.end_funds_available %}
-            <h3>Latest report filed</h3>
-            <table class="table table-bordered table-condensed">
-                <thead>
-                    <th>Ending funds</th>
-                    <th>Reporting period begin</th>
-                    <th>Reporting period end</th>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>{{ latest_filing.end_funds_available|format_money }}</td>
-                        <td>{{ latest_filing.reporting_period_begin }}</td>
-                        <td>{{ latest_filing.reporting_period_end }}</td>
-                    </tr>
-                </tbody>
-            </table>
-        {% endif %}
+            {% endif %}
+
         {% if recent_receipts %}
             <h3>
                 Receipts after last quarterly report
                 <small>({{ recent_total|format_money }} Total)</small>
             </h3>
-            <table class="table table-bordered table-condensed">
-                <thead>
-                    <th>Report type</th>
-                    <th>Donor</th>
-                    <th>Amount</th>
-                    <th>Received date</th>
-                </thead>
+            <table class="table table-striped">
                 <tbody>
                     {% for receipt in recent_receipts|sort(attribute='received_datetime', reverse=True) %}
                         <tr>
-                            <td><a href="{{ url_for('views.contribution', receipt_id=receipt.id )}}">{{ receipt.doc_name }}</a></td>
                             <td>
                                 {% if receipt.first_name %}
                                     {{ receipt.first_name }}
                                 {% endif %}
                                 {{ receipt.last_name }}
                             </td>
-                            <td>{{ receipt.amount|format_money }}</td>
-                            <td>{{ receipt.received_datetime }}</td>
+                            <td class='nowrap'>
+                                <a href="{{ url_for('views.contribution', receipt_id=receipt.id )}}">donated <strong>{{ receipt.amount|format_money }}</strong></a>
+                            </td>
+                            <td class='nowrap'>
+                                on {{ receipt.received_datetime.strftime('%b %d, %Y') }}
+                            </td>
                         </tr>
                     {% endfor %}
                 </tbody>
             </table>
         {% endif %}
+    </div>
+    <div class='col-sm-4'>
+        <div class='well'>
+            {% if committee.candidates %}
+                <table class="table table-striped">
+                    <thead>
+                        <th>Supported candidate</th>
+                        <th>Office</th>
+                    </thead>
+                    <tbody>
+                        {% for candidate in committee.candidates %}
+                            <tr>
+                                <td><a href="{{ url_for('views.candidate', candidate_id=candidate.id )}}">{{ candidate.first_name }} {{ candidate.last_name }}</a></td>
+                                <td>{{ candidate.office }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+
+            {% endif %}
+
+            <hr />
+            <table class="table table-striped">
+                <thead>
+                    <th>Officer</th>
+                    <th>Title</th>
+                </thead>
+                <tbody>
+                    {% for officer in current_officers %}
+                        <tr>
+                            <td>{{ officer.first_name }} {{ officer.last_name }}</a></td>
+                            <td>{{ officer.title }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
 
