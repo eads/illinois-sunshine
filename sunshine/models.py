@@ -223,8 +223,10 @@ class Receipt(Base):
     committee_id = sa.Column(sa.Integer, sa.ForeignKey('committees.id'))
     committee = sa.orm.relationship('Committee', backref='receipts')
     
-    filed_doc_id = sa.Column(sa.Integer, sa.ForeignKey('filed_docs.id'))
-    filed_doc = sa.orm.relationship('FiledDoc', backref='receipts')
+    # filed_doc_id = sa.Column(sa.Integer, sa.ForeignKey('filed_docs.id'))
+    # filed_doc = sa.orm.relationship('FiledDoc', backref='receipts')
+    
+    filed_doc_id = sa.Column(sa.Integer)
     
     etrans_id = sa.Column(sa.String)
     last_name = sa.Column(sa.String)
