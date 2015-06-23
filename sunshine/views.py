@@ -117,7 +117,6 @@ def candidates():
 def search():
     term = request.args.get('term')
     table_name = request.args.getlist('table_name')
-    print(table_name)
     if table_name == []:
       table_name = ['candidates', 'committees', 'officers', 'receipts']
 
