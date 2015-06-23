@@ -552,12 +552,66 @@ class SunshineViews(object):
             conn.execute('DROP MATERIALIZED VIEW IF EXISTS full_search')
 
     def makeAllViews(self):
+        self.receiptsAggregates()
         self.incumbentCandidates()
         self.mostRecentFilings()
         self.committeeMoney()
         self.candidateMoney()
         self.fullSearchView()
 
+    def receiptsAggregates(self):
+        conn = self.engine.connect()
+        trans = conn.begin()
+        try:
+            conn.execute('REFRESH MATERIALIZED VIEW receipts_by_week')
+            trans.commit()
+        except sa.exc.ProgrammingError:
+            trans.rollback()
+            conn = self.engine.connect()
+            trans = conn.begin()
+            weeks = ''' 
+                CREATE MATERIALIZED VIEW receipts_by_week AS (
+                  SELECT 
+                    date_trunc('week', received_date) AS week,
+                    SUM(amount) AS total_amount,
+                    COUNT(id) AS donation_count,
+                    AVG(amount) AS average_donation
+                  FROM receipts
+                  GROUP BY date_trunc('week', received_date)
+                  ORDER BY week
+                )
+            
+            '''
+            conn.execute(sa.text(incumbents))
+            trans.commit()
+
+    def committeeReceiptAggregates(self):
+        conn = self.engine.connect()
+        trans = conn.begin()
+        try:
+            conn.execute('REFRESH MATERIALIZED VIEW committee_receipts_by_week')
+            trans.commit()
+        except sa.exc.ProgrammingError:
+            trans.rollback()
+            conn = self.engine.connect()
+            trans = conn.begin()
+            weeks = ''' 
+                CREATE MATERIALIZED VIEW committee_receipts_by_week AS (
+                  SELECT 
+                    committee_id,
+                    date_trunc('week', received_date) AS week,
+                    SUM(amount) AS total_amount,
+                    COUNT(id) AS donation_count,
+                    AVG(amount) AS average_donation
+                  FROM receipts
+                  GROUP BY committee_id,
+                           date_trunc('week', received_date)
+                  ORDER BY week
+                )
+            
+            '''
+            conn.execute(sa.text(incumbents))
+            trans.commit()
     def incumbentCandidates(self):
         conn = self.engine.connect()
         trans = conn.begin()
