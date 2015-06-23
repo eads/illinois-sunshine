@@ -71,13 +71,7 @@ def donations():
                                  .order_by(FiledDoc.received_datetime.desc())
     
     donations_by_week = ''' 
-        SELECT 
-          date_trunc('week', received_date) AS week,
-          SUM(amount) AS amount
-        FROM receipts
-        WHERE received_date >= '1994-07-01'
-        GROUP BY date_trunc('week', received_date)
-        ORDER BY week
+        SELECT * FROM receipts_by_week
     '''
 
     engine = db_session.bind
@@ -319,6 +313,14 @@ def committee(committee_id):
 
     current_officers = [officer for officer in committee.officers if officer.current]
 
+    receipts_by_week = ''' 
+        SELECT * FROM committee_receipts_by_week
+        WHERE committee_id = :committee_id
+    '''
+
+    receipts_by_week = engine.execute(sa.text(receipts_by_week), 
+                                      committee_id=committee_id)
+
     return render_template('committee-detail.html', 
                            committee=committee, 
                            current_officers=current_officers,
@@ -326,7 +328,8 @@ def committee(committee_id):
                            recent_receipts=recent_receipts,
                            recent_total=recent_total,
                            latest_filing=latest_filing,
-                           controlled_amount=controlled_amount)
+                           controlled_amount=controlled_amount,
+                           receipts_by_week=receipts_by_week)
 
 @views.route('/contributions/')
 def contributions():

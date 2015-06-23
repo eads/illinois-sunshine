@@ -545,6 +545,10 @@ class SunshineViews(object):
 
     def dropViews(self):
         with self.engine.begin() as conn:
+            conn.execute('DROP MATERIALIZED VIEW IF EXISTS receipts_by_week')
+        with self.engine.begin() as conn:
+            conn.execute('DROP MATERIALIZED VIEW IF EXISTS committee_receipts_by_week')
+        with self.engine.begin() as conn:
             conn.execute('DROP MATERIALIZED VIEW IF EXISTS incumbent_candidates')
         with self.engine.begin() as conn:
             conn.execute('DROP MATERIALIZED VIEW IF EXISTS most_recent_filings CASCADE')
@@ -553,6 +557,7 @@ class SunshineViews(object):
 
     def makeAllViews(self):
         self.receiptsAggregates()
+        self.committeeReceiptAggregates()
         self.incumbentCandidates()
         self.mostRecentFilings()
         self.committeeMoney()
@@ -582,7 +587,7 @@ class SunshineViews(object):
                 )
             
             '''
-            conn.execute(sa.text(incumbents))
+            conn.execute(sa.text(weeks))
             trans.commit()
 
     def committeeReceiptAggregates(self):
@@ -610,8 +615,9 @@ class SunshineViews(object):
                 )
             
             '''
-            conn.execute(sa.text(incumbents))
+            conn.execute(sa.text(weeks))
             trans.commit()
+
     def incumbentCandidates(self):
         conn = self.engine.connect()
         trans = conn.begin()
