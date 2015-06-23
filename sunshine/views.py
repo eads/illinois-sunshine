@@ -15,7 +15,7 @@ def index():
     two_days_ago = datetime.now() - timedelta(days=3)
     
     recent_donations = db_session.query(Receipt)\
-                                 .join(FiledDoc)\
+                                 .join(FiledDoc, Receipt.filed_doc_id == FiledDoc.id)\
                                  .filter(Receipt.received_date >= two_days_ago)\
                                  .order_by(FiledDoc.received_datetime.desc())\
                                  .limit(10)
@@ -47,7 +47,7 @@ def donations():
     seven_days_ago = datetime.now() - timedelta(days=8)
     
     recent_donations = db_session.query(Receipt)\
-                                 .join(FiledDoc)\
+                                 .join(FiledDoc, Receipt.filed_doc_id == FiledDoc.id)\
                                  .filter(Receipt.received_date >= seven_days_ago)\
                                  .order_by(FiledDoc.received_datetime.desc())
 

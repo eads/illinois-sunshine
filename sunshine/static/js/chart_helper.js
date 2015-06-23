@@ -1,5 +1,5 @@
 var ChartHelper = {};
-ChartHelper.create = function(el, title, sourceTxt, yaxisLabel, data, startDate, pointInterval, dataType) {
+ChartHelper.create = function(el, title, sourceTxt, yaxisLabel, data, startDate, pointInterval, dataType, color) {
   // console.log("rendering to: #chart_" + iteration);
   // console.log("title: " + title);
   // console.log("sourceTxt: " + sourceTxt);
@@ -10,7 +10,7 @@ ChartHelper.create = function(el, title, sourceTxt, yaxisLabel, data, startDate,
   
   var seriesData;
   seriesData = [{
-    color: "#c30c30",
+    color: color,
     data: data,
     showInLegend: false,
     name: "Raw",
@@ -47,7 +47,7 @@ ChartHelper.create = function(el, title, sourceTxt, yaxisLabel, data, startDate,
       plotOptions: {
         series: {
           marker: {
-            fillColor: "#c30c30",
+            fillColor: color,
             radius: 0,
             states: {
               hover: {

@@ -32,7 +32,7 @@
                     <a href="{{ url_for('views.committee', committee_id=donation.committee_id )}}">{{ donation.committee.name }}</a>
                 </td>
                 <td>
-                    on {{ donation.filed_doc.received_datetime.strftime('%b %d, %Y at %-I:%M%p') }}
+                    on {{ donation.received_date.strftime('%b %d, %Y') }}
                 </td>
             </tr>
         {% endfor %}
