@@ -116,7 +116,12 @@ def candidates():
 @views.route('/search/')
 def search():
     term = request.args.get('term')
-    return render_template('search.html', term=term)
+    table_name = request.args.getlist('table_name')
+    print(table_name)
+    if table_name == []:
+      table_name = ['candidates', 'committees', 'officers', 'receipts']
+
+    return render_template('search.html', term=term, table_name=table_name)
 
 @views.route('/candidates/<candidate_id>/')
 def candidate(candidate_id):

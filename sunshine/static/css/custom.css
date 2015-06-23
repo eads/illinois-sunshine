@@ -18,7 +18,7 @@ table, label,.control-label,.help-block,.checkbox,.radio { font-size: 14px; }
 
 #filter-results label { padding-right: 15px;}
 
-#search-results { min-height: 400px; }
+#search-results { min-height: 300px; }
 
 #donation-chart { height: 250px;}
 

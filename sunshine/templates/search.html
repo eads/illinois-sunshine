@@ -6,9 +6,9 @@
         <h1>
             <i class='fa fa-search'></i> Search
         </h1>
-        <form>
+        <form method='GET'>
             <div class="input-group input-group-lg">
-                <input type="text" class="form-control" placeholder="Search for candidates, committees and donors in Illinois" name="term" {% if term %}value="{{term}}"{% endif %}>
+                <input type="text" class="form-control" placeholder="Search for candidates, committees and donors in Illinois" id="term" name="term" {% if term %}value="{{term}}"{% endif %}>
                 <span class="input-group-btn">
                     <button class="btn btn-default" type="submit"><i class='fa fa-search'></i> Search</button>
                 </span>
@@ -17,22 +17,16 @@
                 <br />
                 <span>Filter by result type:</span>
                 <label data-title='Candidates' data-content='Any person who seeks nomination for election, election to, or retention in public office'>
-                    <input type="checkbox" name="table_name" value="candidates" checked='checked'> Candidates
+                    <input type="checkbox" name="table_name" value="candidates" {% if 'candidates' in table_name %}checked='checked'{% endif %}> Candidates
                 </label>
                 <label data-title='Committees' data-content='Includes committees for political candidates, political parties, political action committees (PACs), and ballot initiatives'>
-                    <input type="checkbox" name="table_name" value="committees" checked='checked'> Committees
+                    <input type="checkbox" name="table_name" value="committees" {% if 'committees' in table_name %}checked='checked'{% endif %}> Committees
                 </label>
                 <label data-title='Committee officers' data-content='Chairmen and treasurerers for political committees'>
-                    <input type="checkbox" name="table_name" value="officers" checked='checked'> Committee officers
+                    <input type="checkbox" name="table_name" value="officers" {% if 'officers' in table_name %}checked='checked'{% endif %}> Committee officers
                 </label>
                 <label data-title='Donors' data-content='Any person or organization who has given to a political committee'>
-                    <input type="checkbox" name="table_name" value="receipts" checked='checked'> Donors
-                </label>
-                <label data-title='Expenditures' data-content='Any payment, distribution, purchase, loan, advance, deposit, gift of money or anything of value, or any transfer of funds between political committees, made to support or oppose a candidate or proposition'>
-                    <input type="checkbox" name="table_name" value="expenditures" checked='checked'> Expenditures
-                </label>
-                <label data-title='Investments' data-content='Funds invested by political committees'>
-                    <input type="checkbox" name="table_name" value="investments" checked='checked'> Investments
+                    <input type="checkbox" name="table_name" value="receipts" {% if 'receipts' in table_name %}checked='checked'{% endif %}> Donors
                 </label>
             </div>
         </form>
@@ -259,13 +253,13 @@
 
         $('#filter-results label').popover({trigger: "hover", placement: "bottom"});
 
-        $('form').on('submit', function(e){
-            $('#search-results').empty();
-            $('#search-results').spin('large')
-            e.preventDefault();
-            var params = $(this).serialize();
-            do_query(params);
-        });
+        // $('form').on('submit', function(e){
+        //     $('#search-results').empty();
+        //     $('#search-results').spin('large')
+        //     e.preventDefault();
+        //     var params = $(this).serialize();
+        //     do_query(params);
+        // });
 
         {% if term != None %}
             $('#search-results').spin('large');
@@ -281,6 +275,8 @@
                     var template = new EJS({'text': template_guts});
                     $('#search-results').append(template.render({'results': results}));
                 })
+                if (resp.objects.length == 0)
+                    $('#search-results').html("<h3>No results found for '" + $("#term").val() + "'</h3>")
             }
         )
     }
