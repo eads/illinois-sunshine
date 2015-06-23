@@ -20,7 +20,7 @@ def index():
                                  .order_by(FiledDoc.received_datetime.desc())\
                                  .limit(10)
     
-    top_ten = ''' 
+    top_five = ''' 
         SELECT * FROM (
           SELECT DISTINCT ON(candidate_first_name, candidate_last_name)
             * 
@@ -34,14 +34,16 @@ def index():
     '''
     
     engine = db_session.bind
-    top_ten = engine.execute(sa.text(top_ten))
+    top_five = engine.execute(sa.text(top_five))
 
     return render_template('index.html', 
                            recent_donations=recent_donations,
-                           top_ten=top_ten)
+                           top_ten=top_five)
 
 @views.route('/donations')
 def donations():
+
+    # add pagination
     seven_days_ago = datetime.now() - timedelta(days=8)
     
     recent_donations = db_session.query(Receipt)\
@@ -58,6 +60,7 @@ def about():
 
 @views.route('/candidates/')
 def candidates():
+    # add pagination
     money = '''
         SELECT * FROM (
           SELECT DISTINCT ON(candidate_first_name, candidate_last_name)

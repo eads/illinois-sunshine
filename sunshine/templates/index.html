@@ -54,7 +54,7 @@
         </tr>
     </thead>
     <tbody>
-        {% for record in top_ten %}
+        {% for record in top_five %}
             <tr>
                 <td>{{ loop.index }}</td>
                 <td><a href="{{ url_for('views.candidate', candidate_id=record.candidate_id ) }}">{{ record.candidate_first_name }} {{ record.candidate_last_name }}</a></td>

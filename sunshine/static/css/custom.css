@@ -20,6 +20,8 @@ table, label,.control-label,.help-block,.checkbox,.radio { font-size: 14px; }
 
 #search-results { min-height: 400px; }
 
+#donation-chart { height: 250px;}
+
 .navbar-default {
   height: 60px;
   background-color: #FFCB08;
