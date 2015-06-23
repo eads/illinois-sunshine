@@ -38,7 +38,7 @@ def index():
 
     return render_template('index.html', 
                            recent_donations=recent_donations,
-                           top_ten=top_five)
+                           top_five=top_five)
 
 @views.route('/donations')
 def donations():
