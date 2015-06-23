@@ -55,7 +55,7 @@ def index():
 @cache.cached(timeout=CACHE_TIMEOUT, key_prefix=make_cache_key)
 def donations():
 
-    start_date = datetime.now().date() - timedelta(days=8)
+    start_date = datetime.now().date() - timedelta(days=7)
     end_date = datetime.now().date()
 
     if request.args.get('start_date'):
@@ -63,6 +63,10 @@ def donations():
     
     if request.args.get('end_date'):
       end_date = parse(request.args.get('end_date'))
+
+    prev_week_date = start_date - timedelta(days=7)
+    next_week_date = end_date + timedelta(days=7)
+    is_current = (end_date == datetime.now().date())
     
     recent_donations = db_session.query(Receipt)\
                                  .join(FiledDoc, Receipt.filed_doc_id == FiledDoc.id)\
@@ -75,13 +79,16 @@ def donations():
     '''
 
     engine = db_session.bind
-    donations_by_week = [d.amount for d in engine.execute(donations_by_week)]
+    donations_by_week = [d.total_amount for d in engine.execute(donations_by_week)]
 
     return render_template('donations.html', 
                            recent_donations=recent_donations,
                            donations_by_week=donations_by_week,
                            start_date=start_date,
-                           end_date=end_date)
+                           end_date=end_date,
+                           prev_week_date=prev_week_date,
+                           next_week_date=next_week_date,
+                           is_current=is_current)
 
 @views.route('/about/')
 def about():

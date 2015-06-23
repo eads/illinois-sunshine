@@ -9,8 +9,10 @@
     <h3>
         Donations between <strong>{{start_date.strftime('%b %d, %Y')}}</strong> and <strong>{{end_date.strftime('%b %d, %Y')}}</strong>
         <span class='pull-right'>
-            <a href='/donations?start_date=&end_date={{start_date.strftime('%Y-%m-%d')}}' class='btn btn-sm btn-primary'>&laquo; Prev week</a>
-            <a href='/donations?start_date={{end_date.strftime('%Y-%m-%d')}}&end_date=' class='btn btn-sm btn-primary'>Next week &raquo;</a>
+            <a href='/donations?start_date={{prev_week_date.strftime('%Y-%m-%d')}}&end_date={{start_date.strftime('%Y-%m-%d')}}' class='btn btn-sm btn-primary'>&laquo; Prev week</a>
+            {% if not is_current %}
+                <a href='/donations?start_date={{end_date.strftime('%Y-%m-%d')}}&end_date={{next_week_date.strftime('%Y-%m-%d')}}' class='btn btn-sm btn-primary'>Next week &raquo;</a>
+            {% endif %}
         </span>
     </h3>
     <table class="table table-striped">

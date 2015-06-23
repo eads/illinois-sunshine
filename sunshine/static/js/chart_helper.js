@@ -47,6 +47,9 @@ ChartHelper.create = function(el, title, sourceTxt, yaxisLabel, data, startDate,
           min: 0
       },
       plotOptions: {
+        line: {
+          animation: false
+        },
         series: {
           point: {
             events: {
