@@ -33,8 +33,9 @@
     <script src="http://code.highcharts.com/highcharts.js"></script>
     <script src="/static/js/chart_helper.js"></script>
     <script>
-        var startDate = Date.UTC(1994, 0, 15)
-        ChartHelper.create('donation-chart', 'Campaign donations', '', 'Donations', [60,50,40,30,20,20,20,20,10,60,100], startDate, 'week', 'money', '#007F00');
+        var startDate = Date.UTC(2010, 5, 23)
+        var money = {{ donations_by_week|tojson|safe }}
+        ChartHelper.create('donation-chart', 'Campaign donations', '', 'Donations', money, startDate, 'week', 'money', '#007F00');
     </script>
 
 {% endblock %}

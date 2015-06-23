@@ -50,9 +50,23 @@ def donations():
                                  .join(FiledDoc, Receipt.filed_doc_id == FiledDoc.id)\
                                  .filter(Receipt.received_date >= seven_days_ago)\
                                  .order_by(FiledDoc.received_datetime.desc())
+    
+    donations_by_week = ''' 
+        SELECT 
+          date_trunc('week', received_date) AS week,
+          SUM(amount) AS amount
+        FROM receipts
+        WHERE received_date >= '2010-06-23'
+        GROUP BY date_trunc('week', received_date)
+        ORDER BY week
+    '''
+
+    engine = db_session.bind
+    donations_by_week = [d.amount for d in engine.execute(donations_by_week)]
 
     return render_template('donations.html', 
-                           recent_donations=recent_donations)
+                           recent_donations=recent_donations,
+                           donations_by_week=donations_by_week)
 
 @views.route('/about/')
 def about():
