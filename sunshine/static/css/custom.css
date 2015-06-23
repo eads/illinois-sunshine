@@ -16,6 +16,10 @@ table, label,.control-label,.help-block,.checkbox,.radio { font-size: 14px; }
   animation: fa-spin 12s infinite linear;
 }
 
+#filter-results label { padding-right: 15px;}
+
+#search-results { min-height: 400px; }
+
 .navbar-default {
   height: 60px;
   background-color: #FFCB08;
@@ -33,6 +37,8 @@ table, label,.control-label,.help-block,.checkbox,.radio { font-size: 14px; }
   font-family: "Muli",sans-serif;
   font-size: 20px;
 }
+
+.navbar-default .navbar-brand:hover { color: #000; }
 
 .navbar-default .navbar-nav > li > a:hover { color: #000; } 
 

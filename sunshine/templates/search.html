@@ -7,76 +7,34 @@
             Search
         </h1>
         <form>
-            <div class="form-group">
-                <input type="text" class="form-control" name="term" placeholder="Search term" {% if term %}value="{{term}}"{% endif %}>
+            <div class="input-group input-group-lg">
+                <input type="text" class="form-control" placeholder="Search for candidates, committees and donors in Illinois" name="term" {% if term %}value="{{term}}"{% endif %}>
+                <span class="input-group-btn">
+                    <button class="btn btn-default" type="submit"><i class='fa fa-search'></i> Search</button>
+                </span>
             </div>
-            <div class="form-group">
-                <p>Filter by result type:</p>
-                <label>
-                    <input type="checkbox" name="table_name" value="candidates" checked='checked'> Candidates - <small>Any person who seeks nomination for election, election to, or retention in public office</small>
-                </label><br />
-                <label>
-                    <input type="checkbox" name="table_name" value="committees" checked='checked'> Committees - <small>Includes committees for political candidates, political parties, political action committees (PACs), and ballot initiatives</small>
-                </label><br />
-                <label>
-                    <input type="checkbox" name="table_name" value="officers" checked='checked'> Committee officers - <small>Chairmen and treasurerers for political committees</small>
-                </label><br />
-                <label>
-                    <input type="checkbox" name="table_name" value="receipts" checked='checked'> Donors - <small>Any person or organization who has given to a political committee</small>
-                </label><br />
-                <label>
-                    <input type="checkbox" name="table_name" value="expenditures" checked='checked'> Expenditures - <small>any payment, distribution, purchase, loan, advance, deposit, gift of money or anything of value, or any transfer of funds between political committees, made to support or oppose a candidate or proposition</small>
-                </label><br />
-                <label>
-                    <input type="checkbox" name="table_name" value="investments" checked='checked'> Investments - <small>funds invested by political committees</small>
+            <div class="form-group" id='filter-results'>
+                <br />
+                <span>Filter by result type:</span>
+                <label data-title='Candidates' data-content='Any person who seeks nomination for election, election to, or retention in public office'>
+                    <input type="checkbox" name="table_name" value="candidates" checked='checked'> Candidates
+                </label>
+                <label data-title='Committees' data-content='Includes committees for political candidates, political parties, political action committees (PACs), and ballot initiatives'>
+                    <input type="checkbox" name="table_name" value="committees" checked='checked'> Committees
+                </label>
+                <label data-title='Committee officers' data-content='Chairmen and treasurerers for political committees'>
+                    <input type="checkbox" name="table_name" value="officers" checked='checked'> Committee officers
+                </label>
+                <label data-title='Donors' data-content='Any person or organization who has given to a political committee'>
+                    <input type="checkbox" name="table_name" value="receipts" checked='checked'> Donors
+                </label>
+                <label data-title='Expenditures' data-content='Any payment, distribution, purchase, loan, advance, deposit, gift of money or anything of value, or any transfer of funds between political committees, made to support or oppose a candidate or proposition'>
+                    <input type="checkbox" name="table_name" value="expenditures" checked='checked'> Expenditures
+                </label>
+                <label data-title='Investments' data-content='Funds invested by political committees'>
+                    <input type="checkbox" name="table_name" value="investments" checked='checked'> Investments
                 </label>
             </div>
-            <!-- <div class="form-group">
-                <div class="row">
-                    <div class="col-sm-6">
-                        <label for="election_type">Election type</label>
-                        <select class="form-control" name="election_type">
-                            <option value="">------</option>
-                            <option value="General Election">General Election</option>
-                            <option value="General Primary">General Primary</option>
-                            <option value="Consolidated Election">Consolidated Election</option>
-                            <option value="Consolidated Primary">Consolidated Primary</option>
-                            <option value="Special Primary">Special Primary</option>
-                        </select>
-                    </div>
-                    <div class="col-sm-6">
-                        <label for="election_year">Election year</label>
-                        <select class="form-control" name="election_year">
-                            <option value="">------</option>
-                            {% for year in range(2018, 1979, -1)%}
-                                {% if year == now.year %}
-                                    <option value="{{ year }}" selected=true>{{ year }}</option>
-                                {% else %}
-                                    <option value="{{ year }}">{{ year }}</option>
-                                {% endif %}
-                            {% endfor %}
-                        </select>
-                    </div>
-                </div>
-            </div>
-            <div class="form-group">
-                <div class="row">
-                    <div class="col-sm-3">
-                        <label for="contribution_operator">Operator</label>
-                        <select class="form-control" name="contribution_operator">
-                            <option value="">------</option>
-                            <option value="greater_than">Greater than</option>
-                            <option value="less_than">Less than</option>
-                            <option value="equal_to">Equal to</option>
-                        </select>
-                    </div>
-                    <div class="col-sm-9">
-                        <label for="contribution_amount">Contribution amount</label>
-                        <input type="text" class="form-control" name="contribution_amount" placeholder="">
-                    </div>
-                </div>
-            </div> -->
-            <button type="submit" class="btn btn-default"><i class='fa fa-search'></i> Search</button>
         </form>
     </div>
 </div>
@@ -95,6 +53,7 @@
     <script src="{{ url_for('static', filename='js/jquery.spin.js') }}"></script>
     <script src="{{ url_for('static', filename='js/ejs_production.js') }}"></script>
     <script src="{{ url_for('static', filename='js/accounting.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/moment.min.js') }}"></script>
     <script type="text/EJS" id="committeesResult">
         <div class="search-result">
             <p><strong><%= results.name %></strong> (<%= results.table_name %>)</p>
@@ -188,7 +147,7 @@
                             <%= accounting.formatMoney(record.amount) %>
                         </td>
                         <td>
-                            <%= record.received_date %>
+                            <%= moment(record.received_date).format('MMM D, YYYY') %>
                         </td>
                     </tr>
                 <% }) %>
@@ -223,7 +182,7 @@
                             <%= record.current %>
                         </td>
                         <td>
-                            <%= record.resign_date %>
+                            <%= moment(record.resign_date).format('MMM D, YYYY') %>
                         </td>
                     </tr>
                 <% }) %>
@@ -256,7 +215,7 @@
                             </a>
                         </td>
                         <td>
-                            <%= record.expended_date %>
+                            <%= moment(record.expended_date).format('MMM D, YYYY') %>
                         </td>
                     </tr>
                 <% }) %>
@@ -297,6 +256,9 @@
     </script>
 <script type="text/javascript">
     $(document).ready(function(){
+
+        $('#filter-results label').popover({trigger: "hover", placement: "bottom"});
+
         $('form').on('submit', function(e){
             $('#search-results').empty();
             $('#search-results').spin('large')
@@ -304,13 +266,11 @@
             var params = $(this).serialize();
             do_query(params);
         });
-        // Need to figure this out so that it doesn't trigger all the time.
-        //
-        if ('{{term}}' != ''){
-            var params = 'term={{term}}';
+
+        {% if term != None %}
             $('#search-results').spin('large');
-            do_query(params);
-        }
+            do_query('term={{term}}');
+        {% endif %}
     })
     function do_query(params){
         $.when($.getJSON("{{ url_for('api.advanced_search') }}" + '?' + params)).then(
