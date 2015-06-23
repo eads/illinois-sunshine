@@ -231,7 +231,7 @@ class Receipt(Base):
     etrans_id = sa.Column(sa.String)
     last_name = sa.Column(sa.String)
     first_name = sa.Column(sa.String)
-    received_date = sa.Column(sa.DateTime)
+    received_date = sa.Column(sa.DateTime, index=True)
     amount = sa.Column(DOUBLE_PRECISION)
     aggregate_amount = sa.Column(DOUBLE_PRECISION)
     loan_amount = sa.Column(DOUBLE_PRECISION)

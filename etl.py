@@ -869,6 +869,7 @@ class SunshineIndexes(object):
 
     def makeAllIndexes(self):
         self.fullSearchIndex()
+        self.receiptsDate()
 
     def fullSearchIndex(self):
         ''' 
@@ -877,6 +878,22 @@ class SunshineIndexes(object):
         index = ''' 
             CREATE INDEX name_index ON full_search
             USING gin(to_tsvector('english', name))
+        '''
+        conn = self.engine.connect()
+        trans = conn.begin()
+        try:
+            conn.execute(index)
+            trans.commit()
+        except sa.exc.ProgrammingError as e:
+            trans.rollback()
+            return
+
+    def receiptsDate(self):
+        ''' 
+        Make index on received_date for receipts
+        '''
+        index = ''' 
+            CREATE INDEX received_date_idx ON receipts (received_date)
         '''
         conn = self.engine.connect()
         trans = conn.begin()
