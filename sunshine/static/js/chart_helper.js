@@ -1,5 +1,5 @@
 var ChartHelper = {};
-ChartHelper.create = function(el, title, sourceTxt, yaxisLabel, data, startDate, pointInterval, dataType, color, start_date, chart_type) {
+ChartHelper.donations = function(el, title, sourceTxt, yaxisLabel, data, startDate, pointInterval, start_date) {
   // console.log("rendering to: #chart_" + iteration);
   // console.log("title: " + title);
   // console.log("sourceTxt: " + sourceTxt);
@@ -16,37 +16,19 @@ ChartHelper.create = function(el, title, sourceTxt, yaxisLabel, data, startDate,
 
   var color = '#007F00';
   
-  var seriesData;
-  if (data[1].length == 0) {
-    seriesData = [{
-          color: color,
-          data: data[0],
-          name: title,
-          showInLegend: false,
-          lineWidth: 2
-      }];
-  }
-  else {
-    seriesData = [{
-          color: color,
-          data: data[0],
-          name: "Donations",
-          lineWidth: 2
-        }, {
-          color: "#cc0000",
-          data: data[1],
-          name: "Expenditures",
-          lineWidth: 2
-        }
-      ]
-
-  }
+  var seriesData = [{
+      color: color,
+      data: data,
+      name: title,
+      showInLegend: false,
+      lineWidth: 2
+  }];
 
   //$("#charts").append("<div class='chart' id='chart_grouping_" + iteration + "'></div>")
   return new Highcharts.Chart({
       chart: {
           renderTo: el,
-          type: chart_type,
+          type: "line",
           marginRight: 10,
           marginBottom: 25
       },
@@ -54,9 +36,7 @@ ChartHelper.create = function(el, title, sourceTxt, yaxisLabel, data, startDate,
         backgroundColor: "#ffffff",
         borderColor: "#cccccc",
         floating: true,
-        verticalAlign: "top",
-        x: 20,
-        y: 170
+        verticalAlign: "top"
       },
       credits: { 
         enabled: false 
@@ -67,14 +47,14 @@ ChartHelper.create = function(el, title, sourceTxt, yaxisLabel, data, startDate,
           type: "datetime"
       },
       yAxis: {
-          title: null
+          title: null,
+          min: 0
       },
       plotOptions: {
         line: {
           animation: false
         },
         series: {
-          stacking: 'normal',
           point: {
             events: {
               click: function() {
@@ -111,12 +91,89 @@ ChartHelper.create = function(el, title, sourceTxt, yaxisLabel, data, startDate,
           formatter: function() {
             var s = "<strong>" + ChartHelper.toolTipDateFormat(pointInterval, this.x) + "</strong>";
             $.each(this.points, function(i, point) {
-              if (dataType == 'percent')
-                s += "<br /><span style='color: " + point.series.color + "'>" + point.series.name + ":</span> " + point.y + "%";
-              else if (dataType == 'money')
-                s += "<br /><span style='color: " + point.series.color + "'>" + point.series.name + ":</span> $" + Highcharts.numberFormat(point.y, 0, '.', ',');
-              else
-                s += "<br /><span style='color: " + point.series.color + "'>" + point.series.name + ":</span> " + Highcharts.numberFormat(point.y, 0, '.', ',');
+              s += "<br /><span style='color: " + point.series.color + "'>" + point.series.name + ":</span> $" + Highcharts.numberFormat(point.y, 0, '.', ',');
+            });
+            return s;
+          },
+          shared: true
+      },
+      series: seriesData
+    });
+  }
+
+ChartHelper.netfunds = function(el, title, sourceTxt, yaxisLabel, data, startDate, pointInterval) {
+  var color = '#007F00';
+  
+  var seriesData = [{
+          color: color,
+          data: data[0],
+          name: "Donations",
+          lineWidth: 2
+        }, {
+          color: "#cc0000",
+          data: data[1],
+          name: "Expenditures",
+          lineWidth: 2
+        }
+      ]
+
+  //$("#charts").append("<div class='chart' id='chart_grouping_" + iteration + "'></div>")
+  return new Highcharts.Chart({
+      chart: {
+          renderTo: el,
+          type: "column",
+          marginRight: 10,
+          marginBottom: 25
+      },
+      legend: {
+        backgroundColor: "#ffffff",
+        borderColor: "#cccccc",
+        floating: true,
+        verticalAlign: "top"
+      },
+      credits: { 
+        enabled: false 
+      },
+      title: null,
+      xAxis: {
+          dateTimeLabelFormats: { year: "%Y" },
+          type: "datetime"
+      },
+      yAxis: {
+          title: null
+      },
+      plotOptions: {
+        line: {
+          animation: false
+        },
+        series: {
+          stacking: 'normal',
+          marker: {
+            fillColor: color,
+            radius: 0,
+            states: {
+              hover: {
+                enabled: true,
+                radius: 5
+              }
+            }
+          },
+          pointInterval: ChartHelper.pointInterval(pointInterval),  
+          pointStart: startDate,
+          shadow: false,
+          states: {
+             hover: {
+                lineWidth: 2
+             }
+          }
+        }
+      },
+      tooltip: {
+          crosshairs: true,
+          formatter: function() {
+            var s = "<strong>" + ChartHelper.toolTipDateFormat(pointInterval, this.x) + "</strong>";
+            $.each(this.points, function(i, point) {
+              s += "<br /><span style='color: " + point.series.color + "'>" + point.series.name + ":</span> $" + Highcharts.numberFormat(point.y, 0, '.', ',');
             });
             return s;
           },

@@ -180,7 +180,7 @@ def committee(committee_id):
               AND receipts.received_date > :end_date
             ORDER BY receipts.received_date DESC
         '''
-        controlled_amount = latest_filing.end_funds_available
+        controlled_amount = latest_filing.end_funds_available + latest_filing.total_investments - latest_filing.total_debts
         params['end_date'] = latest_filing.reporting_period_end
 
     else:

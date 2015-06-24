@@ -17,6 +17,7 @@
             {{ candidate.state }}
             {{ candidate.zipcode }}
         </p>
+        <p><a href='http://www.elections.il.gov/CampaignDisclosure/CandidateDetail.aspx?id={{candidate.id}}'>View on IL Board of Elections website</a></p>
         <hr />
         {% if candidate.committees|length > 1 %}
             <h3>Committees</h3>

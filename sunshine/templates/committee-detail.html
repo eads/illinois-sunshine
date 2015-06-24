@@ -5,27 +5,37 @@
     <div class="col-sm-8">
         <h1>
             {{ committee.name }}
-            <small>{{ committee.type }} Committee</small>
+            <small>{{ committee.type }} Committee
+                {% if not committee.active %}
+                    (inactive)
+                {% endif %}
+            </small>
         </h1>
-
-        <h3>Current funds: {% if controlled_amount %}{{ controlled_amount|format_money }}{% else %}$0{% endif %}</h3>
         
         <table class="table table-striped">
             <thead>
-                <th>Funds report</th>
+                <th>{{ latest_filing.reporting_period_end.strftime('%b %d, %Y') }} quarterly report</th>
                 <th>Amount</th>
             </thead>
             <tbody>
                 {% if latest_filing and latest_filing.reporting_period_end %}
                     <tr>
-                        <td>{{ latest_filing.reporting_period_end.strftime('%b %d, %Y') }} quarterly report</td>
+                        <td>Funds available</td>
                         <td>{{ latest_filing.end_funds_available|format_money }}</td>
                     </tr>
+                    <tr>
+                        <td>Investments</td>
+                        <td>{{ latest_filing.total_investments|format_money }}</td>
+                    </tr>
+                    <tr>
+                        <td>Debts and obligations</td>
+                        <td>-{{ latest_filing.total_debts|format_money }}</td>
+                    </tr>
+                    <tr>
+                        <td>Contributions since {{ latest_filing.reporting_period_end.strftime('%b %d, %Y')}}*</td>
+                        <td>{{ recent_total|format_money }}</td>
+                    </tr>
                 {% endif %}
-                <tr>
-                    <td>Receipts after last quarterly report</td>
-                    <td>{{ recent_total|format_money }}</td>
-                </tr>
             </tbody>
             <tfoot>
                 <tr>
@@ -36,9 +46,6 @@
         </table>
 
         <h3>Net funds over time</h3>
-        <div id="net-chart"></div>
-
-        <h3>Donations and expenditures over time</h3>
         <div id="income-chart"></div>
 
         {% if related_committees %}
@@ -151,6 +158,10 @@
                         <td>Founded</td>
                         <td>{{committee.creation_date.strftime('%b %d, %Y')}}</td>
                     </tr>
+                    <tr>
+                        <td></td>
+                        <td><a href='http://www.elections.il.gov/CampaignDisclosure/CommitteeDetail.aspx?id={{committee.id}}'>View on IL Board of Elections website</a></td>
+                    </tr>
                 </tbody>
             </table>
 
@@ -168,8 +179,6 @@
         var ending_funds = {{ ending_funds|tojson|safe }}
         var receipts_expenditures = {{ receipts_expenditures|tojson|safe }}
         
-        ChartHelper.create('income-chart', 'Donations and expenditures', '', 'Funds', receipts_expenditures, startDate, 'quarter', 'money', '#007F00', '', 'column');
-
-        ChartHelper.create('net-chart', 'Net funds', '', 'Funds', [ending_funds,[]], startDate, 'quarter', 'money', '#007F00', '', 'column');
+        ChartHelper.netfunds('income-chart', 'Donations and expenditures', '', 'Funds', receipts_expenditures, startDate, 'quarter');
     </script>
 {% endblock %}
