@@ -321,22 +321,22 @@ def committee(committee_id):
     current_officers = [officer for officer in committee.officers if officer.current]
 
     quarterlies = ''' 
-        SELECT 
+        SELECT DISTINCT ON (f.doc_name)
           r.end_funds_available,
           r.total_expenditures,
           r.total_receipts,
-          f.received_datetime
+          f.reporting_period_end
         FROM d2_reports AS r
         JOIN filed_docs AS f
           ON r.filed_doc_id = f.id
         WHERE r.committee_id = :committee_id
-        ORDER BY f.received_datetime
+        ORDER BY f.doc_name, f.received_datetime DESC
     '''
 
     quarterlies = list(engine.execute(sa.text(quarterlies), 
                                  committee_id=committee_id))
     
-    oldest_report_date = quarterlies[0].received_datetime
+    oldest_report_date = quarterlies[0].reporting_period_end
 
     ending_funds = [r.end_funds_available for r in quarterlies]
     
