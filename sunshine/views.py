@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, abort, request, make_response
 from flask.ext.cache import Cache
 from sunshine.database import db_session
-from sunshine.models import Candidate, Committee, Receipt, FiledDoc, Expenditure
+from sunshine.models import Candidate, Committee, Receipt, FiledDoc, Expenditure, D2Report
 from sunshine.app_config import CACHE_CONFIG
 import sqlalchemy as sa
 import json
@@ -320,18 +320,28 @@ def committee(committee_id):
 
     current_officers = [officer for officer in committee.officers if officer.current]
 
-    receipts_by_week = ''' 
-        SELECT * FROM committee_receipts_by_week
-        WHERE committee_id = :committee_id
-        ORDER BY week
+    quarterlies = ''' 
+        SELECT 
+          r.end_funds_available,
+          r.total_expenditures,
+          r.total_receipts,
+          f.received_datetime
+        FROM d2_reports AS r
+        JOIN filed_docs AS f
+          ON r.filed_doc_id = f.id
+        WHERE r.committee_id = :committee_id
+        ORDER BY f.received_datetime
     '''
 
-    receipts = list(engine.execute(sa.text(receipts_by_week), 
-                                      committee_id=committee_id))
+    quarterlies = list(engine.execute(sa.text(quarterlies), 
+                                 committee_id=committee_id))
+    
+    oldest_report_date = quarterlies[0].received_datetime
 
-    receipts_by_week = [d.total_amount for d in receipts]
-
-    oldest_week = min([d.week for d in receipts])
+    ending_funds = [r.end_funds_available for r in quarterlies]
+    
+    receipts_expenditures = [[r.total_expenditures for r in quarterlies], \
+                             [r.total_expenditures for r in quarterlies]]
 
     return render_template('committee-detail.html', 
                            committee=committee, 
@@ -341,8 +351,9 @@ def committee(committee_id):
                            recent_total=recent_total,
                            latest_filing=latest_filing,
                            controlled_amount=controlled_amount,
-                           receipts_by_week=receipts_by_week,
-                           oldest_week=oldest_week)
+                           ending_funds=ending_funds,
+                           receipts_expenditures=receipts_expenditures,
+                           oldest_report_date=oldest_report_date)
 
 @views.route('/contributions/')
 def contributions():

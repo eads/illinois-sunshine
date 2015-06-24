@@ -141,14 +141,13 @@
 
 {% endblock %}
 {% block extra_javascript %}
-    {% if receipts_by_week %}
-        <script src="http://code.highcharts.com/highcharts.js"></script>
-        <script src="/static/js/moment.min.js"></script>
-        <script src="/static/js/chart_helper.js"></script>
-        <script>
-            var startDate = Date.UTC({{ oldest_week.year }}, {{ oldest_week.month - 1 }}, {{ oldest_week.day}})
-            var money = {{ receipts_by_week|tojson|safe }}
-            ChartHelper.create('donation-chart', 'Campaign donations', '', 'Donations', money, startDate, 'week', 'money', '#007F00', '{{start_date}}');
-        </script>
-    {% endif %}
+    <script src="http://code.highcharts.com/highcharts.js"></script>
+    <script src="/static/js/moment.min.js"></script>
+    <script src="/static/js/chart_helper.js"></script>
+    <script>
+        var startDate = Date.UTC({{ oldest_report_date.year }}, {{ oldest_report_date.month - 1 }}, {{ oldest_report_date.day}})
+        var ending_funds = {{ ending_funds|tojson|safe }}
+        var receipts_expenditures = {{ receipts_expenditures|tojson|safe }}
+        ChartHelper.create('donation-chart', 'Campaign donations', '', 'Donations', money, startDate, 'week', 'money', '#007F00', '{{start_date}}');
+    </script>
 {% endblock %}
