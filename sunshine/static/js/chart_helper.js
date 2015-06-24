@@ -1,5 +1,5 @@
 var ChartHelper = {};
-ChartHelper.create = function(el, title, sourceTxt, yaxisLabel, data, startDate, pointInterval, dataType, color, start_date) {
+ChartHelper.create = function(el, title, sourceTxt, yaxisLabel, data, startDate, pointInterval, dataType, color, start_date, chart_type) {
   // console.log("rendering to: #chart_" + iteration);
   // console.log("title: " + title);
   // console.log("sourceTxt: " + sourceTxt);
@@ -8,21 +8,45 @@ ChartHelper.create = function(el, title, sourceTxt, yaxisLabel, data, startDate,
   // console.log("startDate: " + startDate);
   // console.log("pointInterval: " + pointInterval);
   console.log(start_date);
+  console.log(Date.parse(start_date))
+  console.log(data)
+
+  var selected = data.indexOf(Date.parse(start_date));
+  console.log(selected);
+
+  var color = '#007F00';
   
   var seriesData;
-  seriesData = [{
-    color: color,
-    data: data,
-    showInLegend: false,
-    name: "Raw",
-    lineWidth: 2
-  }];
+  if (data[1].length == 0) {
+    seriesData = [{
+          color: color,
+          data: data[0],
+          name: title,
+          showInLegend: false,
+          lineWidth: 2
+      }];
+  }
+  else {
+    seriesData = [{
+          color: color,
+          data: data[0],
+          name: "Donations",
+          lineWidth: 2
+        }, {
+          color: "#cc0000",
+          data: data[1],
+          name: "Expenditures",
+          lineWidth: 2
+        }
+      ]
+
+  }
 
   //$("#charts").append("<div class='chart' id='chart_grouping_" + iteration + "'></div>")
   return new Highcharts.Chart({
       chart: {
           renderTo: el,
-          type: 'line',
+          type: chart_type,
           marginRight: 10,
           marginBottom: 25
       },
@@ -43,21 +67,21 @@ ChartHelper.create = function(el, title, sourceTxt, yaxisLabel, data, startDate,
           type: "datetime"
       },
       yAxis: {
-          title: null,
-          min: 0
+          title: null
       },
       plotOptions: {
         line: {
           animation: false
         },
         series: {
+          stacking: 'normal',
           point: {
             events: {
               click: function() {
                 var start_date = moment.utc(new Date(this.x)).format('YYYY-MM-DD');
                 var end_date = moment.utc(new Date(this.x)).add(7, 'days').format('YYYY-MM-DD');
-                console.log(start_date);
-                console.log(end_date);
+                // console.log(start_date);
+                // console.log(end_date);
                 window.location.href = '/donations?start_date=' + start_date + '&end_date=' + end_date;
               }
             }

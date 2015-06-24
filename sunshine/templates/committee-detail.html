@@ -22,7 +22,7 @@
         </p>
 
         <h3>Funds controlled: {% if controlled_amount %}{{ controlled_amount|format_money }}{% else %}$0{% endif %}</h3>
-        <div id="donation-chart"></div>
+        
         <table class="table table-striped">
             <thead>
                 <th>Funds report</th>
@@ -47,6 +47,12 @@
                 </tr>
             </tfoot>
         </table>
+
+        <h3>Net funds</h3>
+        <div id="net-chart"></div>
+
+        <h3>Donations and expenditures</h3>
+        <div id="income-chart"></div>
 
         {% if related_committees %}
                 <h3>
@@ -148,6 +154,9 @@
         var startDate = Date.UTC({{ oldest_report_date.year }}, {{ oldest_report_date.month - 1 }}, {{ oldest_report_date.day}})
         var ending_funds = {{ ending_funds|tojson|safe }}
         var receipts_expenditures = {{ receipts_expenditures|tojson|safe }}
-        ChartHelper.create('donation-chart', 'Campaign donations', '', 'Donations', money, startDate, 'week', 'money', '#007F00', '{{start_date}}');
+        
+        ChartHelper.create('income-chart', 'Donations and expenditures', '', 'Funds', receipts_expenditures, startDate, 'quarter', 'money', '#007F00', '', 'column');
+
+        ChartHelper.create('net-chart', 'Net funds', '', 'Funds', [ending_funds,[]], startDate, 'quarter', 'money', '#007F00', '', 'column');
     </script>
 {% endblock %}
