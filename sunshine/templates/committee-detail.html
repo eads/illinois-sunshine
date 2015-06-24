@@ -7,21 +7,8 @@
             {{ committee.name }}
             <small>{{ committee.type }} Committee</small>
         </h1>
-        <p>
-            {{ committee.address1 }}
-            {% if committee.address2 %}
-                {{ committee.address2 }}
-            {% endif %}
-            {% if committee.address3 %}
-                {{ committee.address3 }}
-            {% endif %}
-            &middot;
-            {{ committee.city }},
-            {{ committee.state }}
-            {{ committee.zipcode }}
-        </p>
 
-        <h3>Funds controlled: {% if controlled_amount %}{{ controlled_amount|format_money }}{% else %}$0{% endif %}</h3>
+        <h3>Current funds: {% if controlled_amount %}{{ controlled_amount|format_money }}{% else %}$0{% endif %}</h3>
         
         <table class="table table-striped">
             <thead>
@@ -48,10 +35,10 @@
             </tfoot>
         </table>
 
-        <h3>Net funds</h3>
+        <h3>Net funds over time</h3>
         <div id="net-chart"></div>
 
-        <h3>Donations and expenditures</h3>
+        <h3>Donations and expenditures over time</h3>
         <div id="income-chart"></div>
 
         {% if related_committees %}
@@ -109,7 +96,7 @@
     <div class='col-sm-4'>
         <div class='well'>
             {% if committee.candidates %}
-                <table class="table table-striped">
+                <table class="table">
                     <thead>
                         <th>Supported candidate</th>
                         <th>Office</th>
@@ -127,7 +114,7 @@
             {% endif %}
 
             <hr />
-            <table class="table table-striped">
+            <table class="table">
                 <thead>
                     <th>Officer</th>
                     <th>Title</th>
@@ -141,6 +128,32 @@
                     {% endfor %}
                 </tbody>
             </table>
+
+            <table class='table'>
+                <tbody>
+                    <tr>
+                        <td>Address</td>
+                        <td>
+                            {{ committee.address1 }}
+                            {% if committee.address2 %}
+                                {{ committee.address2 }}
+                            {% endif %}
+                            {% if committee.address3 %}
+                                {{ committee.address3 }}
+                            {% endif %}
+                            <br />
+                            {{ committee.city }},
+                            {{ committee.state }}
+                            {{ committee.zipcode }}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Founded</td>
+                        <td>{{committee.creation_date.strftime('%b %d, %Y')}}</td>
+                    </tr>
+                </tbody>
+            </table>
+
         </div>
     </div>
 </div>
