@@ -3,25 +3,46 @@
 {% block content %}
 <div class="row">
     <div class="col-sm-12">
+        <h2>Independent Expenditures</h2>
         <table class="table table-bordered table-condensed">
             <thead>
                 <tr>
+                    <th>ID</th>
                     <th>Expense name</th>
                     <th>Committee name</th>
                     <th>Amount given</th>
-                    <th>Date received</th>
+                    <th>Purpose</th>
+                    <th>Date</th>
                 </tr>
             </thead>
             <tbody>
                 {% for record in expenditures %}
                     <tr>
-                        <td>{{ record.first_name }} {{ record.last_name }}</a></td>
+                        <td><a href="{{ url_for('views.expense', expense_id=record.expenditure_id) }}">{{record.expenditure_id}}</a></td>
                         <td>
-                            <a href="{{ url_for('views.committee', committee_id=record.committee.id) }}">
-                                {{ record.committee.name }}
+                            <a href="{{ url_for('views.search', term=record.expenditure_name, table_name='expenditures') }}">
+                                {{ record.expenditure_name }}
                             </a>
                         </td>
-                        <td>{{ record.amount|format_money }}</td>
+                        <td>
+                            <a href="{{ url_for('views.committee', committee_id=record.committee_id) }}">
+                                {{ record.committee_name }}
+                            </a>
+                        </td>
+                        <td>
+                            {{ record.expenditure_amount|format_money }}
+                            {% if record.supporting %}
+                                In <strong>support</strong> of
+                            {% elif record.opposing %}
+                                In <strong>opposition</strong> to
+                            {% endif %}
+                            {% if record.expenditure_candidate_name %}
+                                <a href="{{ url_for('views.search', term=record.expenditure_candidate_name, table_name='candidates') }}">
+                                    {{ record.expenditure_candidate_name }}
+                                </a>
+                            {% endif %}
+                        </td>
+                        <td>{{ record.purpose }}</td>
                         <td>{{ record.expended_date.strftime('%B %d, %Y') }}</td>
                     </tr>
                 {% endfor %}

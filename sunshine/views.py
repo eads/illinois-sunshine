@@ -51,7 +51,7 @@ def index():
                            recent_donations=recent_donations,
                            top_five=top_five)
 
-@views.route('/donations')
+@views.route('/donations/')
 @cache.cached(timeout=CACHE_TIMEOUT, key_prefix=make_cache_key)
 def donations():
 
@@ -375,9 +375,39 @@ def contribution(receipt_id):
 
 @views.route('/expenditures/')
 def expenditures():
-    expenditures = db_session.query(Expenditures)\
-                        .order_by(Expenditures.expended_date.desc())\
-                        .limit(100)
+    expenditures = ''' 
+        SELECT 
+          e.amount AS expenditure_amount,
+          COALESCE(e.first_name, '') || ' ' || COALESCE(e.last_name, '') AS expenditure_name,
+          e.candidate_name AS expenditure_candidate_name,
+          e.supporting,
+          e.opposing,
+          e.purpose,
+          e.expended_date,
+          e.id AS expenditure_id,
+          c.name AS committee_name,
+          c.id AS committee_id
+        FROM filed_docs AS f
+        JOIN d2_reports AS d2
+          ON f.id = d2.filed_doc_id
+        JOIN expenditures AS e
+          ON f.id = e.filed_doc_id
+        JOIN committees AS c
+          ON e.committee_id = c.id
+        WHERE d2.independent_expenditures_itemized != 0
+          OR d2.independent_expenditures_non_itemized != 0
+        ORDER BY e.expended_date DESC
+        LIMIT 500
+    '''
+
+    # expenditures = db_session.query(Expenditure)\
+    #                     .order_by(Expenditure.expended_date.desc())\
+    #                     .limit(100)
+    
+    engine = db_session.bind
+
+    expenditures = engine.execute(expenditures)
+
     return render_template('expenditures.html', expenditures=expenditures)
 
 @views.route('/expenditures/<expense_id>/')
