@@ -89,17 +89,17 @@ class SunshineTransformLoad(object):
 
     def __init__(self, 
                  engine,
-                 metadata,
+                 metadata=None,
                  chunk_size=50000):
 
         
         self.engine = engine
-        self.metadata = metadata
-        
+
         self.chunk_size = chunk_size
 
-        self.initializeDB()
-
+        if metadata:
+            self.metadata = metadata
+            self.initializeDB()
         
         self.file_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 
                                       'downloads', 
@@ -922,6 +922,9 @@ if __name__ == "__main__":
 
     parser.add_argument('--recreate_views', action='store_true',
                    help='Recreate database views')
+    
+    parser.add_argument('--chunk_size', help='Adjust the size of each insert when loading data',
+                   type=int)
 
     args = parser.parse_args()
 
@@ -940,74 +943,82 @@ if __name__ == "__main__":
 
     if args.load_data:
         print("loading data ...")
+        
+        chunk_size = 50000
 
-        committees = SunshineCommittees(engine, Base.metadata)
+        if args.chunk_size:
+            chunk_size = args.chunk_size
+
+        committees = SunshineCommittees(engine, 
+                                        Base.metadata, 
+                                        chunk_size=chunk_size)
         committees.load()
         committees.update()
         
         del committees
+        del Base.metadata
 
-        candidates = SunshineCandidates(engine, Base.metadata)
+        candidates = SunshineCandidates(engine, chunk_size=chunk_size)
         candidates.load()
         candidates.update()
         
         del candidates
 
-        officers = SunshineOfficers(engine, Base.metadata)
+        officers = SunshineOfficers(engine, chunk_size=chunk_size)
         officers.load()
         officers.update()
         
         del officers
 
-        prev_off = SunshinePrevOfficers(engine, Base.metadata)
+        prev_off = SunshinePrevOfficers(engine, chunk_size=chunk_size)
         prev_off.load()
         prev_off.update()
         
         del prev_off
 
-        candidacy = SunshineCandidacy(engine, Base.metadata)
+        candidacy = SunshineCandidacy(engine, chunk_size=chunk_size)
         candidacy.load()
         candidacy.update()
         
         del candidacy
 
-        can_cmte_xwalk = SunshineCandidateCommittees(engine, Base.metadata)
+        can_cmte_xwalk = SunshineCandidateCommittees(engine, chunk_size=chunk_size)
         can_cmte_xwalk.load()
         can_cmte_xwalk.update()
         
         del can_cmte_xwalk
 
-        off_cmte_xwalk = SunshineOfficerCommittees(engine, Base.metadata)
+        off_cmte_xwalk = SunshineOfficerCommittees(engine, chunk_size=chunk_size)
         off_cmte_xwalk.load()
         off_cmte_xwalk.update()
         
         del off_cmte_xwalk
 
-        filed_docs = SunshineFiledDocs(engine, Base.metadata)
+        filed_docs = SunshineFiledDocs(engine, chunk_size=chunk_size)
         filed_docs.load()
         filed_docs.update()
         
         del filed_docs
 
-        d2_reports = SunshineD2Reports(engine, Base.metadata)
+        d2_reports = SunshineD2Reports(engine, chunk_size=chunk_size)
         d2_reports.load()
         d2_reports.update()
         
         del d2_reports
 
-        receipts = SunshineReceipts(engine, Base.metadata)
+        receipts = SunshineReceipts(engine, chunk_size=chunk_size)
         receipts.load()
         receipts.update()
         
         del receipts
 
-        expenditures = SunshineExpenditures(engine, Base.metadata)
+        expenditures = SunshineExpenditures(engine, chunk_size=chunk_size)
         expenditures.load()
         expenditures.update()
         
         del expenditures
 
-        investments = SunshineInvestments(engine, Base.metadata)
+        investments = SunshineInvestments(engine, chunk_size=chunk_size)
         investments.load()
         investments.update()
         
