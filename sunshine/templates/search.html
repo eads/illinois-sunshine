@@ -37,7 +37,12 @@
 
 <div class="row">
     <div class="col-sm-12">
-        <div id="search-results"></div>
+        <div id="search-results">
+            <div id="candidates-results"></div>
+            <div id="committees-results"></div>
+            <div id="officers-results"></div>
+            <div id="receipts-results"></div>
+        </div>
     </div>
 </div>
 
@@ -49,12 +54,12 @@
     <script src="{{ url_for('static', filename='js/accounting.min.js') }}"></script>
     <script src="{{ url_for('static', filename='js/moment.min.js') }}"></script>
     <script type="text/EJS" id="committeesResult">
+        <h4>Committee results</h4>
         <div class="search-result">
-            <p><strong><%= results.name %></strong> (<%= results.table_name %>)</p>
             <table class="table table-hover">
                 <thead>
                     <tr>
-                        <th></th>
+                        <th>Name</th>
                         <th>Committee type</th>
                         <th>Party</th>
                         <th>Purpose</th>
@@ -62,7 +67,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                <% $.each(results.records, function(i, record){ %>
+                <% $.each(results, function(i, record){ %>
                     <tr>
                         <td>
                             <a href="/committees/<%= record.id %>/">
@@ -88,18 +93,18 @@
         </div>
     </script>
     <script type="text/EJS" id="candidatesResult">
+        <h4>Candidate results</h4>
         <div class="search-result">
-            <p><strong><%= results.name %></strong> (<%= results.table_name %>)</p>
             <table class="table table-hover">
                 <thead>
                     <tr>
-                        <th></th>
+                        <th>Name</th>
                         <th>Party</th>
                         <th>Office held</th>
                     </tr>
                 </thead>
                 <tbody>
-                <% $.each(results.records, function(i, record){ %>
+                <% $.each(results, function(i, record){ %>
                     <tr>
                         <td>
                             <a href="/candidates/<%= record.id %>/">
@@ -119,19 +124,23 @@
         </div>
     </script>
     <script type="text/EJS" id="receiptsResult">
+        <h4>Donation results</h4>
         <div class="search-result">
-            <p><strong><%= results.name %></strong> (<%= results.table_name %>)</p>
             <table class="table table-hover">
                 <thead>
                     <tr>
+                        <th>Donor name</th>
                         <th>Committee name</th>
                         <th>Amount</th>
                         <th>Recieved date</th>
                     </tr>
                 </thead>
                 <tbody>
-                <% $.each(results.records, function(i, record){ %>
+                <% $.each(results, function(i, record){ %>
                     <tr>
+                        <td>
+                            <%= record.first_name %> <%= record.last_name %>
+                        </td>
                         <td>
                             <a href="/committees/<%= record.committee_id %>/">
                                 <%= record.committee_name %>
@@ -152,11 +161,12 @@
         </div>
     </script>
     <script type="text/EJS" id="officersResult">
+        <h4>Officer results</h4>
         <div class="search-result">
-            <p><strong><%= results.name %></strong> (<%= results.table_name %>)</p>
             <table class="table table-hover">
                 <thead>
                     <tr>
+                        <th>Officer name</th>
                         <th>Committee name</th>
                         <th>Title</th>
                         <th>Current officer</th>
@@ -164,8 +174,11 @@
                     </tr>
                 </thead>
                 <tbody>
-                <% $.each(results.records, function(i, record){ %>
+                <% $.each(results, function(i, record){ %>
                     <tr>
+                        <td>
+                            <%= record.first_name %> <%= record.last_name %>
+                        </td>
                         <td>
                             <a href="/committees/<%= record.committee_id %>/">
                                 <%= record.committee_name %>
@@ -189,19 +202,23 @@
         </div>
     </script>
     <script type="text/EJS" id="expendituresResult">
+        <h4>Expenditures results</h4>
         <div class="search-result">
-            <p><strong><%= results.name %></strong> (<%= results.table_name %>)</p>
             <table class="table table-hover">
                 <thead>
                     <tr>
+                        <th>Expense name</th>
                         <th>Committee name</th>
                         <th>Amount</th>
                         <th>Expended date</th>
                     </tr>
                 </thead>
                 <tbody>
-                <% $.each(results.records, function(i, record){ %>
+                <% $.each(results, function(i, record){ %>
                     <tr>
+                        <td>
+                            <%= record.first_name %> <%= record.last_name %>
+                        </td>
                         <td>
                             <a href="/committees/<%= record.committee_id %>/">
                                 <%= record.committee_name %>
@@ -224,19 +241,23 @@
         </div>
     </script>
     <script type="text/EJS" id="investmentsResult">
+        <h4>Investments results</h4>
         <div class="search-result">
-            <p><strong><%= results.name %></strong> (<%= results.table_name %>)</p>
             <table class="table table-hover">
                 <thead>
                     <tr>
+                        <th>Investment name</th>
                         <th>Committee name</th>
                         <th>Current value</th>
                         <th>Liquid value</th>
                     </tr>
                 </thead>
                 <tbody>
-                <% $.each(results.records, function(i, record){ %>
+                <% $.each(results, function(i, record){ %>
                     <tr>
+                        <td>
+                            <%= record.first_name %> <%= record.last_name %>
+                        </td>
                         <td>
                             <a href="/committees/<%= record.committee_id %>/">
                                 <%= record.committee_name %>
@@ -268,10 +289,15 @@
         $.when($.getJSON("{{ url_for('api.advanced_search') }}" + params)).then(
             function(resp){
                 $('#search-results').spin(false);
-                $.each(resp.objects, function(i, results){
-                    var template_guts = $('#' + results.table_name + 'Result').html()
+                $.each(resp.objects, function(table_name, results){
+                    var template_guts = $('#' + table_name + 'Result').html()
                     var template = new EJS({'text': template_guts});
-                    $('#search-results').append(template.render({'results': results}));
+                    var records = [];
+                    $.each(results, function(i, record){
+                        records = records.concat(record.records);
+                    });
+                    console.log(records);
+                    $('#' + table_name + '-results').append(template.render({'results': records}));
                 })
                 if (resp.objects.length == 0)
                     $('#search-results').html("<h3>No results found for '" + $("#term").val() + "'</h3>")

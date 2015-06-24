@@ -21,7 +21,7 @@ def advanced_search():
         'status': 'ok',
         'message': '',
         'meta': {},
-        'objects': [],
+        'objects': {},
     }
     
     status_code = 200
@@ -64,16 +64,20 @@ def advanced_search():
 
         results = engine.execute(sa.text(results), **q_params)
         
-        for result in results:
-            d = OrderedDict(zip(result.keys(), result.values()))
-            if result.table_name == 'receipts':
-                d['records'] = sorted(result.records, key=itemgetter('received_date'), reverse=True)[:10]
-            elif result.table_name == 'expenditures':
-                d['records'] = sorted(result.records, key=itemgetter('expended_date'), reverse=True)[:10]
-            elif result.table_name == 'investments':
-                d['records'] = sorted(result.records, key=itemgetter('purchase_date'), reverse=True)[:10]
-            resp['objects'].append(d)
-
+        sorted_results = sorted(results, key=attrgetter('table_name'))
+        
+        for table_name, table_group in groupby(sorted_results, key=attrgetter('table_name')):
+            resp['objects'][table_name] = []
+            for result in table_group:
+                d = OrderedDict(zip(result.keys(), result.values()))
+                if result.table_name == 'receipts':
+                    d['records'] = sorted(result.records, key=itemgetter('received_date'), reverse=True)[:10]
+                elif result.table_name == 'expenditures':
+                    d['records'] = sorted(result.records, key=itemgetter('expended_date'), reverse=True)[:10]
+                elif result.table_name == 'investments':
+                    d['records'] = sorted(result.records, key=itemgetter('purchase_date'), reverse=True)[:10]
+                del d['table_name']
+                resp['objects'][table_name].append(d)
 
     response_str = json.dumps(resp, sort_keys=False, default=dthandler)
     response = make_response(response_str, status_code)
