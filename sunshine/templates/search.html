@@ -15,7 +15,7 @@
             </div>
             <div class="form-group" id='filter-results'>
                 <br />
-                <span>Filter by result type:</span>
+                <span>Search for:</span>
                 <label data-title='Candidates' data-content='Any person who seeks nomination for election, election to, or retention in public office'>
                     <input type="checkbox" name="table_name" value="candidates" {% if 'candidates' in table_name %}checked='checked'{% endif %}> Candidates
                 </label>
@@ -54,7 +54,7 @@
     <script src="{{ url_for('static', filename='js/accounting.min.js') }}"></script>
     <script src="{{ url_for('static', filename='js/moment.min.js') }}"></script>
     <script type="text/EJS" id="committeesResult">
-        <h4>Committee results</h4>
+        <h4><%= results.length %> committees found</h4>
         <div class="search-result">
             <table class="table table-hover">
                 <thead>
@@ -93,7 +93,7 @@
         </div>
     </script>
     <script type="text/EJS" id="candidatesResult">
-        <h4>Candidate results</h4>
+        <h4><%= results.length %> candidates found</h4>
         <div class="search-result">
             <table class="table table-hover">
                 <thead>
@@ -124,7 +124,7 @@
         </div>
     </script>
     <script type="text/EJS" id="receiptsResult">
-        <h4>Donation results</h4>
+        <h4><%= results.length %> donations found</h4>
         <div class="search-result">
             <table class="table table-hover">
                 <thead>
@@ -161,7 +161,7 @@
         </div>
     </script>
     <script type="text/EJS" id="officersResult">
-        <h4>Officer results</h4>
+        <h4><%= results.length %> officers found</h4>
         <div class="search-result">
             <table class="table table-hover">
                 <thead>
@@ -188,7 +188,7 @@
                             <%= record.title %>
                         </td>
                         <td>
-                            <%= record.current %>
+                            <%= format_boolean(record.current) %>
                         </td>
                         <td>
                             <% if (record.resign_date) { %>
@@ -202,7 +202,7 @@
         </div>
     </script>
     <script type="text/EJS" id="expendituresResult">
-        <h4>Expenditures results</h4>
+        <h4><%= results.length %> expenditures found</h4>
         <div class="search-result">
             <table class="table table-hover">
                 <thead>
@@ -241,7 +241,7 @@
         </div>
     </script>
     <script type="text/EJS" id="investmentsResult">
-        <h4>Investments results</h4>
+        <h4><%= results.length %> investments found</h4>
         <div class="search-result">
             <table class="table table-hover">
                 <thead>
