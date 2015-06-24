@@ -340,7 +340,7 @@ def committee(committee_id):
 
     ending_funds = [r.end_funds_available for r in quarterlies]
     
-    receipts_expenditures = [[r.total_expenditures for r in quarterlies], \
+    receipts_expenditures = [[r.total_receipts for r in quarterlies], \
                              [r.total_expenditures for r in quarterlies]]
 
     return render_template('committee-detail.html', 
