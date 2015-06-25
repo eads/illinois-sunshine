@@ -136,7 +136,26 @@ def candidate(candidate_id):
 
 @views.route('/committees/')
 def committees():
-    return render_template('committees.html')
+
+    committee_type = "Candidate"
+
+    if request.args.get('type'):
+      type_arg = request.args.get('type')
+      if type_arg == "independent":
+        committee_type = "Independent Expenditure"
+      if type_arg == "action":
+        committee_type = "Political Action"
+      if type_arg == "party":
+        committee_type = "Political Party"
+      if type_arg == "ballot":
+        committee_type = "Ballot Initiative"
+
+    committees = db_session.query(Committee)\
+                                 .filter(Committee.type == committee_type)\
+                                 .order_by(Committee.name.desc())\
+                                 .limit(50)
+
+    return render_template('committees.html', committees=committees, committee_type=committee_type)
 
 @views.route('/committees/<committee_id>/')
 def committee(committee_id):

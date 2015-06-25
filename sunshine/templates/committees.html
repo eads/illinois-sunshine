@@ -1,16 +1,40 @@
 {% extends 'base.html' %}
-{% block title %}Search Committees{% endblock %}
+{% block title %}Committees{% endblock %}
 {% block content %}
+
+<h1><i class='fa fa-group fa-fw'></i> Committees</h1>
+
 <div class="row">
     <div class="col-sm-12">
-        <h1>Search committees</h1>
-        <div class="input-group input-group-lg">
-            <input type="text" class="form-control" placeholder="Search for...">
-            <span class="input-group-btn">
-                <button class="btn btn-default" type="button">Go!</button>
-            </span>
-        </div>
 
+        <ul class="nav nav-tabs">
+          <li role="presentation" {% if committee_type == "Candidate"%}class="active"{% endif %}><a href="{{ url_for('views.committees') }}?type=candidate">Candidate</a></li>
+          <li role="presentation" {% if committee_type == "Independent Expenditure"%}class="active"{% endif %}><a href="{{ url_for('views.committees') }}?type=independent">Independent Expenditure</a></li>
+          <li role="presentation" {% if committee_type == "Political Action"%}class="active"{% endif %}><a href="{{ url_for('views.committees') }}?type=action">Political Action</a></li>
+          <li role="presentation" {% if committee_type == "Political Party"%}class="active"{% endif %}><a href="{{ url_for('views.committees') }}?type=party">Political Party</a></li>
+          <li role="presentation" {% if committee_type == "Ballot Initiative"%}class="active"{% endif %}><a href="{{ url_for('views.committees') }}?type=ballot">Ballot Initiative</a></li>
+        </ul>
+
+        <h2>{{committee_type}} Committees</h3>
+
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Rank</th>
+                    <th>Committee</th>
+                    <th>Funds</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for c in committees %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        <td><a href="{{ url_for('views.committee', committee_id=c.id ) }}">{{ c.name }}</a></td>
+                        <td>X</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
 </div>
 
