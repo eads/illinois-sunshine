@@ -24,11 +24,8 @@ def make_cache_key(*args, **kwargs):
 @views.route('/')
 @cache.cached(timeout=CACHE_TIMEOUT, key_prefix=make_cache_key)
 def index():
-    two_days_ago = datetime.now() - timedelta(days=3)
-    
     recent_donations = db_session.query(Receipt)\
                                  .join(FiledDoc, Receipt.filed_doc_id == FiledDoc.id)\
-                                 .filter(Receipt.received_date >= two_days_ago)\
                                  .order_by(FiledDoc.received_datetime.desc())\
                                  .limit(10)
     
