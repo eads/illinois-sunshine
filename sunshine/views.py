@@ -24,6 +24,17 @@ def make_cache_key(*args, **kwargs):
 @views.route('/')
 @cache.cached(timeout=CACHE_TIMEOUT, key_prefix=make_cache_key)
 def index():
+    engine = db_session.bind
+
+    totals_sql = '''
+      SELECT 
+        SUM(total_amount) as total_amount, 
+        SUM(donation_count) as donation_count, 
+        AVG(average_donation) as average_donation 
+      FROM receipts_by_week'''
+
+    totals = list(engine.execute(sa.text(totals_sql)))
+
     recent_donations = db_session.query(Receipt)\
                                  .join(FiledDoc, Receipt.filed_doc_id == FiledDoc.id)\
                                  .order_by(FiledDoc.received_datetime.desc())\
@@ -39,12 +50,12 @@ def index():
         LIMIT 10
     '''
     
-    engine = db_session.bind
     top_ten = engine.execute(sa.text(committee_sql))
 
     return render_template('index.html', 
                            recent_donations=recent_donations,
-                           top_ten=top_ten)
+                           top_ten=top_ten,
+                           totals=totals)
 
 @views.route('/donations/')
 @cache.cached(timeout=CACHE_TIMEOUT, key_prefix=make_cache_key)
@@ -76,6 +87,15 @@ def donations():
     engine = db_session.bind
     donations_by_week = [d.total_amount for d in engine.execute(donations_by_week)]
 
+    totals_sql = '''
+      SELECT 
+        SUM(total_amount) as total_amount, 
+        SUM(donation_count) as donation_count, 
+        AVG(average_donation) as average_donation 
+      FROM receipts_by_week'''
+
+    totals = list(engine.execute(sa.text(totals_sql)))
+
     return render_template('donations.html', 
                            recent_donations=recent_donations,
                            donations_by_week=donations_by_week,
@@ -83,7 +103,8 @@ def donations():
                            end_date=end_date,
                            prev_week_date=prev_week_date,
                            next_week_date=next_week_date,
-                           is_current=is_current)
+                           is_current=is_current,
+                           totals=totals)
 
 @views.route('/about/')
 def about():

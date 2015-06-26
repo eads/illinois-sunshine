@@ -3,6 +3,8 @@
 {% block content %}
 
     <h1><i class='fa fa-dollar fa-fw'></i> Donations</h1>
+    <p>Since 1994, <strong>${{ totals[0][0]|format_large_number }}</strong> has been donated to political campaigns in the State of Illinois. Browse the <strong>{{ totals[0][1] | format_number }}</strong> individual donations below.</p>
+
     <div id='donation-chart'></div>
 
     <br />

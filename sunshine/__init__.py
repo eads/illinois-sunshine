@@ -22,6 +22,19 @@ def create_app():
     def format_money(s):
         locale.setlocale( locale.LC_ALL, '' )
         return locale.currency(s, grouping=True)
+
+    @app.template_filter('format_number')
+    def format_number(s):
+        return '{:,}'.format(s)
+
+    @app.template_filter('format_large_number')
+    def format_large_number(n):
+        import math
+        millnames=['','Thousand','Million','Billion','Trillion']
+        n = float(n)
+        millidx=max(0,min(len(millnames)-1,
+                          int(math.floor(math.log10(abs(n))/3))))
+        return '%.1f %s'%(n/10**(3*millidx),millnames[millidx])
     
     @app.context_processor
     def inject_date():
