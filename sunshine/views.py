@@ -352,8 +352,11 @@ def committee(committee_id):
     quarterlies = ''' 
         SELECT DISTINCT ON (f.doc_name, f.reporting_period_end)
           r.end_funds_available,
-          (r.total_expenditures * -1) as total_expenditures,
+          r.total_investments,
           r.total_receipts,
+          (r.debts_itemized * -1) as debts_itemized,
+          (r.debts_non_itemized * -1) as debts_non_itemized,
+          (r.total_expenditures * -1) as total_expenditures,
           f.reporting_period_end
         FROM d2_reports AS r
         JOIN filed_docs AS f
@@ -365,20 +368,25 @@ def committee(committee_id):
     quarterlies = list(engine.execute(sa.text(quarterlies), 
                                  committee_id=committee_id))
 
-    ending_funds = [(r.end_funds_available, r.reporting_period_end) for r in quarterlies]
-    
-    donations = [[r.total_receipts, 
+    #print(quarterlies)
+
+    ending_funds = [[r.end_funds_available, 
                   r.reporting_period_end.year,
                   r.reporting_period_end.month,
                   r.reporting_period_end.day] 
                 for r in quarterlies]
 
-
-    expenditures = [[r.total_expenditures, 
+    investments = [[r.total_investments, 
                      r.reporting_period_end.year,
                      r.reporting_period_end.month,
                      r.reporting_period_end.day] 
                     for r in quarterlies]
+
+    debts = [[(r.debts_itemized + r.debts_non_itemized), 
+             r.reporting_period_end.year,
+             r.reporting_period_end.month,
+             r.reporting_period_end.day] 
+            for r in quarterlies]
 
     return render_template('committee-detail.html', 
                            committee=committee, 
@@ -389,8 +397,8 @@ def committee(committee_id):
                            latest_filing=latest_filing,
                            controlled_amount=controlled_amount,
                            ending_funds=ending_funds,
-                           donations=donations,
-                           expenditures=expenditures)
+                           investments=investments,
+                           debts=debts)
 
 @views.route('/contributions/')
 def contributions():

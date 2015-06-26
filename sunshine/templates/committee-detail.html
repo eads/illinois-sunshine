@@ -45,7 +45,7 @@
             </tfoot>
         </table>
 
-        <h3>Net funds over time</h3>
+        <h3 id="income-chart-title">Net funds over time</h3>
         <div id="income-chart"></div>
 
         {% if related_committees %}
@@ -175,24 +175,34 @@
     <script src="/static/js/moment.min.js"></script>
     <script src="/static/js/chart_helper.js"></script>
     <script>
-        var donations = {{ donations|tojson|safe }};
-        var expenditures = {{ expenditures|tojson|safe }};
+        var investments = {{ investments|tojson|safe }};
+        var debts = {{ debts|tojson|safe }};
+        var ending_funds = {{ ending_funds|tojson|safe }};
         
-        var donations_f = [];
-        var expenditures_f = [];
+        var investments_f = [];
+        var debts_f = [];
+        var ending_funds_f = [];
 
-        // format donations
-        for (i = 0; i < donations.length; i++) {
-            var d = [Date.UTC(donations[i][1],donations[i][2],donations[i][3]), donations[i][0]];
-            donations_f.push(d);
+        // format investments
+        for (i = 0; i < investments.length; i++) {
+            investments_f.push([Date.UTC(investments[i][1],investments[i][2]-1,investments[i][3]), investments[i][0]]);
         }
 
-        // format expenditures
-        for (i = 0; i < expenditures.length; i++) {
-            var d = [Date.UTC(expenditures[i][1],expenditures[i][2],expenditures[i][3]), expenditures[i][0]]
-            expenditures_f.push(d)
+        // format debts
+        for (i = 0; i < debts.length; i++) {
+            debts_f.push([Date.UTC(debts[i][1],debts[i][2]-1,debts[i][3]), debts[i][0]]);
+        }
+
+        // format funds available
+        for (i = 0; i < ending_funds.length; i++) {
+            ending_funds_f.push([Date.UTC(ending_funds[i][1],ending_funds[i][2]-1,ending_funds[i][3]), ending_funds[i][0]]);
         }
         
-        ChartHelper.netfunds('income-chart', 'Donations and expenditures', '', 'Funds', [donations_f, expenditures_f]);
+        {% if ending_funds|length > 1 %}
+            ChartHelper.netfunds('income-chart', 'Funds over time', '', 'Funds', [ending_funds_f,investments_f,debts_f]);
+        {% else %}
+            $("#income-chart-title").hide();
+            $("#income-chart").hide();
+        {% endif %}
     </script>
 {% endblock %}
