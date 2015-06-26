@@ -29,8 +29,14 @@
                 {% for c in committees %}
                     <tr>
                         <td>{{ loop.index }}</td>
-                        <td><a href="{{ url_for('views.committee', committee_id=c.id ) }}">{{ c.name }}</a></td>
-                        <td>X</td>
+                        <td><a href="{{ url_for('views.committee', committee_id=c.committee_id ) }}">{{ c.committee_name }}</a></td>
+                        <td>
+                            {% if c.total %}
+                                {{c.total|format_money}}
+                            {% else %}
+                                $0
+                            {% endif %}
+                        </td>
                     </tr>
                 {% endfor %}
             </tbody>

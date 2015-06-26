@@ -150,10 +150,19 @@ def committees():
       if type_arg == "ballot":
         committee_type = "Ballot Initiative"
 
-    committees = db_session.query(Committee)\
-                                 .filter(Committee.type == committee_type)\
-                                 .order_by(Committee.name.desc())\
-                                 .limit(50)
+    # add pagination
+    sql = '''
+        SELECT * FROM (
+          SELECT * 
+          FROM committee_money 
+          WHERE committee_type = :committee_type
+          ORDER BY committee_name
+        ) AS committees
+        ORDER BY committees.total DESC NULLS LAST
+        LIMIT 50
+    '''
+    engine = db_session.bind
+    committees = engine.execute(sa.text(sql), committee_type=committee_type)
 
     return render_template('committees.html', committees=committees, committee_type=committee_type)
 
