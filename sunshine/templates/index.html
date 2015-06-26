@@ -21,7 +21,6 @@
     </form>
 </div>
 <h3><i class='fa fa-dollar fa-fw'></i> Recent political donations</h3>
-<p>Most recent reported contributions.</p>
 <table class="table table-hover">
     <tbody>
         {% for donation in recent_donations %}
@@ -46,30 +45,29 @@
 <p><a class='btn btn-primary' href='{{ url_for('views.donations') }}'><i class='fa fa-dollar fa-fw'></i> Browse recent contributions &raquo;</a></p>
 <br /><br />
 
-<h3><i class='fa fa-check-square-o fa-fw'></i> Candidates with the most money</h3>
-<p>The 5 candidates with the most money available in their committees.</p>
+<h3><i class='fa fa-group fa-fw'></i> Committees with the most money</h3>
 <table class="table table-hover">
     <thead>
         <tr>
             <th>Rank</th>
-            <th>Candidate</th>
-            <th>Committee(s)</th>
-            <th>Campaign funds</th>
+            <th>Committee</th>
+            <th>Type</th>
+            <th>Funds</th>
         </tr>
     </thead>
     <tbody>
-        {% for record in top_five %}
+        {% for record in top_ten %}
             <tr>
                 <td>{{ loop.index }}</td>
-                <td><a href="{{ url_for('views.candidate', candidate_id=record.candidate_id ) }}">{{ record.candidate_first_name }} {{ record.candidate_last_name }}</a></td>
                 <td><a href="{{ url_for('views.committee', committee_id=record.committee_id ) }}">{{ record.committee_name }}</a></td>
+                <td>{{ record.committee_type }}</td>
                 <td>{{ record.total|format_money }}</td>
             </tr>
         {% endfor %}
     </tbody>
 </table>
 
-<p><a class='btn btn-primary' href='{{ url_for('views.candidates') }}'><i class='fa fa-check-square-o fa-fw'></i> All candidates &raquo;</a></p>
+<p><a class='btn btn-primary' href='{{ url_for('views.committees') }}'><i class='fa fa-check-square-o fa-fw'></i> All committees &raquo;</a></p>
 <br /><br />
 
 <h3><i class='fa fa-info-circle fa-fw'></i> About</h3>

@@ -62,9 +62,8 @@
                 </thead>
                 {% for candidacy in candidate.candidacies|sort(attribute='election_year', reverse=True) %}
                     <tr>
-                        <td><a href="{{ url_for('views.election', election_year=candidacy.election_year, election_type=candidacy.election_type ) }}">
-                                {{ candidacy.election_year }} {{ candidacy.election_type }}
-                            </a>
+                        <td>
+                            {{ candidacy.election_year }} {{ candidacy.election_type }}
                         </td>
                         <td>
                             {{ candidacy.race_type if candidacy.race_type else '' }}

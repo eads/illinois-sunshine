@@ -29,25 +29,22 @@ def index():
                                  .order_by(FiledDoc.received_datetime.desc())\
                                  .limit(10)
     
-    top_five = ''' 
+    committee_sql = ''' 
         SELECT * FROM (
-          SELECT DISTINCT ON(candidate_first_name, candidate_last_name)
-            * 
-          FROM candidate_money 
-          WHERE total IS NOT NULL
-            AND committee_type = 'Candidate'
-          ORDER BY candidate_first_name, candidate_last_name
-        ) AS rows
-        ORDER BY rows.total DESC
-        LIMIT 5
+          SELECT * 
+          FROM committee_money
+          ORDER BY committee_name
+        ) AS committees
+        ORDER BY committees.total DESC NULLS LAST
+        LIMIT 10
     '''
     
     engine = db_session.bind
-    top_five = engine.execute(sa.text(top_five))
+    top_ten = engine.execute(sa.text(committee_sql))
 
     return render_template('index.html', 
                            recent_donations=recent_donations,
-                           top_five=top_five)
+                           top_ten=top_ten)
 
 @views.route('/donations/')
 @cache.cached(timeout=CACHE_TIMEOUT, key_prefix=make_cache_key)
@@ -91,26 +88,6 @@ def donations():
 @views.route('/about/')
 def about():
     return render_template('about.html')
-
-@views.route('/candidates/')
-@cache.cached(timeout=CACHE_TIMEOUT, key_prefix=make_cache_key)
-def candidates():
-    # add pagination
-    money = '''
-        SELECT * FROM (
-          SELECT DISTINCT ON(candidate_first_name, candidate_last_name)
-            * 
-          FROM candidate_money 
-          WHERE total IS NOT NULL
-            AND committee_type = 'Candidate'
-          ORDER BY candidate_first_name, candidate_last_name
-        ) AS rows
-        ORDER BY rows.total DESC
-        LIMIT 50
-    '''
-    engine = db_session.bind
-    rows = engine.execute(sa.text(money))
-    return render_template('candidates.html', rows=rows)
 
 @views.route('/search/')
 def search():
@@ -397,13 +374,6 @@ def committee(committee_id):
                            investments=investments,
                            debts=debts)
 
-@views.route('/contributions/')
-def contributions():
-    contributions = db_session.query(Receipt)\
-                        .order_by(Receipt.received_date.desc())\
-                        .limit(100)
-    return render_template('contributions.html', contributions=contributions)
-
 @views.route('/contributions/<receipt_id>/')
 def contribution(receipt_id):
     try:
@@ -415,43 +385,6 @@ def contribution(receipt_id):
         return abort(404)
     return render_template('contribution-detail.html', receipt=receipt)
 
-@views.route('/expenditures/')
-def expenditures():
-    expenditures = ''' 
-        SELECT 
-          e.amount AS expenditure_amount,
-          COALESCE(e.first_name, '') || ' ' || COALESCE(e.last_name, '') AS expenditure_name,
-          e.candidate_name AS expenditure_candidate_name,
-          e.supporting,
-          e.opposing,
-          e.purpose,
-          e.expended_date,
-          e.id AS expenditure_id,
-          c.name AS committee_name,
-          c.id AS committee_id
-        FROM filed_docs AS f
-        JOIN d2_reports AS d2
-          ON f.id = d2.filed_doc_id
-        JOIN expenditures AS e
-          ON f.id = e.filed_doc_id
-        JOIN committees AS c
-          ON e.committee_id = c.id
-        WHERE d2.independent_expenditures_itemized != 0
-          OR d2.independent_expenditures_non_itemized != 0
-        ORDER BY e.expended_date DESC
-        LIMIT 500
-    '''
-
-    # expenditures = db_session.query(Expenditure)\
-    #                     .order_by(Expenditure.expended_date.desc())\
-    #                     .limit(100)
-    
-    engine = db_session.bind
-
-    expenditures = engine.execute(expenditures)
-
-    return render_template('expenditures.html', expenditures=expenditures)
-
 @views.route('/expenditures/<expense_id>/')
 def expense(expense_id):
     try:
@@ -462,48 +395,3 @@ def expense(expense_id):
     if not expense:
         return abort(404)
     return render_template('expense-detail.html', expense=expense)
-
-@views.route('/elections/')
-def elections():
-    return render_template('elections.html')
-
-@views.route('/elections/<election_year>/<election_type>/')
-def election(election_year, election_type):
-    races = ''' 
-        SELECT 
-          c.id AS candidate_id, 
-          c.last_name AS candidate_last_name, 
-          c.first_name AS candidate_first_name,
-          COALESCE(c.office, '') AS office,
-          COALESCE(c.district, '') AS district,
-          c.district_type,
-          c.party,
-          cc.race_type,
-          cc.outcome
-        FROM candidates AS c
-        JOIN candidacies AS cc
-          ON c.id = cc.candidate_id
-        WHERE cc.election_type = :election_type
-          AND cc.election_year = :election_year
-    '''
-    
-    engine = db_session.bind
-    races = engine.execute(sa.text(races), 
-                           election_type=election_type, 
-                           election_year=election_year)
-
-    all_races = []
-    races = sorted(races, key=attrgetter('office'))
-
-    for office, office_grouping in groupby(races, key=attrgetter('office')):
-        grouping = sorted(office_grouping, key=attrgetter('district'))
-        d = {office: {}}
-        for district, district_group in groupby(grouping, key=attrgetter('district')):
-            d[office][district] = list(district_group)
-        all_races.append(d)
-
-    return render_template('election-detail.html', 
-                           all_races=all_races,
-                           election_year=election_year,
-                           election_type=election_type)
-
