@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% from 'macros.html' import pager %}
 {% block title %}Committees{% endblock %}
 {% block content %}
 
@@ -28,7 +29,7 @@
             <tbody>
                 {% for c in committees %}
                     <tr>
-                        <td>{{ loop.index }}</td>
+                        <td>{{ loop.index + ((request.args.get('page', 1)|int * 50) - 50) }}</td>
                         <td><a href="{{ url_for('views.committee', committee_id=c.committee_id ) }}">{{ c.committee_name }}</a></td>
                         <td>
                             {% if c.total %}
@@ -41,6 +42,12 @@
                 {% endfor %}
             </tbody>
         </table>
+    </div>
+</div>
+<div class="row">
+    <div class="col-md-12">
+      {% set url_base = request.path + '?type=' + request.args.get('type', 'candidate') %}
+      {{ pager(request.args.get('page', 1)|int, page_count|int, url_base) }}
     </div>
 </div>
 

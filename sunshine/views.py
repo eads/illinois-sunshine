@@ -1,4 +1,5 @@
-from flask import Blueprint, render_template, abort, request, make_response
+from flask import Blueprint, render_template, abort, request, make_response, \
+    session as flask_session
 from flask.ext.cache import Cache
 from sunshine.database import db_session
 from sunshine.models import Candidate, Committee, Receipt, FiledDoc, Expenditure, D2Report
@@ -134,9 +135,10 @@ def candidate(candidate_id):
 def committees():
 
     committee_type = "Candidate"
+    type_arg = 'candidate'
 
     if request.args.get('type'):
-      type_arg = request.args.get('type')
+      type_arg = request.args.get('type', 'candidate')
       if type_arg == "independent":
         committee_type = "Independent Expenditure"
       if type_arg == "action":
@@ -146,7 +148,9 @@ def committees():
       if type_arg == "ballot":
         committee_type = "Ballot Initiative"
 
-    # add pagination
+    page = request.args.get('page', 1)
+    offset = (int(page) * 50) - 50
+    
     sql = '''
         SELECT * FROM (
           SELECT * 
@@ -156,11 +160,40 @@ def committees():
         ) AS committees
         ORDER BY committees.total DESC NULLS LAST
         LIMIT 50
+        OFFSET :offset
     '''
+    
     engine = db_session.bind
-    committees = engine.execute(sa.text(sql), committee_type=committee_type)
+    
+    if not flask_session.get('%s_page_count' % type_arg):
 
-    return render_template('committees.html', committees=committees, committee_type=committee_type)
+        result_count = '''
+            SELECT COUNT(*) AS count
+            FROM committee_money
+            WHERE committee_type = :committee_type
+        '''
+        
+        result_count = engine.execute(sa.text(result_count), 
+                                              committee_type=committee_type)\
+                                              .first()\
+                                              .count
+        
+        page_count = int(round(result_count, -2) / 50)
+        
+        flask_session['%s_page_count' % type_arg] = page_count
+    
+    else:
+        
+        page_count = flask_session['%s_page_count' % type_arg]
+
+    committees = engine.execute(sa.text(sql), 
+                                committee_type=committee_type,
+                                offset=offset)
+
+    return render_template('committees.html', 
+                           committees=committees, 
+                           committee_type=committee_type,
+                           page_count=page_count)
 
 @views.route('/committees/<committee_id>/')
 def committee(committee_id):
