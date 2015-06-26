@@ -101,19 +101,17 @@ ChartHelper.donations = function(el, title, sourceTxt, yaxisLabel, data, startDa
     });
   }
 
-ChartHelper.netfunds = function(el, title, sourceTxt, yaxisLabel, data, startDate, pointInterval) {
+ChartHelper.netfunds = function(el, title, sourceTxt, yaxisLabel, data) {
   var color = '#007F00';
   
   var seriesData = [{
           color: color,
           data: data[0],
-          name: "Donations",
-          lineWidth: 2
+          name: "Donations"
         }, {
           color: "#cc0000",
           data: data[1],
-          name: "Expenditures",
-          lineWidth: 2
+          name: "Expenditures"
         }
       ]
 
@@ -158,20 +156,13 @@ ChartHelper.netfunds = function(el, title, sourceTxt, yaxisLabel, data, startDat
               }
             }
           },
-          pointInterval: ChartHelper.pointInterval(pointInterval),  
-          pointStart: startDate,
-          shadow: false,
-          states: {
-             hover: {
-                lineWidth: 2
-             }
-          }
+          shadow: false
         }
       },
       tooltip: {
           crosshairs: true,
           formatter: function() {
-            var s = "<strong>" + ChartHelper.toolTipDateFormat(pointInterval, this.x) + "</strong>";
+            var s = "<strong>" + ChartHelper.toolTipDateFormat("quarter", this.x) + "</strong>";
             $.each(this.points, function(i, point) {
               s += "<br /><span style='color: " + point.series.color + "'>" + point.series.name + ":</span> $" + Highcharts.numberFormat(point.y, 0, '.', ',');
             });

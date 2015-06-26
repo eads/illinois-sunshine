@@ -175,10 +175,24 @@
     <script src="/static/js/moment.min.js"></script>
     <script src="/static/js/chart_helper.js"></script>
     <script>
-        var startDate = Date.UTC({{ oldest_report_date.year }}, {{ oldest_report_date.month - 1 }}, {{ oldest_report_date.day}})
-        var ending_funds = {{ ending_funds|tojson|safe }}
-        var receipts_expenditures = {{ receipts_expenditures|tojson|safe }}
+        var donations = {{ donations|tojson|safe }};
+        var expenditures = {{ expenditures|tojson|safe }};
         
-        ChartHelper.netfunds('income-chart', 'Donations and expenditures', '', 'Funds', receipts_expenditures, startDate, 'quarter');
+        var donations_f = [];
+        var expenditures_f = [];
+
+        // format donations
+        for (i = 0; i < donations.length; i++) {
+            var d = [Date.UTC(donations[i][1],donations[i][2],donations[i][3]), donations[i][0]];
+            donations_f.push(d);
+        }
+
+        // format expenditures
+        for (i = 0; i < expenditures.length; i++) {
+            var d = [Date.UTC(expenditures[i][1],expenditures[i][2],expenditures[i][3]), expenditures[i][0]]
+            expenditures_f.push(d)
+        }
+        
+        ChartHelper.netfunds('income-chart', 'Donations and expenditures', '', 'Funds', [donations_f, expenditures_f]);
     </script>
 {% endblock %}

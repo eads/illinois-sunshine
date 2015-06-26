@@ -5,6 +5,7 @@ from sunshine.models import Candidate, Committee, Receipt, FiledDoc, Expenditure
 from sunshine.app_config import CACHE_CONFIG
 import sqlalchemy as sa
 import json
+import time
 from datetime import datetime, timedelta
 from itertools import groupby
 from operator import attrgetter
@@ -358,18 +359,26 @@ def committee(committee_id):
         JOIN filed_docs AS f
           ON r.filed_doc_id = f.id
         WHERE r.committee_id = :committee_id
-        ORDER BY f.doc_name, f.reporting_period_end, f.received_datetime DESC
+        ORDER BY f.reporting_period_end ASC
     '''
 
     quarterlies = list(engine.execute(sa.text(quarterlies), 
                                  committee_id=committee_id))
-    
-    oldest_report_date = quarterlies[0].reporting_period_end
 
-    ending_funds = [r.end_funds_available for r in quarterlies]
+    ending_funds = [(r.end_funds_available, r.reporting_period_end) for r in quarterlies]
     
-    receipts_expenditures = [[r.total_receipts for r in quarterlies], \
-                             [r.total_expenditures for r in quarterlies]]
+    donations = [[r.total_receipts, 
+                  r.reporting_period_end.year,
+                  r.reporting_period_end.month,
+                  r.reporting_period_end.day] 
+                for r in quarterlies]
+
+
+    expenditures = [[r.total_expenditures, 
+                     r.reporting_period_end.year,
+                     r.reporting_period_end.month,
+                     r.reporting_period_end.day] 
+                    for r in quarterlies]
 
     return render_template('committee-detail.html', 
                            committee=committee, 
@@ -380,8 +389,8 @@ def committee(committee_id):
                            latest_filing=latest_filing,
                            controlled_amount=controlled_amount,
                            ending_funds=ending_funds,
-                           receipts_expenditures=receipts_expenditures,
-                           oldest_report_date=oldest_report_date)
+                           donations=donations,
+                           expenditures=expenditures)
 
 @views.route('/contributions/')
 def contributions():
