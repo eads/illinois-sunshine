@@ -1,11 +1,12 @@
 from sunshine.models import Committee, Candidate, Officer, Candidacy, \
     D2Report, FiledDoc, Receipt, Expenditure, Investment
 import ftplib
+import zipfile
 from io import BytesIO
 import os
 from boto.s3.connection import S3Connection
 from boto.s3.key import Key
-from datetime import date
+from datetime import date, datetime
 from hashlib import md5
 import sqlalchemy as sa
 import csv
@@ -84,6 +85,34 @@ class SunshineExtract(object):
         if cache:
             for path in fpaths:
                 self.cacheOnS3(path)
+            
+            self.zipper()
+
+    def zipper(self):
+        outp = BytesIO()
+        now = datetime.now().strftime('%Y-%m-%d')
+        zf_name = 'IL_Elections_%s' % now
+        with zipfile.ZipFile(outp, mode='w') as zf:
+            for f in os.listdir(self.download_path):
+                if f.endswith('.txt'):
+                    zf.write(os.path.join(self.download_path, f), 
+                             '%s/%s' % (zf_name, f),
+                             compress_type=zipfile.ZIP_DEFLATED)
+        
+        conn = S3Connection(self.aws_key, self.aws_secret)
+        bucket = conn.get_bucket(self.bucket_name)
+        k = Key(bucket)
+        k.key = '%s.zip' % zf_name
+        outp.seek(0)
+        k.set_contents_from_file(outp)
+        k.make_public()
+        bucket.copy_key(
+            'IL_Elections_latest.zip', 
+            'il-elections', 
+            '%s.zip' % zf_name,
+            preserve_acl=True)
+        
+        del outp
 
 class SunshineTransformLoad(object):
 
@@ -942,6 +971,8 @@ if __name__ == "__main__":
         extract.download(cache=args.cache)
     else:
         print("skipping download")
+    
+    del extract
 
     if args.load_data:
         print("loading data ...")
