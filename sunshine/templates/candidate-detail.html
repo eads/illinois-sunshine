@@ -30,21 +30,15 @@
                     {% if committee.active %}
                         <tr>
                             <td><a href="{{ url_for('views.committee', committee_id=committee.id ) }}">{{ committee.name }}</a></td>
-                            <td>
-                                {{ committee.address1 }}
-                                {% if committee.address2 %}
-                                    {{ committee.address2 }}
-                                {% endif %}
-                                {% if committee.address3 %}
-                                    {{ committee.address3 }}
-                                {% endif %}
-                                &middot;
-                                {{ committee.city }},
-                                {{ committee.state }}
-                                {{ committee.zipcode }}
-                            </td>
+                            <td>{{ committee.type }} Committee</td>
                         </tr>
                     {% endif %}
+                {% endfor %}
+                {% for committee in ie_committees %}
+                    <tr>
+                        <td><a href="{{ url_for('views.committee', committee_id=committee.id ) }}">{{ committee.committee_name }}</a></td>
+                        <td>{{ committee.committee_type }} Committee {% if committee.supporting %}(Supporting){% elif committee.opposing %}(Opposing){% endif %}</td>
+                    </tr>
                 {% endfor %}
             </tbody>
         </table>

@@ -585,6 +585,7 @@ class SunshineViews(object):
             conn.execute('DROP MATERIALIZED VIEW IF EXISTS full_search')
 
     def makeAllViews(self):
+        self.expendituresByCandidate()
         self.receiptsAggregates()
         self.committeeReceiptAggregates()
         self.incumbentCandidates()
@@ -592,6 +593,42 @@ class SunshineViews(object):
         self.committeeMoney()
         self.candidateMoney()
         self.fullSearchView()
+
+    def expendituresByCandidate(self):
+        conn = self.engine.connect()
+        trans = conn.begin()
+        try:
+            conn.execute('REFRESH MATERIALIZED VIEW expenditures_by_candidate')
+            trans.commit()
+        except sa.exc.ProgrammingError:
+            trans.rollback()
+            conn = self.engine.connect()
+            trans = conn.begin()
+            exp = ''' 
+                CREATE MATERIALIZED VIEW expenditures_by_candidate AS (
+                  SELECT
+                    c.id AS candidate_id,
+                    MAX(c.first_name) AS first_name,
+                    MAX(c.last_name) AS last_name,
+                    MAX(c.office) AS office,
+                    cm.id AS committee_id,
+                    MAX(cm.name) AS committee_name,
+                    MAX(cm.type) AS committee_type,
+                    bool_or(e.supporting) AS supporting,
+                    bool_or(e.opposing) AS opposing,
+                    SUM(e.amount) AS total_amount,
+                    MIN(e.expended_date) AS min_date,
+                    MAX(e.expended_date) AS max_date
+                  FROM candidates AS c
+                  JOIN expenditures AS e
+                    ON c.first_name || ' ' || c.last_name = e.candidate_name
+                  JOIN committees AS cm
+                    ON e.committee_id = cm.id
+                  GROUP BY cm.id, c.id
+                )
+            '''
+            conn.execute(sa.text(exp))
+            trans.commit()
 
     def receiptsAggregates(self):
         conn = self.engine.connect()
@@ -614,7 +651,6 @@ class SunshineViews(object):
                   GROUP BY date_trunc('week', received_date)
                   ORDER BY week
                 )
-            
             '''
             conn.execute(sa.text(weeks))
             trans.commit()

@@ -126,9 +126,22 @@ def candidate(candidate_id):
     except ValueError:
         return abort(404)
     candidate = db_session.query(Candidate).get(candidate_id)
+    
+    ie_committees = ''' 
+        SELECT * FROM expenditures_by_candidate
+        WHERE candidate_id = :candidate_id
+    '''
+    
+    engine = db_session.bind
+
+    ie_committees = list(engine.execute(sa.text(ie_committees), 
+                                        candidate_id=candidate_id))
+
     if not candidate:
         return abort(404)
-    return render_template('candidate-detail.html', candidate=candidate)
+    return render_template('candidate-detail.html', 
+                           candidate=candidate,
+                           ie_committees=ie_committees)
 
 @views.route('/top-earners/')
 def top_earners():
