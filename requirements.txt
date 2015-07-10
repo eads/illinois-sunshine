@@ -9,4 +9,4 @@ Jinja2==2.7.3
 psycopg2==2.6
 python-dateutil==2.2
 pytz==2014.10
-SQLAlchemy==0.9.9
+SQLAlchemy==1.0.6

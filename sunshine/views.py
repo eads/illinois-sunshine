@@ -127,6 +127,9 @@ def candidate(candidate_id):
         return abort(404)
     candidate = db_session.query(Candidate).get(candidate_id)
     
+    if not candidate:
+        return abort(404)
+    
     ie_committees = ''' 
         SELECT * FROM expenditures_by_candidate
         WHERE candidate_id = :candidate_id
@@ -137,8 +140,6 @@ def candidate(candidate_id):
     ie_committees = list(engine.execute(sa.text(ie_committees), 
                                         candidate_id=candidate_id))
 
-    if not candidate:
-        return abort(404)
     return render_template('candidate-detail.html', 
                            candidate=candidate,
                            ie_committees=ie_committees)

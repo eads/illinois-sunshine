@@ -734,6 +734,7 @@ class SunshineViews(object):
                    cm.name AS committee_name, 
                    cm.id AS committee_id,
                    cm.type AS committee_type,
+                   fd.id AS filed_doc_id,
                    fd.doc_name, 
                    fd.reporting_period_end,
                    fd.reporting_period_begin,

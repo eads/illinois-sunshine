@@ -11,7 +11,7 @@
                 {% endif %}
             </small>
         </h1>
-        
+
         <table class="table table-striped">
             <thead>
                 <th>{{ latest_filing.reporting_period_end.strftime('%b %d, %Y') }} quarterly report</th>
@@ -49,56 +49,42 @@
         <div id="income-chart"></div>
 
         {% if related_committees %}
-                <h3>
-                    Related committees
-                </h3>
-                <table class="table table-striped">
-                    <thead>
-                        <th>Name</th>
-                        <th>Committee type</th>
-                        <th>Funds controlled</th>
-                        <th>Reason for relation</th>
-                    </thead>
-                    <tbody>
-                        {% for committee in related_committees %}
-                            <tr>
-                                <td><a href="{{ url_for('views.committee', committee_id=committee.id )}}">{{ committee.name }}</a></td>
-                                <td>{{ committee.type if committee.type else '' }}</td>
-                                <td>{{ committee.money|format_money if committee.money else ''}}</td>
-                                <td>{{ committee.reason }}</td>
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-
-            {% endif %}
-
-        {% if recent_receipts %}
             <h3>
-                Receipts after last quarterly report
-                <small>({{ recent_total|format_money }} Total)</small>
+                Related committees
             </h3>
             <table class="table table-striped">
+                <thead>
+                    <th>Name</th>
+                    <th>Committee type</th>
+                    <th>Funds controlled</th>
+                    <th>Reason for relation</th>
+                </thead>
                 <tbody>
-                    {% for receipt in recent_receipts|sort(attribute='received_datetime', reverse=True) %}
+                    {% for committee in related_committees %}
                         <tr>
-                            <td>
-                                {% if receipt.first_name %}
-                                    {{ receipt.first_name }}
-                                {% endif %}
-                                {{ receipt.last_name }}
-                            </td>
-                            <td class='nowrap'>
-                                <a href="{{ url_for('views.contribution', receipt_id=receipt.id )}}">donated <strong>{{ receipt.amount|format_money }}</strong></a>
-                            </td>
-                            <td class='nowrap'>
-                                on {{ receipt.received_datetime.strftime('%b %d, %Y') }}
-                            </td>
+                            <td><a href="{{ url_for('views.committee', committee_id=committee.id )}}">{{ committee.name }}</a></td>
+                            <td>{{ committee.type if committee.type else '' }}</td>
+                            <td>{{ committee.money|format_money if committee.money else ''}}</td>
+                            <td>{{ committee.reason }}</td>
                         </tr>
                     {% endfor %}
                 </tbody>
             </table>
+
         {% endif %}
+
+        <ul class="nav nav-tabs">
+          <li role="presentation" class="active"><a class="transactions" href="javascript://" data-table_type="receipts">Receipts</a></li>
+          <li role="presentation"><a class="transactions" href="javascript://" data-table_type="expenditures">Expenditures</a></li>
+        </ul>
+        <h3>
+            Receipts after last quarterly report
+            <small>({{ recent_total|format_money }} Total)</small>
+        </h3>
+        <table class="table table-striped">
+            <tbody id="money-table-guts">
+            </tbody>
+        </table>
     </div>
     <div class='col-sm-4'>
         <div class='well'>
@@ -172,13 +158,85 @@
 {% endblock %}
 {% block extra_javascript %}
     <script src="http://code.highcharts.com/highcharts.js"></script>
-    <script src="/static/js/moment.min.js"></script>
-    <script src="/static/js/chart_helper.js"></script>
+    <script src="{{ url_for('static', filename='js/ejs_production.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/accounting.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/moment.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/chart_helper.js') }}"></script>
+
+    <script type="text/EJS" id="table-guts">
+        <% $.each(transactions, function(i, transaction){ %>
+            <tr>
+                <td>
+                    <% if(transaction.first_name){ %>
+                        <%= transaction.first_name %>
+                    <% } %>
+                    <%= transaction.last_name %>
+                </td>
+                <td class='nowrap'>
+                    <a href="/<%= transaction_type %>/<%= transaction.id %>">
+                        <% if (transaction_type == 'expenditures') { %>
+                            received <strong>
+                        <% } else { %>
+                            donated <strong>
+                        <% } %>
+                        <%= accounting.formatMoney(transaction.amount) %>
+                        </strong>
+                    </a>
+                </td>
+                <td class='nowrap'>
+                    <% if (transaction_type == 'expenditures') { %>
+                        on <%= moment(transaction.expended_date).format('MMMM DD YYYY') %>
+                    <% } else { %>
+                        on <%= moment(transaction.received_date).format('MMMM DD YYYY') %>
+                    <% } %>
+                </td>
+            </tr>
+        <% }) %>
+    </script>
+
     <script>
+        $(document).ready(function(){
+            $.when(getMoney('receipts', 0)).then(function(resp){
+                displayTable(resp['objects'][0]['receipts'], 'receipts')
+            });
+
+            $('.transactions').on('click', function(e){
+                if(!$(this).parent().hasClass('active')){
+                    $('li[role="presentation"]').removeClass('active');
+                    $(this).parent().addClass('active');
+                }
+                var transaction_type = $(this).data('table_type');
+                $.when(getMoney(transaction_type, 0)).then(function(resp){
+                    displayTable(resp['objects'][0][transaction_type], transaction_type);
+                })
+            })
+        })
+        function displayTable(transactions, type){
+            var template_guts = $('#table-guts').html()
+            var template = new EJS({'text': template_guts});
+            $('#money-table-guts').html(template.render({
+                'transactions': transactions, 'transaction_type': type
+            }));
+        }
+
+        function getMoney(transaction_type, offset){
+            var params = {
+                'limit' : 50,
+                'committee_id': "{{committee.id}}",
+                'offset': 0
+            }
+            return $.ajax({
+                url: '/api/' + transaction_type + '/',
+                contentType: 'application/json',
+                data: params,
+                dataType: 'json'
+            })
+        }
+
         var investments = {{ investments|tojson|safe }};
         var debts = {{ debts|tojson|safe }};
         var ending_funds = {{ ending_funds|tojson|safe }};
-        
+
         var investments_f = [];
         var debts_f = [];
         var ending_funds_f = [];
@@ -197,7 +255,7 @@
         for (i = 0; i < ending_funds.length; i++) {
             ending_funds_f.push([Date.UTC(ending_funds[i][1],ending_funds[i][2]-1,ending_funds[i][3]), ending_funds[i][0]]);
         }
-        
+
         {% if ending_funds|length > 1 %}
             ChartHelper.netfunds('income-chart', 'Funds over time', '', 'Funds', [ending_funds_f,investments_f,debts_f]);
         {% else %}
