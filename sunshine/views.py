@@ -37,8 +37,7 @@ def index():
     totals = list(engine.execute(sa.text(totals_sql)))
 
     recent_donations = db_session.query(Receipt)\
-                                 .join(FiledDoc, Receipt.filed_doc_id == FiledDoc.id)\
-                                 .order_by(FiledDoc.received_datetime.desc())\
+                                 .order_by(Receipt.received_date.desc())\
                                  .limit(10)
     
     committee_sql = ''' 
