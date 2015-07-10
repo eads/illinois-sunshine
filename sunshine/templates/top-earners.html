@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% block title %}Top earners{% endblock %}
+{% block content %}
+
+<div class="row">
+    <div class="col-sm-12">
+        <h2>Top Earners - last thirty days</h2>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Rank</th>
+                    <th>Committee</th>
+                    <th>Funds</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for earner in top_earners %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        <td><a href="{{ url_for('views.committee', committee_id=earner.committee_id ) }}">{{ earner.name }}</a></td>
+                        <td>
+                            {% if earner.amount %}
+                                {{earner.amount|format_money}}
+                            {% else %}
+                                $0
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% endblock %}

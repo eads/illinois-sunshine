@@ -130,6 +130,35 @@ def candidate(candidate_id):
         return abort(404)
     return render_template('candidate-detail.html', candidate=candidate)
 
+@views.route('/top-earners/')
+def top_earners():
+    engine = db_session.bind
+    
+    top_earners = ''' 
+        SELECT 
+          sub.*,
+          c.name
+        FROM (
+          SELECT 
+            SUM(amount) AS amount,
+            committee_id
+          FROM receipts
+          WHERE received_date > :received_date
+          GROUP BY committee_id
+          ORDER BY amount DESC
+        ) AS sub
+        JOIN committees AS c
+          ON sub.committee_id = c.id
+    '''
+    
+    thirty_days_ago = datetime.now() - timedelta(days=30)
+
+    top_earners = engine.execute(sa.text(top_earners),
+                                 received_date=thirty_days_ago)
+
+    return render_template('top-earners.html', top_earners=top_earners)
+
+
 @views.route('/committees/')
 def committees():
 
@@ -189,34 +218,10 @@ def committees():
                                 committee_type=committee_type,
                                 offset=offset)
     
-    top_earners = ''' 
-        SELECT 
-          sub.*,
-          c.name
-        FROM (
-          SELECT 
-            SUM(amount) AS amount,
-            committee_id
-          FROM receipts
-          WHERE received_date > :received_date
-          GROUP BY committee_id
-          ORDER BY amount DESC
-          LIMIT 10
-        ) AS sub
-        JOIN committees AS c
-          ON sub.committee_id = c.id
-    '''
-    
-    thirty_days_ago = datetime.now() - timedelta(days=30)
-
-    top_earners = engine.execute(sa.text(top_earners),
-                                 received_date=thirty_days_ago)
-
     return render_template('committees.html', 
                            committees=committees, 
                            committee_type=committee_type,
-                           page_count=page_count,
-                           top_earners=top_earners)
+                           page_count=page_count)
 
 @views.route('/committees/<committee_id>/')
 def committee(committee_id):

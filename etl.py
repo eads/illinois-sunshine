@@ -748,7 +748,10 @@ class SunshineViews(object):
                    MAX(filings.doc_name) AS doc_name,
                    MAX(filings.reporting_period_end) AS reporting_period_end,
                    MAX(filings.reporting_period_begin) AS reporting_period_begin,
-                   (SUM(receipts.amount) + MAX(filings.end_funds_available) + MAX(filings.total_investments) - MAX(filings.total_debts)) AS total,
+                   (SUM(COALESCE(receipts.amount, 0)) + 
+                    MAX(COALESCE(filings.end_funds_available, 0)) + 
+                    MAX(COALESCE(filings.total_investments, 0)) - 
+                    MAX(COALESCE(filings.total_debts, 0))) AS total,
                    MAX(receipts.received_date) AS last_receipt_date
                  FROM most_recent_filings AS filings
                  LEFT JOIN receipts
