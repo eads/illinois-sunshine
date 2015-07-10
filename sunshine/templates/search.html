@@ -48,6 +48,8 @@
 
 {% endblock %}
 {% block extra_javascript %}
+    <script src="{{ url_for('static', filename='js/jquery.dataTables.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/jquery.dataTables.sorting.js') }}"></script>
     <script src="{{ url_for('static', filename='js/spin.min.js') }}"></script>
     <script src="{{ url_for('static', filename='js/jquery.spin.js') }}"></script>
     <script src="{{ url_for('static', filename='js/ejs_production.js') }}"></script>
@@ -126,7 +128,7 @@
     <script type="text/EJS" id="receiptsResult">
         <h4><%= results.length %> donations found</h4>
         <div class="search-result">
-            <table class="table table-hover">
+            <table class="table table-hover" id="receipts-table">
                 <thead>
                     <tr>
                         <th>Donor name</th>
@@ -296,9 +298,14 @@
                     $.each(results, function(i, record){
                         records = records.concat(record.records);
                     });
-                    console.log(records);
                     $('#' + table_name + '-results').append(template.render({'results': records}));
-                })
+                });
+                $('#receipts-table').DataTable({
+                    "aaSorting": [[0, 'asc']],
+                    "paging": false,
+                    "info": false,
+                    "searching": false
+                });
                 if (resp.objects.length == 0)
                     $('#search-results').html("<h3>No results found for '" + $("#term").val() + "'</h3>")
             }

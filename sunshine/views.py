@@ -422,22 +422,22 @@ def committee(committee_id):
     #print(quarterlies)
 
     ending_funds = [[r.end_funds_available, 
-                  r.reporting_period_end.year,
-                  r.reporting_period_end.month,
-                  r.reporting_period_end.day] 
-                for r in quarterlies]
-
-    investments = [[r.total_investments, 
                      r.reporting_period_end.year,
                      r.reporting_period_end.month,
                      r.reporting_period_end.day] 
+                     for r in quarterlies]
+
+    investments = [[r.total_investments, 
+                    r.reporting_period_end.year,
+                    r.reporting_period_end.month,
+                    r.reporting_period_end.day] 
                     for r in quarterlies]
 
     debts = [[(r.debts_itemized + r.debts_non_itemized), 
-             r.reporting_period_end.year,
-             r.reporting_period_end.month,
-             r.reporting_period_end.day] 
-            for r in quarterlies]
+               r.reporting_period_end.year,
+               r.reporting_period_end.month,
+               r.reporting_period_end.day] 
+               for r in quarterlies]
 
     return render_template('committee-detail.html', 
                            committee=committee, 

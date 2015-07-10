@@ -71,11 +71,20 @@ def advanced_search():
             for result in table_group:
                 d = OrderedDict(zip(result.keys(), result.values()))
                 if result.table_name == 'receipts':
-                    d['records'] = sorted(result.records, key=itemgetter('received_date'), reverse=True)[:10]
+                    d['records'] = sorted(result.records, 
+                                          key=itemgetter('received_date'), 
+                                          reverse=True)
+
                 elif result.table_name == 'expenditures':
-                    d['records'] = sorted(result.records, key=itemgetter('expended_date'), reverse=True)[:10]
+                    d['records'] = sorted(result.records, 
+                                          key=itemgetter('expended_date'), 
+                                          reverse=True)
+
                 elif result.table_name == 'investments':
-                    d['records'] = sorted(result.records, key=itemgetter('purchase_date'), reverse=True)[:10]
+                    d['records'] = sorted(result.records, 
+                                          key=itemgetter('purchase_date'), 
+                                          reverse=True)
+
                 del d['table_name']
                 resp['objects'][table_name].append(d)
 
