@@ -10,6 +10,7 @@ from operator import attrgetter, itemgetter
 from itertools import groupby
 from string import punctuation
 import re
+import sqlalchemy as sa
 
 api = Blueprint('api', __name__)
 
@@ -145,7 +146,6 @@ def committees():
 
 @api.route('/receipts/')
 def receipts():
-    receipts_table = Receipt.__table__
     
     raw_query_params = request.args.copy()
     limit = request.args.get('limit', 500)
@@ -154,32 +154,35 @@ def receipts():
     sort_order = request.args.get('sort_order', 'desc')
     if int(limit) > 500:
         limit = 500
+    
+    receipts_table = sa.Table('condensed_receipts', sa.MetaData(), 
+                              autoload=True, 
+                              autoload_with=db_session.bind)
+
     valid_query, query_clauses, resp, status_code = make_query(receipts_table, raw_query_params)
     if valid_query:
         committees_table = Committee.__table__
-        most_recent_filings = sa.Table('most_recent_filings', sa.MetaData(),
-                                         autoload=True, autoload_with=db_session.bind)
         
         committee_cols = [c.label('committee_%s' % c.name) for c in committees_table.columns]
         receipt_cols = [c.label('receipt_%s' % c.name) for c in receipts_table.columns]
         all_columns = committee_cols + receipt_cols
         
         base_query = db_session.query(*all_columns)\
-                         .join(most_recent_filings, 
-                               committees_table.c.id == most_recent_filings.c.committee_id)\
-                         .join(receipts_table, 
-                               most_recent_filings.c.filed_doc_id == receipts_table.c.filed_doc_id)
+                .join(receipts_table, receipts_table.c.committee_id == committees_table.c.id)
         for clause in query_clauses:
             base_query = base_query.filter(clause)
         
         order_by_col = getattr(receipts_table.c, order_by)
         base_query = base_query.order_by(getattr(order_by_col, sort_order)())
-        base_query = base_query.limit(limit)
         
+        limit_query = base_query.limit(limit)
+        limit_query = limit_query.offset(offset)
+
         objs = []
         committee_fields = committees_table.columns.keys() 
         receipt_fields = receipts_table.columns.keys()
-        rows = sorted(list(base_query.all()), key=attrgetter('committee_id'))
+        
+        rows = sorted(list(limit_query.all()), key=attrgetter('committee_id'))
         for committee, grouping in groupby(rows, attrgetter('committee_id')):
             rows = list(grouping)
             committee_values = rows[0][:len(committee_fields)]
@@ -191,12 +194,16 @@ def receipts():
                 receipts.append(receipt_info)
             committee_info['receipts'] = receipts
             objs.append(committee_info)
+
+        total_rows = base_query.count()
+
         resp['objects'] = objs
         resp['meta']['query'].update({
             'limit': limit,
             'offset': offset,
             'sort_order': sort_order,
             'order_by': order_by,
+            'total_rows': total_rows,
         })
     
     
@@ -206,7 +213,6 @@ def receipts():
 
 @api.route('/expenditures/')
 def expenditures():
-    expenditures_table = Expenditure.__table__
 
     raw_query_params = request.args.copy()
     limit = request.args.get('limit', 500)
@@ -215,32 +221,34 @@ def expenditures():
     sort_order = request.args.get('sort_order', 'desc')
     if int(limit) > 500:
         limit = 500
+    
+    expenditures_table = sa.Table('condensed_expenditures', sa.MetaData(), 
+                                  autoload=True, autoload_with=db_session.bind)
+    
     valid_query, query_clauses, resp, status_code = make_query(expenditures_table, raw_query_params)
     if valid_query:
         committees_table = Committee.__table__
-        most_recent_filings = sa.Table('most_recent_filings', sa.MetaData(),
-                                         autoload=True, autoload_with=db_session.bind)
         
         committee_cols = [c.label('committee_%s' % c.name) for c in committees_table.columns]
         expenditure_cols = [c.label('expenditure_%s' % c.name) for c in expenditures_table.columns]
         all_columns = committee_cols + expenditure_cols
         
         base_query = db_session.query(*all_columns)\
-                         .join(most_recent_filings, 
-                               committees_table.c.id == most_recent_filings.c.committee_id)\
                          .join(expenditures_table, 
-                               most_recent_filings.c.filed_doc_id == expenditures_table.c.filed_doc_id)
+                               expenditures_table.c.committee_id == committees_table.c.id)
+
         for clause in query_clauses:
             base_query = base_query.filter(clause)
         
         order_by_col = getattr(expenditures_table.c, order_by)
         base_query = base_query.order_by(getattr(order_by_col, sort_order)())
-        base_query = base_query.limit(limit)
-        
+        limit_query = base_query.limit(int(limit))
+        limit_query = limit_query.offset(int(offset))
+
         objs = []
         committee_fields = committees_table.columns.keys() 
         expenditure_fields = expenditures_table.columns.keys()
-        rows = sorted(list(base_query.all()), key=attrgetter('committee_id'))
+        rows = sorted(list(limit_query.all()), key=attrgetter('committee_id'))
         for committee, grouping in groupby(rows, attrgetter('committee_id')):
             rows = list(grouping)
             committee_values = rows[0][:len(committee_fields)]
@@ -252,12 +260,16 @@ def expenditures():
                 expenditures.append(expenditure_info)
             committee_info['expenditures'] = expenditures
             objs.append(committee_info)
+        
+        total_rows = base_query.count()
+        
         resp['objects'] = objs
         resp['meta']['query'].update({
             'limit': limit,
             'offset': offset,
             'sort_order': sort_order,
             'order_by': order_by,
+            'total_rows': total_rows,
         })
     
     

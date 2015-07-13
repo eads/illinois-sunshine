@@ -220,7 +220,10 @@ class Receipt(Base):
     __tablename__ = 'receipts'
     id = sa.Column(sa.Integer, primary_key=True)
     
-    committee_id = sa.Column(sa.Integer, sa.ForeignKey('committees.id'))
+    committee_id = sa.Column(sa.Integer,
+                             sa.ForeignKey('committees.id'), 
+                             index=True)
+
     committee = sa.orm.relationship('Committee', backref='receipts')
     
     # filed_doc_id = sa.Column(sa.Integer, sa.ForeignKey('filed_docs.id'))

@@ -253,7 +253,7 @@ def committee(committee_id):
     latest_filing = ''' 
         SELECT * FROM most_recent_filings
         WHERE committee_id = :committee_id
-        ORDER BY received_datetime
+        ORDER BY received_datetime DESC
         LIMIT 1
     '''
 
@@ -266,49 +266,34 @@ def committee(committee_id):
 
         recent_receipts = ''' 
             SELECT 
-              receipts.id,
-              receipts.amount,
-              receipts.first_name,
-              receipts.last_name,
-              filed.doc_name,
-              filed.received_datetime
+              COALESCE(SUM(receipts.amount), 0) AS amount
             FROM receipts
             JOIN filed_docs AS filed
               ON receipts.filed_doc_id = filed.id
             WHERE receipts.committee_id = :committee_id
               AND receipts.received_date > :end_date
-            ORDER BY receipts.received_date DESC
         '''
-        controlled_amount = latest_filing.end_funds_available + latest_filing.total_investments - latest_filing.total_debts
+        controlled_amount = latest_filing.end_funds_available + \
+                            latest_filing.total_investments - \
+                            latest_filing.total_debts
+        
         params['end_date'] = latest_filing.reporting_period_end
 
     else:
 
         recent_receipts = ''' 
             SELECT 
-              receipts.id,
-              receipts.amount,
-              receipts.first_name,
-              receipts.last_name,
-              filed.doc_name,
-              filed.received_datetime
+              COALESCE(SUM(receipts.amount), 0) AS amount
             FROM receipts
             JOIN filed_docs AS filed
               ON receipts.filed_doc_id = filed.id
             WHERE receipts.committee_id = :committee_id
-            ORDER BY receipts.received_date DESC
         '''
         
         controlled_amount = 0
 
-    recent_receipts = list(engine.execute(sa.text(recent_receipts),**params))
-        
-    recent_total = 0
-
-    if recent_receipts:
-        recent_total = sum([r.amount for r in recent_receipts])
-        controlled_amount += recent_total
-
+    recent_total = engine.execute(sa.text(recent_receipts),**params).first().amount
+    controlled_amount += recent_total
     
     candidate_ids = tuple(c.id for c in committee.candidates)
     

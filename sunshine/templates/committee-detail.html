@@ -73,14 +73,15 @@
 
         {% endif %}
 
-        <ul class="nav nav-tabs">
-          <li role="presentation" class="active"><a class="transactions" href="javascript://" data-table_type="receipts">Receipts</a></li>
-          <li role="presentation"><a class="transactions" href="javascript://" data-table_type="expenditures">Expenditures</a></li>
-        </ul>
         <h3>
             Receipts after last quarterly report
             <small>({{ recent_total|format_money }} Total)</small>
         </h3>
+
+        <ul class="nav nav-tabs">
+          <li role="presentation" class="active"><a class="transactions" href="javascript://" data-table_type="receipts">Receipts</a></li>
+          <li role="presentation"><a class="transactions" href="javascript://" data-table_type="expenditures">Expenditures</a></li>
+        </ul>
         <table class="table table-striped">
             <tbody id="money-table-guts">
             </tbody>
@@ -164,6 +165,18 @@
     <script src="{{ url_for('static', filename='js/chart_helper.js') }}"></script>
 
     <script type="text/EJS" id="table-guts">
+        <h3>
+            <span class='pull-right'>
+                <% if ( offset >= 50){ %>
+                    <a href='javascript://' class='btn btn-sm btn-primary prev-page' data-transaction_type="<%= transaction_type %>" data-offset="<%= offset %>">&laquo; Previous page</a>
+                <% } %>
+                <% if (offset >= 0){ %>
+                    <a href='javascript://' class='btn btn-sm btn-primary next-page' data-transaction_type="<%= transaction_type %>" data-offset="<%= offset %>">
+                        Next page &raquo;
+                    </a>
+                <% } %>
+            </span>
+        </h3>
         <% $.each(transactions, function(i, transaction){ %>
             <tr>
                 <td>
@@ -185,9 +198,9 @@
                 </td>
                 <td class='nowrap'>
                     <% if (transaction_type == 'expenditures') { %>
-                        on <%= moment(transaction.expended_date).format('MMMM DD YYYY') %>
+                        on <%= moment(transaction.expended_date).format('MMMM DD, YYYY') %>
                     <% } else { %>
-                        on <%= moment(transaction.received_date).format('MMMM DD YYYY') %>
+                        on <%= moment(transaction.received_date).format('MMMM DD, YYYY') %>
                     <% } %>
                 </td>
             </tr>
@@ -197,7 +210,8 @@
     <script>
         $(document).ready(function(){
             $.when(getMoney('receipts', 0)).then(function(resp){
-                displayTable(resp['objects'][0]['receipts'], 'receipts')
+                var total_rows = parseInt(resp['meta']['total_rows']);
+                displayTable(resp['objects'][0]['receipts'], 'receipts', 0, total_rows)
             });
 
             $('.transactions').on('click', function(e){
@@ -207,23 +221,47 @@
                 }
                 var transaction_type = $(this).data('table_type');
                 $.when(getMoney(transaction_type, 0)).then(function(resp){
-                    displayTable(resp['objects'][0][transaction_type], transaction_type);
+                    var total_rows = parseInt(resp['meta']['total_rows']);
+                    displayTable(resp['objects'][0][transaction_type], transaction_type, 0, total_rows);
                 })
-            })
+            });
         })
-        function displayTable(transactions, type){
+        function displayTable(transactions, type, offset, total_rows){
             var template_guts = $('#table-guts').html()
             var template = new EJS({'text': template_guts});
             $('#money-table-guts').html(template.render({
-                'transactions': transactions, 'transaction_type': type
+                'transactions': transactions,
+                'transaction_type': type,
+                'offset': offset,
+                'total_rows': total_rows
             }));
+            $('.next-page').on('click', function(e){
+                var transaction_type = $(this).data('transaction_type');
+                var offset = parseInt($(this).data('offset')) + 50;
+                $.when(getMoney(transaction_type, offset)).then(function(resp){
+                    var objects = resp['objects'][0][transaction_type];
+                    var offset = parseInt(resp['meta']['query']['offset']);
+                    var total_rows = parseInt(resp['meta']['total_rows']);
+                    displayTable(objects, transaction_type, offset, total_rows)
+                })
+            })
+            $('.prev-page').on('click', function(e){
+                var transaction_type = $(this).data('transaction_type');
+                var offset = parseInt($(this).data('offset')) - 50;
+                $.when(getMoney(transaction_type, offset)).then(function(resp){
+                    var objects = resp['objects'][0][transaction_type];
+                    var offset = parseInt(resp['meta']['query']['offset']);
+                    var total_rows = parseInt(resp['meta']['total_rows']);
+                    displayTable(objects, transaction_type, offset, total_rows)
+                })
+            })
         }
 
         function getMoney(transaction_type, offset){
             var params = {
                 'limit' : 50,
                 'committee_id': "{{committee.id}}",
-                'offset': 0
+                'offset': offset
             }
             return $.ajax({
                 url: '/api/' + transaction_type + '/',

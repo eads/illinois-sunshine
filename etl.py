@@ -583,6 +583,8 @@ class SunshineViews(object):
             conn.execute('DROP MATERIALIZED VIEW IF EXISTS most_recent_filings CASCADE')
         with self.engine.begin() as conn:
             conn.execute('DROP MATERIALIZED VIEW IF EXISTS full_search')
+        with self.engine.begin() as conn:
+            conn.execute('DROP MATERIALIZED VIEW IF EXISTS expenditures_by_candidate')
 
     def makeAllViews(self):
         self.expendituresByCandidate()
@@ -590,9 +592,97 @@ class SunshineViews(object):
         self.committeeReceiptAggregates()
         self.incumbentCandidates()
         self.mostRecentFilings()
+        self.condensedReceipts()
+        self.condensedExpenditures()
         self.committeeMoney()
         self.candidateMoney()
         self.fullSearchView()
+    
+    def condensedExpenditures(self):
+        conn = self.engine.connect()
+        trans = conn.begin()
+        try:
+            conn.execute('REFRESH MATERIALIZED VIEW condensed_expenditures')
+            trans.commit()
+        except sa.exc.ProgrammingError:
+            trans.rollback()
+            conn = self.engine.connect()
+            trans = conn.begin()
+            rec = ''' 
+                CREATE MATERIALIZED VIEW condensed_expenditures AS (
+                  (
+                    SELECT 
+                      e.*
+                    FROM expenditures AS e
+                    JOIN most_recent_filings AS m
+                      USING(committee_id)
+                    WHERE e.expended_date > m.reporting_period_end
+                  ) UNION (
+                    SELECT
+                      e.*
+                    FROM expenditures AS e
+                    JOIN (
+                      SELECT DISTINCT ON (
+                        reporting_period_begin, 
+                        reporting_period_end, 
+                        committee_id
+                      )
+                        id AS filed_doc_id
+                      FROM filed_docs
+                      ORDER BY reporting_period_begin,
+                               reporting_period_end,
+                               committee_id,
+                               received_datetime DESC
+                    ) AS f
+                      USING(filed_doc_id)
+                  )
+                )
+            '''
+            conn.execute(sa.text(rec))
+            trans.commit()
+
+    def condensedReceipts(self):
+        conn = self.engine.connect()
+        trans = conn.begin()
+        try:
+            conn.execute('REFRESH MATERIALIZED VIEW condensed_receipts')
+            trans.commit()
+        except sa.exc.ProgrammingError:
+            trans.rollback()
+            conn = self.engine.connect()
+            trans = conn.begin()
+            rec = ''' 
+                CREATE MATERIALIZED VIEW condensed_receipts AS (
+                  (
+                    SELECT 
+                      r.*
+                    FROM receipts AS r
+                    JOIN most_recent_filings AS m
+                      USING(committee_id)
+                    WHERE r.received_date > m.reporting_period_end
+                  ) UNION (
+                    SELECT
+                      r.*
+                    FROM receipts AS r
+                    JOIN (
+                      SELECT DISTINCT ON (
+                        reporting_period_begin, 
+                        reporting_period_end, 
+                        committee_id
+                      )
+                        id AS filed_doc_id
+                      FROM filed_docs
+                      ORDER BY reporting_period_begin,
+                               reporting_period_end,
+                               committee_id,
+                               received_datetime DESC
+                    ) AS f
+                      USING(filed_doc_id)
+                  )
+                )
+            '''
+            conn.execute(sa.text(rec))
+            trans.commit()
 
     def expendituresByCandidate(self):
         conn = self.engine.connect()
@@ -941,6 +1031,7 @@ class SunshineIndexes(object):
     def makeAllIndexes(self):
         self.fullSearchIndex()
         self.receiptsDate()
+        self.receiptsCommittee()
 
     def fullSearchIndex(self):
         ''' 
@@ -965,6 +1056,22 @@ class SunshineIndexes(object):
         '''
         index = ''' 
             CREATE INDEX received_date_idx ON receipts (received_date)
+        '''
+        conn = self.engine.connect()
+        trans = conn.begin()
+        try:
+            conn.execute(index)
+            trans.commit()
+        except sa.exc.ProgrammingError as e:
+            trans.rollback()
+            return
+    
+    def receiptsCommittee(self):
+        ''' 
+        Make index on committee_id for receipts
+        '''
+        index = ''' 
+            CREATE INDEX receipts_committee_idx ON receipts (committee_id)
         '''
         conn = self.engine.connect()
         trans = conn.begin()
