@@ -16,6 +16,34 @@ api = Blueprint('api', __name__)
 
 dthandler = lambda obj: obj.isoformat() if isinstance(obj, date) else None
 
+def getSearchResults(term, table_names):
+    results = ''' 
+        SELECT
+          results.table_name,
+          results.records
+        FROM full_search AS results,
+             to_tsquery('english', :term) AS query,
+             to_tsvector('english', name) AS search_vector
+        WHERE query @@ search_vector
+    '''
+    
+    q_params = {}
+    
+    if table_names:
+        q_params['table_names'] = tuple(table_names)
+        results = '{0} AND table_name IN :table_names'.format(results)
+    
+    engine = db_session.bind
+    
+    punc = re.compile('[%s]' % re.escape(punctuation))
+    term = punc.sub('', term)
+
+    q_params['term'] = ' & '.join([t for t in term.split()])
+
+    results = engine.execute(sa.text(results), **q_params)
+    
+    return results
+
 @api.route('/advanced-search/')
 def advanced_search():
     resp = {
@@ -31,8 +59,24 @@ def advanced_search():
     term = request.args.get('term')
     limit = request.args.get('limit', 50)
     offset = request.args.get('offset', 0)
+    
+    if request.args.get('length'):
+        limit = request.args['length']
+    
+    if request.args.get('start'):
+        offset = request.args['start']
+    
+    if request.args.get('order[0][column]'):
+        col_idx = request.args['order[0][column]']
+        order_by_col = request.args['columns[' + str(col_idx) + '][data]']
+        
+        sort_order = request.args['order[0][dir]']
+        reverse_sort = True
+        if sort_order == 'asc':
+            reverse_sort = False
 
-
+    table_names = request.args.getlist('table_name')
+   
     if not term:
         resp['status'] = 'error'
         resp['message'] = 'A search term is required'
@@ -40,77 +84,87 @@ def advanced_search():
         valid = False
     
     if valid:
-        results = ''' 
-            SELECT
-              results.table_name,
-              results.name,
-              results.records
-            FROM full_search AS results,
-                 to_tsquery('english', :term) AS query,
-                 to_tsvector('english', name) AS search_vector
-            WHERE query @@ search_vector
-        '''
-        
-        q_params = {}
-
-        table_names = request.args.getlist('table_name')
-        
-        if table_names:
-            q_params['table_names'] = tuple(table_names)
-            results = '{0} AND table_name IN :table_names'.format(results)
-        
-        engine = db_session.bind
-        
-        punc = re.compile('[%s]' % re.escape(punctuation))
-        term = punc.sub('', term)
-
-        q_params['term'] = ' & '.join([t for t in term.split()])
-
-        results = engine.execute(sa.text(results), **q_params)
+        results = getSearchResults(term, table_names)
         
         sorted_results = sorted(results, key=attrgetter('table_name'))
-        total_rows = len(sorted_results)
-        start = int(offset)
-        end = int(offset) + int(limit)
+        sorted_objects = {}
 
         for table_name, table_group in groupby(sorted_results, key=attrgetter('table_name')):
-            resp['objects'][table_name] = []
+            sorted_objects[table_name] = []
             for result in table_group:
-                d = OrderedDict(zip(result.keys(), result.values()))
-                if result.table_name == 'receipts':
-                    d['records'] = sorted(result.records, 
-                                          key=itemgetter('received_date'), 
-                                          reverse=True)[start:end]
-
-                elif result.table_name == 'expenditures':
-                    d['records'] = sorted(result.records, 
-                                          key=itemgetter('expended_date'), 
-                                          reverse=True)[start:end]
-
-                elif result.table_name == 'investments':
-                    d['records'] = sorted(result.records, 
-                                          key=itemgetter('purchase_date'), 
-                                          reverse=True)[start:end]
-                
-                elif result.table_name == 'committees':
-                    d['records'] = sorted(result.records, 
-                                          key=itemgetter('name'), 
-                                          reverse=True)[start:end]
-
-                else:
-                    d['records'] = sorted(result.records, 
-                                          key=itemgetter('last_name'), 
-                                          reverse=True)[start:end]
-
-                del d['table_name']
-                resp['objects'][table_name].append(d)
+                records = [OrderedDict(zip(r.keys(), r.values())) for r in result.records]
+                sorted_objects[table_name].extend(records)
         
+        start_idx = int(offset)
+        end_idx = int(offset) + int(limit)
+        total_rows = 0
+
+        for table_name, records in sorted_objects.items():
+            
+            if table_name == 'receipts':
+                
+                if not order_by_col:
+                    order_by_col = 'received_date'
+                    reverse_sort = True
+                
+                records = sorted(records, 
+                                 key=itemgetter(order_by_col), 
+                                 reverse=reverse_sort)
+                
+            elif table_name == 'expenditures':
+                
+                if not order_by_col:
+                    order_by_col = 'expended_date'
+                    reverse_sort = True
+                
+                records = sorted(records, 
+                                 key=itemgetter(order_by_col), 
+                                 reverse=reverse_sort)
+
+            elif table_name == 'investments':
+                
+                if not order_by_col:
+                    order_by_col = 'purchase_date'
+                    reverse_sort = True
+                
+                records = sorted(records, 
+                                 key=itemgetter(order_by_col), 
+                                 reverse=reverse_sort)
+            
+            elif table_name == 'committees':
+                
+                if not order_by_col:
+                    order_by_col = 'name'
+                    reverse_sort = False
+                
+                records = sorted(records, 
+                                 key=itemgetter(order_by_col), 
+                                 reverse=reverse_sort)
+
+            else:
+                
+                if not order_by_col:
+                    order_by_col = 'last_name'
+                    reverse_sort = False
+                
+                records = sorted(records, 
+                                 key=itemgetter(order_by_col), 
+                                 reverse=reverse_sort)
+            
+            total_rows += len(records)
+            resp['objects'][table_name] = records[start_idx:end_idx]
+
         resp['meta'] = {
             'total_rows': total_rows,
             'limit': limit,
             'offset': offset,
             'term': term
         }
+        resp['recordsTotal'] = total_rows
+        resp['recordsFiltered'] = total_rows
+        
+        if request.args.get('draw'):
+            resp['draw'] = int(request.args['draw'])
 
     response_str = json.dumps(resp, sort_keys=False, default=dthandler)
     response = make_response(response_str, status_code)

@@ -42,7 +42,19 @@
             <div id="candidates-results"></div>
             <div id="committees-results"></div>
             <div id="officers-results"></div>
-            <div id="receipts-results"></div>
+            <div id="receipts-results">
+                <h4 id="receipts-results-length"></h4>
+                <table class="table table-hover" id="receipts-table">
+                    <thead>
+                        <tr>
+                            <th>Donor name</th>
+                            <th>Committee name</th>
+                            <th>Amount</th>
+                            <th>Recieved date</th>
+                        </tr>
+                    </thead>
+                </table>
+            </div>
         </div>
     </div>
 </div>
@@ -277,39 +289,65 @@
             </table>
         </div>
     </script>
+<script type="text/javascript" src="{{ url_for('static', filename='js/URI.min.js')}}"></script>
 <script type="text/javascript">
     $(document).ready(function(){
 
         $('#filter-results label').popover({trigger: "hover", placement: "bottom"});
 
         {% if term != None %}
-            $('#spinner').html("<h1><i class='fa fa-spin fa-sun-o'></i></h1>");
-            do_query(window.location.search);
+            var query = URI(window.location.search).query(true)
+            do_query(query);
         {% endif %}
     })
-    function do_query(params){
-        $.when($.getJSON("{{ url_for('api.advanced_search') }}" + params)).then(
-            function(resp){
-                $('#spinner').html("");
-                $.each(resp.objects, function(table_name, results){
-                    var template_guts = $('#' + table_name + 'Result').html()
-                    var template = new EJS({'text': template_guts});
-                    var records = [];
-                    $.each(results, function(i, record){
-                        records = records.concat(record.records);
-                    });
-                    $('#' + table_name + '-results').append(template.render({'results': records}));
-                });
-                $('#receipts-table').DataTable({
-                    "aaSorting": [[0, 'asc']],
-                    "paging": false,
-                    "info": false,
-                    "searching": false
-                });
-                if (resp.objects.length == 0)
-                    $('#search-results').html("<h3>No results found for '" + $("#term").val() + "'</h3>")
-            }
-        )
+    function do_query(query){
+        var term = query['term'];
+        var params = $.param({'term': term, 'table_name': 'receipts'})
+
+        $('#receipts-table').DataTable({
+            "info": true,
+            "searching": false,
+            "processing": true,
+            "serverSide": true,
+            "ajax": {
+                "url": "{{ url_for('api.advanced_search') }}?" + params,
+                "dataSrc": "objects.receipts"
+            },
+            "columns": [
+                {"data": "last_name"},
+                {"data": "committee_name"},
+                {"data": "amount"},
+                {"data": "received_date"}
+            ],
+            "order": [[3, 'desc']]
+        });
+
+        $('#receipts-table_processing').html("<h1><i class='fa fa-spin fa-sun-o'></i></h1>");
+
+        // $.when($.getJSON("{{ url_for('api.advanced_search') }}" + params)).then(
+        //     function(resp){
+        //         $('#spinner').html("");
+        //         $.each(resp.objects, function(table_name, results){
+        //             var template_guts = $('#' + table_name + 'Result').html()
+        //             var template = new EJS({'text': template_guts});
+        //             //var records = [];
+        //             //$.each(results, function(i, record){
+        //             //    records = records.concat(record.records);
+        //             //});
+        //             $('#' + table_name + '-results').append(template.render({'results': results}));
+        //         });
+        //         $('#receipts-table').DataTable({
+        //             "aaSorting": [[0, 'asc']],
+        //             "info": false,
+        //             "searching": false,
+        //             "processing": true,
+        //             "serverSide": true,
+        //             "ajax":
+        //         });
+        //         if (resp.objects.length == 0)
+        //             $('#search-results').html("<h3>No results found for '" + $("#term").val() + "'</h3>");
+        //     }
+        // )
     }
 
     function format_boolean(value) {
