@@ -44,6 +44,7 @@ def index():
         SELECT * FROM (
           SELECT * 
           FROM committee_money
+          WHERE committee_active = TRUE
           ORDER BY committee_name
         ) AS committees
         ORDER BY committees.total DESC NULLS LAST

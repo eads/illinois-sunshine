@@ -29,7 +29,10 @@ def advanced_search():
     valid = True
 
     term = request.args.get('term')
-    
+    limit = request.args.get('limit', 50)
+    offset = request.args.get('offset', 0)
+
+
     if not term:
         resp['status'] = 'error'
         resp['message'] = 'A search term is required'
@@ -66,7 +69,10 @@ def advanced_search():
         results = engine.execute(sa.text(results), **q_params)
         
         sorted_results = sorted(results, key=attrgetter('table_name'))
-        
+        total_rows = len(sorted_results)
+        start = int(offset)
+        end = int(offset) + int(limit)
+
         for table_name, table_group in groupby(sorted_results, key=attrgetter('table_name')):
             resp['objects'][table_name] = []
             for result in table_group:
@@ -74,20 +80,37 @@ def advanced_search():
                 if result.table_name == 'receipts':
                     d['records'] = sorted(result.records, 
                                           key=itemgetter('received_date'), 
-                                          reverse=True)
+                                          reverse=True)[start:end]
 
                 elif result.table_name == 'expenditures':
                     d['records'] = sorted(result.records, 
                                           key=itemgetter('expended_date'), 
-                                          reverse=True)
+                                          reverse=True)[start:end]
 
                 elif result.table_name == 'investments':
                     d['records'] = sorted(result.records, 
                                           key=itemgetter('purchase_date'), 
-                                          reverse=True)
+                                          reverse=True)[start:end]
+                
+                elif result.table_name == 'committees':
+                    d['records'] = sorted(result.records, 
+                                          key=itemgetter('name'), 
+                                          reverse=True)[start:end]
+
+                else:
+                    d['records'] = sorted(result.records, 
+                                          key=itemgetter('last_name'), 
+                                          reverse=True)[start:end]
 
                 del d['table_name']
                 resp['objects'][table_name].append(d)
+        
+        resp['meta'] = {
+            'total_rows': total_rows,
+            'limit': limit,
+            'offset': offset,
+            'term': term
+        }
 
     response_str = json.dumps(resp, sort_keys=False, default=dthandler)
     response = make_response(response_str, status_code)
