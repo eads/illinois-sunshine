@@ -216,6 +216,7 @@
             });
 
             $('.transactions').on('click', function(e){
+                $('#money-table-guts').html("<h1><i class='fa fa-spin fa-sun-o'></i></h1>");
                 if(!$(this).parent().hasClass('active')){
                     $('li[role="presentation"]').removeClass('active');
                     $(this).parent().addClass('active');

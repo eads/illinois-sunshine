@@ -173,7 +173,7 @@
                 ],
                 "language": language_opts,
                 "order": [[0, 'asc']],
-                "initCallback": function(settings, data){
+                "initComplete": function(settings, data){
                     if(data.objects.committees.length == 0){
                         $('#committees-results').hide();
                     }
@@ -240,12 +240,15 @@
                     {
                         "data": "last_name",
                         "render": function(data, type, full, meta){
-                            var name = full['first_name'] + ' ' + full['last_name'];
-                            return name
-                            //return '<a href="/committees/' + full['committee_id'] + '/">' + name + '</a>';
+                            return full['first_name'] + ' ' + full['last_name'];
                         }
                     },
-                    {"data": "committee_name"},
+                    {
+                        "data": "committee_name",
+                        "render": function(data, type, full, meta){
+                            return '<a href="/committees/' + full['committee_id'] + '/">' + data + '</a>';
+                        }
+                    },
                     {"data": "title"},
                     {
                         "data": "current",
