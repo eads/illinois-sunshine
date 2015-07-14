@@ -9,7 +9,7 @@
 
     <br />
     <h3>
-        Donations between <strong>{{start_date.strftime('%b %d, %Y')}}</strong> and <strong>{{end_date.strftime('%b %d, %Y')}}</strong>
+        <strong>{{ weeks_total_count|format_number }}</strong> donations between <strong>{{start_date.strftime('%b %d, %Y')}}</strong> and <strong>{{end_date.strftime('%b %d, %Y')}}</strong> totalling <strong>{{ weeks_total_donations|format_money }}</strong>
         <span class='pull-right'>
             <a href='/donations?start_date={{prev_week_date.strftime('%Y-%m-%d')}}&end_date={{start_date.strftime('%Y-%m-%d')}}' class='btn btn-sm btn-primary'>&laquo; Prev week</a>
             {% if not is_current %}
@@ -17,9 +17,12 @@
             {% endif %}
         </span>
     </h3>
+
+    <p></p>
+
     <table class="table table-striped">
         <tbody>
-            {% for donation in recent_donations %}
+            {% for donation in weeks_donations %}
                 <tr>
                     <td>
                         <a href='/search/?term={% if donation.first_name %}{{ donation.first_name }}{% endif %} {{ donation.last_name }}&table_name=candidates&table_name=committees&table_name=officers&table_name=receipts'>{% if donation.first_name %}{{ donation.first_name }}{% endif %} {{ donation.last_name }}</a>

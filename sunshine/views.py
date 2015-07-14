@@ -75,11 +75,14 @@ def donations():
     next_week_date = end_date + timedelta(days=7)
     is_current = (end_date == datetime.now().date())
     
-    recent_donations = db_session.query(Receipt)\
+    weeks_donations = db_session.query(Receipt)\
                                  .join(FiledDoc, Receipt.filed_doc_id == FiledDoc.id)\
                                  .filter(Receipt.received_date >= start_date)\
                                  .filter(Receipt.received_date <= end_date)\
                                  .order_by(FiledDoc.received_datetime.desc())
+
+    weeks_total_count = len(weeks_donations.all())
+    weeks_total_donations = sum([d.amount for d in weeks_donations])
     
     donations_by_week = ''' 
         SELECT * FROM receipts_by_week
@@ -98,7 +101,9 @@ def donations():
     totals = list(engine.execute(sa.text(totals_sql)))
 
     return render_template('donations.html', 
-                           recent_donations=recent_donations,
+                           weeks_donations=weeks_donations,
+                           weeks_total_count=weeks_total_count,
+                           weeks_total_donations=weeks_total_donations,
                            donations_by_week=donations_by_week,
                            start_date=start_date,
                            end_date=end_date,
