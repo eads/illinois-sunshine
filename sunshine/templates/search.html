@@ -172,7 +172,12 @@
                     }
                 ],
                 "language": language_opts,
-                "order": [[0, 'asc']]
+                "order": [[0, 'asc']],
+                "initCallback": function(settings, data){
+                    if(data.objects.committees.length == 0){
+                        $('#committees-results').hide();
+                    }
+                }
             });
 
             $('#committees-table_processing').html("<h1><i class='fa fa-spin fa-sun-o'></i></h1>");
@@ -205,6 +210,11 @@
                     {"data": "office"}
                 ],
                 "language": language_opts,
+                "initComplete": function(settings, data){
+                    if(data.objects.candidates.length == 0){
+                        $('#candidates-results').hide()
+                    }
+                },
                 "order": [[0, 'asc']]
             });
 
@@ -255,6 +265,11 @@
                     }
                 ],
                 "language": language_opts,
+                "initComplete": function(settings, data){
+                    if(data.objects.officers.length == 0){
+                        $('#officers-results').hide()
+                    }
+                },
                 "order": [[0, 'asc']]
             });
 
@@ -309,6 +324,11 @@
                     }
                 ],
                 "language": language_opts,
+                "initComplete": function(settings, data){
+                    if(data.objects.receipts.length == 0){
+                        $('#receipts-results').hide()
+                    }
+                },
                 "order": [[3, 'desc']]
             });
 
