@@ -165,18 +165,16 @@
     <script src="{{ url_for('static', filename='js/chart_helper.js') }}"></script>
 
     <script type="text/EJS" id="table-guts">
-        <h3>
-            <span class='pull-right'>
-                <% if ( offset >= 50){ %>
-                    <a href='javascript://' class='btn btn-sm btn-primary prev-page' data-transaction_type="<%= transaction_type %>" data-offset="<%= offset %>">&laquo; Previous page</a>
-                <% } %>
-                <% if (offset >= 0){ %>
-                    <a href='javascript://' class='btn btn-sm btn-primary next-page' data-transaction_type="<%= transaction_type %>" data-offset="<%= offset %>">
-                        Next page &raquo;
-                    </a>
-                <% } %>
-            </span>
-        </h3>
+        <p>
+            <% if ( offset >= 50){ %>
+                <a href='javascript://' class='btn btn-sm btn-primary prev-page' data-transaction_type="<%= transaction_type %>" data-offset="<%= offset %>">&laquo; Previous page</a>
+            <% } %>
+            <% if (offset >= 0){ %>
+                <a href='javascript://' class='btn btn-sm btn-primary next-page' data-transaction_type="<%= transaction_type %>" data-offset="<%= offset %>">
+                    Next page &raquo;
+                </a>
+            <% } %>
+        </p>
         <% $.each(transactions, function(i, transaction){ %>
             <tr>
                 <td>

@@ -120,6 +120,7 @@ def search():
     return render_template('search.html', term=term, table_name=table_name)
 
 @views.route('/candidates/<candidate_id>/')
+@cache.cached(timeout=CACHE_TIMEOUT, key_prefix=make_cache_key)
 def candidate(candidate_id):
     try:
         candidate_id = int(candidate_id)
@@ -145,6 +146,7 @@ def candidate(candidate_id):
                            ie_committees=ie_committees)
 
 @views.route('/top-earners/')
+@cache.cached(timeout=CACHE_TIMEOUT, key_prefix=make_cache_key)
 def top_earners():
     engine = db_session.bind
     
@@ -174,6 +176,7 @@ def top_earners():
 
 
 @views.route('/committees/')
+@cache.cached(timeout=CACHE_TIMEOUT, key_prefix=make_cache_key)
 def committees():
 
     committee_type = "Candidate"
@@ -254,6 +257,7 @@ def committees():
                            page_count=page_count)
 
 @views.route('/committees/<committee_id>/')
+@cache.cached(timeout=CACHE_TIMEOUT, key_prefix=make_cache_key)
 def committee(committee_id):
     try:
         committee_id = int(committee_id)
@@ -472,6 +476,7 @@ def committee(committee_id):
                            debts=debts)
 
 @views.route('/contributions/<receipt_id>/')
+@cache.cached(timeout=CACHE_TIMEOUT, key_prefix=make_cache_key)
 def contribution(receipt_id):
     try:
         receipt_id = int(receipt_id)
@@ -483,6 +488,7 @@ def contribution(receipt_id):
     return render_template('contribution-detail.html', receipt=receipt)
 
 @views.route('/expenditures/<expense_id>/')
+@cache.cached(timeout=CACHE_TIMEOUT, key_prefix=make_cache_key)
 def expense(expense_id):
     try:
         expense_id = int(expense_id)
