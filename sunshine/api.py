@@ -87,10 +87,9 @@ def advanced_search():
         results = getSearchResults(term, table_names)
         
         sorted_results = sorted(results, key=attrgetter('table_name'))
-        sorted_objects = {}
-
+        sorted_objects = {table_name: [] for table_name in table_names}
+        
         for table_name, table_group in groupby(sorted_results, key=attrgetter('table_name')):
-            sorted_objects[table_name] = []
             for result in table_group:
                 records = [OrderedDict(zip(r.keys(), r.values())) for r in result.records]
                 sorted_objects[table_name].extend(records)

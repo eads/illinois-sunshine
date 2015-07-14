@@ -129,13 +129,14 @@
             table_names = query.table_name;
         }
 
-        var pagination_opts = {
+        var language_opts = {
             'paginate': {
                 'first': '&laquo;',
                 'last': '&raquo;',
                 'previous': '&lt;',
                 'next': '&gt;'
-            }
+            },
+            'zeroRecords': 'No results found'
         }
 
         if(table_names.indexOf('committees') >= 0){
@@ -154,7 +155,12 @@
                     "dataSrc": "objects.committees"
                 },
                 "columns": [
-                    {"data": "name"},
+                    {
+                        "data": "name",
+                        "render": function(data, type, full, meta){
+                            return '<a href="/committees/' + full['id'] + '/">' + full['name'] + '</a>';
+                        }
+                    },
                     {"data": "type"},
                     {"data": "party"},
                     {"data": "purpose"},
@@ -165,7 +171,7 @@
                         }
                     }
                 ],
-                "language": pagination_opts,
+                "language": language_opts,
                 "order": [[0, 'asc']]
             });
 
@@ -191,13 +197,14 @@
                     {
                         "data": "last_name",
                         "render": function(data, type, full, meta){
-                            return full['first_name'] + ' ' + full['last_name']
+                            var name = full['first_name'] + ' ' + full['last_name'];
+                            return '<a href="/candidates/' + full['id'] + '/">' + name + '</a>';
                         }
                     },
                     {"data": "party"},
                     {"data": "office"}
                 ],
-                "language": pagination_opts,
+                "language": language_opts,
                 "order": [[0, 'asc']]
             });
 
@@ -223,7 +230,9 @@
                     {
                         "data": "last_name",
                         "render": function(data, type, full, meta){
-                            return full['first_name'] + ' ' + full['last_name']
+                            var name = full['first_name'] + ' ' + full['last_name'];
+                            return name
+                            //return '<a href="/committees/' + full['committee_id'] + '/">' + name + '</a>';
                         }
                     },
                     {"data": "committee_name"},
@@ -245,7 +254,7 @@
                         }
                     }
                 ],
-                "language": pagination_opts,
+                "language": language_opts,
                 "order": [[0, 'asc']]
             });
 
@@ -272,13 +281,18 @@
                         "data": "last_name",
                         "render": function(data, type, full, meta){
                             if(full['first_name']){
-                                return full['first_name'] + ' ' + full['last_name']
+                                return full['first_name'] + ' ' + full['last_name'];
                             } else {
-                                return data
+                                return data;
                             }
                         }
                     },
-                    {"data": "committee_name"},
+                    {
+                        "data": "committee_name",
+                        "render": function(data, type, full, meta){
+                            return '<a href="/committees/' + full['id'] + '/">' + full['committee_name'] + '</a>'
+                        }
+                    },
                     {
                         "data": "amount",
                         "render": function(data, type, full, meta){
@@ -294,7 +308,7 @@
                         }
                     }
                 ],
-                "language": pagination_opts,
+                "language": language_opts,
                 "order": [[3, 'desc']]
             });
 

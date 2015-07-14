@@ -36,7 +36,7 @@
                 {% endfor %}
                 {% for committee in ie_committees %}
                     <tr>
-                        <td><a href="{{ url_for('views.committee', committee_id=committee.id ) }}">{{ committee.committee_name }}</a></td>
+                        <td><a href="{{ url_for('views.committee', committee_id=committee.committee_id ) }}">{{ committee.committee_name }}</a></td>
                         <td>{{ committee.committee_type }} Committee {% if committee.supporting %}(Supporting){% elif committee.opposing %}(Opposing){% endif %}</td>
                     </tr>
                 {% endfor %}
