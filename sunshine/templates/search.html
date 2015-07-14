@@ -37,13 +37,53 @@
 
 <div class="row">
     <div class="col-sm-12">
-        <div id="spinner"></div>
         <div id="search-results">
-            <div id="candidates-results"></div>
-            <div id="committees-results"></div>
-            <div id="officers-results"></div>
-            <div id="receipts-results">
-                <h4 id="receipts-results-length"></h4>
+            <div id="committees-results" style="display:none;">
+                <h3>Committees</h3>
+                <table class="table table-hover" id="committees-table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Committee type</th>
+                            <th>Party</th>
+                            <th>Purpose</th>
+                            <th>Active</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                </table>
+                <hr />
+            </div>
+            <div id="candidates-results" style="display:none;">
+                <h3>Candidates</h3>
+                <table class="table table-hover" id="candidates-table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Party</th>
+                            <th>Office held</th>
+                        </tr>
+                    </thead>
+                </table>
+                <hr />
+            </div>
+            <div id="officers-results" style="display:none;">
+                <h3>Officers</h3>
+                <table class="table table-hover" id="officers-table">
+                    <thead>
+                        <tr>
+                            <th>Officer name</th>
+                            <th>Committee name</th>
+                            <th>Title</th>
+                            <th>Current officer</th>
+                            <th>Resign date</th>
+                        </tr>
+                    </thead>
+                </table>
+                <hr />
+            </div>
+            <div id="receipts-results" style="display:none;">
+                <h3>Receipts</h3>
                 <table class="table table-hover" id="receipts-table">
                     <thead>
                         <tr>
@@ -67,229 +107,7 @@
     <script src="{{ url_for('static', filename='js/ejs_production.js') }}"></script>
     <script src="{{ url_for('static', filename='js/accounting.min.js') }}"></script>
     <script src="{{ url_for('static', filename='js/moment.min.js') }}"></script>
-    <script type="text/EJS" id="committeesResult">
-        <h4><%= results.length %> committees found</h4>
-        <div class="search-result">
-            <table class="table table-hover">
-                <thead>
-                    <tr>
-                        <th>Name</th>
-                        <th>Committee type</th>
-                        <th>Party</th>
-                        <th>Purpose</th>
-                        <th>Active</th>
-                    </tr>
-                </thead>
-                <tbody>
-                <% $.each(results, function(i, record){ %>
-                    <tr>
-                        <td>
-                            <a href="/committees/<%= record.id %>/">
-                                <%= record.name %>
-                            </a>
-                        </td>
-                        <td>
-                            <%= record.type %>
-                        </td>
-                        <td>
-                            <%= record.party %>
-                        </td>
-                        <td>
-                            <%= record.purpose %>
-                        </td>
-                        <td>
-                            <%= format_boolean(record.active) %>
-                        </td>
-                    </tr>
-                <% }) %>
-                </tbody>
-            </table>
-        </div>
-    </script>
-    <script type="text/EJS" id="candidatesResult">
-        <h4><%= results.length %> candidates found</h4>
-        <div class="search-result">
-            <table class="table table-hover">
-                <thead>
-                    <tr>
-                        <th>Name</th>
-                        <th>Party</th>
-                        <th>Office held</th>
-                    </tr>
-                </thead>
-                <tbody>
-                <% $.each(results, function(i, record){ %>
-                    <tr>
-                        <td>
-                            <a href="/candidates/<%= record.id %>/">
-                                <%= record.first_name %> <%= record.last_name %>
-                            </a>
-                        </td>
-                        <td>
-                            <%= record.party %>
-                        </td>
-                        <td>
-                            <%= record.office %>
-                        </td>
-                    </tr>
-                <% }) %>
-                </tbody>
-            </table>
-        </div>
-    </script>
-    <script type="text/EJS" id="receiptsResult">
-        <h4><%= results.length %> donations found</h4>
-        <div class="search-result">
-            <table class="table table-hover" id="receipts-table">
-                <thead>
-                    <tr>
-                        <th>Donor name</th>
-                        <th>Committee name</th>
-                        <th>Amount</th>
-                        <th>Recieved date</th>
-                    </tr>
-                </thead>
-                <tbody>
-                <% $.each(results, function(i, record){ %>
-                    <tr>
-                        <td>
-                            <%= record.first_name %> <%= record.last_name %>
-                        </td>
-                        <td>
-                            <a href="/committees/<%= record.committee_id %>/">
-                                <%= record.committee_name %>
-                            </a>
-                        </td>
-                        <td>
-                            <%= accounting.formatMoney(record.amount) %>
-                        </td>
-                        <td>
-                            <% if (record.received_date) { %>
-                                <%= moment(record.received_date).format('MMM D, YYYY') %>
-                            <% } %>
-                        </td>
-                    </tr>
-                <% }) %>
-                </tbody>
-            </table>
-        </div>
-    </script>
-    <script type="text/EJS" id="officersResult">
-        <h4><%= results.length %> officers found</h4>
-        <div class="search-result">
-            <table class="table table-hover">
-                <thead>
-                    <tr>
-                        <th>Officer name</th>
-                        <th>Committee name</th>
-                        <th>Title</th>
-                        <th>Current officer</th>
-                        <th>Resign date</th>
-                    </tr>
-                </thead>
-                <tbody>
-                <% $.each(results, function(i, record){ %>
-                    <tr>
-                        <td>
-                            <%= record.first_name %> <%= record.last_name %>
-                        </td>
-                        <td>
-                            <a href="/committees/<%= record.committee_id %>/">
-                                <%= record.committee_name %>
-                            </a>
-                        </td>
-                        <td>
-                            <%= record.title %>
-                        </td>
-                        <td>
-                            <%= format_boolean(record.current) %>
-                        </td>
-                        <td>
-                            <% if (record.resign_date) { %>
-                                <%= moment(record.resign_date).format('MMM D, YYYY') %>
-                            <% } %>
-                        </td>
-                    </tr>
-                <% }) %>
-                </tbody>
-            </table>
-        </div>
-    </script>
-    <script type="text/EJS" id="expendituresResult">
-        <h4><%= results.length %> expenditures found</h4>
-        <div class="search-result">
-            <table class="table table-hover">
-                <thead>
-                    <tr>
-                        <th>Expense name</th>
-                        <th>Committee name</th>
-                        <th>Amount</th>
-                        <th>Expended date</th>
-                    </tr>
-                </thead>
-                <tbody>
-                <% $.each(results, function(i, record){ %>
-                    <tr>
-                        <td>
-                            <%= record.first_name %> <%= record.last_name %>
-                        </td>
-                        <td>
-                            <a href="/committees/<%= record.committee_id %>/">
-                                <%= record.committee_name %>
-                            </a>
-                        </td>
-                        <td>
-                            <a href="/expenditures/<%= record.id %>/">
-                                <%= accounting.formatMoney(record.amount) %>
-                            </a>
-                        </td>
-                        <td>
-                            <% if (record.expended_date) { %>
-                                <%= moment(record.expended_date).format('MMM D, YYYY') %>
-                            <% } %>
-                        </td>
-                    </tr>
-                <% }) %>
-                </tbody>
-            </table>
-        </div>
-    </script>
-    <script type="text/EJS" id="investmentsResult">
-        <h4><%= results.length %> investments found</h4>
-        <div class="search-result">
-            <table class="table table-hover">
-                <thead>
-                    <tr>
-                        <th>Investment name</th>
-                        <th>Committee name</th>
-                        <th>Current value</th>
-                        <th>Liquid value</th>
-                    </tr>
-                </thead>
-                <tbody>
-                <% $.each(results, function(i, record){ %>
-                    <tr>
-                        <td>
-                            <%= record.first_name %> <%= record.last_name %>
-                        </td>
-                        <td>
-                            <a href="/committees/<%= record.committee_id %>/">
-                                <%= record.committee_name %>
-                            </a>
-                        </td>
-                        <td>
-                            <%= record.current_value %>
-                        </td>
-                        <td>
-                            <%= record.liquid_value %>
-                        </td>
-                    </tr>
-                <% }) %>
-                </tbody>
-            </table>
-        </div>
-    </script>
-<script type="text/javascript" src="{{ url_for('static', filename='js/URI.min.js')}}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='js/URI.min.js')}}"></script>
 <script type="text/javascript">
     $(document).ready(function(){
 
@@ -302,52 +120,186 @@
     })
     function do_query(query){
         var term = query['term'];
-        var params = $.param({'term': term, 'table_name': 'receipts'})
 
-        $('#receipts-table').DataTable({
-            "info": true,
-            "searching": false,
-            "processing": true,
-            "serverSide": true,
-            "ajax": {
-                "url": "{{ url_for('api.advanced_search') }}?" + params,
-                "dataSrc": "objects.receipts"
-            },
-            "columns": [
-                {"data": "last_name"},
-                {"data": "committee_name"},
-                {"data": "amount"},
-                {"data": "received_date"}
-            ],
-            "order": [[3, 'desc']]
-        });
+        var table_names = [];
 
-        $('#receipts-table_processing').html("<h1><i class='fa fa-spin fa-sun-o'></i></h1>");
+        if(typeof query.table_name === 'string'){
+            table_names = [query.table_name];
+        } else {
+            table_names = query.table_name;
+        }
 
-        // $.when($.getJSON("{{ url_for('api.advanced_search') }}" + params)).then(
-        //     function(resp){
-        //         $('#spinner').html("");
-        //         $.each(resp.objects, function(table_name, results){
-        //             var template_guts = $('#' + table_name + 'Result').html()
-        //             var template = new EJS({'text': template_guts});
-        //             //var records = [];
-        //             //$.each(results, function(i, record){
-        //             //    records = records.concat(record.records);
-        //             //});
-        //             $('#' + table_name + '-results').append(template.render({'results': results}));
-        //         });
-        //         $('#receipts-table').DataTable({
-        //             "aaSorting": [[0, 'asc']],
-        //             "info": false,
-        //             "searching": false,
-        //             "processing": true,
-        //             "serverSide": true,
-        //             "ajax":
-        //         });
-        //         if (resp.objects.length == 0)
-        //             $('#search-results').html("<h3>No results found for '" + $("#term").val() + "'</h3>");
-        //     }
-        // )
+        var pagination_opts = {
+            'paginate': {
+                'first': '&laquo;',
+                'last': '&raquo;',
+                'previous': '&lt;',
+                'next': '&gt;'
+            }
+        }
+
+        if(table_names.indexOf('committees') >= 0){
+
+            $('#committees-results').show();
+
+            var params = $.param({'term': term, 'table_name': 'committees'})
+
+            $('#committees-table').DataTable({
+                "info": true,
+                "searching": false,
+                "processing": true,
+                "serverSide": true,
+                "ajax": {
+                    "url": "{{ url_for('api.advanced_search') }}?" + params,
+                    "dataSrc": "objects.committees"
+                },
+                "columns": [
+                    {"data": "name"},
+                    {"data": "type"},
+                    {"data": "party"},
+                    {"data": "purpose"},
+                    {
+                        "data": "active",
+                        "render": function(data, type, full, meta){
+                            return format_boolean(data);
+                        }
+                    }
+                ],
+                "language": pagination_opts,
+                "order": [[0, 'asc']]
+            });
+
+            $('#committees-table_processing').html("<h1><i class='fa fa-spin fa-sun-o'></i></h1>");
+        }
+
+        if(table_names.indexOf('candidates') >= 0){
+
+            $('#candidates-results').show();
+
+            var params = $.param({'term': term, 'table_name': 'candidates'})
+
+            $('#candidates-table').DataTable({
+                "info": true,
+                "searching": false,
+                "processing": true,
+                "serverSide": true,
+                "ajax": {
+                    "url": "{{ url_for('api.advanced_search') }}?" + params,
+                    "dataSrc": "objects.candidates"
+                },
+                "columns": [
+                    {
+                        "data": "last_name",
+                        "render": function(data, type, full, meta){
+                            return full['first_name'] + ' ' + full['last_name']
+                        }
+                    },
+                    {"data": "party"},
+                    {"data": "office"}
+                ],
+                "language": pagination_opts,
+                "order": [[0, 'asc']]
+            });
+
+            $('#candidates-table_processing').html("<h1><i class='fa fa-spin fa-sun-o'></i></h1>");
+        }
+
+        if(table_names.indexOf('officers') >= 0){
+
+            $('#officers-results').show();
+
+            var params = $.param({'term': term, 'table_name': 'officers'})
+
+            $('#officers-table').DataTable({
+                "info": true,
+                "searching": false,
+                "processing": true,
+                "serverSide": true,
+                "ajax": {
+                    "url": "{{ url_for('api.advanced_search') }}?" + params,
+                    "dataSrc": "objects.officers"
+                },
+                "columns": [
+                    {
+                        "data": "last_name",
+                        "render": function(data, type, full, meta){
+                            return full['first_name'] + ' ' + full['last_name']
+                        }
+                    },
+                    {"data": "committee_name"},
+                    {"data": "title"},
+                    {
+                        "data": "current",
+                        "render": function(data, type, full, meta){
+                            return format_boolean(data);
+                        }
+                    },
+                    {
+                        "data": "resign_date",
+                        "render": function(data, type, full, meta){
+                            if(data){
+                                return moment(data).format('MMMM DD, YYYY')
+                            } else {
+                                return data
+                            }
+                        }
+                    }
+                ],
+                "language": pagination_opts,
+                "order": [[0, 'asc']]
+            });
+
+            $('#officers-table_processing').html("<h1><i class='fa fa-spin fa-sun-o'></i></h1>");
+        }
+
+        if(table_names.indexOf('receipts') >= 0){
+
+            $('#receipts-results').show();
+
+            var params = $.param({'term': term, 'table_name': 'receipts'})
+
+            $('#receipts-table').DataTable({
+                "info": true,
+                "searching": false,
+                "processing": true,
+                "serverSide": true,
+                "ajax": {
+                    "url": "{{ url_for('api.advanced_search') }}?" + params,
+                    "dataSrc": "objects.receipts"
+                },
+                "columns": [
+                    {
+                        "data": "last_name",
+                        "render": function(data, type, full, meta){
+                            if(full['first_name']){
+                                return full['first_name'] + ' ' + full['last_name']
+                            } else {
+                                return data
+                            }
+                        }
+                    },
+                    {"data": "committee_name"},
+                    {
+                        "data": "amount",
+                        "render": function(data, type, full, meta){
+                            return accounting.formatMoney(data);
+                        }
+                    },
+                    {
+                        "data": "received_date",
+                        "render": function(data, type, full, meta){
+                            if(data){
+                                return moment(data).format('MMMM DD, YYYY')
+                            }
+                        }
+                    }
+                ],
+                "language": pagination_opts,
+                "order": [[3, 'desc']]
+            });
+
+            $('#receipts-table_processing').html("<h1><i class='fa fa-spin fa-sun-o'></i></h1>");
+        }
     }
 
     function format_boolean(value) {

@@ -108,7 +108,7 @@ def advanced_search():
                     reverse_sort = True
                 
                 records = sorted(records, 
-                                 key=itemgetter(order_by_col), 
+                                 key=lambda r: r[order_by_col] if r[order_by_col] else "", 
                                  reverse=reverse_sort)
                 
             elif table_name == 'expenditures':
@@ -118,7 +118,7 @@ def advanced_search():
                     reverse_sort = True
                 
                 records = sorted(records, 
-                                 key=itemgetter(order_by_col), 
+                                 key=lambda r: r[order_by_col] if r[order_by_col] else "", 
                                  reverse=reverse_sort)
 
             elif table_name == 'investments':
@@ -128,7 +128,7 @@ def advanced_search():
                     reverse_sort = True
                 
                 records = sorted(records, 
-                                 key=itemgetter(order_by_col), 
+                                 key=lambda r: r[order_by_col] if r[order_by_col] else "", 
                                  reverse=reverse_sort)
             
             elif table_name == 'committees':
@@ -138,7 +138,7 @@ def advanced_search():
                     reverse_sort = False
                 
                 records = sorted(records, 
-                                 key=itemgetter(order_by_col), 
+                                 key=lambda r: r[order_by_col] if r[order_by_col] else "", 
                                  reverse=reverse_sort)
 
             else:
@@ -148,7 +148,7 @@ def advanced_search():
                     reverse_sort = False
                 
                 records = sorted(records, 
-                                 key=itemgetter(order_by_col), 
+                                 key=lambda r: r[order_by_col] if r[order_by_col] else "", 
                                  reverse=reverse_sort)
             
             total_rows += len(records)
