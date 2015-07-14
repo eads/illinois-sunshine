@@ -193,9 +193,25 @@ def committees():
     page = request.args.get('page', 1)
     offset = (int(page) * 50) - 50
     
-    sql = '''
+    if committee_type == "Candidate":
+      sql = '''
+          SELECT * FROM (
+            SELECT distinct ON (first_name, last_name)
+            committee_money.*, candidates.*
+            FROM committee_money 
+            LEFT JOIN candidate_committees ON committee_money.committee_id = candidate_committees.committee_id
+            LEFT JOIN candidates ON candidates.id = candidate_committees.candidate_id
+            WHERE committee_type = :committee_type
+            ORDER BY first_name, last_name, committee_name
+          ) AS committees
+          ORDER BY committees.total DESC NULLS LAST
+          LIMIT 50
+          OFFSET :offset
+      '''
+    else:
+      sql = '''
         SELECT * FROM (
-          SELECT * 
+          SELECT *
           FROM committee_money 
           WHERE committee_type = :committee_type
           ORDER BY committee_name

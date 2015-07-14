@@ -23,6 +23,9 @@
                 <tr>
                     <th>Rank</th>
                     <th>Committee</th>
+                    {% if committee_type == "Candidate" %}
+                        <th>Candidate</th>
+                    {% endif %}
                     <th>Funds</th>
                 </tr>
             </thead>
@@ -31,6 +34,9 @@
                     <tr>
                         <td>{{ loop.index + ((request.args.get('page', 1)|int * 50) - 50) }}</td>
                         <td><a href="{{ url_for('views.committee', committee_id=c.committee_id ) }}">{{ c.committee_name }}</a></td>
+                        {% if committee_type == "Candidate" %}
+                            <td><a href='{{ url_for('views.candidate', candidate_id=c.candidate_id ) }}'>{{c.first_name}} {{c.last_name}}</a></td>
+                        {% endif %}
                         <td>
                             {% if c.total %}
                                 {{c.total|format_money}}
