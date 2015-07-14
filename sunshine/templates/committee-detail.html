@@ -74,18 +74,15 @@
         {% endif %}
 
         <h3>
-            Receipts after last quarterly report
+            Donations after last quarterly report
             <small>({{ recent_total|format_money }} Total)</small>
         </h3>
 
         <ul class="nav nav-tabs">
-          <li role="presentation" class="active"><a class="transactions" href="javascript://" data-table_type="receipts">Receipts</a></li>
+          <li role="presentation" class="active"><a class="transactions" href="javascript://" data-table_type="receipts">Donations</a></li>
           <li role="presentation"><a class="transactions" href="javascript://" data-table_type="expenditures">Expenditures</a></li>
         </ul>
-        <table class="table table-striped">
-            <tbody id="money-table-guts">
-            </tbody>
-        </table>
+        <div id='money-table-guts'></div>
     </div>
     <div class='col-sm-4'>
         <div class='well'>
@@ -165,6 +162,40 @@
     <script src="{{ url_for('static', filename='js/chart_helper.js') }}"></script>
 
     <script type="text/EJS" id="table-guts">
+        <table class="table table-striped">
+            <tbody>
+                <% $.each(transactions, function(i, transaction){ %>
+                    <tr>
+                        <td>
+                            <a href='/search/?term=<% if(transaction.first_name){ %><%= transaction.first_name %> <% } %><%= transaction.last_name %>&table_name=candidates&table_name=committees&table_name=officers&table_name=receipts'>
+                                <% if(transaction.first_name){ %>
+                                    <%= transaction.first_name %>
+                                <% } %>
+                                <%= transaction.last_name %>
+                            </a>
+                        </td>
+                        <td class='nowrap'>
+                            <a href="/<%= transaction_type %>/<%= transaction.id %>">
+                                <% if (transaction_type == 'expenditures') { %>
+                                    received <strong>
+                                <% } else { %>
+                                    donated <strong>
+                                <% } %>
+                                <%= accounting.formatMoney(transaction.amount) %>
+                                </strong>
+                            </a>
+                        </td>
+                        <td class='nowrap'>
+                            <% if (transaction_type == 'expenditures') { %>
+                                on <%= moment(transaction.expended_date).format('MMMM DD, YYYY') %>
+                            <% } else { %>
+                                on <%= moment(transaction.received_date).format('MMMM DD, YYYY') %>
+                            <% } %>
+                        </td>
+                    </tr>
+                <% }) %>
+            </tbody>
+        </table>
         <p>
             <% if ( offset >= 50){ %>
                 <a href='javascript://' class='btn btn-sm btn-primary prev-page' data-transaction_type="<%= transaction_type %>" data-offset="<%= offset %>">&laquo; Previous page</a>
@@ -175,34 +206,6 @@
                 </a>
             <% } %>
         </p>
-        <% $.each(transactions, function(i, transaction){ %>
-            <tr>
-                <td>
-                    <% if(transaction.first_name){ %>
-                        <%= transaction.first_name %>
-                    <% } %>
-                    <%= transaction.last_name %>
-                </td>
-                <td class='nowrap'>
-                    <a href="/<%= transaction_type %>/<%= transaction.id %>">
-                        <% if (transaction_type == 'expenditures') { %>
-                            received <strong>
-                        <% } else { %>
-                            donated <strong>
-                        <% } %>
-                        <%= accounting.formatMoney(transaction.amount) %>
-                        </strong>
-                    </a>
-                </td>
-                <td class='nowrap'>
-                    <% if (transaction_type == 'expenditures') { %>
-                        on <%= moment(transaction.expended_date).format('MMMM DD, YYYY') %>
-                    <% } else { %>
-                        on <%= moment(transaction.received_date).format('MMMM DD, YYYY') %>
-                    <% } %>
-                </td>
-            </tr>
-        <% }) %>
     </script>
 
     <script>

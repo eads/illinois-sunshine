@@ -37,6 +37,7 @@
 
 <div class="row">
     <div class="col-sm-12">
+        <div id="spinner"></div>
         <div id="search-results">
             <div id="candidates-results"></div>
             <div id="committees-results"></div>
@@ -51,8 +52,6 @@
     <script src="{{ url_for('static', filename='js/jquery.dataTables.min.js') }}"></script>
     <script src="{{ url_for('static', filename='js/jquery.dataTables.sorting.js') }}"></script>
     <script src="{{ url_for('static', filename='js/dataTables.bootstrap.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/spin.min.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/jquery.spin.js') }}"></script>
     <script src="{{ url_for('static', filename='js/ejs_production.js') }}"></script>
     <script src="{{ url_for('static', filename='js/accounting.min.js') }}"></script>
     <script src="{{ url_for('static', filename='js/moment.min.js') }}"></script>
@@ -284,14 +283,14 @@
         $('#filter-results label').popover({trigger: "hover", placement: "bottom"});
 
         {% if term != None %}
-            $('#search-results').spin('large');
+            $('#spinner').html("<h1><i class='fa fa-spin fa-sun-o'></i></h1>");
             do_query(window.location.search);
         {% endif %}
     })
     function do_query(params){
         $.when($.getJSON("{{ url_for('api.advanced_search') }}" + params)).then(
             function(resp){
-                $('#search-results').spin(false);
+                $('#spinner').html("");
                 $.each(resp.objects, function(table_name, results){
                     var template_guts = $('#' + table_name + 'Result').html()
                     var template = new EJS({'text': template_guts});
