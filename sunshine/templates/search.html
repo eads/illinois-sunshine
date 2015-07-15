@@ -129,6 +129,136 @@
             table_names = query.table_name;
         }
 
+        if(table_names.indexOf('committees') >= 0){
+
+            var columns =  [
+                {
+                    "data": "name",
+                    "render": function(data, type, full, meta){
+                        return '<a href="/committees/' + full['id'] + '/">' + full['name'] + '</a>';
+                    }
+                },
+                {"data": "type"},
+                {"data": "party"},
+                {"data": "purpose"},
+                {
+                    "data": "active",
+                    "render": function(data, type, full, meta){
+                        return format_boolean(data);
+                    }
+                }
+            ]
+
+            init_datatable(term, 'committees', columns);
+        }
+
+        if(table_names.indexOf('candidates') >= 0){
+
+            var columns = [
+                {
+                    "data": "last_name",
+                    "render": function(data, type, full, meta){
+                        var name = full['first_name'] + ' ' + full['last_name'];
+                        return '<a href="/candidates/' + full['id'] + '/">' + name + '</a>';
+                    }
+                },
+                {"data": "party"},
+                {"data": "office"}
+            ]
+
+            init_datatable(term, 'candidates', columns);
+        }
+
+        if(table_names.indexOf('officers') >= 0){
+
+            var columns = [
+                {
+                    "data": "last_name",
+                    "render": function(data, type, full, meta){
+                        return full['first_name'] + ' ' + full['last_name'];
+                    }
+                },
+                {
+                    "data": "committee_name",
+                    "render": function(data, type, full, meta){
+                        return '<a href="/committees/' + full['committee_id'] + '/">' + data + '</a>';
+                    }
+                },
+                {"data": "title"},
+                {
+                    "data": "current",
+                    "render": function(data, type, full, meta){
+                        return format_boolean(data);
+                    }
+                },
+                {
+                    "data": "resign_date",
+                    "render": function(data, type, full, meta){
+                        if(data){
+                            return moment(data).format('MMMM DD, YYYY')
+                        } else {
+                            return data
+                        }
+                    }
+                }
+            ]
+
+            init_datatable(term, 'officers', columns);
+        }
+
+        if(table_names.indexOf('receipts') >= 0){
+
+            var columns =  [
+                {
+                    "data": "last_name",
+                    "render": function(data, type, full, meta){
+                        if(full['first_name']){
+                            return full['first_name'] + ' ' + full['last_name'];
+                        } else {
+                            return data;
+                        }
+                    }
+                },
+                {
+                    "data": "committee_name",
+                    "render": function(data, type, full, meta){
+                        return '<a href="/committees/' + full['id'] + '/">' + full['committee_name'] + '</a>'
+                    }
+                },
+                {
+                    "data": "amount",
+                    "render": function(data, type, full, meta){
+                        return accounting.formatMoney(data);
+                    }
+                },
+                {
+                    "data": "received_date",
+                    "render": function(data, type, full, meta){
+                        if(data){
+                            return moment(data).format('MMMM DD, YYYY')
+                        }
+                    }
+                }
+            ]
+            var order = [[3, 'desc']];
+
+            init_datatable(term, 'receipts', columns, order);
+
+        }
+    }
+
+    function init_datatable(term, table_name, columns, order){
+        if (typeof order === 'undefined'){
+            var order = [[0, 'asc']]
+        }
+
+        $('#' + table_name + '-results').show();
+
+        var params = $.param({
+            'term': term,
+            'table_name': table_name
+        })
+
         var language_opts = {
             'paginate': {
                 'first': '&laquo;',
@@ -138,205 +268,43 @@
             },
             'zeroRecords': 'No results found'
         }
-
-        if(table_names.indexOf('committees') >= 0){
-
-            $('#committees-results').show();
-
-            var params = $.param({'term': term, 'table_name': 'committees'})
-
-            $('#committees-table').DataTable({
-                "info": true,
-                "searching": false,
-                "processing": true,
-                "serverSide": true,
-                "ajax": {
-                    "url": "{{ url_for('api.advanced_search') }}?" + params,
-                    "dataSrc": "objects.committees"
+        var opts = {
+            "info": true,
+            "searching": false,
+            "processing": true,
+            "serverSide": true,
+            "ajax": {
+                "url": "{{ url_for('api.advanced_search') }}?" + params,
+                "dataSrc": "objects." + table_name
+            },
+            "columns": columns,
+            "language": {
+                'paginate': {
+                    'first': '&laquo;',
+                    'last': '&raquo;',
+                    'previous': '&lt;',
+                    'next': '&gt;'
                 },
-                "columns": [
-                    {
-                        "data": "name",
-                        "render": function(data, type, full, meta){
-                            return '<a href="/committees/' + full['id'] + '/">' + full['name'] + '</a>';
-                        }
-                    },
-                    {"data": "type"},
-                    {"data": "party"},
-                    {"data": "purpose"},
-                    {
-                        "data": "active",
-                        "render": function(data, type, full, meta){
-                            return format_boolean(data);
-                        }
-                    }
-                ],
-                "language": language_opts,
-                "order": [[0, 'asc']],
-                "initComplete": function(settings, data){
-                    if(data.objects.committees.length == 0){
-                        $('#committees-results').hide();
-                    }
+                'zeroRecords': 'No results found',
+                'processing': "<h1><i class='fa fa-spin fa-sun-o'></i></h1>"
+            },
+            "initComplete": function(settings, data){
+                if(data['objects'][table_name].length == 0){
+                    $('#' + table_name + '-results').hide()
                 }
-            });
-
-            $('#committees-table_processing').html("<h1><i class='fa fa-spin fa-sun-o'></i></h1>");
+            },
+            "drawCallback": function(settings){
+                var display_count = parseInt(settings._iDisplayLength);
+                var record_count = parseInt(settings['json']['meta']['total_rows']);
+                console.log(display_count, record_count);
+                if (record_count <= display_count){
+                    $('#' + table_name + '-table_paginate').hide();
+                }
+            },
+            "order": order
         }
-
-        if(table_names.indexOf('candidates') >= 0){
-
-            $('#candidates-results').show();
-
-            var params = $.param({'term': term, 'table_name': 'candidates'})
-
-            $('#candidates-table').DataTable({
-                "info": true,
-                "searching": false,
-                "processing": true,
-                "serverSide": true,
-                "ajax": {
-                    "url": "{{ url_for('api.advanced_search') }}?" + params,
-                    "dataSrc": "objects.candidates"
-                },
-                "columns": [
-                    {
-                        "data": "last_name",
-                        "render": function(data, type, full, meta){
-                            var name = full['first_name'] + ' ' + full['last_name'];
-                            return '<a href="/candidates/' + full['id'] + '/">' + name + '</a>';
-                        }
-                    },
-                    {"data": "party"},
-                    {"data": "office"}
-                ],
-                "language": language_opts,
-                "initComplete": function(settings, data){
-                    if(data.objects.candidates.length == 0){
-                        $('#candidates-results').hide()
-                    }
-                },
-                "order": [[0, 'asc']]
-            });
-
-            $('#candidates-table_processing').html("<h1><i class='fa fa-spin fa-sun-o'></i></h1>");
-        }
-
-        if(table_names.indexOf('officers') >= 0){
-
-            $('#officers-results').show();
-
-            var params = $.param({'term': term, 'table_name': 'officers'})
-
-            $('#officers-table').DataTable({
-                "info": true,
-                "searching": false,
-                "processing": true,
-                "serverSide": true,
-                "ajax": {
-                    "url": "{{ url_for('api.advanced_search') }}?" + params,
-                    "dataSrc": "objects.officers"
-                },
-                "columns": [
-                    {
-                        "data": "last_name",
-                        "render": function(data, type, full, meta){
-                            return full['first_name'] + ' ' + full['last_name'];
-                        }
-                    },
-                    {
-                        "data": "committee_name",
-                        "render": function(data, type, full, meta){
-                            return '<a href="/committees/' + full['committee_id'] + '/">' + data + '</a>';
-                        }
-                    },
-                    {"data": "title"},
-                    {
-                        "data": "current",
-                        "render": function(data, type, full, meta){
-                            return format_boolean(data);
-                        }
-                    },
-                    {
-                        "data": "resign_date",
-                        "render": function(data, type, full, meta){
-                            if(data){
-                                return moment(data).format('MMMM DD, YYYY')
-                            } else {
-                                return data
-                            }
-                        }
-                    }
-                ],
-                "language": language_opts,
-                "initComplete": function(settings, data){
-                    if(data.objects.officers.length == 0){
-                        $('#officers-results').hide()
-                    }
-                },
-                "order": [[0, 'asc']]
-            });
-
-            $('#officers-table_processing').html("<h1><i class='fa fa-spin fa-sun-o'></i></h1>");
-        }
-
-        if(table_names.indexOf('receipts') >= 0){
-
-            $('#receipts-results').show();
-
-            var params = $.param({'term': term, 'table_name': 'receipts'})
-
-            $('#receipts-table').DataTable({
-                "info": true,
-                "searching": false,
-                "processing": true,
-                "serverSide": true,
-                "ajax": {
-                    "url": "{{ url_for('api.advanced_search') }}?" + params,
-                    "dataSrc": "objects.receipts"
-                },
-                "columns": [
-                    {
-                        "data": "last_name",
-                        "render": function(data, type, full, meta){
-                            if(full['first_name']){
-                                return full['first_name'] + ' ' + full['last_name'];
-                            } else {
-                                return data;
-                            }
-                        }
-                    },
-                    {
-                        "data": "committee_name",
-                        "render": function(data, type, full, meta){
-                            return '<a href="/committees/' + full['id'] + '/">' + full['committee_name'] + '</a>'
-                        }
-                    },
-                    {
-                        "data": "amount",
-                        "render": function(data, type, full, meta){
-                            return accounting.formatMoney(data);
-                        }
-                    },
-                    {
-                        "data": "received_date",
-                        "render": function(data, type, full, meta){
-                            if(data){
-                                return moment(data).format('MMMM DD, YYYY')
-                            }
-                        }
-                    }
-                ],
-                "language": language_opts,
-                "initComplete": function(settings, data){
-                    if(data.objects.receipts.length == 0){
-                        $('#receipts-results').hide()
-                    }
-                },
-                "order": [[3, 'desc']]
-            });
-
-            $('#receipts-table_processing').html("<h1><i class='fa fa-spin fa-sun-o'></i></h1>");
-        }
+        var table = $('#' + table_name + '-table').DataTable(opts);
+        console.log(table.page.info());
     }
 
     function format_boolean(value) {

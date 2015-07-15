@@ -969,7 +969,7 @@ class SunshineViews(object):
                         r.*,
                         c.name AS committee_name,
                         c.type AS committee_type
-                      FROM receipts AS r
+                      FROM condensed_receipts AS r
                       JOIN committees AS c
                         ON r.committee_id = c.id
                     ) AS rec
@@ -984,7 +984,7 @@ class SunshineViews(object):
                         e.*,
                         c.name AS committee_name,
                         c.type AS committee_type
-                      FROM expenditures AS e
+                      FROM condensed_expenditures AS e
                       JOIN committees AS c
                         ON e.committee_id = c.id
                     ) AS exp
