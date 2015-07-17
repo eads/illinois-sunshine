@@ -42,6 +42,8 @@ def getSearchResults(term, table_names):
 
     results = engine.execute(sa.text(results), **q_params)
     
+    engine.dispose()
+
     return results
 
 @api.route('/advanced-search/')

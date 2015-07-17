@@ -53,6 +53,8 @@ def index():
     
     top_ten = engine.execute(sa.text(committee_sql))
 
+    engine.dispose()
+
     return render_template('index.html', 
                            recent_donations=recent_donations,
                            top_ten=top_ten,
@@ -99,6 +101,8 @@ def donations():
       FROM receipts_by_week'''
 
     totals = list(engine.execute(sa.text(totals_sql)))
+
+    engine.dispose()
 
     return render_template('donations.html', 
                            weeks_donations=weeks_donations,
@@ -147,6 +151,8 @@ def candidate(candidate_id):
     ie_committees = list(engine.execute(sa.text(ie_committees), 
                                         candidate_id=candidate_id))
 
+    engine.dispose()
+
     return render_template('candidate-detail.html', 
                            candidate=candidate,
                            ie_committees=ie_committees)
@@ -177,6 +183,8 @@ def top_earners():
 
     top_earners = engine.execute(sa.text(top_earners),
                                  received_date=thirty_days_ago)
+
+    engine.dispose()
 
     return render_template('top-earners.html', top_earners=top_earners)
 
@@ -257,6 +265,8 @@ def committees():
                                 committee_type=committee_type,
                                 offset=offset)
     
+    engine.dispose()
+
     return render_template('committees.html', 
                            committees=committees, 
                            committee_type=committee_type,
@@ -468,6 +478,8 @@ def committee(committee_id):
                r.reporting_period_end.month,
                r.reporting_period_end.day] 
                for r in quarterlies]
+
+    engine.dispose()
 
     return render_template('committee-detail.html', 
                            committee=committee, 

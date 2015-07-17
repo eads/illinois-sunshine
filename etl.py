@@ -117,12 +117,12 @@ class SunshineExtract(object):
 class SunshineTransformLoad(object):
 
     def __init__(self, 
-                 engine,
+                 connection,
                  metadata=None,
                  chunk_size=50000):
 
         
-        self.engine = engine
+        self.connection = connection
 
         self.chunk_size = chunk_size
 
@@ -134,6 +134,15 @@ class SunshineTransformLoad(object):
                                       'downloads', 
                                       self.filename)
 
+    def executeTransaction(self, query, *args):
+        trans = self.connection.begin()
+
+        try:
+            self.connection.execute(query, *args)
+            trans.commit()
+        except sa.exc.ProgrammingError:
+            trans.rollback()
+
     def initializeDB(self):
         enum = ''' 
             CREATE TYPE committee_position AS ENUM (
@@ -141,26 +150,19 @@ class SunshineTransformLoad(object):
               'oppose'
             )
         '''
-        conn = self.engine.connect()
-        trans = conn.begin()
         
-        try:
-            conn.execute(enum)
-            trans.commit()
-        except sa.exc.ProgrammingError:
-            trans.rollback()
+        self.executeTransaction(enum)
         
-        self.metadata.create_all(bind=self.engine)
-    
+        self.metadata.create_all(bind=self.connection.engine)
+        
     def createTempTable(self):
         create = ''' 
             CREATE TABLE temp_{0} AS
               SELECT * FROM {0} LIMIT 1
             WITH NO DATA
         '''.format(self.table_name)
-        with self.engine.begin() as conn:
-            conn.execute('DROP TABLE IF EXISTS temp_{0}'.format(self.table_name))
-            conn.execute(create)
+
+        self.executeTransaction(create)
     
     @property
     def upsert(self):
@@ -188,13 +190,17 @@ class SunshineTransformLoad(object):
                    ','.join(update_fields))
 
     def update(self):
-
-        with self.engine.begin() as conn:
-            inserted = list(conn.execute(sa.text(self.upsert)))
+        
+        trans = self.connection.begin()
+        
+        try:
+            inserted = list(self.connection.execute(sa.text(self.upsert)))
+            trans.commit()
+            
             print('inserted %s %s' % (len(inserted), self.table_name))
-
-        # with self.engine.begin() as conn:
-        #     conn.execute('DROP TABLE temp_{0}'.format(self.table_name))
+        
+        except sa.exc.ProgrammingError:
+            trans.rollback()
 
     def transform(self):
         with open(self.file_path, 'r', encoding='latin1') as f:
@@ -224,15 +230,14 @@ class SunshineTransformLoad(object):
             rows.append(row)
             if len(rows) % self.chunk_size is 0:
                 
-                with self.engine.begin() as conn:
-                    conn.execute(sa.text(insert), *rows)
+                self.executeTransaction(sa.text(insert), *rows)
                 
                 print('Loaded %s %s' % ((i * self.chunk_size), self.table_name))
                 i += 1
                 rows = []
         if rows:
-            with self.engine.begin() as conn:
-                conn.execute(sa.text(insert), *rows)
+            self.executeTransaction(sa.text(insert), *rows)
+        
     
 class SunshineCommittees(SunshineTransformLoad):
     
@@ -524,10 +529,10 @@ class SunshineOfficerCommittees(SunshineTransformLoad):
               officer_id INTEGER
             )
         '''.format(self.table_name)
-        with self.engine.begin() as conn:
-            conn.execute('DROP TABLE IF EXISTS temp_{0}'.format(self.table_name))
-            conn.execute(create)
-    
+        
+        self.executeTransaction('DROP TABLE IF EXISTS temp_{0}'.format(self.table_name))
+        self.executeTransaction(create)
+        
     @property
     def upsert(self):
 
@@ -569,22 +574,26 @@ class SunshineInvestments(SunshineTransformLoad):
 
 class SunshineViews(object):
     
-    def __init__(self, engine):
-        self.engine = engine
+    def __init__(self, connection):
+        self.connection = connection
 
+    def executeTransaction(self, query, **kwargs):
+        trans = self.connection.begin()
+
+        try:
+            self.connection.execute(query, **kwargs)
+            trans.commit()
+        except sa.exc.ProgrammingError as e:
+            trans.rollback()
+            raise e
+    
     def dropViews(self):
-        with self.engine.begin() as conn:
-            conn.execute('DROP MATERIALIZED VIEW IF EXISTS receipts_by_week')
-        with self.engine.begin() as conn:
-            conn.execute('DROP MATERIALIZED VIEW IF EXISTS committee_receipts_by_week')
-        with self.engine.begin() as conn:
-            conn.execute('DROP MATERIALIZED VIEW IF EXISTS incumbent_candidates')
-        with self.engine.begin() as conn:
-            conn.execute('DROP MATERIALIZED VIEW IF EXISTS most_recent_filings CASCADE')
-        with self.engine.begin() as conn:
-            conn.execute('DROP MATERIALIZED VIEW IF EXISTS full_search')
-        with self.engine.begin() as conn:
-            conn.execute('DROP MATERIALIZED VIEW IF EXISTS expenditures_by_candidate')
+        self.executeTransaction('DROP MATERIALIZED VIEW IF EXISTS receipts_by_week')
+        self.executeTransaction('DROP MATERIALIZED VIEW IF EXISTS committee_receipts_by_week')
+        self.executeTransaction('DROP MATERIALIZED VIEW IF EXISTS incumbent_candidates')
+        self.executeTransaction('DROP MATERIALIZED VIEW IF EXISTS most_recent_filings CASCADE')
+        self.executeTransaction('DROP MATERIALIZED VIEW IF EXISTS full_search')
+        self.executeTransaction('DROP MATERIALIZED VIEW IF EXISTS expenditures_by_candidate')
 
     def makeAllViews(self):
         self.expendituresByCandidate()
@@ -599,15 +608,13 @@ class SunshineViews(object):
         self.fullSearchView()
     
     def condensedExpenditures(self):
-        conn = self.engine.connect()
-        trans = conn.begin()
+        
         try:
-            conn.execute('REFRESH MATERIALIZED VIEW condensed_expenditures')
-            trans.commit()
+            
+            self.executeTransaction('REFRESH MATERIALIZED VIEW condensed_expenditures')
+        
         except sa.exc.ProgrammingError:
-            trans.rollback()
-            conn = self.engine.connect()
-            trans = conn.begin()
+
             rec = ''' 
                 CREATE MATERIALIZED VIEW condensed_expenditures AS (
                   (
@@ -638,19 +645,15 @@ class SunshineViews(object):
                   )
                 )
             '''
-            conn.execute(sa.text(rec))
-            trans.commit()
+            self.executeTransaction(rec)
 
     def condensedReceipts(self):
-        conn = self.engine.connect()
-        trans = conn.begin()
+        
         try:
-            conn.execute('REFRESH MATERIALIZED VIEW condensed_receipts')
-            trans.commit()
+            self.executeTransaction('REFRESH MATERIALIZED VIEW condensed_receipts')
+        
         except sa.exc.ProgrammingError:
-            trans.rollback()
-            conn = self.engine.connect()
-            trans = conn.begin()
+            
             rec = ''' 
                 CREATE MATERIALIZED VIEW condensed_receipts AS (
                   (
@@ -681,19 +684,16 @@ class SunshineViews(object):
                   )
                 )
             '''
-            conn.execute(sa.text(rec))
-            trans.commit()
+
+            self.executeTransaction(rec)
 
     def expendituresByCandidate(self):
-        conn = self.engine.connect()
-        trans = conn.begin()
+
         try:
-            conn.execute('REFRESH MATERIALIZED VIEW expenditures_by_candidate')
-            trans.commit()
+            self.executeTransaction('REFRESH MATERIALIZED VIEW expenditures_by_candidate')
+        
         except sa.exc.ProgrammingError:
-            trans.rollback()
-            conn = self.engine.connect()
-            trans = conn.begin()
+            
             exp = ''' 
                 CREATE MATERIALIZED VIEW expenditures_by_candidate AS (
                   SELECT
@@ -717,19 +717,16 @@ class SunshineViews(object):
                   GROUP BY cm.id, c.id
                 )
             '''
-            conn.execute(sa.text(exp))
-            trans.commit()
+            self.executeTransaction(exp)
 
     def receiptsAggregates(self):
-        conn = self.engine.connect()
-        trans = conn.begin()
+
         try:
-            conn.execute('REFRESH MATERIALIZED VIEW receipts_by_week')
-            trans.commit()
+            
+            self.executeTransaction('REFRESH MATERIALIZED VIEW receipts_by_week')
+        
         except sa.exc.ProgrammingError:
-            trans.rollback()
-            conn = self.engine.connect()
-            trans = conn.begin()
+
             weeks = ''' 
                 CREATE MATERIALIZED VIEW receipts_by_week AS (
                   SELECT 
@@ -742,19 +739,15 @@ class SunshineViews(object):
                   ORDER BY week
                 )
             '''
-            conn.execute(sa.text(weeks))
-            trans.commit()
-
+            self.executeTransaction(weeks)
+    
     def committeeReceiptAggregates(self):
-        conn = self.engine.connect()
-        trans = conn.begin()
+
         try:
-            conn.execute('REFRESH MATERIALIZED VIEW committee_receipts_by_week')
-            trans.commit()
+            self.executeTransaction('REFRESH MATERIALIZED VIEW committee_receipts_by_week')
+
         except sa.exc.ProgrammingError:
-            trans.rollback()
-            conn = self.engine.connect()
-            trans = conn.begin()
+
             weeks = ''' 
                 CREATE MATERIALIZED VIEW committee_receipts_by_week AS (
                   SELECT 
@@ -770,19 +763,17 @@ class SunshineViews(object):
                 )
             
             '''
-            conn.execute(sa.text(weeks))
-            trans.commit()
+            
+            self.executeTransaction(weeks)
 
     def incumbentCandidates(self):
-        conn = self.engine.connect()
-        trans = conn.begin()
+
         try:
-            conn.execute('REFRESH MATERIALIZED VIEW incumbent_candidates')
-            trans.commit()
+            
+            self.executeTransaction('REFRESH MATERIALIZED VIEW incumbent_candidates')
+
         except sa.exc.ProgrammingError:
-            trans.rollback()
-            conn = self.engine.connect()
-            trans = conn.begin()
+            
             incumbents = '''
                 CREATE MATERIALIZED VIEW incumbent_candidates AS (
                   SELECT DISTINCT ON (cd.district, cd.office)
@@ -799,22 +790,20 @@ class SunshineViews(object):
                 )
             '''
             
-            conn.execute(sa.text(incumbents), 
-                         outcome='won',
-                         year=2014)
+            last_year = datetime.now().year - 1
 
-            trans.commit()
-
+            self.executeTransaction(sa.text(incumbents), 
+                                    outcome='won',
+                                    year=last_year)
+    
     def mostRecentFilings(self):
-        conn = self.engine.connect()
-        trans = conn.begin()
+
         try:
-            conn.execute('REFRESH MATERIALIZED VIEW most_recent_filings')
-            trans.commit()
+            
+            self.executeTransaction('REFRESH MATERIALIZED VIEW most_recent_filings')
+        
         except sa.exc.ProgrammingError:
-            trans.rollback()
-            conn = self.engine.connect()
-            trans = conn.begin()
+
             create = '''
                CREATE MATERIALIZED VIEW most_recent_filings AS (
                  SELECT 
@@ -853,19 +842,16 @@ class SunshineViews(object):
                    ON fd.id = d2.filed_doc_id 
                )
             '''
-            conn.execute(sa.text(create))
-            trans.commit()
+            self.executeTransaction(create)
 
     def committeeMoney(self):
-        conn = self.engine.connect()
-        trans = conn.begin()
+        
         try:
-            conn.execute('REFRESH MATERIALIZED VIEW committee_money')
-            trans.commit()
+            
+            self.executeTransaction('REFRESH MATERIALIZED VIEW committee_money')
+        
         except sa.exc.ProgrammingError:
-            trans.rollback()
-            conn = self.engine.connect()
-            trans = conn.begin()
+
             create = '''
                CREATE MATERIALIZED VIEW committee_money AS (
                  SELECT 
@@ -890,19 +876,16 @@ class SunshineViews(object):
                  ORDER BY total DESC NULLS LAST
                )
             '''
-            conn.execute(sa.text(create))
-            trans.commit()
-    
+            self.executeTransaction(create)
+
     def candidateMoney(self):
-        conn = self.engine.connect()
-        trans = conn.begin()
+        
         try:
-            conn.execute('REFRESH MATERIALIZED VIEW candidate_money')
-            trans.commit()
+            
+            self.executeTransaction('REFRESH MATERIALIZED VIEW candidate_money')
+        
         except sa.exc.ProgrammingError:
-            trans.rollback()
-            conn = self.engine.connect()
-            trans = conn.begin()
+            
             create = '''
                 CREATE MATERIALIZED VIEW candidate_money AS (
                   SELECT
@@ -925,19 +908,15 @@ class SunshineViews(object):
                   ORDER BY m.total DESC NULLS LAST
                 )
             '''
-            conn.execute(sa.text(create))
-            trans.commit()
+            self.executeTransaction(create)
     
     def fullSearchView(self):
-        conn = self.engine.connect()
-        trans = conn.begin()
+
         try:
-            conn.execute('REFRESH MATERIALIZED VIEW full_search')
-            trans.commit()
+        
+            self.executeTransaction('REFRESH MATERIALIZED VIEW full_search')
+        
         except sa.exc.ProgrammingError:
-            trans.rollback()
-            conn = self.engine.connect()
-            trans = conn.begin()
             
             create = ''' 
                 CREATE MATERIALIZED VIEW full_search AS (
@@ -1022,13 +1001,21 @@ class SunshineViews(object):
                   GROUP BY table_name, name
                 )
             '''
-            conn.execute(sa.text(create))
-            trans.commit()
+            self.executeTransaction(create)
 
 
 class SunshineIndexes(object):
-    def __init__(self, engine):
-        self.engine = engine
+    def __init__(self, connection):
+        self.connection = connection
+    
+    def executeTransaction(self, query):
+        trans = self.connection.begin()
+
+        try:
+            self.connection.execute(query)
+            trans.commit()
+        except sa.exc.ProgrammingError as e:
+            trans.rollback()
 
     def makeAllIndexes(self):
         self.fullSearchIndex()
@@ -1043,15 +1030,9 @@ class SunshineIndexes(object):
             CREATE INDEX name_index ON full_search
             USING gin(to_tsvector('english', name))
         '''
-        conn = self.engine.connect()
-        trans = conn.begin()
-        try:
-            conn.execute(index)
-            trans.commit()
-        except sa.exc.ProgrammingError as e:
-            trans.rollback()
-            return
-
+        
+        self.executeTransaction(index)
+    
     def receiptsDate(self):
         ''' 
         Make index on received_date for receipts
@@ -1059,14 +1040,8 @@ class SunshineIndexes(object):
         index = ''' 
             CREATE INDEX received_date_idx ON receipts (received_date)
         '''
-        conn = self.engine.connect()
-        trans = conn.begin()
-        try:
-            conn.execute(index)
-            trans.commit()
-        except sa.exc.ProgrammingError as e:
-            trans.rollback()
-            return
+        
+        self.executeTransaction(index)
     
     def receiptsCommittee(self):
         ''' 
@@ -1075,15 +1050,9 @@ class SunshineIndexes(object):
         index = ''' 
             CREATE INDEX receipts_committee_idx ON receipts (committee_id)
         '''
-        conn = self.engine.connect()
-        trans = conn.begin()
-        try:
-            conn.execute(index)
-            trans.commit()
-        except sa.exc.ProgrammingError as e:
-            trans.rollback()
-            return
-
+        
+        self.executeTransaction(index)
+    
 if __name__ == "__main__":
     import sys
     import argparse
@@ -1115,6 +1084,8 @@ if __name__ == "__main__":
                               aws_key=app_config.AWS_KEY,
                               aws_secret=app_config.AWS_SECRET)
     
+    connection = engine.connect()
+
     if args.download:
         print("downloading ...")
         extract.download(cache=args.cache)
@@ -1131,7 +1102,7 @@ if __name__ == "__main__":
         if args.chunk_size:
             chunk_size = args.chunk_size
 
-        committees = SunshineCommittees(engine, 
+        committees = SunshineCommittees(connection, 
                                         Base.metadata, 
                                         chunk_size=chunk_size)
         committees.load()
@@ -1140,67 +1111,67 @@ if __name__ == "__main__":
         del committees
         del Base.metadata
 
-        candidates = SunshineCandidates(engine, chunk_size=chunk_size)
+        candidates = SunshineCandidates(connection, chunk_size=chunk_size)
         candidates.load()
         candidates.update()
         
         del candidates
 
-        officers = SunshineOfficers(engine, chunk_size=chunk_size)
+        officers = SunshineOfficers(connection, chunk_size=chunk_size)
         officers.load()
         officers.update()
         
         del officers
 
-        prev_off = SunshinePrevOfficers(engine, chunk_size=chunk_size)
+        prev_off = SunshinePrevOfficers(connection, chunk_size=chunk_size)
         prev_off.load()
         prev_off.update()
         
         del prev_off
 
-        candidacy = SunshineCandidacy(engine, chunk_size=chunk_size)
+        candidacy = SunshineCandidacy(connection, chunk_size=chunk_size)
         candidacy.load()
         candidacy.update()
         
         del candidacy
 
-        can_cmte_xwalk = SunshineCandidateCommittees(engine, chunk_size=chunk_size)
+        can_cmte_xwalk = SunshineCandidateCommittees(connection, chunk_size=chunk_size)
         can_cmte_xwalk.load()
         can_cmte_xwalk.update()
         
         del can_cmte_xwalk
 
-        off_cmte_xwalk = SunshineOfficerCommittees(engine, chunk_size=chunk_size)
+        off_cmte_xwalk = SunshineOfficerCommittees(connection, chunk_size=chunk_size)
         off_cmte_xwalk.load()
         off_cmte_xwalk.update()
         
         del off_cmte_xwalk
 
-        filed_docs = SunshineFiledDocs(engine, chunk_size=chunk_size)
+        filed_docs = SunshineFiledDocs(connection, chunk_size=chunk_size)
         filed_docs.load()
         filed_docs.update()
         
         del filed_docs
 
-        d2_reports = SunshineD2Reports(engine, chunk_size=chunk_size)
+        d2_reports = SunshineD2Reports(connection, chunk_size=chunk_size)
         d2_reports.load()
         d2_reports.update()
         
         del d2_reports
 
-        receipts = SunshineReceipts(engine, chunk_size=chunk_size)
+        receipts = SunshineReceipts(connection, chunk_size=chunk_size)
         receipts.load()
         receipts.update()
         
         del receipts
 
-        expenditures = SunshineExpenditures(engine, chunk_size=chunk_size)
+        expenditures = SunshineExpenditures(connection, chunk_size=chunk_size)
         expenditures.load()
         expenditures.update()
         
         del expenditures
 
-        investments = SunshineInvestments(engine, chunk_size=chunk_size)
+        investments = SunshineInvestments(connection, chunk_size=chunk_size)
         investments.load()
         investments.update()
         
@@ -1209,7 +1180,7 @@ if __name__ == "__main__":
     else:
         print("skipping load")
 
-    views = SunshineViews(engine)
+    views = SunshineViews(connection)
 
     if args.recreate_views:
         print("dropping views")
@@ -1219,5 +1190,7 @@ if __name__ == "__main__":
     views.makeAllViews()
     
     print("creating indexes ...")
-    indexes = SunshineIndexes(engine)
+    indexes = SunshineIndexes(connection)
     indexes.makeAllIndexes()
+
+    connection.close()
