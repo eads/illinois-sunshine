@@ -2,6 +2,7 @@ import sqlalchemy as sa
 from sunshine.database import db_session
 from sunshine.models import Candidate, Candidacy, Committee, Officer, \
     D2Report, Receipt, Expenditure, Investment, candidate_committees
+from sunshine.cache import cache, make_cache_key, CACHE_TIMEOUT
 from flask import Blueprint, render_template, request, make_response
 import json
 from datetime import datetime, date
@@ -47,6 +48,7 @@ def getSearchResults(term, table_names):
     return results
 
 @api.route('/advanced-search/')
+@cache.cached(timeout=CACHE_TIMEOUT, key_prefix=make_cache_key)
 def advanced_search():
     resp = {
         'status': 'ok',
@@ -173,6 +175,7 @@ def advanced_search():
     return response
 
 @api.route('/committees/')
+@cache.cached(timeout=CACHE_TIMEOUT, key_prefix=make_cache_key)
 def committees():
     committee_table = Committee.__table__
     candidates_table = Candidate.__table__
@@ -223,6 +226,7 @@ def committees():
     return response
 
 @api.route('/receipts/')
+@cache.cached(timeout=CACHE_TIMEOUT, key_prefix=make_cache_key)
 def receipts():
     
     raw_query_params = request.args.copy()
@@ -290,6 +294,7 @@ def receipts():
     return response
 
 @api.route('/expenditures/')
+@cache.cached(timeout=CACHE_TIMEOUT, key_prefix=make_cache_key)
 def expenditures():
 
     raw_query_params = request.args.copy()

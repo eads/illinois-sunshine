@@ -1,9 +1,10 @@
 from flask import Flask, render_template
-from sunshine.views import views, cache
+from sunshine.views import views
 from sunshine.api import api
 import locale
 from dateutil import parser
 from sunshine.app_config import TIME_ZONE
+from sunshine.cache import cache
 from datetime import datetime
 
 def create_app():

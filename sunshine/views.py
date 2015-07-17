@@ -1,9 +1,8 @@
 from flask import Blueprint, render_template, abort, request, make_response, \
     session as flask_session
-from flask.ext.cache import Cache
 from sunshine.database import db_session
 from sunshine.models import Candidate, Committee, Receipt, FiledDoc, Expenditure, D2Report
-from sunshine.app_config import CACHE_CONFIG
+from sunshine.cache import cache, make_cache_key, CACHE_TIMEOUT
 import sqlalchemy as sa
 import json
 import time
@@ -13,14 +12,6 @@ from operator import attrgetter
 from dateutil.parser import parse
 
 views = Blueprint('views', __name__)
-cache = Cache(config=CACHE_CONFIG)
-CACHE_TIMEOUT = 60*60*6
-
-def make_cache_key(*args, **kwargs):
-    path = request.path
-    args = str(hash(frozenset(request.args.items())))
-    # print 'cache_key:', (path+args)
-    return (path + args).encode('utf-8')
 
 @views.route('/')
 @cache.cached(timeout=CACHE_TIMEOUT, key_prefix=make_cache_key)
