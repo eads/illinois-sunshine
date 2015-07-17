@@ -175,7 +175,11 @@
                             </a>
                         </td>
                         <td class='nowrap'>
-                            <a href="/<%= transaction_type %>/<%= transaction.id %>">
+                            <% if(transaction_type == 'receipts'){  %>
+                                <a href="/contributions/<%= transaction.id %>">
+                            <% } else { %>
+                                <a href="/<%= transaction_type %>/<%= transaction.id %>">
+                            <% }%>
                                 <% if (transaction_type == 'expenditures') { %>
                                     received <strong>
                                 <% } else { %>
