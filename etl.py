@@ -143,6 +143,36 @@ class SunshineTransformLoad(object):
         except sa.exc.ProgrammingError:
             trans.rollback()
 
+    def addNameColumn(self):
+        add_name_col = ''' 
+            ALTER TABLE {0} ADD COLUMN name VARCHAR
+        '''.format(self.table_name)
+
+        self.executeTransaction(add_name_col)
+
+        add_names = ''' 
+            UPDATE {0} SET
+              name = subq.name
+            FROM (
+                SELECT 
+                  TRIM(COALESCE(TRIM(TRANSLATE(first_name, '.,-/', '')), '') || ' ' ||
+                  COALESCE(TRIM(TRANSLATE(last_name, '.,-/', '')), '')) AS name,
+                  id
+                FROM {0}
+            ) AS subq
+            WHERE {0}.id = subq.id 
+              AND {0}.name IS NULL
+        '''.format(self.table_name)
+
+        self.executeTransaction(add_names)
+
+        add_index = ''' 
+            CREATE INDEX {0}_name_index ON {0}
+            USING gin(to_tsvector('english', name))
+        '''.format(self.table_name)
+        
+        self.executeTransaction(add_index)
+
     def initializeDB(self):
         enum = ''' 
             CREATE TYPE committee_position AS ENUM (
@@ -1032,7 +1062,7 @@ class SunshineIndexes(object):
         '''
         
         self.executeTransaction(index)
-    
+
     def receiptsDate(self):
         ''' 
         Make index on received_date for receipts
@@ -1114,18 +1144,21 @@ if __name__ == "__main__":
         candidates = SunshineCandidates(connection, chunk_size=chunk_size)
         candidates.load()
         candidates.update()
+        candidates.addNameColumn()
         
         del candidates
 
         officers = SunshineOfficers(connection, chunk_size=chunk_size)
         officers.load()
         officers.update()
+        officers.addNameColumn()
         
         del officers
 
         prev_off = SunshinePrevOfficers(connection, chunk_size=chunk_size)
         prev_off.load()
         prev_off.update()
+        prev_off.addNameColumn()
         
         del prev_off
 
@@ -1162,18 +1195,21 @@ if __name__ == "__main__":
         receipts = SunshineReceipts(connection, chunk_size=chunk_size)
         receipts.load()
         receipts.update()
+        receipts.addNameColumn()
         
         del receipts
 
         expenditures = SunshineExpenditures(connection, chunk_size=chunk_size)
         expenditures.load()
         expenditures.update()
+        expenditures.addNameColumn()
         
         del expenditures
 
         investments = SunshineInvestments(connection, chunk_size=chunk_size)
         investments.load()
         investments.update()
+        investments.addNameColumn()
         
         del investments
 

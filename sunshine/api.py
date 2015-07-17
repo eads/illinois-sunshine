@@ -17,24 +17,71 @@ api = Blueprint('api', __name__)
 
 dthandler = lambda obj: obj.isoformat() if isinstance(obj, date) else None
 
-def getSearchResults(term, table_names):
+operator_lookup = {
+    'ge': '>=',
+    'gt': '>',
+    'le': '<=',
+    'lt': '<'
+}
+
+def getSearchResults(term, 
+                     table_name, 
+                     limit=50, 
+                     offset=0, 
+                     order_by=None, 
+                     sort_order='asc',
+                     q_params={}):
+    
+    engine = db_session.bind
+
     results = ''' 
         SELECT
-          results.table_name,
-          results.records
-        FROM full_search AS results,
+          {0}.id,
+          {0}.name, 
+          row_to_json(results) AS records
+        FROM {0},
              to_tsquery('english', :term) AS query,
              to_tsvector('english', name) AS search_vector
         WHERE query @@ search_vector
-    '''
-    
-    q_params = {}
-    
-    if table_names:
-        q_params['table_names'] = tuple(table_names)
-        results = '{0} AND table_name IN :table_names'.format(results)
-    
-    engine = db_session.bind
+    '''.format(table_name)
+
+    if q_params:
+        sa_table = sa.Table(table_name, 
+                            sa.MetaData(), 
+                            autoload=True, 
+                            autoload_with=engine)
+
+        valid_query, _, _, _  = make_query(sa_table, q_params)
+        
+        if valid_query:
+            clauses = []
+            for key in q_params.keys():
+                try:
+                    fieldname, operator = key.split('__')
+                except ValueError:
+                    fieldname = key
+                    operator = '='
+                clauses.append('%s %s :%s' % (fieldname, operator, key))
+            
+            result = '{0} {1}'.format(result, ' AND '.join(clauses))
+
+            q_params['term'] = term
+
+        else:
+            raise ValueError
+    else:
+        q_params = {'term': term}
+
+    results = '''
+        {0}
+        LIMIT {1} 
+        OFFSET {2} 
+        ORDER BY {3} {4}
+    '''.format(result,
+               limit, 
+               offset, 
+               order_by, 
+               sort_order)
     
     punc = re.compile('[%s]' % re.escape(punctuation))
     term = punc.sub('', term)
