@@ -218,7 +218,11 @@
         $(document).ready(function(){
             $.when(getMoney('receipts', 0)).then(function(resp){
                 var total_rows = parseInt(resp['meta']['total_rows']);
-                displayTable(resp['objects'][0]['receipts'], 'receipts', 0, total_rows)
+                if(total_rows > 0){
+                    displayTable(resp['objects'][0]['receipts'], 'receipts', 0, total_rows)
+                } else {
+                    $('#money-table-guts').html('<h4>No donations found</h4>');
+                }
             });
 
             $('.transactions').on('click', function(e){
@@ -230,7 +234,15 @@
                 var transaction_type = $(this).data('table_type');
                 $.when(getMoney(transaction_type, 0)).then(function(resp){
                     var total_rows = parseInt(resp['meta']['total_rows']);
-                    displayTable(resp['objects'][0][transaction_type], transaction_type, 0, total_rows);
+                    if(total_rows > 0){
+                        displayTable(resp['objects'][0][transaction_type], transaction_type, 0, total_rows);
+                    } else {
+                        if(transaction_type == 'receipts'){
+                            $('#money-table-guts').html('<h4>No donations found</h4>');
+                        } else {
+                            $('#money-table-guts').html('<h4>No expenditures found</h4>');
+                        }
+                    }
                 })
             });
         })

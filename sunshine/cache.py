@@ -1,3 +1,4 @@
+from flask import request
 from flask.ext.cache import Cache
 from sunshine.app_config import CACHE_CONFIG
 

@@ -923,7 +923,7 @@ class SunshineViews(object):
                   SELECT 
                     name,
                     table_name,
-                    json_agg(record_json) AS records
+                    json_agg(record_json)::jsonb AS records
                   FROM (
                     SELECT 
                       COALESCE(TRIM(TRANSLATE(first_name, '.,-/', '')), '') || ' ' ||
