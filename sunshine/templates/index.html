@@ -1,8 +1,5 @@
 {% extends 'base.html' %}
 {% block title %}Keep an eye on money in Illinois politics{% endblock %}
-{% block extra_styles %}
-    <link href="{{ url_for('static', filename='css/jquery-ui.min.css') }}" rel="stylesheet">
-{% endblock %}
 {% block content %}
 <div class='jumbotron'>
     <p>Since 1994, <strong>${{ totals[0][0]|format_large_number }}</strong> has been donated to political campaigns in the State of Illinois. <br />Search and browse the donations and the committees that receive them.</p>

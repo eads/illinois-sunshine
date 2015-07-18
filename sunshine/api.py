@@ -26,24 +26,33 @@ operator_lookup = {
 
 def getSearchResults(term, 
                      table_name, 
-                     limit=50, 
-                     offset=0, 
-                     order_by=None, 
-                     sort_order='asc',
                      q_params={}):
     
     engine = db_session.bind
 
-    results = ''' 
-        SELECT
-          {0}.id,
-          {0}.name, 
-          row_to_json(results) AS records
-        FROM {0},
-             to_tsquery('english', :term) AS query,
-             to_tsvector('english', name) AS search_vector
-        WHERE query @@ search_vector
-    '''.format(table_name)
+    if table_name in ['receipts', 'expenditures', 'investments']:
+        result = ''' 
+            SELECT *
+            FROM (
+              SELECT 
+                c.name AS committee_name,
+                r.*
+              FROM {0} AS r
+              JOIN committees AS c
+                ON r.committee_id = c.id,
+                   to_tsquery('english', :term) AS query
+              WHERE query @@ r.search_name
+            ) AS {0}
+            WHERE 1=1
+        '''.format(table_name)
+
+    else:
+        result = ''' 
+            SELECT *
+            FROM {0},
+                 to_tsquery('english', :term) AS query
+            WHERE query @@ search_name
+        '''.format(table_name)
 
     if q_params:
         sa_table = sa.Table(table_name, 
@@ -63,7 +72,7 @@ def getSearchResults(term,
                     operator = '='
                 clauses.append('%s %s :%s' % (fieldname, operator, key))
             
-            result = '{0} {1}'.format(result, ' AND '.join(clauses))
+            result = '{0} AND {1}'.format(result, ' AND '.join(clauses))
 
             q_params['term'] = term
 
@@ -72,23 +81,12 @@ def getSearchResults(term,
     else:
         q_params = {'term': term}
 
-    results = '''
-        {0}
-        LIMIT {1} 
-        OFFSET {2} 
-        ORDER BY {3} {4}
-    '''.format(result,
-               limit, 
-               offset, 
-               order_by, 
-               sort_order)
-    
     punc = re.compile('[%s]' % re.escape(punctuation))
     term = punc.sub('', term)
 
     q_params['term'] = ' & '.join([t for t in term.split()])
 
-    results = engine.execute(sa.text(results), **q_params)
+    results = engine.execute(sa.text(result), **q_params)
     
     engine.dispose()
 
@@ -135,21 +133,27 @@ def advanced_search():
         valid = False
     
     if valid:
-        results = getSearchResults(term, table_names)
+
+        # Need to figure a way to do any column. This will 
+        # just work for search_date for the time being
         
-        sorted_results = sorted(results, key=attrgetter('table_name'))
-        sorted_objects = {table_name: [] for table_name in table_names}
+        q_params = {k:v for k,v in request.args.items() if k.startswith('search_date')}
         
-        for table_name, table_group in groupby(sorted_results, key=attrgetter('table_name')):
-            for result in table_group:
-                records = [OrderedDict(zip(r.keys(), r.values())) for r in result.records]
-                sorted_objects[table_name].extend(records)
+        objects = {}
+        
+        for table_name in table_names:
+            
+            results = getSearchResults(term, 
+                                       table_name, 
+                                       q_params=q_params)
+            
+            objects[table_name] = [OrderedDict(zip(r.keys(), r.values())) for r in results]
         
         start_idx = int(offset)
         end_idx = int(offset) + int(limit)
         total_rows = 0
 
-        for table_name, records in sorted_objects.items():
+        for table_name, records in objects.items():
             
             if table_name == 'receipts':
                 

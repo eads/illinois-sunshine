@@ -140,35 +140,55 @@ class SunshineTransformLoad(object):
         try:
             self.connection.execute(query, *args)
             trans.commit()
-        except sa.exc.ProgrammingError:
+        except sa.exc.ProgrammingError as e:
             trans.rollback()
 
     def addNameColumn(self):
         add_name_col = ''' 
-            ALTER TABLE {0} ADD COLUMN name VARCHAR
+            ALTER TABLE {0} ADD COLUMN search_name tsvector
         '''.format(self.table_name)
 
         self.executeTransaction(add_name_col)
 
         add_names = ''' 
             UPDATE {0} SET
-              name = subq.name
-            FROM (
-                SELECT 
-                  TRIM(COALESCE(TRIM(TRANSLATE(first_name, '.,-/', '')), '') || ' ' ||
-                  COALESCE(TRIM(TRANSLATE(last_name, '.,-/', '')), '')) AS name,
-                  id
-                FROM {0}
-            ) AS subq
-            WHERE {0}.id = subq.id 
-              AND {0}.name IS NULL
+              search_name = to_tsvector('english', COALESCE(first_name, '') || ' ' ||
+                                                   COALESCE(last_name, ''))
         '''.format(self.table_name)
 
         self.executeTransaction(add_names)
 
         add_index = ''' 
-            CREATE INDEX {0}_name_index ON {0}
-            USING gin(to_tsvector('english', name))
+            CREATE INDEX {0}_search_name_index ON {0}
+            USING gin(search_name)
+        '''.format(self.table_name)
+        
+        self.executeTransaction(add_index)
+    
+    def addDateColumn(self, date_col):
+        add_date_col = ''' 
+            ALTER TABLE {0} ADD COLUMN search_date TIMESTAMP
+        '''.format(self.table_name)
+
+        self.executeTransaction(add_date_col)
+
+        add_dates = ''' 
+            UPDATE {0} SET
+              search_date = subq.search_date
+            FROM (
+                SELECT 
+                  {1}::timestamp AS search_date,
+                  id
+                FROM {0}
+            ) AS subq
+            WHERE {0}.id = subq.id 
+              AND {0}.search_date IS NULL
+        '''.format(self.table_name, date_col)
+
+        self.executeTransaction(add_dates)
+
+        add_index = ''' 
+            CREATE INDEX {0}_search_date_index ON {0} (search_date)
         '''.format(self.table_name)
         
         self.executeTransaction(add_index)
@@ -186,6 +206,13 @@ class SunshineTransformLoad(object):
         self.metadata.create_all(bind=self.connection.engine)
         
     def createTempTable(self):
+        
+        drop = ''' 
+            DROP TABLE IF EXISTS temp_{0} 
+        '''
+
+        self.executeTransaction(drop)
+
         create = ''' 
             CREATE TABLE temp_{0} AS
               SELECT * FROM {0} LIMIT 1
@@ -274,6 +301,27 @@ class SunshineCommittees(SunshineTransformLoad):
     table_name = 'committees'
     header = Committee.__table__.columns.keys()
     filename = 'Committees.txt'
+    
+    def addNameColumn(self):
+        add_name_col = ''' 
+            ALTER TABLE {0} ADD COLUMN search_name tsvector
+        '''.format(self.table_name)
+
+        self.executeTransaction(add_name_col)
+
+        add_names = ''' 
+            UPDATE {0} SET
+              search_name = to_tsvector('english', name)
+        '''.format(self.table_name)
+
+        self.executeTransaction(add_names)
+
+        add_index = ''' 
+            CREATE INDEX {0}_search_name_index ON {0}
+            USING gin(search_name)
+        '''.format(self.table_name)
+        
+        self.executeTransaction(add_index)
     
     def transform(self):
         with open(self.file_path, 'r', encoding='latin1') as f:
@@ -535,7 +583,7 @@ class SunshineCandidateCommittees(SunshineTransformLoad):
                    where_clause)
 
 class SunshineOfficerCommittees(SunshineTransformLoad):
-    table_name = 'officers'
+    table_name = 'officer_committees'
     header = ['committee_id', 'officer_id']
     filename = 'CmteOfficerLinks.txt'
     
@@ -553,6 +601,12 @@ class SunshineOfficerCommittees(SunshineTransformLoad):
                     yield OrderedDict(zip(self.header, row))
 
     def createTempTable(self):
+        drop = ''' 
+            DROP TABLE IF EXISTS temp_{0}
+        '''
+
+        self.executeTransaction(drop)
+
         create = ''' 
             CREATE TABLE temp_{0} (
               committee_id INTEGER, 
@@ -1137,6 +1191,8 @@ if __name__ == "__main__":
                                         chunk_size=chunk_size)
         committees.load()
         committees.update()
+        committees.addNameColumn()
+        committees.addDateColumn('NULL')
         
         del committees
         del Base.metadata
@@ -1145,6 +1201,7 @@ if __name__ == "__main__":
         candidates.load()
         candidates.update()
         candidates.addNameColumn()
+        candidates.addDateColumn('NULL')
         
         del candidates
 
@@ -1152,6 +1209,7 @@ if __name__ == "__main__":
         officers.load()
         officers.update()
         officers.addNameColumn()
+        officers.addDateColumn('NULL')
         
         del officers
 
@@ -1159,6 +1217,7 @@ if __name__ == "__main__":
         prev_off.load()
         prev_off.update()
         prev_off.addNameColumn()
+        prev_off.addDateColumn('NULL')
         
         del prev_off
 
@@ -1196,6 +1255,7 @@ if __name__ == "__main__":
         receipts.load()
         receipts.update()
         receipts.addNameColumn()
+        receipts.addDateColumn('received_date')
         
         del receipts
 
@@ -1203,6 +1263,7 @@ if __name__ == "__main__":
         expenditures.load()
         expenditures.update()
         expenditures.addNameColumn()
+        expenditures.addDateColumn('expended_date')
         
         del expenditures
 
@@ -1210,6 +1271,7 @@ if __name__ == "__main__":
         investments.load()
         investments.update()
         investments.addNameColumn()
+        investments.addDateColumn('purchase_date')
         
         del investments
 

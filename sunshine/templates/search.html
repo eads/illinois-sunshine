@@ -29,6 +29,18 @@
                     <input type="checkbox" name="table_name" value="receipts" {% if 'receipts' in table_name %}checked='checked'{% endif %}> Donors
                 </label>
             </div>
+            <div class="form-group">
+                <div class="row">
+                    <div class="col-md-6">
+                        <label for="search_date__ge">Date from: </label>
+                        <input id="search_date__ge" type="text" class="form-control" name="search_date__ge" />
+                    </div>
+                    <div class="col-md-6">
+                        <label for="search_date__le">Date to: </label>
+                        <input id="search_date__le" type="text" class="form-control" name="search_date__le" />
+                    </div>
+                </div>
+            </div>
         </form>
     </div>
 </div>
@@ -304,7 +316,6 @@
             "order": order
         }
         var table = $('#' + table_name + '-table').DataTable(opts);
-        console.log(table.page.info());
     }
 
     function format_boolean(value) {
