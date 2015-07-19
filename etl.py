@@ -2,7 +2,7 @@ from sunshine.models import Committee, Candidate, Officer, Candidacy, \
     D2Report, FiledDoc, Receipt, Expenditure, Investment
 import ftplib
 import zipfile
-from io import BytesIO
+from io import BytesIO, StringIO
 import os
 from boto.s3.connection import S3Connection
 from boto.s3.key import Key
@@ -11,7 +11,10 @@ from hashlib import md5
 import sqlalchemy as sa
 import csv
 from csvkit.cleanup import RowChecker
+from csvkit.sql import make_table, make_create_table_statement
+from csvkit.table import Table
 from collections import OrderedDict
+from typeinferer import TypeInferer
 
 class SunshineExtract(object):
     
@@ -141,6 +144,7 @@ class SunshineTransformLoad(object):
             self.connection.execute(query, *args)
             trans.commit()
         except sa.exc.ProgrammingError as e:
+            print(e)
             trans.rollback()
 
     def addNameColumn(self):
@@ -205,78 +209,96 @@ class SunshineTransformLoad(object):
         
         self.metadata.create_all(bind=self.connection.engine)
         
-    def createTempTable(self):
+
+    def makeRawTable(self):
+        inferer = TypeInferer(self.file_path)
+        inferer.infer()
         
-        drop = ''' 
-            DROP TABLE IF EXISTS temp_{0} 
-        '''
+        sql_table = sa.Table('raw_{0}'.format(self.table_name), 
+                             sa.MetaData())
 
-        self.executeTransaction(drop)
+        for column_name, column_type in inferer.types.items():
+            sql_table.append_column(sa.Column(column_name, column_type()))
+        
+        dialect = sa.dialects.postgresql.dialect()
+        create_table = str(sa.schema.CreateTable(sql_table)\
+                           .compile(dialect=dialect)).strip(';')
 
-        create = ''' 
-            CREATE TABLE temp_{0} AS
-              SELECT * FROM {0} LIMIT 1
-            WITH NO DATA
+        self.executeTransaction('DROP TABLE IF EXISTS raw_{0}'.format(self.table_name))
+        self.executeTransaction(create_table)
+
+    def writeRawToDisk(self):
+        with open(self.file_path, 'r', encoding='latin-1') as inp:
+            reader = csv.reader(inp, delimiter='\t', quoting=csv.QUOTE_NONE)
+            header = next(reader)
+            checker = RowChecker(reader)
+            
+            with open('%s_raw.csv' % self.file_path, 'w') as outp:
+                writer = csv.writer(outp)
+
+                writer.writerows([header] + [r for r in checker.checked_rows()])
+
+    def bulkLoadRawData(self):
+        import psycopg2
+        from sunshine.app_config import DB_USER, DB_PW, DB_HOST, \
+            DB_PORT, DB_NAME
+        
+        DB_CONN_STR = 'host={0} dbname={1} user={2} port={3}'\
+            .format(DB_HOST, DB_NAME, DB_USER, DB_PORT)
+
+        copy_st = ''' 
+            COPY raw_{0} FROM STDIN WITH CSV HEADER DELIMITER ','
+        '''.format(self.table_name)
+        
+        with open('%s_raw.csv' % self.file_path, 'r', encoding='latin-1') as f:
+            next(f)
+            with psycopg2.connect(DB_CONN_STR) as conn:
+                with conn.cursor() as curs:
+                    try:
+                        curs.copy_expert(copy_st, f)
+                    except psycopg2.IntegrityError as e:
+                        print(e)
+                        conn.rollback()
+        
+        os.remove('%s_raw.csv' % self.file_path)
+    
+    def findNewRecords(self):
+        create_new_record_table = ''' 
+            CREATE TABLE new_{0} AS (
+                SELECT raw."ID"
+                FROM raw_{0} AS raw
+                LEFT JOIN {0} AS dat
+                  ON raw."ID" = dat.id
+                WHERE dat.id IS NULL
+            )
         '''.format(self.table_name)
 
-        self.executeTransaction(create)
-    
-    @property
-    def upsert(self):
-        field_format = '{1} = subq.{1}'
+        self.executeTransaction('DROP TABLE IF EXISTS new_{0}'.format(self.table_name))
+        self.executeTransaction(create_new_record_table)
         
-        update_fields = [field_format.format(self.table_name,f) \
-                             for f in self.header]
+    def iterIncomingData(self):
+        incoming = ''' 
+            SELECT raw.* 
+            FROM raw_{0} AS raw
+            JOIN new_{0} AS new
+              USING("ID")
+        '''.format(self.table_name)
         
-        return ''' 
-            WITH data_update AS (
-              UPDATE {0} SET 
-                {1}
-              FROM (
-                SELECT * FROM temp_{0}
-              ) AS subq
-              WHERE {0}.id = subq.id
-            )
-            INSERT INTO {0} 
-              SELECT temp.* FROM temp_{0} AS temp
-              LEFT JOIN {0} AS data
-                USING(id)
-              WHERE data.id IS NULL
-            RETURNING *
-        '''.format(self.table_name, 
-                   ','.join(update_fields))
-
-    def update(self):
-        
-        trans = self.connection.begin()
-        
-        try:
-            inserted = list(self.connection.execute(sa.text(self.upsert)))
-            trans.commit()
-            
-            print('inserted %s %s' % (len(inserted), self.table_name))
-        
-        except sa.exc.ProgrammingError:
-            trans.rollback()
+        for record in self.connection.engine.execute(incoming):
+            yield record
 
     def transform(self):
-        with open(self.file_path, 'r', encoding='latin1') as f:
-            reader = csv.reader(f, delimiter='\t', 
-                                quoting=csv.QUOTE_NONE)
-            checker = RowChecker(reader)
-            for row in checker.checked_rows():
-                if row:
-                    for idx, cell in enumerate(row):
-                        row[idx] = cell.strip()
-                        if not row[idx]:
-                            row[idx] = None
-                    yield OrderedDict(zip(self.header, row))
+        for row in self.iterIncomingData():
+            yield OrderedDict(zip(self.header, row))
 
     def load(self):
-        self.createTempTable()
+        self.makeRawTable()
+        self.writeRawToDisk()
+        self.bulkLoadRawData()
+        self.findNewRecords()
         
         insert = ''' 
-            INSERT INTO temp_{0} ({1}) VALUES ({2})
+            INSERT INTO {0} ({1}) VALUES ({2})
         '''.format(self.table_name,
                    ','.join(self.header),
                    ','.join([':%s' % h for h in self.header]))
@@ -284,17 +306,21 @@ class SunshineTransformLoad(object):
         rows = []
         i = 1
         for row in self.transform():
-            rows.append(row)
+            rows.append(dict(zip(row.keys(), row.values())))
+            
             if len(rows) % self.chunk_size is 0:
                 
                 self.executeTransaction(sa.text(insert), *rows)
                 
                 print('Loaded %s %s' % ((i * self.chunk_size), self.table_name))
-                i += 1
                 rows = []
+            
+            i += 1
+        
         if rows:
             self.executeTransaction(sa.text(insert), *rows)
         
+        print('inserted %s' % i)
     
 class SunshineCommittees(SunshineTransformLoad):
     
@@ -324,32 +350,23 @@ class SunshineCommittees(SunshineTransformLoad):
         self.executeTransaction(add_index)
     
     def transform(self):
-        with open(self.file_path, 'r', encoding='latin1') as f:
-            reader = csv.reader(f, delimiter='\t')
-            header = next(reader)
-            for row in reader:
-                if row:
-                    for idx, cell in enumerate(row):
-                        row[idx] = cell.strip()
-                        if not cell:
-                            row[idx] = None
+        for row in self.iterIncomingData():
+            # Replace status value
+            if row['Status'] != 'A':
+                row['Status'] = False
+            else:
+                row['Status'] = True
 
-                    # Replace status value
-                    if row[14] != 'A':
-                        row[14] = False
-                    else:
-                        row[14] = True
-
-                    # Replace position values
-                    for idx in [23, 24]:
-                        if row[idx] == 'O':
-                            row[idx] = 'oppose'
-                        elif row[idx] == 'S':
-                            row[idx] = 'support'
-                        else:
-                            row[idx] = None
-                    
-                    yield OrderedDict(zip(self.header, row))
+            # Replace position values
+            for idx in ['CanSuppOpp', 'PolicySuppOpp']:
+                if row[idx] == 'O':
+                    row[idx] = 'oppose'
+                elif row[idx] == 'S':
+                    row[idx] = 'support'
+                else:
+                    row[idx] = None
+            
+            yield OrderedDict(zip(self.header, row))
     
 
 class SunshineCandidates(SunshineTransformLoad):
@@ -689,7 +706,6 @@ class SunshineViews(object):
         self.condensedExpenditures()
         self.committeeMoney()
         self.candidateMoney()
-        self.fullSearchView()
     
     def condensedExpenditures(self):
         
@@ -994,99 +1010,6 @@ class SunshineViews(object):
             '''
             self.executeTransaction(create)
     
-    def fullSearchView(self):
-
-        try:
-        
-            self.executeTransaction('REFRESH MATERIALIZED VIEW full_search')
-        
-        except sa.exc.ProgrammingError:
-            
-            create = ''' 
-                CREATE MATERIALIZED VIEW full_search AS (
-                  SELECT 
-                    name,
-                    table_name,
-                    json_agg(record_json)::jsonb AS records
-                  FROM (
-                    SELECT 
-                      COALESCE(TRIM(TRANSLATE(first_name, '.,-/', '')), '') || ' ' ||
-                      COALESCE(TRIM(TRANSLATE(last_name, '.,-/', '')), '') AS name,
-                      'candidates' AS table_name,
-                      row_to_json(cand) AS record_json
-                    FROM candidates AS cand
-                    UNION ALL
-                    SELECT
-                      name,
-                      'committees' AS table_name,
-                      row_to_json(comm) AS record_json
-                    FROM committees AS comm
-                    UNION ALL
-                    SELECT
-                      COALESCE(TRIM(TRANSLATE(first_name, '.,-/', '')), '') || ' ' ||
-                      COALESCE(TRIM(TRANSLATE(last_name, '.,-/', '')), '') AS name,
-                      'receipts' AS table_name,
-                      row_to_json(rec) AS record_json
-                    FROM (
-                      SELECT
-                        r.*,
-                        c.name AS committee_name,
-                        c.type AS committee_type
-                      FROM condensed_receipts AS r
-                      JOIN committees AS c
-                        ON r.committee_id = c.id
-                    ) AS rec
-                    UNION ALL
-                    SELECT
-                      COALESCE(TRIM(TRANSLATE(first_name, '.,-/', '')), '') || ' ' ||
-                      COALESCE(TRIM(TRANSLATE(last_name, '.,-/', '')), '') AS name,
-                      'expenditures' AS table_name,
-                      row_to_json(exp) AS record_json
-                    FROM (
-                      SELECT
-                        e.*,
-                        c.name AS committee_name,
-                        c.type AS committee_type
-                      FROM condensed_expenditures AS e
-                      JOIN committees AS c
-                        ON e.committee_id = c.id
-                    ) AS exp
-                    UNION ALL
-                    SELECT
-                      COALESCE(TRIM(TRANSLATE(first_name, '.,-/', '')), '') || ' ' ||
-                      COALESCE(TRIM(TRANSLATE(last_name, '.,-/', '')), '') AS name,
-                      'officers' AS table_name,
-                      row_to_json(off) AS record_json
-                    FROM (
-                      SELECT
-                        o.*,
-                        c.name AS committee_name,
-                        c.type AS committee_type
-                      FROM officers AS o
-                      JOIN committees AS c
-                        ON o.committee_id = c.id
-                    ) AS off
-                    UNION ALL
-                    SELECT
-                      COALESCE(TRIM(TRANSLATE(first_name, '.,-/', '')), '') || ' ' ||
-                      COALESCE(TRIM(TRANSLATE(last_name, '.,-/', '')), '') AS name,
-                      'investments' AS table_name,
-                      row_to_json(inv) AS record_json
-                    FROM (
-                      SELECT
-                        i.*,
-                        c.name AS committee_name,
-                        c.type AS committee_type
-                      FROM investments AS i
-                      JOIN committees AS c
-                        ON i.committee_id = c.id
-                    ) AS inv
-                  ) AS s
-                  GROUP BY table_name, name
-                )
-            '''
-            self.executeTransaction(create)
-
 
 class SunshineIndexes(object):
     def __init__(self, connection):
@@ -1105,17 +1028,6 @@ class SunshineIndexes(object):
         self.fullSearchIndex()
         self.receiptsDate()
         self.receiptsCommittee()
-
-    def fullSearchIndex(self):
-        ''' 
-        Search names across all tables
-        '''
-        index = ''' 
-            CREATE INDEX name_index ON full_search
-            USING gin(to_tsvector('english', name))
-        '''
-        
-        self.executeTransaction(index)
 
     def receiptsDate(self):
         ''' 
