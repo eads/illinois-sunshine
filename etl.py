@@ -253,7 +253,10 @@ class SunshineTransformLoad(object):
             with open('%s_raw.csv' % self.file_path, 'w') as outp:
                 writer = csv.writer(outp)
 
-                writer.writerows([header] + [r for r in checker.checked_rows()])
+                writer.writerow(header)
+                
+                for row in checker.checked_rows():
+                    writer.writerow(row)
 
     def bulkLoadRawData(self):
         import psycopg2
