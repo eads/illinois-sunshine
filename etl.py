@@ -2,7 +2,7 @@ from sunshine.models import Committee, Candidate, Officer, Candidacy, \
     D2Report, FiledDoc, Receipt, Expenditure, Investment
 import ftplib
 import zipfile
-from io import BytesIO
+from io import BytesIO, StringIO
 import os
 from boto.s3.connection import S3Connection
 from boto.s3.key import Key
@@ -11,7 +11,10 @@ from hashlib import md5
 import sqlalchemy as sa
 import csv
 from csvkit.cleanup import RowChecker
+from csvkit.sql import make_table, make_create_table_statement
+from csvkit.table import Table
 from collections import OrderedDict
+from typeinferer import TypeInferer
 
 class SunshineExtract(object):
     
@@ -134,21 +137,27 @@ class SunshineTransformLoad(object):
                                       'downloads', 
                                       self.filename)
 
-    def executeTransaction(self, query, *args):
+    def executeTransaction(self, query, raise_exc=False, *args):
         trans = self.connection.begin()
 
         try:
             self.connection.execute(query, *args)
             trans.commit()
         except sa.exc.ProgrammingError as e:
+            print(e)
             trans.rollback()
+            if raise_exc:
+                raise e
 
     def addNameColumn(self):
         add_name_col = ''' 
             ALTER TABLE {0} ADD COLUMN search_name tsvector
         '''.format(self.table_name)
 
-        self.executeTransaction(add_name_col)
+        try:
+            self.executeTransaction(add_name_col, raise_exc=True)
+        except sa.exc.ProgrammingError:
+            return
 
         add_names = ''' 
             UPDATE {0} SET
@@ -164,6 +173,18 @@ class SunshineTransformLoad(object):
         '''.format(self.table_name)
         
         self.executeTransaction(add_index)
+        
+        trigger = ''' 
+            CREATE TRIGGER {0}_search_update
+            BEFORE INSERT OR UPDATE ON {0}
+            FOR EACH ROW EXECUTE PROCEDURE
+            tsvector_update_trigger(search_name, 
+                                    'pg_catalog.english',
+                                    first_name,
+                                    last_name)
+        '''.format(self.table_name)
+
+        self.executeTransaction(trigger)
     
     def addDateColumn(self, date_col):
         add_date_col = ''' 
@@ -205,96 +226,129 @@ class SunshineTransformLoad(object):
         
         self.metadata.create_all(bind=self.connection.engine)
         
-    def createTempTable(self):
+
+    def makeRawTable(self):
+        inferer = TypeInferer(self.file_path)
+        inferer.infer()
         
-        drop = ''' 
-            DROP TABLE IF EXISTS temp_{0} 
-        '''
+        sql_table = sa.Table('raw_{0}'.format(self.table_name), 
+                             sa.MetaData())
 
-        self.executeTransaction(drop)
+        for column_name, column_type in inferer.types.items():
+            sql_table.append_column(sa.Column(column_name, column_type()))
+        
+        dialect = sa.dialects.postgresql.dialect()
+        create_table = str(sa.schema.CreateTable(sql_table)\
+                           .compile(dialect=dialect)).strip(';')
 
-        create = ''' 
-            CREATE TABLE temp_{0} AS
-              SELECT * FROM {0} LIMIT 1
-            WITH NO DATA
+        self.executeTransaction('DROP TABLE IF EXISTS raw_{0}'.format(self.table_name))
+        self.executeTransaction(create_table)
+
+    def writeRawToDisk(self):
+        with open(self.file_path, 'r', encoding='latin-1') as inp:
+            reader = csv.reader(inp, delimiter='\t', quoting=csv.QUOTE_NONE)
+            header = next(reader)
+            checker = RowChecker(reader)
+            
+            with open('%s_raw.csv' % self.file_path, 'w') as outp:
+                writer = csv.writer(outp)
+
+                writer.writerows([header] + [r for r in checker.checked_rows()])
+
+    def bulkLoadRawData(self):
+        import psycopg2
+        from sunshine.app_config import DB_USER, DB_PW, DB_HOST, \
+            DB_PORT, DB_NAME
+        
+        DB_CONN_STR = 'host={0} dbname={1} user={2} port={3}'\
+            .format(DB_HOST, DB_NAME, DB_USER, DB_PORT)
+
+        copy_st = ''' 
+            COPY raw_{0} FROM STDIN WITH CSV HEADER DELIMITER ','
+        '''.format(self.table_name)
+        
+        with open('%s_raw.csv' % self.file_path, 'r', encoding='latin-1') as f:
+            next(f)
+            with psycopg2.connect(DB_CONN_STR) as conn:
+                with conn.cursor() as curs:
+                    try:
+                        curs.copy_expert(copy_st, f)
+                    except psycopg2.IntegrityError as e:
+                        print(e)
+                        conn.rollback()
+        
+        os.remove('%s_raw.csv' % self.file_path)
+    
+    def findNewRecords(self):
+        create_new_record_table = ''' 
+            CREATE TABLE new_{0} AS (
+                SELECT raw."ID"
+                FROM raw_{0} AS raw
+                LEFT JOIN {0} AS dat
+                  ON raw."ID" = dat.id
+                WHERE dat.id IS NULL
+            )
         '''.format(self.table_name)
 
-        self.executeTransaction(create)
-    
-    @property
-    def upsert(self):
-        field_format = '{1} = subq.{1}'
+        self.executeTransaction('DROP TABLE IF EXISTS new_{0}'.format(self.table_name))
+        self.executeTransaction(create_new_record_table)
         
-        update_fields = [field_format.format(self.table_name,f) \
-                             for f in self.header]
+    def iterIncomingData(self):
+        incoming = ''' 
+            SELECT raw.* 
+            FROM raw_{0} AS raw
+            JOIN new_{0} AS new
+              USING("ID")
+        '''.format(self.table_name)
         
-        return ''' 
-            WITH data_update AS (
-              UPDATE {0} SET 
-                {1}
-              FROM (
-                SELECT * FROM temp_{0}
-              ) AS subq
-              WHERE {0}.id = subq.id
-            )
-            INSERT INTO {0} 
-              SELECT temp.* FROM temp_{0} AS temp
-              LEFT JOIN {0} AS data
-                USING(id)
-              WHERE data.id IS NULL
-            RETURNING *
-        '''.format(self.table_name, 
-                   ','.join(update_fields))
-
-    def update(self):
-        
-        trans = self.connection.begin()
-        
-        try:
-            inserted = list(self.connection.execute(sa.text(self.upsert)))
-            trans.commit()
-            
-            print('inserted %s %s' % (len(inserted), self.table_name))
-        
-        except sa.exc.ProgrammingError:
-            trans.rollback()
+        for record in self.connection.engine.execute(incoming):
+            yield record
 
     def transform(self):
-        with open(self.file_path, 'r', encoding='latin1') as f:
-            reader = csv.reader(f, delimiter='\t', 
-                                quoting=csv.QUOTE_NONE)
-            checker = RowChecker(reader)
-            for row in checker.checked_rows():
-                if row:
-                    for idx, cell in enumerate(row):
-                        row[idx] = cell.strip()
-                        if not row[idx]:
-                            row[idx] = None
-                    yield OrderedDict(zip(self.header, row))
+        for row in self.iterIncomingData():
+            values = []
+            for value in row.values():
+                if isinstance(value, str):
+                    if value.strip() == '':
+                        values.append(None)
+                    else:
+                        values.append(value)
+                else:
+                    values.append(value)
+            yield OrderedDict(zip(self.header, values))
 
-    def load(self):
-        self.createTempTable()
-        
-        insert = ''' 
-            INSERT INTO temp_{0} ({1}) VALUES ({2})
+    @property
+    def insert(self):
+        return ''' 
+            INSERT INTO {0} ({1}) VALUES ({2})
         '''.format(self.table_name,
                    ','.join(self.header),
                    ','.join([':%s' % h for h in self.header]))
 
+    def load(self):
+        self.makeRawTable()
+        self.writeRawToDisk()
+        self.bulkLoadRawData()
+        self.findNewRecords()
+
         rows = []
-        i = 1
+        i = 0
         for row in self.transform():
-            rows.append(row)
+            rows.append(dict(zip(row.keys(), row.values())))
+            
             if len(rows) % self.chunk_size is 0:
                 
-                self.executeTransaction(sa.text(insert), *rows)
+                self.executeTransaction(sa.text(self.insert), *rows)
                 
-                print('Loaded %s %s' % ((i * self.chunk_size), self.table_name))
-                i += 1
+                print('Inserted %s %s' % (i, self.table_name))
                 rows = []
-        if rows:
-            self.executeTransaction(sa.text(insert), *rows)
+            
+            i += 1
         
+        if rows:
+            self.executeTransaction(sa.text(self.insert), *rows)
+        
+        print('inserted %s %s' % (i, self.table_name))
     
 class SunshineCommittees(SunshineTransformLoad):
     
@@ -307,7 +361,10 @@ class SunshineCommittees(SunshineTransformLoad):
             ALTER TABLE {0} ADD COLUMN search_name tsvector
         '''.format(self.table_name)
 
-        self.executeTransaction(add_name_col)
+        try:
+            self.executeTransaction(add_name_col, raise_exc=True)
+        except sa.exc.ProgrammingError:
+            return
 
         add_names = ''' 
             UPDATE {0} SET
@@ -322,34 +379,39 @@ class SunshineCommittees(SunshineTransformLoad):
         '''.format(self.table_name)
         
         self.executeTransaction(add_index)
+        
+        trigger = ''' 
+            CREATE TRIGGER {0}_search_update
+            BEFORE INSERT OR UPDATE ON {0}
+            FOR EACH ROW EXECUTE PROCEDURE
+            tsvector_update_trigger(search_name, 
+                                    'pg_catalog.english',
+                                    name)
+        '''.format(self.table_name)
+
+        self.executeTransaction(trigger)
+
     
     def transform(self):
-        with open(self.file_path, 'r', encoding='latin1') as f:
-            reader = csv.reader(f, delimiter='\t')
-            header = next(reader)
-            for row in reader:
-                if row:
-                    for idx, cell in enumerate(row):
-                        row[idx] = cell.strip()
-                        if not cell:
-                            row[idx] = None
+        for row in self.iterIncomingData():
+            row = OrderedDict(zip(row.keys(), row.values()))
 
-                    # Replace status value
-                    if row[14] != 'A':
-                        row[14] = False
-                    else:
-                        row[14] = True
+            # Replace status value
+            if row['Status'] != 'A':
+                row['Status'] = False
+            else:
+                row['Status'] = True
 
-                    # Replace position values
-                    for idx in [23, 24]:
-                        if row[idx] == 'O':
-                            row[idx] = 'oppose'
-                        elif row[idx] == 'S':
-                            row[idx] = 'support'
-                        else:
-                            row[idx] = None
-                    
-                    yield OrderedDict(zip(self.header, row))
+            # Replace position values
+            for idx in ['CanSuppOpp', 'PolicySuppOpp']:
+                if row[idx] == 'O':
+                    row[idx] = 'oppose'
+                elif row[idx] == 'S':
+                    row[idx] = 'support'
+                else:
+                    row[idx] = None
+            
+            yield OrderedDict(zip(self.header, row.values()))
     
 
 class SunshineCandidates(SunshineTransformLoad):
@@ -359,38 +421,6 @@ class SunshineCandidates(SunshineTransformLoad):
               if f not in ['date_added', 'last_update', 'ocd_id']]
     filename = 'Candidates.txt'
     
-    @property
-    def upsert(self):
-        field_format = '{1} = subq.{1}'
-        
-        update_fields = [field_format.format(self.table_name,f) \
-                             for f in self.header]
-        
-        return ''' 
-            WITH upsert AS (
-              UPDATE {0} SET 
-                {1},
-                last_update = NOW()
-              FROM (
-                SELECT * FROM temp_{0}
-              ) AS subq
-              WHERE {0}.id = subq.id
-            )
-            INSERT INTO {0} ({2})
-              SELECT 
-                {3},
-                NOW() AS last_update,
-                NOW() AS date_added
-              FROM temp_{0} AS temp
-              LEFT JOIN {0} AS data
-                USING(id)
-              WHERE data.id IS NULL
-            RETURNING *
-        '''.format(self.table_name, 
-                   ','.join(update_fields),
-                   ','.join(self.header + ['last_update', 'date_added']),
-                   ','.join(['temp.{0}'.format(f) for f in self.header]))
-
 class SunshineOfficers(SunshineTransformLoad):
     table_name = 'officers'
     header = Officer.__table__.columns.keys()
@@ -398,61 +428,21 @@ class SunshineOfficers(SunshineTransformLoad):
     current = True
 
     def transform(self):
-        with open(self.file_path, 'r', encoding='latin1') as f:
-            reader = csv.reader(f, delimiter='\t')
-            header = next(reader)
-            for row in reader:
-                if row:
-                    
-                    for idx, cell in enumerate(row):
-                        row[idx] = cell.strip()
-                        
-                        if not cell:
-                            row[idx] = None
-                    
-                    # Add empty committee_id
-                    row.insert(1, None)
+        for row in self.iterIncomingData():
+            
+            row_list = list(row.values())
 
-                    # Add empty resign date
-                    row.insert(11, None)
+            # Add empty committee_id
+            row_list.insert(1, None)
 
-                    # Add current flag
-                    row.append(self.current)
-                    
-                    yield OrderedDict(zip(self.header, row))
+            # Add empty resign date
+            row_list.insert(11, None)
 
-    @property
-    def upsert(self):
-        field_format = '{1} = subq.{1}'
-        
-        update_fields = [field_format.format(self.table_name,f) \
-                             for f in self.header]
-        
-        return ''' 
-            WITH upsert AS (
-              UPDATE {0} SET 
-                {1}
-              FROM (
-                SELECT * FROM temp_{0}
-              ) AS subq
-              WHERE officers.id = subq.id
-                AND officers.current = subq.current
-            )
-            INSERT INTO {0} ({2})
-              SELECT 
-                {3}
-              FROM temp_{0} AS temp
-              LEFT JOIN {0} AS data
-                ON temp.id = data.id 
-                AND temp.current = data.current
-              WHERE data.id IS NULL
-                AND data.current IS NULL
-            RETURNING *
-        '''.format(self.table_name, 
-                   ','.join(update_fields),
-                   ','.join(self.header),
-                   ','.join(['temp.{0}'.format(f) for f in self.header]))
-    
+            # Add current flag
+            row_list.append(self.current)
+            
+            yield OrderedDict(zip(self.header, row_list))
+
 class SunshinePrevOfficers(SunshineOfficers):
     table_name = 'officers'
     header = Officer.__table__.columns.keys()
@@ -460,23 +450,17 @@ class SunshinePrevOfficers(SunshineOfficers):
     current = False
     
     def transform(self):
-        with open(self.file_path, 'r', encoding='latin1') as f:
-            reader = csv.reader(f, delimiter='\t')
-            header = next(reader)
-            for row in reader:
-                if row:
-                    for idx, cell in enumerate(row):
-                        row[idx] = cell.strip()
-                        if not cell:
-                            row[idx] = None
-                    
-                    # Add empty phone
-                    row.insert(10, None)
+        for row in self.iterIncomingData():
+            
+            row_list = list(row.values())
+            
+            # Add empty phone
+            row_list.insert(10, None)
 
-                    # Add current flag
-                    row.append(self.current)
+            # Add current flag
+            row_list.append(self.current)
 
-                    yield OrderedDict(zip(self.header, row))
+            yield OrderedDict(zip(self.header, row_list))
 
 class SunshineCandidacy(SunshineTransformLoad):
     table_name = 'candidacies'
@@ -500,31 +484,24 @@ class SunshineCandidacy(SunshineTransformLoad):
     }
 
     def transform(self):
-        with open(self.file_path, 'r', encoding='latin1') as f:
-            reader = csv.reader(f, delimiter='\t')
-            header = next(reader)
-            for row in reader:
-                if row:
-                    for idx, cell in enumerate(row):
-                        row[idx] = cell.strip()
-                        if not cell:
-                            row[idx] = None
+        for row in self.iterIncomingData():
+            row = OrderedDict(zip(row.keys(), row.values()))
 
-                    # Get election type
-                    row[2] = self.election_types.get(row[2])
-                    
-                    # Get race type
-                    row[4] = self.race_types.get(row[4])
-                    
-                    # Get outcome
-                    if row[5] == 'Won':
-                        row[5] = 'won'
-                    elif row[5] == 'Lost':
-                        row[5] = 'lost'
-                    else:
-                        row[5] = None
+            # Get election type
+            row['ElectionType'] = self.election_types.get(row['ElectionType'])
+            
+            # Get race type
+            row['IncChallOpen'] = self.race_types.get(row['IncChallOpen'])
+            
+            # Get outcome
+            if row['WonLost'] == 'Won':
+                row['WonLost'] = 'won'
+            elif row['WonLost'] == 'Lost':
+                row['WonLost'] = 'lost'
+            else:
+                row['WonLost'] = None
 
-                    yield OrderedDict(zip(self.header, row))
+            yield OrderedDict(zip(self.header, row.values()))
 
 
 class SunshineCandidateCommittees(SunshineTransformLoad):
@@ -532,55 +509,40 @@ class SunshineCandidateCommittees(SunshineTransformLoad):
     header = ['committee_id', 'candidate_id']
     filename = 'CmteCandidateLinks.txt'
     
-    def transform(self):
-        with open(self.file_path, 'r', encoding='latin1') as f:
-            reader = csv.reader(f, delimiter='\t')
-            header = next(reader)
-            for row in reader:
-                if row:
-                    for idx, cell in enumerate(row):
-                        row[idx] = cell.strip()
-                        if not cell:
-                            row[idx] = None
-                    row.pop(0)
-                    yield OrderedDict(zip(self.header, row))
-
-    @property
-    def upsert(self):
-        field_format = '{1} = subq.{1}'
-        
-        update_fields = [field_format.format(self.table_name,f) \
-                             for f in self.header]
-        
-        where_clause = ''' 
-            WHERE {0}.{1} = subq.{1}
-              AND {0}.{2} = subq.{2}
-        '''.format(self.table_name, 
-                   self.header[0], 
-                   self.header[1])
-
-        return ''' 
-            WITH upsert AS (
-              UPDATE {0} SET 
-                {1}
-              FROM (
-                SELECT * FROM temp_{0}
-              ) AS subq
-              {2}
-              RETURNING *
+    def findNewRecords(self):
+        create_new_record_table = ''' 
+            CREATE TABLE new_{0} AS (
+                SELECT 
+                  raw."CommitteeID", 
+                  raw."CandidateID"
+                FROM raw_{0} AS raw
+                LEFT JOIN {0} AS dat
+                  ON raw."CommitteeID" = dat.committee_id
+                  AND raw."CandidateID" = dat.candidate_id
+                WHERE dat.committee_id IS NULL
+                  AND dat.candidate_id IS NULL
             )
-            INSERT INTO {0} 
-              SELECT temp.* 
-              FROM temp_{0} AS temp
-              LEFT JOIN {0} AS data
-                ON temp.candidate_id = data.candidate_id
-                AND temp.committee_id = data.committee_id
-              WHERE data.candidate_id IS NULL
-                AND data.committee_id IS NULL
-            RETURNING *
-        '''.format(self.table_name, 
-                   ','.join(update_fields),
-                   where_clause)
+        '''.format(self.table_name)
+
+        self.executeTransaction('DROP TABLE IF EXISTS new_{0}'.format(self.table_name))
+        self.executeTransaction(create_new_record_table)
+    
+    def iterIncomingData(self):
+        incoming = ''' 
+            SELECT raw.* 
+            FROM raw_{0} AS raw
+            JOIN new_{0} AS new
+              ON raw."CommitteeID" = new."CommitteeID"
+              AND raw."CandidateID" = new."CandidateID"
+        '''.format(self.table_name)
+        
+        for record in self.connection.engine.execute(incoming):
+            yield record
+    
+    def transform(self):
+        for row in self.iterIncomingData():
+            row = [row['CommitteeID'], row['CandidateID']]
+            yield OrderedDict(zip(self.header, row))
 
 class SunshineOfficerCommittees(SunshineTransformLoad):
     table_name = 'officer_committees'
@@ -588,48 +550,28 @@ class SunshineOfficerCommittees(SunshineTransformLoad):
     filename = 'CmteOfficerLinks.txt'
     
     def transform(self):
-        with open(self.file_path, 'r', encoding='latin1') as f:
-            reader = csv.reader(f, delimiter='\t')
-            header = next(reader)
-            for row in reader:
-                if row:
-                    for idx, cell in enumerate(row):
-                        row[idx] = cell.strip()
-                        if not cell:
-                            row[idx] = None
-                    row.pop(0)
-                    yield OrderedDict(zip(self.header, row))
+        for row in self.iterIncomingData():
+            row = [row['CommitteeID'], row['OfficerID']]
+            yield OrderedDict(zip(self.header, row))
+    
+    def load(self):
+        self.makeRawTable()
+        self.writeRawToDisk()
+        self.bulkLoadRawData()
 
-    def createTempTable(self):
-        drop = ''' 
-            DROP TABLE IF EXISTS temp_{0}
+        update = ''' 
+            UPDATE officers SET
+              committee_id = subq."CommitteeID"
+            FROM (
+              SELECT 
+                "OfficerID", 
+                "CommitteeID"
+              FROM raw_officer_committees
+            ) AS subq
+            WHERE officers.id = subq."OfficerID"
         '''
-
-        self.executeTransaction(drop)
-
-        create = ''' 
-            CREATE TABLE temp_{0} (
-              committee_id INTEGER, 
-              officer_id INTEGER
-            )
-        '''.format(self.table_name)
         
-        self.executeTransaction('DROP TABLE IF EXISTS temp_{0}'.format(self.table_name))
-        self.executeTransaction(create)
-        
-    @property
-    def upsert(self):
-
-        return ''' 
-              UPDATE officers SET 
-                committee_id = subq.committee_id
-              FROM (
-                SELECT * FROM temp_{0}
-              ) AS subq
-              WHERE officers.id = subq.officer_id
-                AND officers.current = TRUE
-              RETURNING *
-        '''.format(self.table_name)
+        self.executeTransaction(update)
 
 class SunshineD2Reports(SunshineTransformLoad):
     table_name = 'd2_reports'
@@ -1083,7 +1025,6 @@ if __name__ == "__main__":
                                         Base.metadata, 
                                         chunk_size=chunk_size)
         committees.load()
-        committees.update()
         committees.addNameColumn()
         committees.addDateColumn('NULL')
         
@@ -1092,7 +1033,6 @@ if __name__ == "__main__":
 
         candidates = SunshineCandidates(connection, chunk_size=chunk_size)
         candidates.load()
-        candidates.update()
         candidates.addNameColumn()
         candidates.addDateColumn('NULL')
         
@@ -1100,7 +1040,6 @@ if __name__ == "__main__":
 
         officers = SunshineOfficers(connection, chunk_size=chunk_size)
         officers.load()
-        officers.update()
         officers.addNameColumn()
         officers.addDateColumn('NULL')
         
@@ -1108,45 +1047,36 @@ if __name__ == "__main__":
 
         prev_off = SunshinePrevOfficers(connection, chunk_size=chunk_size)
         prev_off.load()
-        prev_off.update()
-        prev_off.addNameColumn()
-        prev_off.addDateColumn('NULL')
         
         del prev_off
 
         candidacy = SunshineCandidacy(connection, chunk_size=chunk_size)
         candidacy.load()
-        candidacy.update()
         
         del candidacy
 
         can_cmte_xwalk = SunshineCandidateCommittees(connection, chunk_size=chunk_size)
         can_cmte_xwalk.load()
-        can_cmte_xwalk.update()
         
         del can_cmte_xwalk
 
         off_cmte_xwalk = SunshineOfficerCommittees(connection, chunk_size=chunk_size)
         off_cmte_xwalk.load()
-        off_cmte_xwalk.update()
         
         del off_cmte_xwalk
 
         filed_docs = SunshineFiledDocs(connection, chunk_size=chunk_size)
         filed_docs.load()
-        filed_docs.update()
         
         del filed_docs
 
         d2_reports = SunshineD2Reports(connection, chunk_size=chunk_size)
         d2_reports.load()
-        d2_reports.update()
         
         del d2_reports
 
         receipts = SunshineReceipts(connection, chunk_size=chunk_size)
         receipts.load()
-        receipts.update()
         receipts.addNameColumn()
         receipts.addDateColumn('received_date')
         
@@ -1154,7 +1084,6 @@ if __name__ == "__main__":
 
         expenditures = SunshineExpenditures(connection, chunk_size=chunk_size)
         expenditures.load()
-        expenditures.update()
         expenditures.addNameColumn()
         expenditures.addDateColumn('expended_date')
         
@@ -1162,7 +1091,6 @@ if __name__ == "__main__":
 
         investments = SunshineInvestments(connection, chunk_size=chunk_size)
         investments.load()
-        investments.update()
         investments.addNameColumn()
         investments.addDateColumn('purchase_date')
         
