@@ -26,3 +26,5 @@ AWS_SECRET = ''
 CACHE_CONFIG = {
     'CACHE_TYPE': 'simple',
 }
+
+SENTRY_DSN = ''

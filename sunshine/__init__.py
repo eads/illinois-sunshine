@@ -7,6 +7,17 @@ from sunshine.app_config import TIME_ZONE
 from sunshine.cache import cache
 from datetime import datetime
 
+sentry = None
+try:
+    from raven.contrib.flask import Sentry
+    from sunshine.app_config import SENTRY_DSN
+    if SENTRY_DSN:
+        sentry = Sentry(dsn=SENTRY_DSN) 
+except ImportError:
+    pass
+except KeyError:
+    pass
+
 def create_app():
     app = Flask(__name__)
     config = '{0}.app_config'.format(__name__)
@@ -14,6 +25,9 @@ def create_app():
     app.register_blueprint(views)
     app.register_blueprint(api, url_prefix='/api')
     cache.init_app(app)
+    
+    if sentry:
+        sentry.init_app(app)
     
     @app.errorhandler(404)
     def page_not_found(e):
