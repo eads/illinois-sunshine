@@ -676,7 +676,6 @@ class SunshineViews(object):
         self.executeTransaction('DROP MATERIALIZED VIEW IF EXISTS committee_receipts_by_week')
         self.executeTransaction('DROP MATERIALIZED VIEW IF EXISTS incumbent_candidates')
         self.executeTransaction('DROP MATERIALIZED VIEW IF EXISTS most_recent_filings CASCADE')
-        self.executeTransaction('DROP MATERIALIZED VIEW IF EXISTS full_search')
         self.executeTransaction('DROP MATERIALIZED VIEW IF EXISTS expenditures_by_candidate')
 
     def makeAllViews(self):
@@ -689,7 +688,6 @@ class SunshineViews(object):
         self.condensedExpenditures()
         self.committeeMoney()
         self.candidateMoney()
-        self.fullSearchView()
     
     def condensedExpenditures(self):
         
@@ -994,99 +992,6 @@ class SunshineViews(object):
             '''
             self.executeTransaction(create)
     
-    def fullSearchView(self):
-
-        try:
-        
-            self.executeTransaction('REFRESH MATERIALIZED VIEW full_search')
-        
-        except sa.exc.ProgrammingError:
-            
-            create = ''' 
-                CREATE MATERIALIZED VIEW full_search AS (
-                  SELECT 
-                    name,
-                    table_name,
-                    json_agg(record_json)::jsonb AS records
-                  FROM (
-                    SELECT 
-                      COALESCE(TRIM(TRANSLATE(first_name, '.,-/', '')), '') || ' ' ||
-                      COALESCE(TRIM(TRANSLATE(last_name, '.,-/', '')), '') AS name,
-                      'candidates' AS table_name,
-                      row_to_json(cand) AS record_json
-                    FROM candidates AS cand
-                    UNION ALL
-                    SELECT
-                      name,
-                      'committees' AS table_name,
-                      row_to_json(comm) AS record_json
-                    FROM committees AS comm
-                    UNION ALL
-                    SELECT
-                      COALESCE(TRIM(TRANSLATE(first_name, '.,-/', '')), '') || ' ' ||
-                      COALESCE(TRIM(TRANSLATE(last_name, '.,-/', '')), '') AS name,
-                      'receipts' AS table_name,
-                      row_to_json(rec) AS record_json
-                    FROM (
-                      SELECT
-                        r.*,
-                        c.name AS committee_name,
-                        c.type AS committee_type
-                      FROM condensed_receipts AS r
-                      JOIN committees AS c
-                        ON r.committee_id = c.id
-                    ) AS rec
-                    UNION ALL
-                    SELECT
-                      COALESCE(TRIM(TRANSLATE(first_name, '.,-/', '')), '') || ' ' ||
-                      COALESCE(TRIM(TRANSLATE(last_name, '.,-/', '')), '') AS name,
-                      'expenditures' AS table_name,
-                      row_to_json(exp) AS record_json
-                    FROM (
-                      SELECT
-                        e.*,
-                        c.name AS committee_name,
-                        c.type AS committee_type
-                      FROM condensed_expenditures AS e
-                      JOIN committees AS c
-                        ON e.committee_id = c.id
-                    ) AS exp
-                    UNION ALL
-                    SELECT
-                      COALESCE(TRIM(TRANSLATE(first_name, '.,-/', '')), '') || ' ' ||
-                      COALESCE(TRIM(TRANSLATE(last_name, '.,-/', '')), '') AS name,
-                      'officers' AS table_name,
-                      row_to_json(off) AS record_json
-                    FROM (
-                      SELECT
-                        o.*,
-                        c.name AS committee_name,
-                        c.type AS committee_type
-                      FROM officers AS o
-                      JOIN committees AS c
-                        ON o.committee_id = c.id
-                    ) AS off
-                    UNION ALL
-                    SELECT
-                      COALESCE(TRIM(TRANSLATE(first_name, '.,-/', '')), '') || ' ' ||
-                      COALESCE(TRIM(TRANSLATE(last_name, '.,-/', '')), '') AS name,
-                      'investments' AS table_name,
-                      row_to_json(inv) AS record_json
-                    FROM (
-                      SELECT
-                        i.*,
-                        c.name AS committee_name,
-                        c.type AS committee_type
-                      FROM investments AS i
-                      JOIN committees AS c
-                        ON i.committee_id = c.id
-                    ) AS inv
-                  ) AS s
-                  GROUP BY table_name, name
-                )
-            '''
-            self.executeTransaction(create)
-
 
 class SunshineIndexes(object):
     def __init__(self, connection):
@@ -1102,20 +1007,8 @@ class SunshineIndexes(object):
             trans.rollback()
 
     def makeAllIndexes(self):
-        self.fullSearchIndex()
         self.receiptsDate()
         self.receiptsCommittee()
-
-    def fullSearchIndex(self):
-        ''' 
-        Search names across all tables
-        '''
-        index = ''' 
-            CREATE INDEX name_index ON full_search
-            USING gin(to_tsvector('english', name))
-        '''
-        
-        self.executeTransaction(index)
 
     def receiptsDate(self):
         ''' 
