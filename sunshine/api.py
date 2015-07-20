@@ -138,7 +138,7 @@ def advanced_search():
         # Need to figure a way to do any column. This will 
         # just work for search_date for the time being
         
-        q_params = {k:v for k,v in request.args.items() if k.startswith('search_date')}
+        q_params = {k:v for k,v in request.args.items() if k.startswith('search_date') and v}
         
         objects = {}
         
