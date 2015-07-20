@@ -36,11 +36,15 @@ class Candidacy(Base):
     __tablename__ = 'candidacies'
     id = sa.Column(sa.Integer, primary_key=True)
     
-    candidate_id = sa.Column(sa.Integer, sa.ForeignKey('candidates.id'))
-    candidate = sa.orm.relationship('Candidate', backref='candidacies')
+    candidate_id = sa.Column(sa.Integer)
+    candidate = sa.orm.relationship('Candidate', 
+                                    primaryjoin='Candidacy.candidate_id==Candidate.id',
+                                    foreign_keys='Candidacy.candidate_id',
+                                    remote_side='Candidate.id')
     
     election_type = sa.Column(sa.String)
     election_year = sa.Column(sa.Integer)
+    
     # Incumbent, challenger, open seat
     race_type = sa.Column(ENUM('incumbent', 'challenger', 'open seat', 'retired',
                             name='candidacy_race_type'))
@@ -59,8 +63,8 @@ class Candidacy(Base):
         return {c.name: getattr(self, c.name) for c in self.__table__.columns}
 
 candidate_committees = sa.Table('candidate_committees', Base.metadata,
-                       sa.Column('candidate_id', sa.Integer, sa.ForeignKey('candidates.id')),
-                       sa.Column('committee_id', sa.Integer, sa.ForeignKey('committees.id'))
+                       sa.Column('candidate_id', sa.Integer),
+                       sa.Column('committee_id', sa.Integer)
 )
 
 class Committee(Base):
@@ -88,7 +92,8 @@ class Committee(Base):
     disp_funds_charity = sa.Column(sa.Boolean)
     disp_funds_95 = sa.Column(sa.Boolean)
     disp_funds_description = sa.Column(sa.Text)
-    # These use the same ENUM. Need to create is separately
+    
+    # These use the same ENUM. Need to create it separately
     candidate_position = sa.Column(ENUM('support', 'oppose', 
                                         name='committee_position',
                                         create_type=False))
@@ -98,9 +103,9 @@ class Committee(Base):
     party = sa.Column(sa.String)
     purpose = sa.Column(sa.Text)
 
-    candidates = sa.orm.relationship('Candidate', 
-                                     secondary=candidate_committees, 
-                                     backref='committees')
+    #candidates = sa.orm.relationship('Candidate', 
+    #                                 secondary="join(candidate_committees, candidate_committees.c.committee_id == Committee.id).join(Candidate, Candidate.id == candidate_committees.c.candidate_id)", 
+    #                                 backref='committees')
 
     def __repr__(self):
         return '<Committee %r>' % self.name
@@ -113,8 +118,11 @@ class Officer(Base):
     __tablename__ = 'officers'
     id = sa.Column(sa.Integer, primary_key=True)
     
-    committee_id = sa.Column(sa.Integer, sa.ForeignKey('committees.id'))
-    committee = sa.orm.relationship('Committee', backref='officers')
+    committee_id = sa.Column(sa.Integer)
+    committee = sa.orm.relationship('Committee', 
+                                    primaryjoin='Officer.committee_id==Committee.id',
+                                    foreign_keys='Officer.committee_id',
+                                    remote_side='Committee.id')
     
     last_name = sa.Column(sa.String)
     first_name = sa.Column(sa.String)
@@ -140,8 +148,11 @@ class FiledDoc(Base):
     __tablename__ = 'filed_docs'
     id = sa.Column(sa.Integer, primary_key=True)
 
-    committee_id = sa.Column(sa.Integer, sa.ForeignKey('committees.id'))
-    committee = sa.orm.relationship('Committee', backref='filed_docs')
+    committee_id = sa.Column(sa.Integer)
+    committee = sa.orm.relationship('Committee', 
+                                    primaryjoin='FiledDoc.committee_id==Committee.id',
+                                    foreign_keys='FiledDoc.committee_id',
+                                    remote_side='Committee.id')
     
     doc_type = sa.Column(sa.String(10))
     doc_name = sa.Column(sa.String(30))
@@ -181,7 +192,16 @@ class D2Report(Base):
     # Not making an explicit relations here because there are reports
     # that have related filed_docs and committees that don't exist, apparently
     committee_id = sa.Column(sa.Integer)
+    committee = sa.orm.relationship('Committee', 
+                                    primaryjoin='D2Report.committee_id==Committee.id',
+                                    foreign_keys='D2Report.committee_id',
+                                    remote_side='Committee.id')
+    
     filed_doc_id = sa.Column(sa.Integer)
+    filed_doc = sa.orm.relationship('FiledDoc', 
+                                    primaryjoin='D2Report.filed_doc_id==FiledDoc.id',
+                                    foreign_keys='D2Report.filed_doc_id',
+                                    remote_side='FiledDoc.id')
     
     beginning_funds_avail = sa.Column(DOUBLE_PRECISION)
     individual_itemized_contrib = sa.Column(DOUBLE_PRECISION)
@@ -220,16 +240,17 @@ class Receipt(Base):
     __tablename__ = 'receipts'
     id = sa.Column(sa.Integer, primary_key=True)
     
-    committee_id = sa.Column(sa.Integer,
-                             sa.ForeignKey('committees.id'), 
-                             index=True)
+    committee_id = sa.Column(sa.Integer)
+    committee = sa.orm.relationship('Committee', 
+                                    primaryjoin='Receipt.committee_id==Committee.id',
+                                    foreign_keys='Receipt.committee_id',
+                                    remote_side='Committee.id')
 
-    committee = sa.orm.relationship('Committee', backref='receipts')
-    
-    # filed_doc_id = sa.Column(sa.Integer, sa.ForeignKey('filed_docs.id'))
-    # filed_doc = sa.orm.relationship('FiledDoc', backref='receipts')
-    
     filed_doc_id = sa.Column(sa.Integer)
+    filed_doc = sa.orm.relationship('FiledDoc', 
+                                    primaryjoin='Receipt.filed_doc_id==FiledDoc.id',
+                                    foreign_keys='Receipt.filed_doc_id',
+                                    remote_side='FiledDoc.id')
     
     etrans_id = sa.Column(sa.String)
     last_name = sa.Column(sa.String)
@@ -265,11 +286,19 @@ class Expenditure(Base):
     __tablename__ = 'expenditures'
     id = sa.Column(sa.Integer, primary_key=True)
     
-    committee_id = sa.Column(sa.Integer, sa.ForeignKey('committees.id'))
-    committee = sa.orm.relationship('Committee', backref='expenditures')
-    
-    filed_doc_id = sa.Column(sa.Integer, sa.ForeignKey('filed_docs.id'))
-    filed_doc = sa.orm.relationship('FiledDoc', backref='expenditures')
+    committee_id = sa.Column(sa.Integer)
+    committee = sa.orm.relationship('Committee',
+                                    backref='expenditures',
+                                    primaryjoin='Expenditure.committee_id==Committee.id',
+                                    foreign_keys='Expenditure.committee_id',
+                                    remote_side='Committee.id')
+
+    filed_doc_id = sa.Column(sa.Integer)
+    filed_doc = sa.orm.relationship('FiledDoc', 
+                                    backref='expenditures',
+                                    primaryjoin='Expenditure.filed_doc_id==FiledDoc.id',
+                                    foreign_keys='Expenditure.filed_doc_id',
+                                    remote_side='FiledDoc.id')
 
     etrans_id = sa.Column(sa.String)
     last_name = sa.Column(sa.String)

@@ -959,6 +959,11 @@ class SunshineIndexes(object):
     def makeAllIndexes(self):
         self.receiptsDate()
         self.receiptsCommittee()
+        self.receiptsFiledDocs()
+        self.candidaciesCandidate()
+        self.candidateCommittees()
+        self.officersCommittee()
+        self.filedDocsCommittee()
         self.receiptsName()
         self.expendituresName()
 
@@ -981,7 +986,52 @@ class SunshineIndexes(object):
         '''
         
         self.executeTransaction(index)
-   
+    
+    def receiptsFiledDocs(self):
+        index = ''' 
+            CREATE INDEX receipts_filed_docs_idx ON receipts (filed_doc_id)
+        '''
+        
+        self.executeTransaction(index)
+    
+    def candidaciesCandidate(self):
+        index = ''' 
+            CREATE INDEX candidacies_candidate_id_index 
+              ON candidacies (candidate_id)
+        '''
+
+        self.executeTransaction(index)
+    
+    def candidateCommittees(self):
+        index = ''' 
+            CREATE INDEX cand_comm_candidate_id_index 
+              ON candidate_committees (candidate_id)
+        '''
+
+        self.executeTransaction(index)
+        
+        index = ''' 
+            CREATE INDEX cand_comm_committee_id_index 
+              ON candidate_committees (committee_id)
+        '''
+
+        self.executeTransaction(index)
+
+    def filedDocsCommittee(self):
+        index = ''' 
+            CREATE INDEX filed_docs_committee_idx ON filed_docs (committee_id)
+        '''
+        
+        self.executeTransaction(index)
+
+    def officersCommittee(self):
+        index = ''' 
+            CREATE INDEX officers_committee_id_index 
+              ON officers (committee_id)
+        '''
+
+        self.executeTransaction(index)
+
     def receiptsName(self):
          add_index = ''' 
              CREATE INDEX condensed_receipts_search_index ON condensed_receipts
@@ -990,7 +1040,7 @@ class SunshineIndexes(object):
          
          self.executeTransaction(add_index)
     
-    def receiptsName(self):
+    def expendituresName(self):
          add_index = ''' 
              CREATE INDEX condensed_expenditures_search_index ON condensed_expenditures
              USING gin(search_name)
