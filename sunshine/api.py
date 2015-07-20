@@ -230,9 +230,9 @@ def advanced_search():
     response.headers['Content-Type'] = 'application/json'
     return response
 
-@api.route('/top-donors/')
+@api.route('/top-money/')
 @cache.cached(timeout=CACHE_TIMEOUT, key_prefix=make_cache_key)
-def top_donors():
+def top_money():
     resp = {
         'status': 'ok',
         'message': '',
@@ -241,9 +241,10 @@ def top_donors():
     }
     status_code = 200
     committee_id = request.args.get('committee_id')
-    if not committee_id:
+    table = request.args.get('type')
+    if not committee_id or not table:
         resp['status'] = 'error'
-        resp['message'] = 'Committee ID is required'
+        resp['message'] = 'Committee ID and transaction type are required'
         status_code = 400
 
     else:
@@ -252,13 +253,13 @@ def top_donors():
               SUM(amount) AS total,
               first_name,
               last_name,
-              MAX(received_date) AS last_donation_date
-            FROM condensed_receipts
+              MAX(search_date) AS total_date
+            FROM condensed_{0}
             WHERE committee_id = :committee_id
             GROUP BY last_name, first_name
-            ORDER BY total DESC
+            ORDER BY total DESC NULLS LAST
             LIMIT 20
-        '''
+        '''.format(table)
 
         engine = db_session.bind
 

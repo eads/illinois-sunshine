@@ -79,9 +79,10 @@
 
         <ul class="nav nav-tabs">
             <li role="presentation" class="active"><a class="transactions" href="javascript://" data-table_type="top_donors">Top Donors</a></li>
+            <li role="presentation"><a class="transactions" href="javascript://" data-table_type="top_recipients">Top Recipients</a></li>
             <li role="presentation"><a class="transactions" href="javascript://" data-table_type="largest_donations">Largest Donations</a></li>
-            <li role="presentation"><a class="transactions" href="javascript://" data-table_type="receipts">All Donations</a></li>
-            <li role="presentation"><a class="transactions" href="javascript://" data-table_type="expenditures">All Expenditures</a></li>
+            <li role="presentation"><a class="transactions" href="javascript://" data-table_type="receipts">Donations</a></li>
+            <li role="presentation"><a class="transactions" href="javascript://" data-table_type="expenditures">Expenditures</a></li>
         </ul>
         <div id='money-table-guts'>
             <h1><i class='fa fa-spin fa-sun-o'></i></h1>
@@ -232,13 +233,18 @@
         </p>
     </script>
 
-    <script type="text/EJS" id="top-donors-table-guts">
+    <script type="text/EJS" id="top-money-table-guts">
         <table class="table table-striped">
             <thead>
                 <tr>
-                    <th>Donor</th>
-                    <th>Total donated</th>
-                    <th>Last donation date</th>
+                    <% if(transaction_type == 'top_donors'){ %>
+                        <th>Donor</th>
+                        <th>Total donated</th>
+                    <% } else { %>
+                        <th>Recipient</th>
+                        <th>Total received</th>
+                    <% } %>
+                    <th>Latest date</th>
                 </tr>
             </thead>
             <tbody>
@@ -256,7 +262,7 @@
                             <%= accounting.formatMoney(transaction.total) %>
                         </td>
                         <td class='nowrap'>
-                            <%= moment(transaction.last_donation_date).format('MMMM DD, YYYY') %>
+                            <%= moment(transaction.total_date).format('MMMM DD, YYYY') %>
                         </td>
                     </tr>
                 <% }) %>
@@ -294,13 +300,17 @@
                 var transaction_type = $(this).data('table_type');
                 $.when(getMoney(transaction_type, 0)).then(function(resp){
                     var total_rows = parseInt(resp['meta']['total_rows']);
-                    var transactions = resp['objects'];
-                    if(transaction_type != 'top_donors'){
+                    var transactions;
+
+                    if(['top_donors', 'top_recipients'].indexOf(transaction_type) >= 0){
+                        transactions = resp['objects'];
+                    } else if (transaction_type == 'largest_donations') {
+                        transactions = resp['objects'][0]['receipts'];
+                    } else {
                         transactions = resp['objects'][0][transaction_type];
                     }
-                    if(transaction_type == 'largest_donations'){
-                        transactions = resp['objects'][0]['receipts'];
-                    }
+                    console.log(transactions)
+
                     if(total_rows > 0){
                         displayTable(transactions, transaction_type, 0, total_rows);
                     } else {
@@ -316,10 +326,10 @@
         function displayTable(transactions, type, offset, total_rows){
             var template_guts;
 
-            if(type != 'top_donors'){
-                template_guts = $('#rec-exp-table-guts').html();
+            if(['top_donors', 'top_recipients'].indexOf(type) >= 0){
+                template_guts = $('#top-money-table-guts').html();
             } else {
-                template_guts = $('#top-donors-table-guts').html();
+                template_guts = $('#rec-exp-table-guts').html();
             }
 
             var template = new EJS({'text': template_guts});
@@ -373,7 +383,11 @@
             };
 
             if(transaction_type == 'top_donors'){
-                url = "{{ url_for('api.top_donors') }}";
+                url = "{{ url_for('api.top_money', type='receipts') }}";
+            }
+
+            if(transaction_type == 'top_recipients'){
+                url = "{{ url_for('api.top_money', type='expenditures') }}";
             }
 
             return $.ajax({
