@@ -216,7 +216,7 @@ class SunshineTransformLoad(object):
         '''.format(self.table_name)
         
         self.executeTransaction(add_index)
-
+        
     def initializeDB(self):
         enum = ''' 
             CREATE TYPE committee_position AS ENUM (

@@ -35,7 +35,7 @@ def create_app():
     
     @app.template_filter('format_money')
     def format_money(s):
-        locale.setlocale( locale.LC_ALL, '' )
+        locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
         return locale.currency(s, grouping=True)
 
     @app.template_filter('format_number')
