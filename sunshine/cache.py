@@ -11,3 +11,4 @@ def make_cache_key(*args, **kwargs):
 cache = Cache(config=CACHE_CONFIG)
 CACHE_TIMEOUT = 60*60*6
 
+
