@@ -74,13 +74,14 @@
         {% endif %}
 
         <h3>
-            Donations after last quarterly report
-            <small>({{ recent_total|format_money }} Total)</small>
+            Donations & Expenditures
         </h3>
 
         <ul class="nav nav-tabs">
-          <li role="presentation" class="active"><a class="transactions" href="javascript://" data-table_type="receipts">Donations</a></li>
-          <li role="presentation"><a class="transactions" href="javascript://" data-table_type="expenditures">Expenditures</a></li>
+            <li role="presentation" class="active"><a class="transactions" href="javascript://" data-table_type="top_donors">Top Donors</a></li>
+            <li role="presentation"><a class="transactions" href="javascript://" data-table_type="largest_donations">Largest Donations</a></li>
+            <li role="presentation"><a class="transactions" href="javascript://" data-table_type="receipts">All Donations</a></li>
+            <li role="presentation"><a class="transactions" href="javascript://" data-table_type="expenditures">All Expenditures</a></li>
         </ul>
         <div id='money-table-guts'>
             <h1><i class='fa fa-spin fa-sun-o'></i></h1>
@@ -163,7 +164,7 @@
     <script src="{{ url_for('static', filename='js/moment.min.js') }}"></script>
     <script src="{{ url_for('static', filename='js/chart_helper.js') }}"></script>
 
-    <script type="text/EJS" id="table-guts">
+    <script type="text/EJS" id="rec-exp-table-guts">
         <table class="table table-striped">
             <tbody>
                 <% $.each(transactions, function(i, transaction){ %>
@@ -181,7 +182,7 @@
                                 <a href="/contributions/<%= transaction.id %>">
                             <% } else { %>
                                 <a href="/<%= transaction_type %>/<%= transaction.id %>">
-                            <% }%>
+                            <% } %>
                                 <% if (transaction_type == 'expenditures') { %>
                                     received <strong>
                                 <% } else { %>
@@ -214,12 +215,54 @@
         </p>
     </script>
 
+    <script type="text/EJS" id="top-donors-table-guts">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Donor</th>
+                    <th>Total donated</th>
+                    <th>Last donation date</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% $.each(transactions, function(i, transaction){ %>
+                    <tr>
+                        <td>
+                            <a href='/search/?term=<% if(transaction.first_name){ %><%= transaction.first_name %> <% } %><%= transaction.last_name %>&table_name=candidates&table_name=committees&table_name=officers&table_name=receipts'>
+                                <% if(transaction.first_name){ %>
+                                    <%= transaction.first_name %>
+                                <% } %>
+                                <%= transaction.last_name %>
+                            </a>
+                        </td>
+                        <td class='nowrap'>
+                            <%= accounting.formatMoney(transaction.total) %>
+                        </td>
+                        <td class='nowrap'>
+                            <%= moment(transaction.last_donation_date).format('MMMM DD, YYYY') %>
+                        </td>
+                    </tr>
+                <% }) %>
+            </tbody>
+        </table>
+        <p>
+            <% if ( offset >= 50){ %>
+                <a href='javascript://' class='btn btn-sm btn-primary prev-page' data-transaction_type="<%= transaction_type %>" data-offset="<%= offset %>">&laquo; Previous page</a>
+            <% } %>
+            <% if (offset >= 0){ %>
+                <a href='javascript://' class='btn btn-sm btn-primary next-page' data-transaction_type="<%= transaction_type %>" data-offset="<%= offset %>">
+                    Next page &raquo;
+                </a>
+            <% } %>
+        </p>
+    </script>
+
     <script>
         $(document).ready(function(){
-            $.when(getMoney('receipts', 0)).then(function(resp){
+            $.when(getMoney('top_donors', 0)).then(function(resp){
                 var total_rows = parseInt(resp['meta']['total_rows']);
                 if(total_rows > 0){
-                    displayTable(resp['objects'][0]['receipts'], 'receipts', 0, total_rows)
+                    displayTable(resp['objects'], 'top_donors', 0, total_rows)
                 } else {
                     $('#money-table-guts').html('<h4>No donations found</h4>');
                 }
@@ -234,12 +277,19 @@
                 var transaction_type = $(this).data('table_type');
                 $.when(getMoney(transaction_type, 0)).then(function(resp){
                     var total_rows = parseInt(resp['meta']['total_rows']);
+                    var transactions = resp['objects'];
+                    if(transaction_type != 'top_donors'){
+                        transactions = resp['objects'][0][transaction_type];
+                    }
+                    if(transaction_type == 'largest_donations'){
+                        transactions = resp['objects'][0]['receipts'];
+                    }
                     if(total_rows > 0){
-                        displayTable(resp['objects'][0][transaction_type], transaction_type, 0, total_rows);
+                        displayTable(transactions, transaction_type, 0, total_rows);
                     } else {
-                        if(transaction_type == 'receipts'){
+                        if(transaction_type == 'receipts' || transaction_type == 'largest_donations'){
                             $('#money-table-guts').html('<h4>No donations found</h4>');
-                        } else {
+                        } else if (transaction_type == 'expenditures'){
                             $('#money-table-guts').html('<h4>No expenditures found</h4>');
                         }
                     }
@@ -247,44 +297,70 @@
             });
         })
         function displayTable(transactions, type, offset, total_rows){
-            var template_guts = $('#table-guts').html()
+            var template_guts;
+
+            if(type != 'top_donors'){
+                template_guts = $('#rec-exp-table-guts').html();
+            } else {
+                template_guts = $('#top-donors-table-guts').html();
+            }
+
             var template = new EJS({'text': template_guts});
+
             $('#money-table-guts').html(template.render({
                 'transactions': transactions,
                 'transaction_type': type,
                 'offset': offset,
                 'total_rows': total_rows
             }));
-            $('.next-page').on('click', function(e){
-                var transaction_type = $(this).data('transaction_type');
-                var offset = parseInt($(this).data('offset')) + 50;
-                $.when(getMoney(transaction_type, offset)).then(function(resp){
-                    var objects = resp['objects'][0][transaction_type];
-                    var offset = parseInt(resp['meta']['query']['offset']);
-                    var total_rows = parseInt(resp['meta']['total_rows']);
-                    displayTable(objects, transaction_type, offset, total_rows)
+
+
+            if(['expenditures', 'receipts'].indexOf(type)){
+                $('.next-page').on('click', function(e){
+                    var transaction_type = $(this).data('transaction_type');
+                    var offset = parseInt($(this).data('offset')) + 50;
+                    $.when(getMoney(transaction_type, offset)).then(function(resp){
+                        var objects = resp['objects'][0][transaction_type];
+                        var offset = parseInt(resp['meta']['query']['offset']);
+                        var total_rows = parseInt(resp['meta']['total_rows']);
+                        displayTable(objects, transaction_type, offset, total_rows)
+                    })
                 })
-            })
-            $('.prev-page').on('click', function(e){
-                var transaction_type = $(this).data('transaction_type');
-                var offset = parseInt($(this).data('offset')) - 50;
-                $.when(getMoney(transaction_type, offset)).then(function(resp){
-                    var objects = resp['objects'][0][transaction_type];
-                    var offset = parseInt(resp['meta']['query']['offset']);
-                    var total_rows = parseInt(resp['meta']['total_rows']);
-                    displayTable(objects, transaction_type, offset, total_rows)
+                $('.prev-page').on('click', function(e){
+                    var transaction_type = $(this).data('transaction_type');
+                    var offset = parseInt($(this).data('offset')) - 50;
+                    $.when(getMoney(transaction_type, offset)).then(function(resp){
+                        var objects = resp['objects'][0][transaction_type];
+                        var offset = parseInt(resp['meta']['query']['offset']);
+                        var total_rows = parseInt(resp['meta']['total_rows']);
+                        displayTable(objects, transaction_type, offset, total_rows)
+                    })
                 })
-            })
+            }
         }
 
         function getMoney(transaction_type, offset){
+
             var params = {
                 'limit' : 50,
                 'committee_id': "{{committee.id}}",
                 'offset': offset
+            };
+
+            var url = '/api/' + transaction_type + '/';
+
+            if(transaction_type == 'largest_donations'){
+                params['order_by'] = 'amount';
+                params['limit'] = 20;
+                url = "{{ url_for('api.receipts') }}";
+            };
+
+            if(transaction_type == 'top_donors'){
+                url = "{{ url_for('api.top_donors') }}";
             }
+
             return $.ajax({
-                url: '/api/' + transaction_type + '/',
+                url: url,
                 contentType: 'application/json',
                 data: params,
                 dataType: 'json'

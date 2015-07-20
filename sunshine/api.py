@@ -230,6 +230,52 @@ def advanced_search():
     response.headers['Content-Type'] = 'application/json'
     return response
 
+@api.route('/top-donors/')
+@cache.cached(timeout=CACHE_TIMEOUT, key_prefix=make_cache_key)
+def top_donors():
+    resp = {
+        'status': 'ok',
+        'message': '',
+        'meta': {},
+        'objects': {},
+    }
+    status_code = 200
+    committee_id = request.args.get('committee_id')
+    if not committee_id:
+        resp['status'] = 'error'
+        resp['message'] = 'Committee ID is required'
+        status_code = 400
+
+    else:
+        top_donors = ''' 
+            SELECT 
+              SUM(amount) AS total,
+              first_name,
+              last_name,
+              MAX(received_date) AS last_donation_date
+            FROM condensed_receipts
+            WHERE committee_id = :committee_id
+            GROUP BY last_name, first_name
+            ORDER BY total DESC
+            LIMIT 20
+        '''
+
+        engine = db_session.bind
+
+        top_donors = engine.execute(sa.text(top_donors), 
+                                    committee_id=committee_id)
+
+        resp['objects'] = [OrderedDict(zip(r.keys(), r.values())) \
+                               for r in top_donors]
+
+        resp['meta']['total_rows'] = 20
+    
+    response_str = json.dumps(resp, sort_keys=False, default=dthandler)
+    response = make_response(response_str, status_code)
+    response.headers['Content-Type'] = 'application/json'
+    return response
+
+
 @api.route('/committees/')
 @cache.cached(timeout=CACHE_TIMEOUT, key_prefix=make_cache_key)
 def committees():

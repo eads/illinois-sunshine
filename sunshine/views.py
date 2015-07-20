@@ -296,7 +296,8 @@ def committee(committee_id):
     
     params = {'committee_id': committee_id}
 
-    if latest_filing.end_funds_available:
+    if latest_filing.end_funds_available \
+        or latest_filing.end_funds_available == 0:
 
         recent_receipts = ''' 
             SELECT 
