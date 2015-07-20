@@ -166,6 +166,18 @@
 
     <script type="text/EJS" id="rec-exp-table-guts">
         <table class="table table-striped">
+            <thead>
+                <tr>
+                    <% if(transaction_type == 'expenditures'){ %>
+                        <th>Recipient</th>
+                        <th>Purpose</th>
+                    <% } else { %>
+                        <th>Donor</th>
+                    <% } %>
+                    <th>Amount</th>
+                    <th>Date</th>
+                </tr>
+            </thead>
             <tbody>
                 <% $.each(transactions, function(i, transaction){ %>
                     <tr>
@@ -177,6 +189,11 @@
                                 <%= transaction.last_name %>
                             </a>
                         </td>
+                        <% if(transaction_type == 'expenditures'){ %>
+                            <td class="nowrap">
+                                <%= transaction.purpose %>
+                            </td>
+                        <% } %>
                         <td class='nowrap'>
                             <% if(transaction_type == 'receipts'){  %>
                                 <a href="/contributions/<%= transaction.id %>">
