@@ -982,21 +982,21 @@ class SunshineIndexes(object):
         
         self.executeTransaction(index)
    
-   def receiptsName(self):
-        add_index = ''' 
-            CREATE INDEX condensed_receipts_search_index ON condensed_receipts
-            USING gin(search_name)
-        '''
-        
-        self.executeTransaction(add_index)
-
-   def receiptsName(self):
-        add_index = ''' 
-            CREATE INDEX condensed_expenditures_search_index ON condensed_expenditures
-            USING gin(search_name)
-        '''
-        
-        self.executeTransaction(add_index)
+    def receiptsName(self):
+         add_index = ''' 
+             CREATE INDEX condensed_receipts_search_index ON condensed_receipts
+             USING gin(search_name)
+         '''
+         
+         self.executeTransaction(add_index)
+    
+    def receiptsName(self):
+         add_index = ''' 
+             CREATE INDEX condensed_expenditures_search_index ON condensed_expenditures
+             USING gin(search_name)
+         '''
+         
+         self.executeTransaction(add_index)
 
 
 if __name__ == "__main__":
