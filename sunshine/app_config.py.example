@@ -28,3 +28,5 @@ CACHE_CONFIG = {
 }
 
 SENTRY_DSN = ''
+
+FLUSH_KEY = 'super secret junk'

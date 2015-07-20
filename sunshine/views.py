@@ -3,6 +3,7 @@ from flask import Blueprint, render_template, abort, request, make_response, \
 from sunshine.database import db_session
 from sunshine.models import Candidate, Committee, Receipt, FiledDoc, Expenditure, D2Report
 from sunshine.cache import cache, make_cache_key, CACHE_TIMEOUT
+from sunshine.app_config import FLUSH_KEY
 import sqlalchemy as sa
 import json
 import time
@@ -513,3 +514,9 @@ def expense(expense_id):
     if not expense:
         return abort(404)
     return render_template('expense-detail.html', expense=expense)
+
+@views.route('/flush-cache/<secret>/')
+def flush(secret):
+    if secret == FLUSH_KEY:
+        cache.clear()
+    return 'Woop'
