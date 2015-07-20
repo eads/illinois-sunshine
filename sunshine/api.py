@@ -30,7 +30,7 @@ def getSearchResults(term,
     
     engine = db_session.bind
 
-    if table_name in ['receipts', 'expenditures', 'investments']:
+    if table_name in ['receipts', 'expenditures', 'investments', 'officers']:
         result = ''' 
             SELECT *
             FROM (
