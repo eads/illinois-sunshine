@@ -406,8 +406,8 @@ def expenditures():
             'offset': offset,
             'sort_order': sort_order,
             'order_by': order_by,
-            'total_rows': total_rows,
         })
+        resp['meta']['total_rows'] = total_rows
     
     
     response = make_response(json.dumps(resp, default=dthandler, sort_keys=False))
