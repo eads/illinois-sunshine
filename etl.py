@@ -137,11 +137,14 @@ class SunshineTransformLoad(object):
                                       'downloads', 
                                       self.filename)
 
-    def executeTransaction(self, query, raise_exc=False, *args):
+    def executeTransaction(self, query, raise_exc=False, *args, **kwargs):
         trans = self.connection.begin()
 
         try:
-            self.connection.execute(query, *args)
+            if kwargs:
+                self.connection.execute(query, **kwargs)
+            else:
+                self.connection.execute(query, *args)
             trans.commit()
         except sa.exc.ProgrammingError as e:
             print(e)
@@ -270,7 +273,7 @@ class SunshineTransformLoad(object):
             COPY raw_{0} FROM STDIN WITH CSV HEADER DELIMITER ','
         '''.format(self.table_name)
         
-        with open('%s_raw.csv' % self.file_path, 'r', encoding='latin-1') as f:
+        with open('%s_raw.csv' % self.file_path, 'r') as f:
             next(f)
             with psycopg2.connect(DB_CONN_STR) as conn:
                 with conn.cursor() as curs:
@@ -337,8 +340,7 @@ class SunshineTransformLoad(object):
         rows = []
         i = 0
         for row in self.transform():
-            rows.append(dict(zip(row.keys(), row.values())))
-            
+            rows.append(row)
             if len(rows) % self.chunk_size is 0:
                 
                 self.executeTransaction(sa.text(self.insert), *rows)
@@ -349,7 +351,10 @@ class SunshineTransformLoad(object):
             i += 1
         
         if rows:
-            self.executeTransaction(sa.text(self.insert), *rows)
+            if len(rows) == 1:
+                self.executeTransaction(sa.text(self.insert), **rows[0])
+            else:
+                self.executeTransaction(sa.text(self.insert), *rows)
         
         print('inserted %s %s' % (i, self.table_name))
     
@@ -414,7 +419,7 @@ class SunshineCommittees(SunshineTransformLoad):
                 else:
                     row[idx] = None
             
-            yield OrderedDict(zip(self.header, row.values()))
+            yield OrderedDict(zip(self.header, list(row.values())))
     
 
 class SunshineCandidates(SunshineTransformLoad):
