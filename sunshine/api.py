@@ -53,7 +53,7 @@ def getSearchResults(term,
                  to_tsquery('english', :term) AS query
             WHERE query @@ search_name
         '''.format(table_name)
-
+    
     if q_params:
         sa_table = sa.Table(table_name, 
                             sa.MetaData(), 
@@ -67,6 +67,7 @@ def getSearchResults(term,
             for key in q_params.keys():
                 try:
                     fieldname, operator = key.split('__')
+                    operator = operator_lookup[operator]
                 except ValueError:
                     fieldname = key
                     operator = '='

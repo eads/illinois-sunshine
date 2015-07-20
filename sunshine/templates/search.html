@@ -33,11 +33,11 @@
                 <div class="row">
                     <div class="col-md-6">
                         <label for="search_date__ge">Date from: </label>
-                        <input id="search_date__ge" type="text" class="form-control" name="search_date__ge" />
+                        <input id="search_date__ge" type="text" class="form-control" name="search_date__ge" {% if search_date__ge %}value="{{search_date__ge}}" {% endif %}/>
                     </div>
                     <div class="col-md-6">
                         <label for="search_date__le">Date to: </label>
-                        <input id="search_date__le" type="text" class="form-control" name="search_date__le" />
+                        <input id="search_date__le" type="text" class="form-control" name="search_date__le" {% if search_date__le %}value="{{search_date__le}}" {% endif %}/>
                     </div>
                 </div>
             </div>
@@ -132,6 +132,8 @@
     })
     function do_query(query){
         var term = query['term'];
+        var start_date = query['search_date__ge'];
+        var end_date = query['search_date__le'];
 
         var table_names = [];
 
@@ -161,7 +163,7 @@
                 }
             ]
 
-            init_datatable(term, 'committees', columns);
+            init_datatable(term, start_date, end_date, 'committees', columns);
         }
 
         if(table_names.indexOf('candidates') >= 0){
@@ -178,7 +180,7 @@
                 {"data": "office"}
             ]
 
-            init_datatable(term, 'candidates', columns);
+            init_datatable(term, start_date, end_date, 'candidates', columns);
         }
 
         if(table_names.indexOf('officers') >= 0){
@@ -215,7 +217,7 @@
                 }
             ]
 
-            init_datatable(term, 'officers', columns);
+            init_datatable(term, start_date, end_date, 'officers', columns);
         }
 
         if(table_names.indexOf('receipts') >= 0){
@@ -254,22 +256,32 @@
             ]
             var order = [[3, 'desc']];
 
-            init_datatable(term, 'receipts', columns, order);
+            init_datatable(term, start_date, end_date, 'receipts', columns, order);
 
         }
     }
 
-    function init_datatable(term, table_name, columns, order){
+    function init_datatable(term, start_date, end_date, table_name, columns, order){
         if (typeof order === 'undefined'){
             var order = [[0, 'asc']]
         }
 
         $('#' + table_name + '-results').show();
 
-        var params = $.param({
+        var params = {
             'term': term,
-            'table_name': table_name
-        })
+            'table_name': table_name,
+        };
+
+        if (typeof start_date !== 'undefined'){
+            params['search_date__ge'] = start_date
+        }
+
+        if (typeof end_date !== 'undefined'){
+            params['search_date__le'] = end_date
+        }
+
+        params = $.param(params);
 
         var language_opts = {
             'paginate': {

@@ -115,10 +115,16 @@ def about():
 def search():
     term = request.args.get('term')
     table_name = request.args.getlist('table_name')
+    search_date__le = request.args.get('search_date__le')
+    search_date__ge = request.args.get('search_date__ge')
     if table_name == []:
-      table_name = ['candidates', 'committees', 'officers', 'receipts']
+        table_name = ['candidates', 'committees', 'officers', 'receipts']
 
-    return render_template('search.html', term=term, table_name=table_name)
+    return render_template('search.html', 
+                           term=term, 
+                           table_name=table_name,
+                           search_date__le=search_date__le,
+                           search_date__ge=search_date__ge)
 
 @views.route('/candidates/<candidate_id>/')
 @cache.cached(timeout=CACHE_TIMEOUT, key_prefix=make_cache_key)
