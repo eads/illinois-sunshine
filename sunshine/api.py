@@ -31,6 +31,10 @@ def getSearchResults(term,
     engine = db_session.bind
 
     if table_name in ['receipts', 'expenditures', 'investments', 'officers']:
+        
+        if table_name in ['receipts', 'expenditures']:
+            table_name = 'condensed_%s' % table_name
+
         result = ''' 
             SELECT *
             FROM (
