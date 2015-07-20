@@ -25,8 +25,11 @@
                 <label data-title='Committee officers' data-content='Chairmen and treasurerers for political committees'>
                     <input type="checkbox" name="table_name" value="officers" {% if 'officers' in table_name %}checked='checked'{% endif %}> Committee officers
                 </label>
-                <label data-title='Donors' data-content='Any person or organization who has given to a political committee'>
-                    <input type="checkbox" name="table_name" value="receipts" {% if 'receipts' in table_name %}checked='checked'{% endif %}> Donors
+                <label data-title='Donations' data-content='Any person or organization who has given to a political committee'>
+                    <input type="checkbox" name="table_name" value="receipts" {% if 'receipts' in table_name %}checked='checked'{% endif %}> Donations
+                </label>
+                <label data-title='Expenditures' data-content='Any person or organization who was given money by a political committee'>
+                    <input type="checkbox" name="table_name" value="expenditures" {% if 'expenditures' in table_name %}checked='checked'{% endif %}> Expenditures
                 </label>
             </div>
             <div class="form-group">
@@ -100,6 +103,19 @@
                     <thead>
                         <tr>
                             <th>Donor name</th>
+                            <th>Committee name</th>
+                            <th>Amount</th>
+                            <th>Recieved date</th>
+                        </tr>
+                    </thead>
+                </table>
+            </div>
+            <div id="expenditures-results" style="display:none;">
+                <h3>Expenditures</h3>
+                <table class="table table-hover" id="expenditures-table">
+                    <thead>
+                        <tr>
+                            <th>Recipient name</th>
                             <th>Committee name</th>
                             <th>Amount</th>
                             <th>Recieved date</th>
@@ -257,6 +273,46 @@
             var order = [[3, 'desc']];
 
             init_datatable(term, start_date, end_date, 'receipts', columns, order);
+
+        }
+
+        if(table_names.indexOf('expenditures') >= 0){
+
+            var columns =  [
+                {
+                    "data": "last_name",
+                    "render": function(data, type, full, meta){
+                        if(full['first_name']){
+                            return full['first_name'] + ' ' + full['last_name'];
+                        } else {
+                            return data;
+                        }
+                    }
+                },
+                {
+                    "data": "committee_name",
+                    "render": function(data, type, full, meta){
+                        return '<a href="/committees/' + full['committee_id'] + '/">' + full['committee_name'] + '</a>'
+                    }
+                },
+                {
+                    "data": "amount",
+                    "render": function(data, type, full, meta){
+                        return accounting.formatMoney(data);
+                    }
+                },
+                {
+                    "data": "expended_date",
+                    "render": function(data, type, full, meta){
+                        if(data){
+                            return moment(data).format('MMMM DD, YYYY')
+                        }
+                    }
+                }
+            ]
+            var order = [[3, 'desc']];
+
+            init_datatable(term, start_date, end_date, 'expenditures', columns, order);
 
         }
     }

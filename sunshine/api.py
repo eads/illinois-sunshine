@@ -330,17 +330,15 @@ def receipts():
             objs.append(committee_info)
 
         total_rows = base_query.count()
-
         resp['objects'] = objs
         resp['meta']['query'].update({
             'limit': limit,
             'offset': offset,
             'sort_order': sort_order,
             'order_by': order_by,
-            'total_rows': total_rows,
         })
-    
-    
+        resp['meta']['total_rows'] = total_rows
+
     response = make_response(json.dumps(resp, default=dthandler, sort_keys=False))
     response.headers['Content-Type'] = 'application/json'
     return response

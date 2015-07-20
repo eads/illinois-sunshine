@@ -6,11 +6,12 @@
 
     <form action='/search' method='GET'>
         <div class="input-group input-group-lg">
-            <input type="text" class="form-control" placeholder="Search for candidates, committees and donors in Illinois" name="term">
+            <input type="text" class="form-control" placeholder="Search for candidates, committees and donations and expenditures in Illinois" name="term">
             <input type='hidden' name='table_name' value='candidates' />
             <input type='hidden' name='table_name' value='committees' />
             <input type='hidden' name='table_name' value='officers' />
             <input type='hidden' name='table_name' value='receipts' />
+            <input type='hidden' name='table_name' value='expenditures' />
             <span class="input-group-btn">
                 <button class="btn btn-default" type="submit"><i class='fa fa-search'></i> Search</button>
             </span>
