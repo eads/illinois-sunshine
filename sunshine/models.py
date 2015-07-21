@@ -126,7 +126,8 @@ class Officer(Base):
     committee = sa.orm.relationship('Committee', 
                                     primaryjoin='Officer.committee_id==Committee.id',
                                     foreign_keys='Officer.committee_id',
-                                    remote_side='Committee.id')
+                                    remote_side='Committee.id',
+                                    backref='officers')
     
     last_name = sa.Column(sa.String)
     first_name = sa.Column(sa.String)
