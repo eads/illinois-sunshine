@@ -16,6 +16,23 @@ from csvkit.table import Table
 from collections import OrderedDict
 from typeinferer import TypeInferer
 
+import logging
+logger = logging.getLogger(__name__)
+
+try:
+    from raven.conf import setup_logging
+    from raven.handlers.logging import SentryHandler
+    from sunshine.app_config import SENTRY_DSN
+    
+    if SENTRY_DSN:
+        handler = SentryHandler(SENTRY_DSN)
+        setup_logging(handler)
+except ImportError:
+    pass
+except KeyError:
+    pass
+
+
 class SunshineExtract(object):
     
     def __init__(self, 
@@ -356,7 +373,7 @@ class SunshineTransformLoad(object):
             else:
                 self.executeTransaction(sa.text(self.insert), *rows)
         
-        print('inserted %s %s' % (i, self.table_name))
+        logger.info('inserted %s %s' % (i, self.table_name))
     
 class SunshineCommittees(SunshineTransformLoad):
     
@@ -959,6 +976,11 @@ class SunshineIndexes(object):
     def makeAllIndexes(self):
         self.receiptsDate()
         self.receiptsCommittee()
+        self.receiptsFiledDocs()
+        self.candidaciesCandidate()
+        self.candidateCommittees()
+        self.officersCommittee()
+        self.filedDocsCommittee()
         self.receiptsName()
         self.expendituresName()
 
@@ -981,7 +1003,52 @@ class SunshineIndexes(object):
         '''
         
         self.executeTransaction(index)
-   
+    
+    def receiptsFiledDocs(self):
+        index = ''' 
+            CREATE INDEX receipts_filed_docs_idx ON receipts (filed_doc_id)
+        '''
+        
+        self.executeTransaction(index)
+    
+    def candidaciesCandidate(self):
+        index = ''' 
+            CREATE INDEX candidacies_candidate_id_index 
+              ON candidacies (candidate_id)
+        '''
+
+        self.executeTransaction(index)
+    
+    def candidateCommittees(self):
+        index = ''' 
+            CREATE INDEX cand_comm_candidate_id_index 
+              ON candidate_committees (candidate_id)
+        '''
+
+        self.executeTransaction(index)
+        
+        index = ''' 
+            CREATE INDEX cand_comm_committee_id_index 
+              ON candidate_committees (committee_id)
+        '''
+
+        self.executeTransaction(index)
+
+    def filedDocsCommittee(self):
+        index = ''' 
+            CREATE INDEX filed_docs_committee_idx ON filed_docs (committee_id)
+        '''
+        
+        self.executeTransaction(index)
+
+    def officersCommittee(self):
+        index = ''' 
+            CREATE INDEX officers_committee_id_index 
+              ON officers (committee_id)
+        '''
+
+        self.executeTransaction(index)
+
     def receiptsName(self):
          add_index = ''' 
              CREATE INDEX condensed_receipts_search_index ON condensed_receipts
@@ -990,7 +1057,7 @@ class SunshineIndexes(object):
          
          self.executeTransaction(add_index)
     
-    def receiptsName(self):
+    def expendituresName(self):
          add_index = ''' 
              CREATE INDEX condensed_expenditures_search_index ON condensed_expenditures
              USING gin(search_name)
@@ -1033,15 +1100,16 @@ if __name__ == "__main__":
     connection = engine.connect()
 
     if args.download:
-        print("downloading ...")
+        logger.info("download start %s ..." % datetime.now().isoformat())
         extract.download(cache=args.cache)
+        logger.info("download finish %s ..." % datetime.now().isoformat())
     else:
         print("skipping download")
     
     del extract
 
     if args.load_data:
-        print("loading data ...")
+        print("loading data start %s ..." % datetime.now().isoformat())
         
         chunk_size = 50000
 
@@ -1122,6 +1190,8 @@ if __name__ == "__main__":
         investments.addDateColumn('purchase_date')
         
         del investments
+        
+        print("loading data end %s ..." % datetime.now().isoformat())
 
     else:
         print("skipping load")
@@ -1132,10 +1202,10 @@ if __name__ == "__main__":
         print("dropping views")
         views.dropViews()
 
-    print("creating views ...")
+    logger.info("creating views %s..." % datetime.now().isoformat())
     views.makeAllViews()
     
-    print("creating indexes ...")
+    logger.info("creating indexes %s ..." % datetime.now().isoformat())
     indexes = SunshineIndexes(connection)
     indexes.makeAllIndexes()
 
