@@ -117,6 +117,7 @@
                         <tr>
                             <th>Recipient name</th>
                             <th>Committee name</th>
+                            <th>Purpose</th>
                             <th>Amount</th>
                             <th>Expended date</th>
                         </tr>
@@ -293,6 +294,12 @@
                     "data": "committee_name",
                     "render": function(data, type, full, meta){
                         return '<a href="/committees/' + full['committee_id'] + '/">' + full['committee_name'] + '</a>'
+                    }
+                },
+                {
+                    "data": "purpose",
+                    "render": function(data, type, full, meta){
+                        return data
                     }
                 },
                 {
