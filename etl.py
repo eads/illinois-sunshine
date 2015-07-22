@@ -170,48 +170,62 @@ class SunshineTransformLoad(object):
                 raise e
 
     def addNameColumn(self):
-        add_name_col = ''' 
-            ALTER TABLE {0} ADD COLUMN search_name tsvector
-        '''.format(self.table_name)
+        
+        sql_table = sa.Table(self.table_name, sa.MetaData(), 
+                             autoload=True, autoload_with=self.connection.engine)
 
-        try:
+        if not 'search_name' in sql_table.columns.keys():
+
+            add_name_col = ''' 
+                ALTER TABLE {0} ADD COLUMN search_name tsvector
+            '''.format(self.table_name)
+
             self.executeTransaction(add_name_col, raise_exc=True)
-        except sa.exc.ProgrammingError:
-            return
 
-        add_names = ''' 
-            UPDATE {0} SET
-              search_name = to_tsvector('english', COALESCE(first_name, '') || ' ' ||
-                                                   COALESCE(last_name, ''))
-        '''.format(self.table_name)
+            add_names = ''' 
+                UPDATE {0} SET
+                  search_name = to_tsvector('english', COALESCE(first_name, '') || ' ' ||
+                                                       COALESCE(last_name, ''))
+            '''.format(self.table_name)
 
-        self.executeTransaction(add_names)
+            self.executeTransaction(add_names)
 
-        add_index = ''' 
-            CREATE INDEX {0}_search_name_index ON {0}
-            USING gin(search_name)
-        '''.format(self.table_name)
-        
-        self.executeTransaction(add_index)
-        
-        trigger = ''' 
-            CREATE TRIGGER {0}_search_update
-            BEFORE INSERT OR UPDATE ON {0}
-            FOR EACH ROW EXECUTE PROCEDURE
-            tsvector_update_trigger(search_name, 
-                                    'pg_catalog.english',
-                                    first_name,
-                                    last_name)
-        '''.format(self.table_name)
+            add_index = ''' 
+                CREATE INDEX {0}_search_name_index ON {0}
+                USING gin(search_name)
+            '''.format(self.table_name)
+            
+            self.executeTransaction(add_index)
+            
+            trigger = ''' 
+                CREATE TRIGGER {0}_search_update
+                BEFORE INSERT OR UPDATE ON {0}
+                FOR EACH ROW EXECUTE PROCEDURE
+                tsvector_update_trigger(search_name, 
+                                        'pg_catalog.english',
+                                        first_name,
+                                        last_name)
+            '''.format(self.table_name)
 
-        self.executeTransaction(trigger)
+            self.executeTransaction(trigger)
     
     def addDateColumn(self, date_col):
-        add_date_col = ''' 
-            ALTER TABLE {0} ADD COLUMN search_date TIMESTAMP
-        '''.format(self.table_name)
+        sql_table = sa.Table(self.table_name, sa.MetaData(), 
+                             autoload=True, autoload_with=self.connection.engine)
 
-        self.executeTransaction(add_date_col)
+        if not 'search_date' in sql_table.columns.keys():
+            
+            add_date_col = ''' 
+                ALTER TABLE {0} ADD COLUMN search_date TIMESTAMP
+            '''.format(self.table_name)
+
+            self.executeTransaction(add_date_col)
+            
+            add_index = ''' 
+                CREATE INDEX {0}_search_date_index ON {0} (search_date)
+            '''.format(self.table_name)
+            
+            self.executeTransaction(add_index)
 
         add_dates = ''' 
             UPDATE {0} SET
@@ -228,11 +242,6 @@ class SunshineTransformLoad(object):
 
         self.executeTransaction(add_dates)
 
-        add_index = ''' 
-            CREATE INDEX {0}_search_date_index ON {0} (search_date)
-        '''.format(self.table_name)
-        
-        self.executeTransaction(add_index)
         
     def initializeDB(self):
         enum = ''' 
@@ -382,40 +391,45 @@ class SunshineCommittees(SunshineTransformLoad):
     filename = 'Committees.txt'
     
     def addNameColumn(self):
-        add_name_col = ''' 
-            ALTER TABLE {0} ADD COLUMN search_name tsvector
-        '''.format(self.table_name)
-
-        try:
-            self.executeTransaction(add_name_col, raise_exc=True)
-        except sa.exc.ProgrammingError:
-            return
-
-        add_names = ''' 
-            UPDATE {0} SET
-              search_name = to_tsvector('english', name)
-        '''.format(self.table_name)
-
-        self.executeTransaction(add_names)
-
-        add_index = ''' 
-            CREATE INDEX {0}_search_name_index ON {0}
-            USING gin(search_name)
-        '''.format(self.table_name)
         
-        self.executeTransaction(add_index)
-        
-        trigger = ''' 
-            CREATE TRIGGER {0}_search_update
-            BEFORE INSERT OR UPDATE ON {0}
-            FOR EACH ROW EXECUTE PROCEDURE
-            tsvector_update_trigger(search_name, 
-                                    'pg_catalog.english',
-                                    name)
-        '''.format(self.table_name)
+        sql_table = sa.Table(self.table_name, sa.MetaData(), 
+                             autoload=True, autoload_with=self.connection.engine)
 
-        self.executeTransaction(trigger)
+        if not 'search_name' in sql_table.columns.keys():
+            
+            add_name_col = ''' 
+                ALTER TABLE {0} ADD COLUMN search_name tsvector
+            '''.format(self.table_name)
 
+            try:
+                self.executeTransaction(add_name_col, raise_exc=True)
+            except sa.exc.ProgrammingError:
+                return
+
+            add_names = ''' 
+                UPDATE {0} SET
+                  search_name = to_tsvector('english', name)
+            '''.format(self.table_name)
+
+            self.executeTransaction(add_names)
+
+            add_index = ''' 
+                CREATE INDEX {0}_search_name_index ON {0}
+                USING gin(search_name)
+            '''.format(self.table_name)
+            
+            self.executeTransaction(add_index)
+            
+            trigger = ''' 
+                CREATE TRIGGER {0}_search_update
+                BEFORE INSERT OR UPDATE ON {0}
+                FOR EACH ROW EXECUTE PROCEDURE
+                tsvector_update_trigger(search_name, 
+                                        'pg_catalog.english',
+                                        name)
+            '''.format(self.table_name)
+
+            self.executeTransaction(trigger)
     
     def transform(self):
         for row in self.iterIncomingData():
@@ -989,7 +1003,7 @@ class SunshineIndexes(object):
         Make index on received_date for receipts
         '''
         index = ''' 
-            CREATE INDEX received_date_idx ON receipts (received_date)
+            CREATE INDEX CONCURRENTLY received_date_idx ON receipts (received_date)
         '''
         
         self.executeTransaction(index)
@@ -999,21 +1013,21 @@ class SunshineIndexes(object):
         Make index on committee_id for receipts
         '''
         index = ''' 
-            CREATE INDEX receipts_committee_idx ON receipts (committee_id)
+            CREATE INDEX CONCURRENTLY receipts_committee_idx ON receipts (committee_id)
         '''
         
         self.executeTransaction(index)
     
     def receiptsFiledDocs(self):
         index = ''' 
-            CREATE INDEX receipts_filed_docs_idx ON receipts (filed_doc_id)
+            CREATE INDEX CONCURRENTLY receipts_filed_docs_idx ON receipts (filed_doc_id)
         '''
         
         self.executeTransaction(index)
     
     def candidaciesCandidate(self):
         index = ''' 
-            CREATE INDEX candidacies_candidate_id_index 
+            CREATE INDEX CONCURRENTLY candidacies_candidate_id_index 
               ON candidacies (candidate_id)
         '''
 
@@ -1021,14 +1035,14 @@ class SunshineIndexes(object):
     
     def candidateCommittees(self):
         index = ''' 
-            CREATE INDEX cand_comm_candidate_id_index 
+            CREATE INDEX CONCURRENTLY cand_comm_candidate_id_index 
               ON candidate_committees (candidate_id)
         '''
 
         self.executeTransaction(index)
         
         index = ''' 
-            CREATE INDEX cand_comm_committee_id_index 
+            CREATE INDEX CONCURRENTLY cand_comm_committee_id_index 
               ON candidate_committees (committee_id)
         '''
 
@@ -1036,14 +1050,14 @@ class SunshineIndexes(object):
 
     def filedDocsCommittee(self):
         index = ''' 
-            CREATE INDEX filed_docs_committee_idx ON filed_docs (committee_id)
+            CREATE INDEX CONCURRENTLY filed_docs_committee_idx ON filed_docs (committee_id)
         '''
         
         self.executeTransaction(index)
 
     def officersCommittee(self):
         index = ''' 
-            CREATE INDEX officers_committee_id_index 
+            CREATE INDEX CONCURRENTLY officers_committee_id_index 
               ON officers (committee_id)
         '''
 
@@ -1051,7 +1065,7 @@ class SunshineIndexes(object):
 
     def receiptsName(self):
          add_index = ''' 
-             CREATE INDEX condensed_receipts_search_index ON condensed_receipts
+             CREATE INDEX CONCURRENTLY condensed_receipts_search_index ON condensed_receipts
              USING gin(search_name)
          '''
          
@@ -1059,7 +1073,7 @@ class SunshineIndexes(object):
     
     def expendituresName(self):
          add_index = ''' 
-             CREATE INDEX condensed_expenditures_search_index ON condensed_expenditures
+             CREATE INDEX CONCURRENTLY condensed_expenditures_search_index ON condensed_expenditures
              USING gin(search_name)
          '''
          
