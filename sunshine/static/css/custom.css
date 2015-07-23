@@ -52,6 +52,20 @@ table, label,.control-label,.help-block,.checkbox,.radio { font-size: 14px; }
 .navbar-default .navbar-nav > .active > a:hover, 
 .navbar-default .navbar-nav > .active > a:focus { color: #000; }
 
+.pagination > .active > a, 
+.pagination > .active > span, 
+.pagination > .active > a:hover, 
+.pagination > .active > span:hover, 
+.pagination > .active > a:focus, 
+.pagination > .active > span:focus,
+.pagination > li > a:hover, 
+.pagination > li > a:focus, 
+.pagination > li > span:focus {
+  background-color: #FFCB08;
+  border-color: #FFCB08;
+  color: #000;
+}
+
 .btn-primary, .btn-primary:hover {
   background-image: none;
   background-color: #FFCB08;

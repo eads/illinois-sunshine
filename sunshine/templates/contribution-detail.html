@@ -3,18 +3,26 @@
 {% block content %}
 <div class="row">
     <div class="col-sm-12">
-        <h4>
+        <h3>
+            <strong>
             {% if receipt.first_name %}
                 {{ receipt.first_name }}
             {% endif %}
             {{ receipt.last_name }}
-            donated <strong>{{ receipt.amount|format_money }}</strong> to
+            </strong>
+            
+            {% if receipt.loan_amount %}
+                loaned
+            {% else %}
+                donated
+            {% endif %}
+            <strong>{{ receipt.amount|format_money }}</strong> to
             <strong>{{ receipt.committee.name }}</strong>
             {% if receipt.received_date %}
                 on {{ receipt.received_date.strftime('%b %d, %Y') }}
             {% endif %}
-        </h4>
-        <hr />
+        </h3>
+        <br />
     </div>
 </div>
 
@@ -95,7 +103,12 @@
         <div class='text-center'>
             <h1>
                 <strong>l</strong><br />
-                {{ receipt.amount|format_money }}<br />
+                {{ receipt.amount|format_money }}
+
+                {% if receipt.loan_amount %}
+                    <small>(loan)</small>
+                {% endif %}
+                <br />
                 <i class='fa fa-fw fa-chevron-down'></i>
             </h1>
         </div>
@@ -142,10 +155,18 @@
                             {% endif %}
                         </td>
                     </tr>
-                    <tr>
-                        <td>Total amount</td>
-                        <td>{{ receipt.amount|format_money }}</td>
-                    </tr>
+                    
+                    {% if receipt.loan_amount %}
+                        <tr>
+                            <td>Loan amount</td>
+                            <td>{{ receipt.loan_amount|format_money }}</td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td>Donation amount</td>
+                            <td>{{ receipt.amount|format_money }}</td>
+                        </tr>
+                    {% endif %}
                     <tr>
                         <td>Donation ID</td>
                         <td>{{ receipt.id }}</td>

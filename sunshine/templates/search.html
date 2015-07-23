@@ -54,7 +54,7 @@
     <div class="col-sm-12">
         <div id="search-results">
             <div id="committees-results" style="display:none;">
-                <h3>Committees</h3>
+                <h3>Committees <small></small></h3>
                 <table class="table table-hover" id="committees-table">
                     <thead>
                         <tr>
@@ -70,7 +70,7 @@
                 <hr />
             </div>
             <div id="candidates-results" style="display:none;">
-                <h3>Candidates</h3>
+                <h3>Candidates <small></small></h3>
                 <table class="table table-hover" id="candidates-table">
                     <thead>
                         <tr>
@@ -83,7 +83,7 @@
                 <hr />
             </div>
             <div id="officers-results" style="display:none;">
-                <h3>Officers</h3>
+                <h3>Officers <small></small></h3>
                 <table class="table table-hover" id="officers-table">
                     <thead>
                         <tr>
@@ -98,7 +98,7 @@
                 <hr />
             </div>
             <div id="receipts-results" style="display:none;">
-                <h3>Receipts</h3>
+                <h3>Receipts <small></small></h3>
                 <table class="table table-hover" id="receipts-table">
                     <thead>
                         <tr>
@@ -111,7 +111,7 @@
                 </table>
             </div>
             <div id="expenditures-results" style="display:none;">
-                <h3>Expenditures</h3>
+                <h3>Expenditures <small></small></h3>
                 <table class="table table-hover" id="expenditures-table">
                     <thead>
                         <tr>
@@ -356,8 +356,9 @@
             'zeroRecords': 'No results found'
         }
         var opts = {
-            "info": true,
+            "info": false,
             "searching": false,
+            "bLengthChange": false,
             "processing": true,
             "serverSide": true,
             "ajax": {
@@ -379,11 +380,14 @@
                 if(data['objects'][table_name].length == 0){
                     $('#' + table_name + '-results').hide()
                 }
+                else {
+                    $('#' + table_name + '-results h3 small').html(data['meta'].total_rows + " found");
+                }
             },
             "drawCallback": function(settings){
                 var display_count = parseInt(settings._iDisplayLength);
                 var record_count = parseInt(settings['json']['meta']['total_rows']);
-                console.log(display_count, record_count);
+                // console.log(display_count, record_count);
                 if (record_count <= display_count){
                     $('#' + table_name + '-table_paginate').hide();
                 }
