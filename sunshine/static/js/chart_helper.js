@@ -47,8 +47,9 @@ ChartHelper.donations = function(el, title, sourceTxt, yaxisLabel, data) {
           type: "datetime"
       },
       yAxis: {
-          title: null,
-          min: 0
+          title: yaxisLabel,
+          min: 0,
+          max: 100000000
       },
       plotOptions: {
         line: {

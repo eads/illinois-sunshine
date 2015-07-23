@@ -675,7 +675,7 @@ class SunshineViews(object):
             pass
     
     def dropViews(self):
-        self.executeTransaction('DROP MATERIALIZED VIEW IF EXISTS receipts_by_week')
+        self.executeTransaction('DROP MATERIALIZED VIEW IF EXISTS receipts_by_month')
         self.executeTransaction('DROP MATERIALIZED VIEW IF EXISTS committee_receipts_by_week')
         self.executeTransaction('DROP MATERIALIZED VIEW IF EXISTS incumbent_candidates')
         self.executeTransaction('DROP MATERIALIZED VIEW IF EXISTS most_recent_filings CASCADE')
@@ -814,20 +814,20 @@ class SunshineViews(object):
 
         try:
             
-            self.executeTransaction('REFRESH MATERIALIZED VIEW CONCURRENTLY receipts_by_week')
+            self.executeTransaction('REFRESH MATERIALIZED VIEW CONCURRENTLY receipts_by_month')
         
         except sa.exc.ProgrammingError:
 
             weeks = ''' 
-                CREATE MATERIALIZED VIEW receipts_by_week AS (
+                CREATE MATERIALIZED VIEW receipts_by_month AS (
                   SELECT 
-                    date_trunc('month', received_date) AS week,
+                    date_trunc('month', received_date) AS month,
                     SUM(amount) AS total_amount,
                     COUNT(id) AS donation_count,
                     AVG(amount) AS average_donation
                   FROM condensed_receipts
                   GROUP BY date_trunc('month', received_date)
-                  ORDER BY week
+                  ORDER BY month
                 )
             '''
             self.executeTransaction(weeks)
@@ -1071,8 +1071,8 @@ class SunshineViews(object):
 
     def receiptsByWeekIndex(self):
         index = ''' 
-            CREATE UNIQUE INDEX CONCURRENTLY receipts_by_week_idx 
-            ON receipts_by_week(week)
+            CREATE UNIQUE INDEX CONCURRENTLY receipts_by_month_idx 
+            ON receipts_by_month(week)
         '''
         
         self.executeOutsideTransaction(index)

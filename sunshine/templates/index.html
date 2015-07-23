@@ -109,7 +109,7 @@
     <script src="/static/js/chart_helper.js"></script>
     <script>
 
-        var money = {{ donations_by_week|tojson|safe }};
+        var money = {{ donations_by_month|tojson|safe }};
         var money_f = [];
         for (i = 0; i < money.length; i++) {
             money_f.push([Date.UTC(money[i][1],money[i][2]-1,money[i][3]), money[i][0]]);

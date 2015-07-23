@@ -25,20 +25,20 @@ def index():
         SUM(total_amount) as total_amount, 
         SUM(donation_count) as donation_count, 
         AVG(average_donation) as average_donation 
-      FROM receipts_by_week'''
+      FROM receipts_by_month'''
 
     totals = list(engine.execute(sa.text(totals_sql)))
 
     # donations chart
-    donations_by_week_sql = ''' 
-      SELECT * FROM receipts_by_week WHERE week >= :start_date
+    donations_by_month_sql = ''' 
+      SELECT * FROM receipts_by_month WHERE month >= :start_date
     '''
 
-    donations_by_week = [[d.total_amount,
-                          d.week.year,
-                          d.week.month,
-                          d.week.day] 
-                          for d in engine.execute(sa.text(donations_by_week_sql), 
+    donations_by_month = [[d.total_amount,
+                          d.month.year,
+                          d.month.month,
+                          d.month.day] 
+                          for d in engine.execute(sa.text(donations_by_month_sql), 
                                                   start_date="1994-01-01")]
 
     # top earners in the last week
@@ -89,7 +89,7 @@ def index():
                            top_earners=top_earners,
                            top_ten=top_ten,
                            totals=totals,
-                           donations_by_week=donations_by_week)
+                           donations_by_month=donations_by_month)
 
 @views.route('/donations/')
 @cache.cached(timeout=CACHE_TIMEOUT, key_prefix=make_cache_key)
@@ -128,15 +128,15 @@ def donations():
     weeks_total_count = len(weeks_donations)
     weeks_total_donations = sum([d.amount for d in weeks_donations])
     
-    donations_by_week_sql = ''' 
-        SELECT * FROM receipts_by_week WHERE week >= :start_date
+    donations_by_month_sql = ''' 
+        SELECT * FROM receipts_by_month WHERE month >= :start_date
     '''
 
-    donations_by_week = [[d.total_amount,
-                          d.week.year,
-                          d.week.month,
-                          d.week.day] 
-                          for d in engine.execute(sa.text(donations_by_week_sql), 
+    donations_by_month = [[d.total_amount,
+                          d.month.year,
+                          d.month.month,
+                          d.month.day] 
+                          for d in engine.execute(sa.text(donations_by_month_sql), 
                                                   start_date="1994-01-01")]
 
     totals_sql = '''
@@ -144,7 +144,7 @@ def donations():
         SUM(total_amount) as total_amount, 
         SUM(donation_count) as donation_count, 
         AVG(average_donation) as average_donation 
-      FROM receipts_by_week'''
+      FROM receipts_by_month'''
 
     totals = list(engine.execute(sa.text(totals_sql)))
 
@@ -154,7 +154,7 @@ def donations():
                            weeks_donations=weeks_donations,
                            weeks_total_count=weeks_total_count,
                            weeks_total_donations=weeks_total_donations,
-                           donations_by_week=donations_by_week,
+                           donations_by_month=donations_by_month,
                            start_date=start_date,
                            end_date=end_date,
                            prev_week_date=prev_week_date,
