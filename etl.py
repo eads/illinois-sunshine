@@ -674,7 +674,7 @@ class SunshineViews(object):
         
         try:
             
-            self.executeTransaction('REFRESH MATERIALIZED VIEW condensed_expenditures')
+            self.executeTransaction('REFRESH MATERIALIZED VIEW CONCURRENTLY condensed_expenditures')
         
         except sa.exc.ProgrammingError:
 
@@ -713,7 +713,7 @@ class SunshineViews(object):
     def condensedReceipts(self):
         
         try:
-            self.executeTransaction('REFRESH MATERIALIZED VIEW condensed_receipts')
+            self.executeTransaction('REFRESH MATERIALIZED VIEW CONCURRENTLY condensed_receipts')
         
         except sa.exc.ProgrammingError:
             
@@ -753,7 +753,7 @@ class SunshineViews(object):
     def expendituresByCandidate(self):
 
         try:
-            self.executeTransaction('REFRESH MATERIALIZED VIEW expenditures_by_candidate')
+            self.executeTransaction('REFRESH MATERIALIZED VIEW CONCURRENTLY expenditures_by_candidate')
         
         except sa.exc.ProgrammingError:
             
@@ -786,7 +786,7 @@ class SunshineViews(object):
 
         try:
             
-            self.executeTransaction('REFRESH MATERIALIZED VIEW receipts_by_week')
+            self.executeTransaction('REFRESH MATERIALIZED VIEW CONCURRENTLY receipts_by_week')
         
         except sa.exc.ProgrammingError:
 
@@ -807,7 +807,7 @@ class SunshineViews(object):
     def committeeReceiptAggregates(self):
 
         try:
-            self.executeTransaction('REFRESH MATERIALIZED VIEW committee_receipts_by_week')
+            self.executeTransaction('REFRESH MATERIALIZED VIEW CONCURRENTLY committee_receipts_by_week')
 
         except sa.exc.ProgrammingError:
 
@@ -833,7 +833,7 @@ class SunshineViews(object):
 
         try:
             
-            self.executeTransaction('REFRESH MATERIALIZED VIEW incumbent_candidates')
+            self.executeTransaction('REFRESH MATERIALIZED VIEW CONCURRENTLY incumbent_candidates')
 
         except sa.exc.ProgrammingError:
             
@@ -863,7 +863,7 @@ class SunshineViews(object):
 
         try:
             
-            self.executeTransaction('REFRESH MATERIALIZED VIEW most_recent_filings')
+            self.executeTransaction('REFRESH MATERIALIZED VIEW CONCURRENTLY most_recent_filings')
         
         except sa.exc.ProgrammingError:
 
@@ -911,7 +911,7 @@ class SunshineViews(object):
         
         try:
             
-            self.executeTransaction('REFRESH MATERIALIZED VIEW committee_money')
+            self.executeTransaction('REFRESH MATERIALIZED VIEW CONCURRENTLY committee_money')
         
         except sa.exc.ProgrammingError:
 
@@ -945,7 +945,7 @@ class SunshineViews(object):
         
         try:
             
-            self.executeTransaction('REFRESH MATERIALIZED VIEW candidate_money')
+            self.executeTransaction('REFRESH MATERIALIZED VIEW CONCURRENTLY candidate_money')
         
         except sa.exc.ProgrammingError:
             
