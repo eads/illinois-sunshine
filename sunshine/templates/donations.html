@@ -31,7 +31,7 @@
                         <a href="{{ url_for('views.contribution', receipt_id=donation.id )}}">donated <strong>{{ donation.amount|format_money }}</strong></a> to
                     </td>
                     <td>
-                        <a href="{{ url_for('views.committee', committee_id=donation.committee_id )}}">{{ donation.committee.name }}</a>
+                        <a href="{{ url_for('views.committee', committee_id=donation.committee_id )}}">{{ donation.committee_name }}</a>
                     </td>
                     <td class='nowrap'>
                         on {{ donation.received_date.strftime('%b %d, %Y') }}
@@ -47,9 +47,14 @@
     <script src="/static/js/moment.min.js"></script>
     <script src="/static/js/chart_helper.js"></script>
     <script>
-        var startDate = Date.UTC(1994, 6, 1)
-        var money = {{ donations_by_week|tojson|safe }}
-        ChartHelper.donations('donation-chart', 'Campaign donations', '', 'Donations', money, startDate, 'week', '{{start_date}}');
+
+        var money = {{ donations_by_week|tojson|safe }};
+        var money_f = [];
+        for (i = 0; i < money.length; i++) {
+            money_f.push([Date.UTC(money[i][1],money[i][2]-1,money[i][3]), money[i][0]]);
+        }
+
+        ChartHelper.donations('donation-chart', 'Campaign donations', '', 'Donations', money_f);
     </script>
 
 {% endblock %}

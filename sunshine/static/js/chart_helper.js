@@ -1,5 +1,5 @@
 var ChartHelper = {};
-ChartHelper.donations = function(el, title, sourceTxt, yaxisLabel, data, startDate, pointInterval, start_date) {
+ChartHelper.donations = function(el, title, sourceTxt, yaxisLabel, data) {
   // console.log("rendering to: #chart_" + iteration);
   // console.log("title: " + title);
   // console.log("sourceTxt: " + sourceTxt);
@@ -7,12 +7,12 @@ ChartHelper.donations = function(el, title, sourceTxt, yaxisLabel, data, startDa
   // console.log(dataArray);
   // console.log("startDate: " + startDate);
   // console.log("pointInterval: " + pointInterval);
-  console.log(start_date);
-  console.log(Date.parse(start_date))
-  console.log(data)
+  // console.log(start_date);
+  // console.log(Date.parse(start_date))
+  // console.log(data)
 
-  var selected = data.indexOf(Date.parse(start_date));
-  console.log(selected);
+  // var selected = data.indexOf(Date.parse(start_date));
+  // console.log(selected);
 
   var color = '#007F00';
   
@@ -76,8 +76,6 @@ ChartHelper.donations = function(el, title, sourceTxt, yaxisLabel, data, startDa
               }
             }
           },
-          pointInterval: ChartHelper.pointInterval(pointInterval),  
-          pointStart: startDate,
           shadow: false,
           states: {
              hover: {
@@ -89,7 +87,7 @@ ChartHelper.donations = function(el, title, sourceTxt, yaxisLabel, data, startDa
       tooltip: {
           crosshairs: true,
           formatter: function() {
-            var s = "<strong>" + ChartHelper.toolTipDateFormat(pointInterval, this.x) + "</strong>";
+            var s = "<strong>" + ChartHelper.toolTipDateFormat("week", this.x) + "</strong>";
             $.each(this.points, function(i, point) {
               s += "<br /><span style='color: " + point.series.color + "'>" + point.series.name + ":</span> $" + Highcharts.numberFormat(point.y, 0, '.', ',');
             });

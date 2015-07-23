@@ -662,14 +662,14 @@ class SunshineViews(object):
 
     def makeAllViews(self):
         self.expendituresByCandidate()
-        self.receiptsAggregates()
-        self.committeeReceiptAggregates()
         self.incumbentCandidates()
         self.mostRecentFilings()
         self.condensedReceipts()
         self.condensedExpenditures()
-        self.committeeMoney()
-        self.candidateMoney()
+        self.receiptsAggregates() # relies on condensedReceipts
+        self.committeeReceiptAggregates() # relies on condensedReceipts
+        self.committeeMoney() # relies on mostRecentFilings
+        self.candidateMoney() # relies on committeeMoney and mostRecentFilings
     
     def condensedExpenditures(self):
         
@@ -804,7 +804,7 @@ class SunshineViews(object):
                     SUM(amount) AS total_amount,
                     COUNT(id) AS donation_count,
                     AVG(amount) AS average_donation
-                  FROM receipts
+                  FROM condensed_receipts
                   GROUP BY date_trunc('week', received_date)
                   ORDER BY week
                 )

@@ -97,21 +97,35 @@ def donations():
     next_week_date = end_date + timedelta(days=7)
     is_current = (end_date == datetime.now().date())
     
-    weeks_donations = db_session.query(Receipt)\
-                                 .join(FiledDoc, Receipt.filed_doc_id == FiledDoc.id)\
-                                 .filter(Receipt.received_date >= start_date)\
-                                 .filter(Receipt.received_date <= end_date)\
-                                 .order_by(FiledDoc.received_datetime.desc())
+    engine = db_session.bind
 
-    weeks_total_count = len(weeks_donations.all())
+    weeks_donations_sql = '''
+      SELECT 
+        c.*, 
+        cm.name as committee_name
+      FROM condensed_receipts AS c 
+      JOIN committees AS cm ON c.committee_id = cm.id
+      WHERE c.received_date >= :start_date
+        AND c.received_date < :end_date
+      ORDER BY c.received_date DESC
+    '''
+
+    weeks_donations = list(engine.execute(sa.text(weeks_donations_sql), 
+                                     start_date=start_date,
+                                     end_date=end_date))
+
+    weeks_total_count = len(weeks_donations)
     weeks_total_donations = sum([d.amount for d in weeks_donations])
     
     donations_by_week = ''' 
-        SELECT * FROM receipts_by_week
+        SELECT * FROM receipts_by_week WHERE week > :start_date
     '''
 
-    engine = db_session.bind
-    donations_by_week = [d.total_amount for d in engine.execute(donations_by_week)]
+    donations_by_week = [[d.total_amount,
+                          d.week.year,
+                          d.week.month,
+                          d.week.day] 
+                          for d in engine.execute(sa.text(donations_by_week), start_date="1994-01-01")]
 
     totals_sql = '''
       SELECT 
