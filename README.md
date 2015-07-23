@@ -6,8 +6,8 @@ Keep an eye on money in Illinois politics. Built for the Illinois Campaign for P
 
 **Install OS level dependencies:** 
 
-* Python 3
-* Postgres
+* Python 3.4
+* PostgreSQL 9.4 +
 
 **Install app requirements**
 
