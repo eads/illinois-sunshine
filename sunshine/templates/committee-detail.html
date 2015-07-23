@@ -302,17 +302,18 @@
                     var total_rows = parseInt(resp['meta']['total_rows']);
                     var transactions;
 
-                    if(['top_donors', 'top_recipients'].indexOf(transaction_type) >= 0){
-                        transactions = resp['objects'];
-                    } else if (transaction_type == 'largest_donations') {
-                        transactions = resp['objects'][0]['receipts'];
-                    } else {
-                        transactions = resp['objects'][0][transaction_type];
-                    }
-                    console.log(transactions)
-
                     if(total_rows > 0){
+
+                        if(['top_donors', 'top_recipients'].indexOf(transaction_type) >= 0){
+                            transactions = resp['objects'];
+                        } else if (transaction_type == 'largest_donations') {
+                            transactions = resp['objects'][0]['receipts'];
+                        } else {
+                            transactions = resp['objects'][0][transaction_type];
+                        }
+
                         displayTable(transactions, transaction_type, 0, total_rows);
+
                     } else {
                         if(transaction_type == 'receipts' || transaction_type == 'largest_donations'){
                             $('#money-table-guts').html('<h4>No donations found</h4>');

@@ -15,6 +15,7 @@ from csvkit.sql import make_table, make_create_table_statement
 from csvkit.table import Table
 from collections import OrderedDict
 from typeinferer import TypeInferer
+import psycopg2
 
 import logging
 logger = logging.getLogger(__name__)
@@ -710,6 +711,8 @@ class SunshineViews(object):
             '''
             self.executeTransaction(rec)
 
+            self.condensedExpendituresIndex()
+
     def condensedReceipts(self):
         
         try:
@@ -750,6 +753,8 @@ class SunshineViews(object):
 
             self.executeTransaction(rec)
 
+            self.condensedReceiptsIndex()
+
     def expendituresByCandidate(self):
 
         try:
@@ -781,6 +786,8 @@ class SunshineViews(object):
                 )
             '''
             self.executeTransaction(exp)
+            
+            self.expendituresByCandidateIndex()
 
     def receiptsAggregates(self):
 
@@ -803,7 +810,9 @@ class SunshineViews(object):
                 )
             '''
             self.executeTransaction(weeks)
-    
+            
+            self.receiptsByWeekIndex()
+
     def committeeReceiptAggregates(self):
 
         try:
@@ -828,6 +837,8 @@ class SunshineViews(object):
             '''
             
             self.executeTransaction(weeks)
+            
+            self.committeeReceiptsByWeekIndex()
 
     def incumbentCandidates(self):
 
@@ -858,7 +869,9 @@ class SunshineViews(object):
             self.executeTransaction(sa.text(incumbents), 
                                     outcome='won',
                                     year=last_year)
-    
+            
+            self.incumbentCandidatesIndex()
+
     def mostRecentFilings(self):
 
         try:
@@ -906,6 +919,8 @@ class SunshineViews(object):
                )
             '''
             self.executeTransaction(create)
+            
+            self.mostRecentFilingsIndex()
 
     def committeeMoney(self):
         
@@ -940,6 +955,8 @@ class SunshineViews(object):
                )
             '''
             self.executeTransaction(create)
+            
+            self.committeeMoneyIndex()
 
     def candidateMoney(self):
         
@@ -972,6 +989,167 @@ class SunshineViews(object):
                 )
             '''
             self.executeTransaction(create)
+            
+            self.candidateMoneyIndex()
+
+    def makeUniqueIndexes(self):
+        ''' 
+        Need a unique index on materialized views so that can be refreshed concurrently
+        '''
+        self.condensedExpendituresIndex()
+        self.condensedReceiptsIndex()
+        self.expendituresByCandidateIndex()
+        self.receiptsByWeekIndex()
+        self.committeeReceiptsByWeekIndex()
+        self.incumbentCandidatesIndex()
+        self.candidateMoneyIndex()
+        self.committeeMoneyIndex()
+        self.mostRecentFilingsIndex()
+
+    def condensedExpendituresIndex(self):
+        index = ''' 
+            CREATE UNIQUE INDEX CONCURRENTLY condensed_expenditures_id_idx 
+            ON condensed_expenditures(id)
+        '''
+
+        self.connection.connection.set_isolation_level(0)
+        curs = self.connection.connection.cursor()
+
+        try:
+            curs.execute(index)
+        except psycopg2.ProgrammingError:
+            pass
+
+        self.connection.connection.set_isolation_level(1)
+    
+    def condensedReceiptsIndex(self):
+        index = ''' 
+            CREATE UNIQUE INDEX CONCURRENTLY condensed_receipts_id_idx 
+            ON condensed_receipts(id)
+        '''
+
+        self.connection.connection.set_isolation_level(0)
+        curs = self.connection.connection.cursor()
+
+        try:
+            curs.execute(index)
+        except psycopg2.ProgrammingError:
+            pass
+
+        self.connection.connection.set_isolation_level(1)
+
+    def expendituresByCandidateIndex(self):
+        index = ''' 
+            CREATE UNIQUE INDEX CONCURRENTLY expenditures_by_candidate_idx 
+            ON expenditures_by_candidate(candidate_id, committee_id)
+        '''
+
+        self.connection.connection.set_isolation_level(0)
+        curs = self.connection.connection.cursor()
+
+        try:
+            curs.execute(index)
+        except psycopg2.ProgrammingError:
+            pass
+
+        self.connection.connection.set_isolation_level(1)
+
+    def receiptsByWeekIndex(self):
+        index = ''' 
+            CREATE UNIQUE INDEX CONCURRENTLY receipts_by_week_idx 
+            ON receipts_by_week(week)
+        '''
+        
+        self.connection.connection.set_isolation_level(0)
+        curs = self.connection.connection.cursor()
+
+        try:
+            curs.execute(index)
+        except psycopg2.ProgrammingError:
+            pass
+
+        self.connection.connection.set_isolation_level(1)
+
+    def committeeReceiptsByWeekIndex(self):
+        index = ''' 
+            CREATE UNIQUE INDEX CONCURRENTLY committee_receipts_by_week_idx 
+            ON committee_receipts_by_week(committee_id, week)
+        '''
+        
+        self.connection.connection.set_isolation_level(0)
+        curs = self.connection.connection.cursor()
+
+        try:
+            curs.execute(index)
+        except psycopg2.ProgrammingError:
+            pass
+
+        self.connection.connection.set_isolation_level(1)
+
+    def incumbentCandidatesIndex(self):
+
+        index = ''' 
+            CREATE UNIQUE INDEX CONCURRENTLY incumbent_candidates_idx 
+            ON incumbent_candidates(id)
+        '''
+        
+        self.connection.connection.set_isolation_level(0)
+        curs = self.connection.connection.cursor()
+
+        try:
+            curs.execute(index)
+        except psycopg2.ProgrammingError:
+            pass
+
+        self.connection.connection.set_isolation_level(1)
+
+    def candidateMoneyIndex(self):
+        index = ''' 
+            CREATE UNIQUE INDEX CONCURRENTLY candidate_money_idx
+            ON candidate_money(candidate_id, committee_id)
+        '''
+        
+        self.connection.connection.set_isolation_level(0)
+        curs = self.connection.connection.cursor()
+
+        try:
+            curs.execute(index)
+        except psycopg2.ProgrammingError:
+            pass
+
+        self.connection.connection.set_isolation_level(1)
+    
+    def committeeMoneyIndex(self):
+        index = ''' 
+            CREATE UNIQUE INDEX CONCURRENTLY committee_money_idx
+            ON committee_money(committee_id)
+        '''
+        
+        self.connection.connection.set_isolation_level(0)
+        curs = self.connection.connection.cursor()
+
+        try:
+            curs.execute(index)
+        except psycopg2.ProgrammingError:
+            pass
+
+        self.connection.connection.set_isolation_level(1)
+    
+    def mostRecentFilingsIndex(self):
+        index = ''' 
+            CREATE UNIQUE INDEX CONCURRENTLY most_recent_filings_idx
+            ON most_recent_filings(committee_id)
+        '''
+        
+        self.connection.connection.set_isolation_level(0)
+        curs = self.connection.connection.cursor()
+
+        try:
+            curs.execute(index)
+        except psycopg2.ProgrammingError:
+            pass
+
+        self.connection.connection.set_isolation_level(1)
     
 
 class SunshineIndexes(object):
@@ -1218,6 +1396,7 @@ if __name__ == "__main__":
 
     logger.info("creating views %s..." % datetime.now().isoformat())
     views.makeAllViews()
+    views.makeUniqueIndexes()
     
     logger.info("creating indexes %s ..." % datetime.now().isoformat())
     indexes = SunshineIndexes(connection)
