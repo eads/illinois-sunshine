@@ -170,6 +170,17 @@ class SunshineTransformLoad(object):
             if raise_exc:
                 raise e
 
+    def executeOutsideTransaction(self, query):
+        
+        self.connection.connection.set_isolation_level(0)
+        curs = self.connection.connection.cursor()
+
+        try:
+            curs.execute(query)
+        except psycopg2.ProgrammingError:
+            pass
+
+
     def addNameColumn(self):
         
         sql_table = sa.Table(self.table_name, sa.MetaData(), 
@@ -653,6 +664,16 @@ class SunshineViews(object):
             trans.rollback()
             raise e
     
+    def executeOutsideTransaction(self, query):
+        
+        self.connection.connection.set_isolation_level(0)
+        curs = self.connection.connection.cursor()
+
+        try:
+            curs.execute(query)
+        except psycopg2.ProgrammingError:
+            pass
+    
     def dropViews(self):
         self.executeTransaction('DROP MATERIALIZED VIEW IF EXISTS receipts_by_week')
         self.executeTransaction('DROP MATERIALIZED VIEW IF EXISTS committee_receipts_by_week')
@@ -998,6 +1019,8 @@ class SunshineViews(object):
         '''
         self.condensedExpendituresIndex()
         self.condensedReceiptsIndex()
+        self.condensedReceiptsDateIndex()
+        self.condensedExpendituresDateIndex()
         self.expendituresByCandidateIndex()
         self.receiptsByWeekIndex()
         self.committeeReceiptsByWeekIndex()
@@ -1012,15 +1035,7 @@ class SunshineViews(object):
             ON condensed_expenditures(id)
         '''
 
-        self.connection.connection.set_isolation_level(0)
-        curs = self.connection.connection.cursor()
-
-        try:
-            curs.execute(index)
-        except psycopg2.ProgrammingError:
-            pass
-
-        self.connection.connection.set_isolation_level(1)
+        self.executeOutsideTransaction(index)
     
     def condensedReceiptsIndex(self):
         index = ''' 
@@ -1028,31 +1043,31 @@ class SunshineViews(object):
             ON condensed_receipts(id)
         '''
 
-        self.connection.connection.set_isolation_level(0)
-        curs = self.connection.connection.cursor()
+        self.executeOutsideTransaction(index)
 
-        try:
-            curs.execute(index)
-        except psycopg2.ProgrammingError:
-            pass
+    def condensedExpendituresDateIndex(self):
+        index = ''' 
+            CREATE INDEX CONCURRENTLY condensed_expenditures_date_idx 
+            ON condensed_expenditures(expended_date)
+        '''
 
-        self.connection.connection.set_isolation_level(1)
+        self.executeOutsideTransaction(index)
+    
+    def condensedReceiptsDateIndex(self):
+        index = ''' 
+            CREATE INDEX CONCURRENTLY condensed_receipts_date_idx 
+            ON condensed_receipts(date)
+        '''
 
+        self.executeOutsideTransaction(index)
+    
     def expendituresByCandidateIndex(self):
         index = ''' 
             CREATE UNIQUE INDEX CONCURRENTLY expenditures_by_candidate_idx 
             ON expenditures_by_candidate(candidate_id, committee_id)
         '''
 
-        self.connection.connection.set_isolation_level(0)
-        curs = self.connection.connection.cursor()
-
-        try:
-            curs.execute(index)
-        except psycopg2.ProgrammingError:
-            pass
-
-        self.connection.connection.set_isolation_level(1)
+        self.executeOutsideTransaction(index)
 
     def receiptsByWeekIndex(self):
         index = ''' 
@@ -1060,15 +1075,7 @@ class SunshineViews(object):
             ON receipts_by_week(week)
         '''
         
-        self.connection.connection.set_isolation_level(0)
-        curs = self.connection.connection.cursor()
-
-        try:
-            curs.execute(index)
-        except psycopg2.ProgrammingError:
-            pass
-
-        self.connection.connection.set_isolation_level(1)
+        self.executeOutsideTransaction(index)
 
     def committeeReceiptsByWeekIndex(self):
         index = ''' 
@@ -1076,15 +1083,7 @@ class SunshineViews(object):
             ON committee_receipts_by_week(committee_id, week)
         '''
         
-        self.connection.connection.set_isolation_level(0)
-        curs = self.connection.connection.cursor()
-
-        try:
-            curs.execute(index)
-        except psycopg2.ProgrammingError:
-            pass
-
-        self.connection.connection.set_isolation_level(1)
+        self.executeOutsideTransaction(index)
 
     def incumbentCandidatesIndex(self):
 
@@ -1093,15 +1092,7 @@ class SunshineViews(object):
             ON incumbent_candidates(id)
         '''
         
-        self.connection.connection.set_isolation_level(0)
-        curs = self.connection.connection.cursor()
-
-        try:
-            curs.execute(index)
-        except psycopg2.ProgrammingError:
-            pass
-
-        self.connection.connection.set_isolation_level(1)
+        self.executeOutsideTransaction(index)
 
     def candidateMoneyIndex(self):
         index = ''' 
@@ -1109,15 +1100,7 @@ class SunshineViews(object):
             ON candidate_money(candidate_id, committee_id)
         '''
         
-        self.connection.connection.set_isolation_level(0)
-        curs = self.connection.connection.cursor()
-
-        try:
-            curs.execute(index)
-        except psycopg2.ProgrammingError:
-            pass
-
-        self.connection.connection.set_isolation_level(1)
+        self.executeOutsideTransaction(index)
     
     def committeeMoneyIndex(self):
         index = ''' 
@@ -1125,15 +1108,7 @@ class SunshineViews(object):
             ON committee_money(committee_id)
         '''
         
-        self.connection.connection.set_isolation_level(0)
-        curs = self.connection.connection.cursor()
-
-        try:
-            curs.execute(index)
-        except psycopg2.ProgrammingError:
-            pass
-
-        self.connection.connection.set_isolation_level(1)
+        self.executeOutsideTransaction(index)
     
     def mostRecentFilingsIndex(self):
         index = ''' 
@@ -1141,15 +1116,7 @@ class SunshineViews(object):
             ON most_recent_filings(committee_id)
         '''
         
-        self.connection.connection.set_isolation_level(0)
-        curs = self.connection.connection.cursor()
-
-        try:
-            curs.execute(index)
-        except psycopg2.ProgrammingError:
-            pass
-
-        self.connection.connection.set_isolation_level(1)
+        self.executeOutsideTransaction(index)
     
 
 class SunshineIndexes(object):
@@ -1164,6 +1131,16 @@ class SunshineIndexes(object):
             trans.commit()
         except sa.exc.ProgrammingError as e:
             trans.rollback()
+    
+    def executeOutsideTransaction(self, query):
+        
+        self.connection.connection.set_isolation_level(0)
+        curs = self.connection.connection.cursor()
+
+        try:
+            curs.execute(query)
+        except psycopg2.ProgrammingError:
+            pass
 
     def makeAllIndexes(self):
         self.receiptsDate()
@@ -1184,7 +1161,7 @@ class SunshineIndexes(object):
             CREATE INDEX CONCURRENTLY received_date_idx ON receipts (received_date)
         '''
         
-        self.executeTransaction(index)
+        self.executeOutsideTransaction(index)
     
     def receiptsCommittee(self):
         ''' 
@@ -1194,14 +1171,14 @@ class SunshineIndexes(object):
             CREATE INDEX CONCURRENTLY receipts_committee_idx ON receipts (committee_id)
         '''
         
-        self.executeTransaction(index)
+        self.executeOutsideTransaction(index)
     
     def receiptsFiledDocs(self):
         index = ''' 
             CREATE INDEX CONCURRENTLY receipts_filed_docs_idx ON receipts (filed_doc_id)
         '''
         
-        self.executeTransaction(index)
+        self.executeOutsideTransaction(index)
     
     def candidaciesCandidate(self):
         index = ''' 
@@ -1209,7 +1186,7 @@ class SunshineIndexes(object):
               ON candidacies (candidate_id)
         '''
 
-        self.executeTransaction(index)
+        self.executeOutsideTransaction(index)
     
     def candidateCommittees(self):
         index = ''' 
@@ -1217,21 +1194,21 @@ class SunshineIndexes(object):
               ON candidate_committees (candidate_id)
         '''
 
-        self.executeTransaction(index)
+        self.executeOutsideTransaction(index)
         
         index = ''' 
             CREATE INDEX CONCURRENTLY cand_comm_committee_id_index 
               ON candidate_committees (committee_id)
         '''
 
-        self.executeTransaction(index)
+        self.executeOutsideTransaction(index)
 
     def filedDocsCommittee(self):
         index = ''' 
             CREATE INDEX CONCURRENTLY filed_docs_committee_idx ON filed_docs (committee_id)
         '''
         
-        self.executeTransaction(index)
+        self.executeOutsideTransaction(index)
 
     def officersCommittee(self):
         index = ''' 
@@ -1239,23 +1216,23 @@ class SunshineIndexes(object):
               ON officers (committee_id)
         '''
 
-        self.executeTransaction(index)
+        self.executeOutsideTransaction(index)
 
     def receiptsName(self):
-         add_index = ''' 
+         index = ''' 
              CREATE INDEX CONCURRENTLY condensed_receipts_search_index ON condensed_receipts
              USING gin(search_name)
          '''
          
-         self.executeTransaction(add_index)
+         self.executeOutsideTransaction(index)
     
     def expendituresName(self):
-         add_index = ''' 
+         index = ''' 
              CREATE INDEX CONCURRENTLY condensed_expenditures_search_index ON condensed_expenditures
              USING gin(search_name)
          '''
          
-         self.executeTransaction(add_index)
+         self.executeOutsideTransaction(index)
 
 
 if __name__ == "__main__":
