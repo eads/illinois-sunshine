@@ -119,7 +119,7 @@ def search():
     search_date__le = request.args.get('search_date__le')
     search_date__ge = request.args.get('search_date__ge')
     if table_name == []:
-        table_name = ['candidates', 'committees', 'officers', 'receipts']
+        table_name = ['candidates', 'committees', 'officers', 'receipts', 'expenditures']
 
     return render_template('search.html', 
                            term=term, 
