@@ -28,7 +28,7 @@ ChartHelper.donations = function(el, title, sourceTxt, yaxisLabel, data) {
   return new Highcharts.Chart({
       chart: {
           renderTo: el,
-          type: "line",
+          type: "column",
           marginRight: 10,
           marginBottom: 25
       },
@@ -87,7 +87,7 @@ ChartHelper.donations = function(el, title, sourceTxt, yaxisLabel, data) {
       tooltip: {
           crosshairs: true,
           formatter: function() {
-            var s = "<strong>" + ChartHelper.toolTipDateFormat("week", this.x) + "</strong>";
+            var s = "<strong>" + ChartHelper.toolTipDateFormat("month", this.x) + "</strong>";
             $.each(this.points, function(i, point) {
               s += "<br /><span style='color: " + point.series.color + "'>" + point.series.name + ":</span> $" + Highcharts.numberFormat(point.y, 0, '.', ',');
             });

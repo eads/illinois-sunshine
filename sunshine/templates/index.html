@@ -18,8 +18,19 @@
         </div>
     </form>
 </div>
+
 <h3>
     <i class='fa fa-dollar fa-fw'></i>
+    <a href='{{ url_for('views.donations') }}'>Donations</a> <small>since 1994</small>
+</h3>
+
+<div id='donation-chart'></div>
+<br />
+
+<p><a class='btn btn-primary' href='{{ url_for('views.donations') }}'><i class='fa fa-dollar fa-fw'></i> Browse all donations &raquo;</a></p>
+
+<h3>
+    <i class='fa fa-plus-circle fa-fw'></i>
     <a href='{{ url_for('views.top_earners') }}'>Top earners</a> <small>last 30 days</small>
 </h3>
 <table class="table table-striped">
@@ -53,7 +64,6 @@
 
 <p>
     <a class='btn btn-primary' href='{{ url_for('views.top_earners') }}'><i class='fa fa-plus-circle fa-fw'></i> More top earners &raquo;</a>
-    <a class='btn btn-primary' href='{{ url_for('views.donations') }}'><i class='fa fa-dollar fa-fw'></i> Browse all donations &raquo;</a>
 </p>
 <br /><br />
 
@@ -90,5 +100,22 @@
 
 <p><a class='btn btn-primary' href='{{ url_for('views.about') }}'><i class='fa fa-info-circle fa-fw'></i> Read more &raquo;</a></p>
 <br /><br />
+
+{% endblock %}
+
+{% block extra_javascript %}
+    <script src="http://code.highcharts.com/highcharts.js"></script>
+    <script src="/static/js/moment.min.js"></script>
+    <script src="/static/js/chart_helper.js"></script>
+    <script>
+
+        var money = {{ donations_by_week|tojson|safe }};
+        var money_f = [];
+        for (i = 0; i < money.length; i++) {
+            money_f.push([Date.UTC(money[i][1],money[i][2]-1,money[i][3]), money[i][0]]);
+        }
+
+        ChartHelper.donations('donation-chart', 'Campaign donations', '', 'Donations', money_f);
+    </script>
 
 {% endblock %}

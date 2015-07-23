@@ -29,6 +29,17 @@ def index():
 
     totals = list(engine.execute(sa.text(totals_sql)))
 
+    # donations chart
+    donations_by_week_sql = ''' 
+      SELECT * FROM receipts_by_week WHERE week >= :start_date
+    '''
+
+    donations_by_week = [[d.total_amount,
+                          d.week.year,
+                          d.week.month,
+                          d.week.day] 
+                          for d in engine.execute(sa.text(donations_by_week_sql), 
+                                                  start_date="1994-01-01")]
 
     # top earners in the last week
     top_earners = ''' 
@@ -53,9 +64,8 @@ def index():
         ORDER BY sub.amount DESC
         LIMIT 10
     '''
-    
-    days_ago = datetime.now() - timedelta(days=30)
 
+    days_ago = datetime.now() - timedelta(days=30)
     top_earners = engine.execute(sa.text(top_earners),
                                  received_date=days_ago)
     
@@ -78,7 +88,8 @@ def index():
     return render_template('index.html', 
                            top_earners=top_earners,
                            top_ten=top_ten,
-                           totals=totals)
+                           totals=totals,
+                           donations_by_week=donations_by_week)
 
 @views.route('/donations/')
 @cache.cached(timeout=CACHE_TIMEOUT, key_prefix=make_cache_key)
@@ -117,15 +128,16 @@ def donations():
     weeks_total_count = len(weeks_donations)
     weeks_total_donations = sum([d.amount for d in weeks_donations])
     
-    donations_by_week = ''' 
-        SELECT * FROM receipts_by_week WHERE week > :start_date
+    donations_by_week_sql = ''' 
+        SELECT * FROM receipts_by_week WHERE week >= :start_date
     '''
 
     donations_by_week = [[d.total_amount,
                           d.week.year,
                           d.week.month,
                           d.week.day] 
-                          for d in engine.execute(sa.text(donations_by_week), start_date="1994-01-01")]
+                          for d in engine.execute(sa.text(donations_by_week_sql), 
+                                                  start_date="1994-01-01")]
 
     totals_sql = '''
       SELECT 
@@ -584,3 +596,7 @@ def flush(secret):
     if secret == FLUSH_KEY:
         cache.clear()
     return 'Woop'
+
+@views.route('/sunshine')
+def sunshine():
+    return redirect(url_for('views.index'))
