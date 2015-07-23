@@ -4,13 +4,30 @@
 
 <div class="row">
     <div class="col-sm-12">
-        <h2>Top Earners - last thirty days</h2>
+        <h2><i class='fa fa-plus-circle fa-fw'></i> Top earners</h2>
+
+        <ul class="nav nav-pills">
+          <li role="presentation" {% if days_ago == 1%}class="active"{% endif %}><a href="{{ url_for('views.top_earners') }}?days_ago=1">Yesterday</a></li>
+          <li role="presentation" {% if days_ago == 7%}class="active"{% endif %}><a href="{{ url_for('views.top_earners') }}?days_ago=7">Last week</a></li>
+          <li role="presentation" {% if days_ago == 30%}class="active"{% endif %}><a href="{{ url_for('views.top_earners') }}?days_ago=30">Last month</a></li>
+          <li role="presentation" {% if days_ago == 365%}class="active"{% endif %}><a href="{{ url_for('views.top_earners') }}?days_ago=365">Last year</a></li>
+          <li role="presentation" {% if days_ago == 0%}class="active"{% endif %}><a href="{{ url_for('views.top_earners') }}?days_ago=0">All time</a></li>
+        </ul>
+
+        {% if days_ago == 0 %}
+            <h3>Committees with the most donations since Jan 1, 1994</h3>
+        {% else %}
+            <h3>Committees with the most donations since {{ calc_days_ago.strftime('%b %d, %Y') }}</h3>
+        {% endif %}
+
         <table class="table table-striped">
             <thead>
                 <tr>
                     <th>Rank</th>
                     <th>Committee</th>
-                    <th>Funds</th>
+                    <th>Type</th>
+                    <th class='text-right'>New funds</th>
+                    <th class='text-right'>Current funds</th>
                 </tr>
             </thead>
             <tbody>
@@ -18,13 +35,15 @@
                     <tr>
                         <td>{{ loop.index }}</td>
                         <td><a href="{{ url_for('views.committee', committee_id=earner.committee_id ) }}">{{ earner.name }}</a></td>
-                        <td>
+                        <td>{{ earner.type }}</td>
+                        <td class='money-add text-right'>
                             {% if earner.amount %}
-                                {{earner.amount|format_money}}
+                                +{{earner.amount|format_money}}
                             {% else %}
                                 $0
                             {% endif %}
                         </td>
+                        <td class='text-right'>{{ earner.total|format_money }}</td>
                     </tr>
                 {% endfor %}
             </tbody>

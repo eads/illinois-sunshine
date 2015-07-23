@@ -19,6 +19,7 @@ views = Blueprint('views', __name__)
 def index():
     engine = db_session.bind
 
+    # summary total text
     totals_sql = '''
       SELECT 
         SUM(total_amount) as total_amount, 
@@ -28,10 +29,37 @@ def index():
 
     totals = list(engine.execute(sa.text(totals_sql)))
 
-    recent_donations = db_session.query(Receipt)\
-                                 .order_by(Receipt.received_date.desc())\
-                                 .limit(10)
+
+    # top earners in the last week
+    top_earners = ''' 
+        SELECT 
+          sub.*,
+          m.total,
+          c.name,
+          c.type
+        FROM (
+          SELECT 
+            SUM(amount) AS amount,
+            committee_id
+          FROM condensed_receipts
+          WHERE received_date > :received_date
+          GROUP BY committee_id
+          ORDER BY amount DESC
+        ) AS sub
+        JOIN committees AS c
+          ON sub.committee_id = c.id
+        JOIN committee_money as m
+          ON c.id = m.committee_id
+        ORDER BY sub.amount DESC
+        LIMIT 10
+    '''
     
+    days_ago = datetime.now() - timedelta(days=30)
+
+    top_earners = engine.execute(sa.text(top_earners),
+                                 received_date=days_ago)
+    
+    # committees with the most money
     committee_sql = ''' 
         SELECT * FROM (
           SELECT * 
@@ -48,7 +76,7 @@ def index():
     engine.dispose()
 
     return render_template('index.html', 
-                           recent_donations=recent_donations,
+                           top_earners=top_earners,
                            top_ten=top_ten,
                            totals=totals)
 
@@ -158,33 +186,54 @@ def candidate(candidate_id):
 @views.route('/top-earners/')
 @cache.cached(timeout=CACHE_TIMEOUT, key_prefix=make_cache_key)
 def top_earners():
+
+    days_ago = 30
+    if request.args.get('days_ago'):
+      try: 
+        days_ago = int(request.args.get('days_ago'))
+      except:
+        pass
+
     engine = db_session.bind
     
     top_earners = ''' 
         SELECT 
           sub.*,
-          c.name
+          m.total,
+          c.name,
+          c.type
         FROM (
           SELECT 
             SUM(amount) AS amount,
             committee_id
-          FROM receipts
-          WHERE received_date > :received_date
+          FROM condensed_receipts'''
+
+    if days_ago > 0:
+      top_earners += " WHERE received_date > :received_date"
+
+    top_earners += '''
           GROUP BY committee_id
           ORDER BY amount DESC
         ) AS sub
         JOIN committees AS c
           ON sub.committee_id = c.id
+        JOIN committee_money as m
+          ON c.id = m.committee_id
+        ORDER BY sub.amount DESC
+        LIMIT 100
     '''
     
-    thirty_days_ago = datetime.now() - timedelta(days=30)
+    calc_days_ago = datetime.now() - timedelta(days=days_ago)
 
     top_earners = engine.execute(sa.text(top_earners),
-                                 received_date=thirty_days_ago)
+                                 received_date=calc_days_ago)
 
     engine.dispose()
 
-    return render_template('top-earners.html', top_earners=top_earners)
+    return render_template('top-earners.html', 
+                            top_earners=top_earners,
+                            days_ago=days_ago,
+                            calc_days_ago=calc_days_ago)
 
 
 @views.route('/committees/')

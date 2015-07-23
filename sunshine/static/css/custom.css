@@ -26,6 +26,8 @@ table, label,.control-label,.help-block,.checkbox,.radio { font-size: 14px; }
 
 #net-chart, #income-chart { height: 200px; }
 
+.money-add { color: #007F00;}
+
 .navbar-default {
   height: 60px;
   background-color: #FFCB08;
@@ -61,6 +63,14 @@ table, label,.control-label,.help-block,.checkbox,.radio { font-size: 14px; }
 .pagination > li > a:hover, 
 .pagination > li > a:focus, 
 .pagination > li > span:focus {
+  background-color: #FFCB08;
+  border-color: #FFCB08;
+  color: #000;
+}
+
+.nav-pills > li.active > a, 
+.nav-pills > li.active > a:hover, 
+.nav-pills > li.active > a:focus {
   background-color: #FFCB08;
   border-color: #FFCB08;
   color: #000;

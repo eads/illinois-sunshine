@@ -18,39 +18,53 @@
         </div>
     </form>
 </div>
-<h3><i class='fa fa-dollar fa-fw'></i> Recent political donations</h3>
-<table class="table table-hover">
+<h3>
+    <i class='fa fa-dollar fa-fw'></i>
+    <a href='{{ url_for('views.top_earners') }}'>Top earners</a> <small>last 30 days</small>
+</h3>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Rank</th>
+            <th>Committee</th>
+            <th>Type</th>
+            <th class='text-right'>New funds</th>
+            <th class='text-right'>Current funds</th>
+        </tr>
+    </thead>
     <tbody>
-        {% for donation in recent_donations %}
+        {% for earner in top_earners %}
             <tr>
-                <td>
-                    <a href='/search/?term={% if donation.first_name %}{{ donation.first_name }}{% endif %} {{ donation.last_name }}&table_name=candidates&table_name=committees&table_name=officers&table_name=receipts'>{% if donation.first_name %}{{ donation.first_name }}{% endif %} {{ donation.last_name }}</a>
+                <td>{{ loop.index }}</td>
+                <td><a href="{{ url_for('views.committee', committee_id=earner.committee_id ) }}">{{ earner.name }}</a></td>
+                <td>{{ earner.type }}</td>
+                <td class='money-add text-right'>
+                    {% if earner.amount %}
+                        +{{earner.amount|format_money}}
+                    {% else %}
+                        $0
+                    {% endif %}
                 </td>
-                <td>
-                    <a href="{{ url_for('views.contribution', receipt_id=donation.id )}}">donated <strong>{{ donation.amount|format_money }}</strong></a> to
-                </td>
-                <td>
-                    <a href="{{ url_for('views.committee', committee_id=donation.committee_id )}}">{{ donation.committee.name }}</a>
-                </td>
-                <td>
-                    on {{ donation.received_date.strftime('%b %d, %Y') }}
-                </td>
+                <td class='text-right'>{{ earner.total|format_money }}</td>
             </tr>
         {% endfor %}
     </tbody>
 </table>
 
-<p><a class='btn btn-primary' href='{{ url_for('views.donations') }}'><i class='fa fa-dollar fa-fw'></i> Browse recent contributions &raquo;</a></p>
+<p>
+    <a class='btn btn-primary' href='{{ url_for('views.top_earners') }}'><i class='fa fa-plus-circle fa-fw'></i> More top earners &raquo;</a>
+    <a class='btn btn-primary' href='{{ url_for('views.donations') }}'><i class='fa fa-dollar fa-fw'></i> Browse all donations &raquo;</a>
+</p>
 <br /><br />
 
-<h3><i class='fa fa-group fa-fw'></i> Committees with the most money</h3>
+<h3><i class='fa fa-group fa-fw'></i> <a href='{{ url_for('views.committees') }}'>Committees</a> <small>highest current funds</small></h3>
 <table class="table table-hover">
     <thead>
         <tr>
             <th>Rank</th>
             <th>Committee</th>
             <th>Type</th>
-            <th>Funds</th>
+            <th class='text-right'>Current funds</th>
         </tr>
     </thead>
     <tbody>
@@ -59,7 +73,7 @@
                 <td>{{ loop.index }}</td>
                 <td><a href="{{ url_for('views.committee', committee_id=record.committee_id ) }}">{{ record.committee_name }}</a></td>
                 <td>{{ record.committee_type }}</td>
-                <td>{{ record.total|format_money }}</td>
+                <td class='text-right'>{{ record.total|format_money }}</td>
             </tr>
         {% endfor %}
     </tbody>
@@ -68,7 +82,7 @@
 <p><a class='btn btn-primary' href='{{ url_for('views.committees') }}'><i class='fa fa-group fa-fw'></i> All committees &raquo;</a></p>
 <br /><br />
 
-<h3><i class='fa fa-info-circle fa-fw'></i> About</h3>
+<h3><i class='fa fa-info-circle fa-fw'></i> <a href='{{ url_for('views.about') }}'>About</a></h3>
 
 <p><strong>Illinois Sunshine</strong> is a tool for browsing political contributions in the state of Illinois.</p>
 
