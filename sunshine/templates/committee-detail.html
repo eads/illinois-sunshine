@@ -183,7 +183,7 @@
                 <% $.each(transactions, function(i, transaction){ %>
                     <tr>
                         <td>
-                            <a href='/search/?term=<% if(transaction.first_name){ %><%= transaction.first_name %> <% } %><%= transaction.last_name %>&table_name=candidates&table_name=committees&table_name=officers&table_name=receipts'>
+                            <a href='/search/?term=<% if(transaction.first_name){ %><%= transaction.first_name %> <% } %><%= transaction.last_name %>&table_name=candidates&table_name=committees&table_name=officers&table_name=receipts&table_name=expenditures'>
                                 <% if(transaction.first_name){ %>
                                     <%= transaction.first_name %>
                                 <% } %>
@@ -251,7 +251,7 @@
                 <% $.each(transactions, function(i, transaction){ %>
                     <tr>
                         <td>
-                            <a href='/search/?term=<% if(transaction.first_name){ %><%= transaction.first_name %> <% } %><%= transaction.last_name %>&table_name=candidates&table_name=committees&table_name=officers&table_name=receipts'>
+                            <a href='/search/?term=<% if(transaction.first_name){ %><%= transaction.first_name %> <% } %><%= transaction.last_name %>&table_name=candidates&table_name=committees&table_name=officers&table_name=receipts&table_name=expenditures'>
                                 <% if(transaction.first_name){ %>
                                     <%= transaction.first_name %>
                                 <% } %>
@@ -342,7 +342,7 @@
             }));
 
 
-            if(['expenditures', 'receipts'].indexOf(type)){
+            if(['expenditures', 'receipts'].indexOf(type) >= 0){
                 $('.next-page').on('click', function(e){
                     var transaction_type = $(this).data('transaction_type');
                     var offset = parseInt($(this).data('offset')) + 50;
