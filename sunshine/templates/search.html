@@ -15,32 +15,39 @@
             </div>
             <div class="form-group" id='filter-results'>
                 <br />
-                <span>Search for:</span>
-                <label data-title='Candidates' data-content='Any person who seeks nomination for election, election to, or retention in public office'>
-                    <input type="checkbox" name="table_name" value="candidates" {% if 'candidates' in table_name %}checked='checked'{% endif %}> Candidates
-                </label>
-                <label data-title='Committees' data-content='Includes committees for political candidates, political parties, political action committees (PACs), and ballot initiatives'>
-                    <input type="checkbox" name="table_name" value="committees" {% if 'committees' in table_name %}checked='checked'{% endif %}> Committees
-                </label>
-                <label data-title='Committee officers' data-content='Chairmen and treasurerers for political committees'>
-                    <input type="checkbox" name="table_name" value="officers" {% if 'officers' in table_name %}checked='checked'{% endif %}> Committee officers
-                </label>
-                <label data-title='Donations' data-content='Any person or organization who has given to a political committee'>
-                    <input type="checkbox" name="table_name" value="receipts" {% if 'receipts' in table_name %}checked='checked'{% endif %}> Donations
-                </label>
-                <label data-title='Expenditures' data-content='Any person or organization who was given money by a political committee'>
-                    <input type="checkbox" name="table_name" value="expenditures" {% if 'expenditures' in table_name %}checked='checked'{% endif %}> Expenditures
-                </label>
+                <div class="row">
+                    <div class="col-md-2">
+                        <span>Search for</span>
+                    </div>
+                    <div class="col-md-10">
+                        <label data-title='Candidates' data-content='Any person who seeks nomination for election, election to, or retention in public office'>
+                            <input type="checkbox" name="table_name" value="candidates" {% if 'candidates' in table_name %}checked='checked'{% endif %}> Candidates
+                        </label>
+                        <label data-title='Committees' data-content='Includes committees for political candidates, political parties, political action committees (PACs), and ballot initiatives'>
+                            <input type="checkbox" name="table_name" value="committees" {% if 'committees' in table_name %}checked='checked'{% endif %}> Committees
+                        </label>
+                        <label data-title='Committee officers' data-content='Chairmen and treasurerers for political committees'>
+                            <input type="checkbox" name="table_name" value="officers" {% if 'officers' in table_name %}checked='checked'{% endif %}> Committee officers
+                        </label>
+                        <label data-title='Donations' data-content='Any person or organization who has given to a political committee'>
+                            <input type="checkbox" name="table_name" value="receipts" {% if 'receipts' in table_name %}checked='checked'{% endif %}> Donations
+                        </label>
+                        <label data-title='Expenditures' data-content='Any person or organization who was given money by a political committee'>
+                            <input type="checkbox" name="table_name" value="expenditures" {% if 'expenditures' in table_name %}checked='checked'{% endif %}> Expenditures
+                        </label>
+                    </div>
+                </div>
             </div>
             <div class="form-group">
                 <div class="row">
-                    <div class="col-md-6">
-                        <label for="search_date__ge">Date from: </label>
-                        <input id="search_date__ge" type="text" class="form-control" name="search_date__ge" {% if search_date__ge %}value="{{search_date__ge}}" {% endif %}/>
+                    <div class="col-md-2">
+                        <span>Donation or expenditure date</span>
                     </div>
-                    <div class="col-md-6">
-                        <label for="search_date__le">Date to: </label>
-                        <input id="search_date__le" type="text" class="form-control" name="search_date__le" {% if search_date__le %}value="{{search_date__le}}" {% endif %}/>
+                    <div class="col-md-3">
+                        <input id="search_date__ge" type="text" class="form-control date-filter" name="search_date__ge" {% if search_date__ge %}value="{{search_date__ge}}" {% endif %} placeholder="Date from"/>
+                    </div>
+                    <div class="col-md-3">
+                        <input id="search_date__le" type="text" class="form-control date-filter" name="search_date__le" {% if search_date__le %}value="{{search_date__le}}" {% endif %} placeholder="Date to"/>
                     </div>
                 </div>
             </div>
@@ -136,11 +143,20 @@
     <script src="{{ url_for('static', filename='js/ejs_production.js') }}"></script>
     <script src="{{ url_for('static', filename='js/accounting.min.js') }}"></script>
     <script src="{{ url_for('static', filename='js/moment.min.js') }}"></script>
-    <script type="text/javascript" src="{{ url_for('static', filename='js/URI.min.js')}}"></script>
+    <script src="{{ url_for('static', filename='js/URI.min.js')}}"></script>
+
+    <script src="{{ url_for('static', filename='js/jquery-ui.min.js')}}"></script>
 <script type="text/javascript">
     $(document).ready(function(){
 
         $('#filter-results label').popover({trigger: "hover", placement: "bottom"});
+
+        $('.date-filter').datepicker({
+            dayNamesMin: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+            prevText: '',
+            nextText: '',
+            dateFormat: "yy-mm-dd"
+        });
 
         {% if term != None %}
             var query = URI(window.location.search).query(true)
@@ -149,6 +165,12 @@
     })
     function do_query(query){
         var term = query['term'];
+
+        if (term == "") {
+            alert("You must enter a search term");
+            return;
+        }
+
         var start_date = query['search_date__ge'];
         var end_date = query['search_date__le'];
 
