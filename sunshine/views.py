@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, abort, request, make_response, \
+from flask import Blueprint, render_template, abort, request, make_response, redirect, \
     session as flask_session
 from sunshine.database import db_session
 from sunshine.models import Candidate, Committee, Receipt, FiledDoc, Expenditure, D2Report
@@ -599,4 +599,4 @@ def flush(secret):
 
 @views.route('/sunshine')
 def sunshine():
-    return redirect(url_for('views.index'))
+    return redirect("/")
