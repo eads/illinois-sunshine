@@ -28,6 +28,10 @@ table, label,.control-label,.help-block,.checkbox,.radio { font-size: 14px; }
 
 .money-add { color: #007F00;}
 
+.table > thead > tr > th {
+  background-color: #ffe47f;
+}
+
 .navbar-default {
   height: 60px;
   background-color: #FFCB08;
@@ -40,14 +44,21 @@ table, label,.control-label,.help-block,.checkbox,.radio { font-size: 14px; }
   color: #000;
 }
 
-.navbar-default .navbar-brand {
+.navbar-default .navbar-brand a {
   color: #000;
   font-family: "Muli",sans-serif;
   font-size: 20px;
 }
 
+.navbar-default .navbar-brand .sub-credit a {
+  color: #666;
+  font-family: "Muli",sans-serif;
+  font-size: 14px;
+}
+
 .navbar-default .navbar-brand:hover { color: #000; }
 
+.navbar-default .navbar-nav { padding-top: 3px; } 
 .navbar-default .navbar-nav > li > a:hover { color: #000; } 
 
 .navbar-default .navbar-nav > .active > a, 
@@ -88,9 +99,17 @@ table, label,.control-label,.help-block,.checkbox,.radio { font-size: 14px; }
 
 /* Custom page footer */
 .footer {
-  padding-top: 19px;
+  padding: 20px 0 20px 0;
   color: #777;
-  border-top: 1px solid #e5e5e5;
+  border-top: 2px solid #e5e5e5;
+}
+
+.footer img {
+  padding-right: 10px;
+}
+
+.footer .credits {
+  padding-top: 35px;
 }
 
 /* Responsive: Portrait tablets and up */

@@ -2,7 +2,7 @@
 {% block title %}Keep an eye on money in Illinois politics{% endblock %}
 {% block content %}
 <div class='jumbotron'>
-    <p>Since 1994, <strong>${{ totals[0][0]|format_large_number }}</strong> has been donated to political campaigns in the State of Illinois. <br />Search and browse the donations and the committees that receive them.</p>
+    <p>Keep an eye on money in Illinois politics</p>
 
     <form action='/search' method='GET'>
         <div class="input-group input-group-lg">
@@ -19,20 +19,23 @@
     </form>
 </div>
 
-<h3>
+<h2>
     <i class='fa fa-dollar fa-fw'></i>
     <a href='{{ url_for('views.donations') }}'>Donations</a> <small>since 1994</small>
-</h3>
+</h2>
+
+<p>Since 1994, <strong>${{ totals[0][0]|format_large_number }}</strong> has been donated to political campaigns in the State of Illinois.</p>
 
 <div id='donation-chart'></div>
 <br />
 
 <p><a class='btn btn-primary' href='{{ url_for('views.donations') }}'><i class='fa fa-dollar fa-fw'></i> Browse all donations &raquo;</a></p>
+<br /><br />
 
-<h3>
+<h2>
     <i class='fa fa-plus-circle fa-fw'></i>
     <a href='{{ url_for('views.top_earners') }}'>Top earners</a> <small>last 30 days</small>
-</h3>
+</h2>
 <table class="table table-striped">
     <thead>
         <tr>
@@ -67,7 +70,7 @@
 </p>
 <br /><br />
 
-<h3><i class='fa fa-group fa-fw'></i> <a href='{{ url_for('views.committees') }}'>Committees</a> <small>highest current funds</small></h3>
+<h2><i class='fa fa-group fa-fw'></i> <a href='{{ url_for('views.committees') }}'>Committees</a> <small>highest current funds</small></h2>
 <table class="table table-hover">
     <thead>
         <tr>
@@ -92,14 +95,13 @@
 <p><a class='btn btn-primary' href='{{ url_for('views.committees') }}'><i class='fa fa-group fa-fw'></i> All committees &raquo;</a></p>
 <br /><br />
 
-<h3><i class='fa fa-info-circle fa-fw'></i> <a href='{{ url_for('views.about') }}'>About</a></h3>
+<h2><i class='fa fa-info-circle fa-fw'></i> <a href='{{ url_for('views.about') }}'>About</a></h2>
 
 <p><strong>Illinois Sunshine</strong> is a tool for browsing political contributions in the state of Illinois.</p>
 
 <p>The data comes from the Illinois State Board of Elections, which has been collecting this data electronically since 1994. We built Illinois Sunshine to give journalists, activists and citizens better access to and documentation for this data.</p>
 
 <p><a class='btn btn-primary' href='{{ url_for('views.about') }}'><i class='fa fa-info-circle fa-fw'></i> Read more &raquo;</a></p>
-<br /><br />
 
 {% endblock %}
 
