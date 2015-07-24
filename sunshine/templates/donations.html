@@ -2,32 +2,52 @@
 {% block title %}Donations{% endblock %}
 {% block content %}
 
-    <h1><i class='fa fa-dollar fa-fw'></i> Donations</h1>
-    <p>Since 1994, <strong>${{ totals[0][0]|format_large_number }}</strong> has been donated to political campaigns in the State of Illinois. Browse the <strong>{{ totals[0][1] | format_number }}</strong> individual donations below.</p>
+    <div class='row'>
+        <div class='col-sm-9'>
+            <h1><i class='fa fa-dollar fa-fw'></i> Donations</h1>
+            <h3>
+                <strong>{{ days_total_count|format_number }}</strong> donations on <strong>{{date.strftime('%b %d, %Y')}}</strong> totalling <strong>{{ days_total_donations|format_money }}</strong>
+            </h3>
+        </div>
 
-    <div id='donation-chart'></div>
+        <div class='col-sm-3 text-center'>
+            <br />
+            <span>
+                <a href='/donations?date={{prev_day_date.strftime('%Y-%m-%d')}}' class='btn btn-sm btn-primary'>&laquo; {{prev_day_date.strftime('%b %d, %Y')}}</a>
+                {% if not is_current %}
+                    <a href='/donations?date={{next_day_date.strftime('%Y-%m-%d')}}' class='btn btn-sm btn-primary'>{{next_day_date.strftime('%b %d, %Y')}} &raquo;</a>
+                {% endif %}
+            </span>
+            <br /><br />
+            <form action='/donations' method='GET' class='col-sm-12'>
+                <div class="input-group input-group-xs">
+                    <input type="text" class="form-control date-filter" placeholder="Pick a date" name="date" value='{{date.strftime('%Y-%m-%d')}}'>
+                    <span class="input-group-btn">
+                        <button class="btn btn-default" type="submit">Jump to date</button>
+                    </span>
+                </div>
+            </form>
+        </div>
 
+    <div class='clearfix'></div>
     <br />
-    <h3>
-        <strong>{{ weeks_total_count|format_number }}</strong> donations between <strong>{{start_date.strftime('%b %d, %Y')}}</strong> and <strong>{{end_date.strftime('%b %d, %Y')}}</strong> totalling <strong>{{ weeks_total_donations|format_money }}</strong>
-        <span class='pull-right'>
-            <a href='/donations?start_date={{prev_week_date.strftime('%Y-%m-%d')}}&end_date={{start_date.strftime('%Y-%m-%d')}}' class='btn btn-sm btn-primary'>&laquo; Prev week</a>
-            {% if not is_current %}
-                <a href='/donations?start_date={{end_date.strftime('%Y-%m-%d')}}&end_date={{next_week_date.strftime('%Y-%m-%d')}}' class='btn btn-sm btn-primary'>Next week &raquo;</a>
-            {% endif %}
-        </span>
-    </h3>
 
-    <p></p>
-
-    <table class="table table-striped">
+    <table class="table table-striped" id='donations-table'>
+        <thead>
+            <tr>
+                <th>Donor</th>
+                <th class='text-right'>Amount</th>
+                <th>Committee</th>
+                <th>Date</th>
+            </tr>
+        </thead>
         <tbody>
-            {% for donation in weeks_donations %}
+            {% for donation in days_donations %}
                 <tr>
                     <td>
                         <a href='/search/?term={% if donation.first_name %}{{ donation.first_name }}{% endif %} {{ donation.last_name }}&table_name=candidates&table_name=committees&table_name=officers&table_name=receipts'>{% if donation.first_name %}{{ donation.first_name }}{% endif %} {{ donation.last_name }}</a>
                     </td>
-                    <td class='nowrap'>
+                    <td class='nowrap text-right'>
                         <a href="{{ url_for('views.contribution', receipt_id=donation.id )}}">{{ donation.d2_part|donation_verb }} <strong>{{ donation.amount|format_money }}</strong></a> to
                     </td>
                     <td>
@@ -43,18 +63,36 @@
 {% endblock %}
 
 {% block extra_javascript %}
-    <script src="http://code.highcharts.com/highcharts.js"></script>
-    <script src="/static/js/moment.min.js"></script>
-    <script src="/static/js/chart_helper.js"></script>
-    <script>
+    <script src="{{ url_for('static', filename='js/jquery.dataTables.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/jquery.dataTables.sorting.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/dataTables.bootstrap.js') }}"></script>
+    
+    <script src="{{ url_for('static', filename='js/jquery-ui.min.js')}}"></script>
+    <script type="text/javascript">
+        $(document).ready(function(){
 
-        var money = {{ donations_by_month|tojson|safe }};
-        var money_f = [];
-        for (i = 0; i < money.length; i++) {
-            money_f.push([Date.UTC(money[i][1],money[i][2]-1,money[i][3]), money[i][0]]);
-        }
+            $("#donations-table").DataTable({
+                "info": false,
+                "searching": false,
+                "bLengthChange": false,
+                "paging": false,
+                "aaSorting": [ [1,'desc'] ],
+                "aoColumns": [
+                    null,
+                    { "sType": "num-html" },
+                    null,
+                    { "sType": "datetime" }
+                ],
+            });
 
-        ChartHelper.donations('donation-chart', 'Campaign donations', '', 'Donations', money_f);
+            $('.date-filter').datepicker({
+                dayNamesMin: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+                prevText: '',
+                nextText: '',
+                dateFormat: "yy-mm-dd",
+                maxDate: new Date(),
+                minDate: new Date( 1994, 0, 1)
+            });
+        });
     </script>
-
 {% endblock %}

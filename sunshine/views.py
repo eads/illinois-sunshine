@@ -95,22 +95,21 @@ def index():
 @cache.cached(timeout=CACHE_TIMEOUT, key_prefix=make_cache_key)
 def donations():
 
-    start_date = datetime.now().date() - timedelta(days=7)
-    end_date = datetime.now().date()
+    date = datetime.now().date() - timedelta(days=1)
 
-    if request.args.get('start_date'):
-      start_date = parse(request.args.get('start_date'))
+    if request.args.get('date'):
+      date = parse(request.args.get('date'))
     
-    if request.args.get('end_date'):
-      end_date = parse(request.args.get('end_date'))
+    if request.args.get('date'):
+      date = parse(request.args.get('date'))
 
-    prev_week_date = start_date - timedelta(days=7)
-    next_week_date = end_date + timedelta(days=7)
-    is_current = (end_date == datetime.now().date())
+    prev_day_date = date - timedelta(days=1)
+    next_day_date = date + timedelta(days=1)
+    is_current = (date == datetime.now().date())
     
     engine = db_session.bind
 
-    weeks_donations_sql = '''
+    days_donations_sql = '''
       SELECT 
         c.*, 
         cm.name as committee_name
@@ -121,46 +120,23 @@ def donations():
       ORDER BY c.received_date DESC
     '''
 
-    weeks_donations = list(engine.execute(sa.text(weeks_donations_sql), 
-                                     start_date=start_date,
-                                     end_date=end_date))
+    days_donations = list(engine.execute(sa.text(days_donations_sql), 
+                                     start_date=date,
+                                     end_date=(date + timedelta(days=1))))
 
-    weeks_total_count = len(weeks_donations)
-    weeks_total_donations = sum([d.amount for d in weeks_donations])
-    
-    donations_by_month_sql = ''' 
-        SELECT * FROM receipts_by_month WHERE month >= :start_date
-    '''
-
-    donations_by_month = [[d.total_amount,
-                          d.month.year,
-                          d.month.month,
-                          d.month.day] 
-                          for d in engine.execute(sa.text(donations_by_month_sql), 
-                                                  start_date="1994-01-01")]
-
-    totals_sql = '''
-      SELECT 
-        SUM(total_amount) as total_amount, 
-        SUM(donation_count) as donation_count, 
-        AVG(average_donation) as average_donation 
-      FROM receipts_by_month'''
-
-    totals = list(engine.execute(sa.text(totals_sql)))
+    days_total_count = len(days_donations)
+    days_total_donations = sum([d.amount for d in days_donations])
 
     engine.dispose()
 
     return render_template('donations.html', 
-                           weeks_donations=weeks_donations,
-                           weeks_total_count=weeks_total_count,
-                           weeks_total_donations=weeks_total_donations,
-                           donations_by_month=donations_by_month,
-                           start_date=start_date,
-                           end_date=end_date,
-                           prev_week_date=prev_week_date,
-                           next_week_date=next_week_date,
-                           is_current=is_current,
-                           totals=totals)
+                           days_donations=days_donations,
+                           days_total_count=days_total_count,
+                           days_total_donations=days_total_donations,
+                           date=date,
+                           prev_day_date=prev_day_date,
+                           next_day_date=next_day_date,
+                           is_current=is_current)
 
 @views.route('/about/')
 def about():

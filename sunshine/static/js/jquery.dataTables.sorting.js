@@ -12,7 +12,7 @@ jQuery.extend( jQuery.fn.dataTableExt.oSort, {
     },
 
     "num-html-pre": function ( a ) {
-        return parseFloat( a.replace( /<.*?>/g, "" ).replace("$","").replace(",","") );
+        return parseFloat( a.replace( /<.*?>/g, "" ).replace(/\D/g,''));
     },
     
     "num-html-asc": function ( a, b ) {

@@ -59,11 +59,8 @@ ChartHelper.donations = function(el, title, sourceTxt, yaxisLabel, data) {
           point: {
             events: {
               click: function() {
-                var start_date = moment.utc(new Date(this.x)).format('YYYY-MM-DD');
-                var end_date = moment.utc(new Date(this.x)).add(7, 'days').format('YYYY-MM-DD');
-                // console.log(start_date);
-                // console.log(end_date);
-                window.location.href = '/donations?start_date=' + start_date + '&end_date=' + end_date;
+                var date = moment.utc(new Date(this.x)).format('YYYY-MM-DD');
+                window.location.href = '/donations?date=' + date;
               }
             }
           },
