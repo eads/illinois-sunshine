@@ -904,10 +904,10 @@ class SunshineViews(object):
             create = '''
                CREATE MATERIALIZED VIEW most_recent_filings AS (
                  SELECT 
-                   d2.end_funds_available, 
-                   d2.total_investments,
-                   d2.total_debts,
-                   (d2.inkind_itemized + d2.inkind_non_itemized) AS total_inkind,
+                   COALESCE(d2.end_funds_available, 0) AS end_funds_available, 
+                   COALESCE(d2.total_investments, 0) AS total_investments,
+                   COALESCE(d2.total_debts, 0) AS total_debts,
+                   COALESCE((d2.inkind_itemized + d2.inkind_non_itemized), 0) AS total_inkind,
                    cm.name AS committee_name, 
                    cm.id AS committee_id,
                    cm.type AS committee_type,
