@@ -235,7 +235,7 @@ def top_earners():
           FROM condensed_receipts'''
 
     if days_ago > 0:
-      top_earners += " WHERE received_date > :received_date"
+      top_earners += " WHERE received_date >= :received_date"
 
     top_earners += '''
           GROUP BY committee_id
