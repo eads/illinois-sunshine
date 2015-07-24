@@ -217,7 +217,7 @@
                             </a>
                         </td>
                         <td class='nowrap'>
-                            on <strong><%= moment(transaction.received_date).format('MMMM DD, YYYY') %></strong>
+                            on <%= moment(transaction.received_date).format('MMMM DD, YYYY') %>
                         </td>
                         <td>
                             <a href='/search/?term=<% if(transaction.first_name){ %><%= transaction.first_name %> <% } %><%= transaction.last_name %>&table_name=candidates&table_name=committees&table_name=officers&table_name=receipts&table_name=expenditures'>
@@ -251,7 +251,7 @@
             <thead>
                 <tr>
                     <th>Donor</th>
-                    <th class="text-right">Amount</th>
+                    <th class="text-right nowrap">Amount</th>
                     <th>Date</th>
                 </tr>
             </thead>
@@ -266,7 +266,7 @@
                                 <%= transaction.last_name %>
                             </a>
                         </td>
-                        <td class="text-right">
+                        <td class="text-right nowrap">
                                 <a href="/contributions/<%= transaction.id %>">
                                     <%= donation_verb(transaction.d2_part) %> <strong>
                                 <%= accounting.formatMoney(transaction.amount) %>
@@ -321,7 +321,7 @@
                             <%= accounting.formatMoney(transaction.total) %>
                         </td>
                         <td class='nowrap'>
-                            <%= moment(transaction.total_date).format('MMMM DD, YYYY') %>
+                            <%= moment(transaction.total_date).format('MMM DD, YYYY') %>
                         </td>
                     </tr>
                 <% }) %>

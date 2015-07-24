@@ -99,12 +99,7 @@
         <div class='text-center'>
             <h1>
                 <strong>l</strong><br />
-                {{ receipt.amount|format_money }}
-
-                {% if receipt.loan_amount %}
-                    <small>(loan)</small>
-                {% endif %}
-                <br />
+               <small>{{ receipt.d2_part|donation_verb }}</small><br />{{ receipt.amount|format_money }}<br />
                 <i class='fa fa-fw fa-chevron-down'></i>
             </h1>
         </div>
@@ -151,18 +146,14 @@
                             {% endif %}
                         </td>
                     </tr>
-
-                    {% if receipt.loan_amount %}
-                        <tr>
-                            <td>Loan amount</td>
-                            <td>{{ receipt.loan_amount|format_money }}</td>
-                        </tr>
-                    {% else %}
-                        <tr>
-                            <td>Donation amount</td>
-                            <td>{{ receipt.amount|format_money }}</td>
-                        </tr>
-                    {% endif %}
+                    <tr>
+                        <td>Contribution type</td>
+                        <td>{{ receipt.d2_part|donation_name }}</td>
+                    </tr>
+                    <tr>
+                        <td>Amount</td>
+                        <td>{{ receipt.amount|format_money }}</td>
+                    </tr>
                     <tr>
                         <td>Donation ID</td>
                         <td>{{ receipt.id }}</td>

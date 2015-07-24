@@ -14,49 +14,15 @@
                 on {{ expense.expended_date.strftime('%B %-m, %Y') }}
             {% endif %}
         </h2>
-        <hr />
+        <br />
     </div>
 </div>
 <div class="row">
-    <div class="col-sm-12">
-        <h4>Expense info</h4>
+    <div class="col-sm-8">
         <table class="table table-hover">
-            <thead>
-                <tr>
-                    <th>Candidate name</th>
-                    <th>Office</th>
-                    <th>Position</th>
-                    <th>Purpose</th>
-                    <th>Amount</th>
-                    <th>Expended date</th>
-                </tr>
-            </thead>
             <tbody>
                 <tr>
-                    <td>{{ expense.candidate_name if expense.candidate_name else '' }}</td>
-                    <td>{{ expense.office if expense.office else '' }}</td>
-                    {% if expense.supporting %}
-                        <td>Supporting</td>
-                    {% elif expense.opposing %}
-                        <td>Opposing</td>
-                    {% else %}
-                        <td></td>
-                    {% endif %}
-                    <td>{{ expense.purpose if expense.purpose else '' }}</td>
-                    <td>{{ expense.amount|format_money }}</td>
-                    <td>{{ expense.expended_date.strftime('%B %-m, %Y') }}</td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
-</div>
-<div class="row">
-    <div class="col-sm-12">
-        <h4>Donor info</h4>
-        <table class="table table-bordered table-condensed">
-            <tbody>
-                <tr>
-                    <td><strong>Name</strong></td>
+                    <td><strong>Committee</strong></td>
                     <td>
                         <a href="{{ url_for('views.committee', committee_id=expense.committee.id ) }}">
                             {{ expense.committee.name }}
@@ -81,21 +47,41 @@
                 </tr>
             </tbody>
         </table>
-    </div>
-    <hr />
-</div>
-<div class="row">
-    <div class="col-sm-12">
-        <h4>Recipient info</h4>
-        <table class="table table-bordered table-condensed">
+
+        <div class='text-center'>
+            <h1>
+                <strong>l</strong><br />
+               <small>{{ expense.d2_part|expense_verb }}</small><br />{{ expense.amount|format_money }}<br />
+                <i class='fa fa-fw fa-chevron-down'></i>
+            </h1>
+        </div>
+
+        <table class="table table-hover">
             <tbody>
                 <tr>
-                    <td><strong>Name</strong></td>
+                    <td><strong>Recipient</strong></td>
                     <td>
                         {% if expense.first_name %}
                             {{ expense.first_name }}
                         {% endif %}
                         {{ expense.last_name }}
+                    </td>
+                </tr>
+                <tr>
+                    <td><strong>Purpose</strong></td>
+                    <td>
+                        {{ expense.purpose if expense.purpose else '' }}
+
+                        {% if expense.supporting or expense.opposing %}
+                            <br />
+                            {% if expense.supporting %}
+                                <label class='label label-success'>Supporting</label>
+                            {% elif expense.opposing %}
+                                <label class='label label-danger'>Opposing</label>
+                            {% endif %}
+                            <br /><strong>Candidate</strong>: {{ expense.candidate_name if expense.candidate_name else '' }}
+                            <br /><strong>Office</strong>: {{ expense.office if expense.office else '' }}
+                        {% endif %}
                     </td>
                 </tr>
                 <tr>
@@ -155,6 +141,35 @@
                 {% endif %}
             </tbody>
         </table>
+    </div>
+    <div class='col-sm-4'>
+        <div class='well'>
+            <h4>Expenditure</h4>
+            <table class="table table-hover">
+                <tbody>
+                    <tr>
+                        <td>Date</td>
+                        <td>
+                            {% if expense.expended_date %}
+                                {{ expense.expended_date.strftime('%b %d, %Y') }}
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Expenditure type</td>
+                        <td>{{ expense.d2_part|expense_name }}</td>
+                    </tr>
+                    <tr>
+                        <td>Amount</td>
+                        <td>{{ expense.amount|format_money }}</td>
+                    </tr>
+                    <tr>
+                        <td>Expenditure ID</td>
+                        <td>{{ expense.id }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
 

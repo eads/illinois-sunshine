@@ -48,6 +48,17 @@ def create_app():
             '5A': 'donated inkind'
         }
         return verbs.get(s, 'donated')
+
+    @app.template_filter('donation_name')
+    def donation_name(s):
+        verbs = {
+            '1A': 'Donation',
+            '2A': 'Transfer in',
+            '3A': 'Loan recieved',
+            '4A': 'Other',
+            '5A': 'In kind donation'
+        }
+        return verbs.get(s, 'donated')
     
     @app.template_filter('expense_verb')
     def expense_verb(s):
@@ -56,6 +67,16 @@ def create_app():
             '7B': 'loaned',
             '8B': 'spent',
             '9B': 'spent*',
+        }
+        return verbs.get(s, 'spent')
+
+    @app.template_filter('expense_name')
+    def expense_name(s):
+        verbs = {
+            '6B': 'Transfer out',
+            '7B': 'Loan made',
+            '8B': 'Expenditure',
+            '9B': 'Independent Expenditure',
         }
         return verbs.get(s, 'spent')
 
