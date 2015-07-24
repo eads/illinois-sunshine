@@ -907,6 +907,7 @@ class SunshineViews(object):
                    d2.end_funds_available, 
                    d2.total_investments,
                    d2.total_debts,
+                   (d2.inkind_itemized + d2.inkind_non_itemized) AS total_inkind,
                    cm.name AS committee_name, 
                    cm.id AS committee_id,
                    cm.type AS committee_type,
@@ -955,6 +956,7 @@ class SunshineViews(object):
                CREATE MATERIALIZED VIEW committee_money AS (
                  SELECT 
                    MAX(filings.end_funds_available) AS end_funds_available,
+                   MAX(filings.total_inkind) AS total_inkind,
                    MAX(filings.committee_name) AS committee_name,
                    MAX(filings.committee_id) AS committee_id,
                    MAX(filings.committee_type) AS committee_type,
@@ -1072,7 +1074,7 @@ class SunshineViews(object):
     def receiptsByWeekIndex(self):
         index = ''' 
             CREATE UNIQUE INDEX CONCURRENTLY receipts_by_month_idx 
-            ON receipts_by_month(week)
+            ON receipts_by_month(month)
         '''
         
         self.executeOutsideTransaction(index)
