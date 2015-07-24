@@ -112,6 +112,15 @@ table, label,.control-label,.help-block,.checkbox,.radio { font-size: 14px; }
   padding-top: 35px;
 }
 
+#money-table-guts {
+  min-height: 200px;
+  text-align: center;
+}
+
+#money-table-guts h1{
+  margin-top: 40px;
+}
+
 /* Responsive: Portrait tablets and up */
 @media screen and (min-width: 768px) {
   /* Remove the padding we set earlier */

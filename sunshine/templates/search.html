@@ -248,7 +248,7 @@
                     "data": "resign_date",
                     "render": function(data, type, full, meta){
                         if(data){
-                            return moment(data).format('MMMM DD, YYYY')
+                            return moment(data).format('MMM DD, YYYY')
                         } else {
                             return data
                         }
@@ -281,14 +281,15 @@
                 {
                     "data": "amount",
                     "render": function(data, type, full, meta){
-                        return accounting.formatMoney(data);
+                        return '<a href="/contributions/' + full['id'] + '/">' + accounting.formatMoney(data) + '</a>'
+                        return ;
                     }
                 },
                 {
                     "data": "received_date",
                     "render": function(data, type, full, meta){
                         if(data){
-                            return moment(data).format('MMMM DD, YYYY')
+                            return moment(data).format('MMM DD, YYYY')
                         }
                     }
                 }
@@ -327,14 +328,14 @@
                 {
                     "data": "amount",
                     "render": function(data, type, full, meta){
-                        return accounting.formatMoney(data);
+                        return '<a href="/expenditures/' + full['id'] + '/">' + accounting.formatMoney(data) + '</a>'
                     }
                 },
                 {
                     "data": "expended_date",
                     "render": function(data, type, full, meta){
                         if(data){
-                            return moment(data).format('MMMM DD, YYYY')
+                            return moment(data).format('MMM DD, YYYY')
                         }
                     }
                 }
