@@ -65,13 +65,13 @@ class TypeInferer(object):
             pass
         
         try:
-            self.types[col] = self.tryDate(idx)
+            self.types[col] = self.tryDateTime(idx)
             return
         except (TypeError, ValueError) as e:
             pass
         
         try:
-            self.types[col] = self.tryDateTime(idx)
+            self.types[col] = self.tryDate(idx)
             return
         except (TypeError, ValueError) as e:
             pass

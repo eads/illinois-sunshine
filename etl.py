@@ -920,20 +920,28 @@ class SunshineViews(object):
                  FROM committees AS cm 
                  LEFT JOIN (
                    SELECT DISTINCT ON (committee_id) 
-                     id, 
-                     committee_id, 
-                     doc_name, 
-                     reporting_period_end,
-                     reporting_period_begin,
-                     received_datetime
-                   FROM filed_docs 
-                   WHERE doc_name NOT IN (
-                     'A-1', 
-                     'Statement of Organization', 
-                     'Letter/Correspondence',
-                     'B-1'
-                   ) 
-                   ORDER BY committee_id, received_datetime DESC
+                     f.* 
+                   FROM (
+                     SELECT DISTINCT ON (committee_id, reporting_period_end) 
+                       id, 
+                       committee_id, 
+                       doc_name, 
+                       reporting_period_end,
+                       reporting_period_begin,
+                       received_datetime
+                     FROM filed_docs 
+                     WHERE doc_name NOT IN (
+                       'A-1', 
+                       'Statement of Organization', 
+                       'Letter/Correspondence',
+                       'B-1'
+                     ) 
+                     ORDER BY committee_id, 
+                              reporting_period_end DESC,
+                              received_datetime DESC
+                   ) AS f
+                   ORDER BY f.committee_id, 
+                            f.reporting_period_end DESC
                  ) AS fd 
                    ON fd.committee_id = cm.id 
                  LEFT JOIN d2_reports AS d2 
@@ -1115,7 +1123,7 @@ class SunshineViews(object):
     def mostRecentFilingsIndex(self):
         index = ''' 
             CREATE UNIQUE INDEX CONCURRENTLY most_recent_filings_idx
-            ON most_recent_filings(committee_id)
+            ON most_recent_filings(committee_id, reporting_period_end)
         '''
         
         self.executeOutsideTransaction(index)

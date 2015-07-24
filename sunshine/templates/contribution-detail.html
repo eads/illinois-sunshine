@@ -10,12 +10,8 @@
             {% endif %}
             {{ receipt.last_name }}
             </strong>
-            
-            {% if receipt.loan_amount %}
-                loaned
-            {% else %}
-                donated
-            {% endif %}
+
+            {{ receipt.d2_part|donation_verb }}
             <strong>{{ receipt.amount|format_money }}</strong> to
             <strong>{{ receipt.committee.name }}</strong>
             {% if receipt.received_date %}
@@ -155,7 +151,7 @@
                             {% endif %}
                         </td>
                     </tr>
-                    
+
                     {% if receipt.loan_amount %}
                         <tr>
                             <td>Loan amount</td>
