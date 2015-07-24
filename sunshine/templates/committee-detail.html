@@ -165,17 +165,94 @@
     <script src="{{ url_for('static', filename='js/moment.min.js') }}"></script>
     <script src="{{ url_for('static', filename='js/chart_helper.js') }}"></script>
 
-    <script type="text/EJS" id="rec-exp-table-guts">
+    <script>
+        function donation_verb(d2_part){
+            var verbs = {
+                '1A': 'donated',
+                '2A': 'transferred',
+                '3A': 'loaned',
+                '4A': 'gave',
+                '5A': 'donated inkind'
+            }
+            if (typeof verbs[d2_part] === 'undefined'){
+                return 'dontated';
+            } else {
+                return verbs[d2_part];
+            }
+        }
+    </script>
+    <script>
+        function expense_verb(d2_part){
+            var verbs = {
+                '6B': 'Transferred',
+                '7B': 'Loaned',
+                '8B': 'Spent',
+                '9B': 'Spent*'
+            }
+            if (typeof verbs[d2_part] === 'undefined'){
+                return 'spent';
+            } else {
+                return verbs[d2_part];
+            }
+        }
+    </script>
+    <script type="text/EJS" id="exp-table-guts">
         <table class="table table-striped">
             <thead>
                 <tr>
-                    <% if(transaction_type == 'expenditures'){ %>
-                        <th>Recipient</th>
-                        <th>Purpose</th>
-                    <% } else { %>
-                        <th>Donor</th>
-                    <% } %>
-                    <th>Amount</th>
+                    <th class="text-right">Amount</th>
+                    <th>Date</th>
+                    <th>Recipient</th>
+                    <th>Purpose</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% $.each(transactions, function(i, transaction){ %>
+                    <tr>
+                        <td class="text-right nowrap">
+                                <a href="/expenditures/<%= transaction.id %>">
+                                    <%= expense_verb(transaction.d2_part) %> <strong>
+                                <%= accounting.formatMoney(transaction.amount) %>
+                                </strong>
+                            </a>
+                        </td>
+                        <td class='nowrap'>
+                            on <%= moment(transaction.received_date).format('MMMM DD, YYYY') %>
+                        </td>
+                        <td>
+                            to
+                            <a href='/search/?term=<% if(transaction.first_name){ %><%= transaction.first_name %> <% } %><%= transaction.last_name %>&table_name=candidates&table_name=committees&table_name=officers&table_name=receipts&table_name=expenditures'>
+                                <% if(transaction.first_name){ %>
+                                    <%= transaction.first_name %>
+                                <% } %>
+                                <%= transaction.last_name %>
+                            </a>
+                        </td>
+                        <td class='nowrap'>
+                            for <strong><%= transaction.purpose %></strong>
+                        </td>
+                    </tr>
+                <% }) %>
+            </tbody>
+        </table>
+        <p>
+            <% if ( offset >= 50){ %>
+                <a href='javascript://' class='btn btn-sm btn-primary prev-page' data-transaction_type="<%= transaction_type %>" data-offset="<%= offset %>">&laquo; Previous page</a>
+            <% } %>
+            <% if (offset >= 0){ %>
+                <a href='javascript://' class='btn btn-sm btn-primary next-page' data-transaction_type="<%= transaction_type %>" data-offset="<%= offset %>">
+                    Next page &raquo;
+                </a>
+            <% } %>
+        </p>
+    </script>
+
+    <script type="text/EJS" id="rec-table-guts">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Donor</th>
+                    <th class="text-right">Amount</th>
                     <th>Date</th>
                 </tr>
             </thead>
@@ -190,32 +267,15 @@
                                 <%= transaction.last_name %>
                             </a>
                         </td>
-                        <% if(transaction_type == 'expenditures'){ %>
-                            <td class="nowrap">
-                                <%= transaction.purpose %>
-                            </td>
-                        <% } %>
-                        <td class='nowrap'>
-                            <% if(transaction_type == 'receipts'){  %>
+                        <td class="text-right">
                                 <a href="/contributions/<%= transaction.id %>">
-                            <% } else { %>
-                                <a href="/<%= transaction_type %>/<%= transaction.id %>">
-                            <% } %>
-                                <% if (transaction_type == 'expenditures') { %>
-                                    received <strong>
-                                <% } else { %>
-                                    donated <strong>
-                                <% } %>
+                                    <%= donation_verb(transaction.d2_part) %> <strong>
                                 <%= accounting.formatMoney(transaction.amount) %>
                                 </strong>
                             </a>
                         </td>
                         <td class='nowrap'>
-                            <% if (transaction_type == 'expenditures') { %>
-                                on <%= moment(transaction.expended_date).format('MMMM DD, YYYY') %>
-                            <% } else { %>
-                                on <%= moment(transaction.received_date).format('MMMM DD, YYYY') %>
-                            <% } %>
+                            on <%= moment(transaction.received_date).format('MMMM DD, YYYY') %>
                         </td>
                     </tr>
                 <% }) %>
@@ -329,8 +389,11 @@
 
             if(['top_donors', 'top_recipients'].indexOf(type) >= 0){
                 template_guts = $('#top-money-table-guts').html();
+            } else if (type == 'receipts' || type == 'largest_donations') {
+                template_guts = $('#rec-table-guts').html();
             } else {
-                template_guts = $('#rec-exp-table-guts').html();
+                template_guts = $('#exp-table-guts').html();
+
             }
 
             var template = new EJS({'text': template_guts});

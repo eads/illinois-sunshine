@@ -28,7 +28,7 @@
                         <a href='/search/?term={% if donation.first_name %}{{ donation.first_name }}{% endif %} {{ donation.last_name }}&table_name=candidates&table_name=committees&table_name=officers&table_name=receipts'>{% if donation.first_name %}{{ donation.first_name }}{% endif %} {{ donation.last_name }}</a>
                     </td>
                     <td class='nowrap'>
-                        <a href="{{ url_for('views.contribution', receipt_id=donation.id )}}">donated <strong>{{ donation.amount|format_money }}</strong></a> to
+                        <a href="{{ url_for('views.contribution', receipt_id=donation.id )}}">{{ donation.d2_part|donation_verb }} <strong>{{ donation.amount|format_money }}</strong></a> to
                     </td>
                     <td>
                         <a href="{{ url_for('views.committee', committee_id=donation.committee_id )}}">{{ donation.committee_name }}</a>

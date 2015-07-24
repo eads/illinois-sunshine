@@ -37,6 +37,27 @@ def create_app():
     def format_money(s):
         locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
         return locale.currency(s, grouping=True)
+    
+    @app.template_filter('donation_verb')
+    def donation_verb(s):
+        verbs = {
+            '1A': 'donated',
+            '2A': 'transferred',
+            '3A': 'loaned',
+            '4A': 'gave',
+            '5A': 'donated inkind'
+        }
+        return verbs.get(s, 'donated')
+    
+    @app.template_filter('expense_verb')
+    def expense_verb(s):
+        verbs = {
+            '6B': 'transferred',
+            '7B': 'loaned',
+            '8B': 'spent',
+            '9B': 'spent*',
+        }
+        return verbs.get(s, 'spent')
 
     @app.template_filter('format_number')
     def format_number(s):
