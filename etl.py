@@ -934,7 +934,8 @@ class SunshineViews(object):
                        'A-1', 
                        'Statement of Organization', 
                        'Letter/Correspondence',
-                       'B-1'
+                       'B-1',
+                       'Nonparticipation'
                      ) 
                      ORDER BY committee_id, 
                               reporting_period_end DESC,

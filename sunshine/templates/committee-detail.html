@@ -5,46 +5,47 @@
     <div class="col-sm-8">
         <h1>
             {{ committee.name }}
-            <small>{{ committee.type }} Committee
+            <small>{{ committee.type if committee.type else '' }} Committee
                 {% if not committee.active %}
                     (inactive)
                 {% endif %}
             </small>
         </h1>
 
-        <table class="table table-striped">
-            <thead>
-                <th>{{ latest_filing.reporting_period_end.strftime('%b %d, %Y') }} quarterly report</th>
-                <th>Amount</th>
-            </thead>
-            <tbody>
-                {% if latest_filing and latest_filing.reporting_period_end %}
+        {% if latest_filing.reorting_period_end %}
+            <table class="table table-striped">
+                <thead>
+                    <th>{{ latest_filing.reporting_period_end.strftime('%b %d, %Y') }} quarterly report</th>
+                    <th>Amount</th>
+                </thead>
+                <tbody>
+                    {% if latest_filing and latest_filing.reporting_period_end %}
+                        <tr>
+                            <td>Funds available</td>
+                            <td>{{ latest_filing.end_funds_available|format_money }}</td>
+                        </tr>
+                        <tr>
+                            <td>Investments</td>
+                            <td>{{ latest_filing.total_investments|format_money }}</td>
+                        </tr>
+                        <tr>
+                            <td>Debts and obligations</td>
+                            <td>-{{ latest_filing.total_debts|format_money }}</td>
+                        </tr>
+                        <tr>
+                            <td>Contributions since {{ latest_filing.reporting_period_end.strftime('%b %d, %Y')}}*</td>
+                            <td>{{ recent_total|format_money }}</td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+                <tfoot>
                     <tr>
-                        <td>Funds available</td>
-                        <td>{{ latest_filing.end_funds_available|format_money }}</td>
+                        <td><strong>Total funds</strong></td>
+                        <td><strong>{% if controlled_amount %}{{ controlled_amount|format_money }}{% else %}$0{% endif %}</strong></td>
                     </tr>
-                    <tr>
-                        <td>Investments</td>
-                        <td>{{ latest_filing.total_investments|format_money }}</td>
-                    </tr>
-                    <tr>
-                        <td>Debts and obligations</td>
-                        <td>-{{ latest_filing.total_debts|format_money }}</td>
-                    </tr>
-                    <tr>
-                        <td>Contributions since {{ latest_filing.reporting_period_end.strftime('%b %d, %Y')}}*</td>
-                        <td>{{ recent_total|format_money }}</td>
-                    </tr>
-                {% endif %}
-            </tbody>
-            <tfoot>
-                <tr>
-                    <td><strong>Total funds</strong></td>
-                    <td><strong>{% if controlled_amount %}{{ controlled_amount|format_money }}{% else %}$0{% endif %}</strong></td>
-                </tr>
-            </tfoot>
-        </table>
-
+                </tfoot>
+            </table>
+        {% endif %}
         <h3 id="income-chart-title">Net funds over time</h3>
         <div id="income-chart"></div>
 
