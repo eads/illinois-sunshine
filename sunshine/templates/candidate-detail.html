@@ -19,14 +19,14 @@
         </p>
         <p><a href='http://www.elections.il.gov/CampaignDisclosure/CandidateDetail.aspx?id={{candidate.id}}'>View on IL Board of Elections website</a></p>
         <hr />
-        {% if candidate.committees|length > 1 %}
-            <h3>Committees</h3>
+        {% if supporting|length > 1 %}
+            <h3>Supporting Committees</h3>
         {% else %}
-            <h3>Committee</h3>
+            <h3>Supporting Committee</h3>
         {% endif %}
         <table class="table table-striped">
             <tbody>
-                {% for committee in candidate.committees %}
+                {% for committee in supporting %}
                     {% if committee.active %}
                         <tr>
                             <td><a href="{{ url_for('views.committee', committee_id=committee.id ) }}">{{ committee.name }}</a></td>
@@ -34,14 +34,27 @@
                         </tr>
                     {% endif %}
                 {% endfor %}
-                {% for committee in ie_committees %}
-                    <tr>
-                        <td><a href="{{ url_for('views.committee', committee_id=committee.committee_id ) }}">{{ committee.committee_name }}</a></td>
-                        <td>{{ committee.committee_type }} Committee {% if committee.supporting %}(Supporting){% elif committee.opposing %}(Opposing){% endif %}</td>
-                    </tr>
-                {% endfor %}
             </tbody>
         </table>
+
+        {% if opposing %}
+            {% if opposing|length > 1 %}
+                <h3>Opposing Committees</h3>
+            {% else %}
+                <h3>Opposing Committee</h3>
+            {% endif %}
+            <table class="table table-striped">
+                <tbody>
+                    {% for committee in opposing %}
+                        <tr>
+                            <td><a href="{{ url_for('views.committee', committee_id=committee.id ) }}">{{ committee.name }}</a></td>
+                            <td>{{ committee.type }} Committee</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% endif %}
+
         {% if candidate.candidacies|length > 1 %}
             <h3>Candidacies</h3>
         {% else %}

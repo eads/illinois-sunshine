@@ -91,6 +91,18 @@
     </div>
     <div class='col-sm-4'>
         <div class='well'>
+
+            <table class="table">
+                <tbody>
+                    {% if committee.purpose %}
+                        <tr>
+                            <td>Purpose</td>
+                            <td>{{ committee.purpose }}</td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+
             {% if committee.candidates %}
                 <table class="table">
                     <thead>

@@ -168,22 +168,36 @@ def candidate(candidate_id):
     
     if not candidate:
         return abort(404)
-    
+
+    supporting = [c for c in candidate.committees]
+    opposing = []
+
     ie_committees = ''' 
-        SELECT * FROM expenditures_by_candidate
+        SELECT committee_id as id, committee_name as name, 
+        committee_type as type, supporting, opposing, true as active 
+        FROM expenditures_by_candidate
         WHERE candidate_id = :candidate_id
     '''
     
     engine = db_session.bind
-
     ie_committees = list(engine.execute(sa.text(ie_committees), 
                                         candidate_id=candidate_id))
+
+    for ie in ie_committees:
+      if ie.supporting:
+        supporting.append(ie)
+      if ie.opposing:
+        opposing.append(ie)
+
+    for ie in ie_committees:
+      print(ie)
 
     engine.dispose()
 
     return render_template('candidate-detail.html', 
                            candidate=candidate,
-                           ie_committees=ie_committees)
+                           supporting=supporting,
+                           opposing=opposing)
 
 @views.route('/top-earners/')
 @cache.cached(timeout=CACHE_TIMEOUT, key_prefix=make_cache_key)
