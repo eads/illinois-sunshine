@@ -80,6 +80,23 @@ def create_app():
         }
         return verbs.get(s, 'spent')
 
+    @app.template_filter('committee_description')
+    def committee_description(s):
+      if s == "Candidate":
+        description = "Candidate committees accept campaign contributions and make expenditures under the candidate's authority in order to further their bid for election or re-election to public office. They are subject to state and federal contribution limits."
+      elif s == "Independent Expenditure":
+        description = "Independent expenditure committees, also known as Super PACs, may raise unlimited sums of money from corporations, unions, associations and individuals, then spend unlimited sums to overtly advocate for or against political candidates or issues. Unlike traditional PACs, independent expenditure committees are prohibited from donating money directly to political candidates."
+      elif s == "Political Action":
+        description = "A political action committee (PAC) is a type of organization that gathers campaign contributions from members and spends those funds to support or oppose candidates, ballot initiatives, or legislation. These committees are subject to state and federal contribution limits."
+      elif s == "Political Party":
+        description = "A political party committee is an organization, officially affiliated with a political party, which raises and spends money to support candidates of that party or oppose candidates of other parties. These committees are subject to some contributions limits, and funds are often transferred from Political Party Committees to Candidate Committees."
+      elif s == "Ballot Initiative":
+        description = "A ballot initiative is created by a petition signed by a minimum number of registered voters to bring about a public vote on a proposed statute or constitutional amendment. A group in support or opposition of this type of public policy is considered to be a ballot initiative committee. These committees are not subject to contributions limits."
+      else:
+        description = ""
+
+      return description
+
     @app.template_filter('format_number')
     def format_number(s):
         return '{:,}'.format(s)

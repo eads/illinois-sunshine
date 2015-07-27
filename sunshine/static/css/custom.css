@@ -47,13 +47,13 @@ table, label,.control-label,.help-block,.checkbox,.radio { font-size: 14px; }
 .navbar-default .navbar-brand a {
   color: #000;
   font-family: "Muli",sans-serif;
-  font-size: 20px;
+  font-size: 22px;
 }
 
 .navbar-default .navbar-brand .sub-credit a {
   color: #666;
   font-family: "Muli",sans-serif;
-  font-size: 14px;
+  font-size: 12px;
 }
 
 .navbar-default .navbar-brand:hover { color: #000; }
@@ -114,7 +114,6 @@ table, label,.control-label,.help-block,.checkbox,.radio { font-size: 14px; }
 
 #money-table-guts {
   min-height: 200px;
-  text-align: center;
 }
 
 #money-table-guts h1{
