@@ -547,6 +547,21 @@ def committee(committee_id):
                r.reporting_period_end.day] 
                for r in quarterlies]
 
+    donations = [[r.total_receipts, 
+                  r.reporting_period_end.year,
+                  r.reporting_period_end.month,
+                  r.reporting_period_end.day] 
+                  for r in quarterlies]
+
+    expenditures = [[r.total_expenditures, 
+                     r.reporting_period_end.year,
+                     r.reporting_period_end.month,
+                     r.reporting_period_end.day] 
+                     for r in quarterlies]
+
+    total_donations = sum([r.total_receipts for r in quarterlies])
+    total_expenditures = sum([r.total_expenditures for r in quarterlies])
+
     engine.dispose()
 
     return render_template('committee-detail.html', 
@@ -559,7 +574,11 @@ def committee(committee_id):
                            controlled_amount=controlled_amount,
                            ending_funds=ending_funds,
                            investments=investments,
-                           debts=debts)
+                           debts=debts,
+                           donations=donations,
+                           expenditures=expenditures,
+                           total_donations=total_donations,
+                           total_expenditures=total_expenditures)
 
 @views.route('/contributions/<receipt_id>/')
 @cache.cached(timeout=CACHE_TIMEOUT, key_prefix=make_cache_key)

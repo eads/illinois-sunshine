@@ -174,6 +174,79 @@ ChartHelper.netfunds = function(el, title, sourceTxt, yaxisLabel, data) {
     });
   }
 
+ChartHelper.donation_expenditure = function(el, title, sourceTxt, yaxisLabel, data) {
+  var color = '#007F00';
+  
+  var seriesData = [{
+          color: color,
+          data: data[0],
+          name: "Donations"
+        },{
+          color: "#cc0000",
+          data: data[1],
+          name: "Expenditures"
+        }
+      ]
+
+  //$("#charts").append("<div class='chart' id='chart_grouping_" + iteration + "'></div>")
+  return new Highcharts.Chart({
+      chart: {
+          renderTo: el,
+          type: "column",
+          marginRight: 10,
+          marginBottom: 25
+      },
+      legend: {
+        backgroundColor: "#ffffff",
+        borderColor: "#cccccc",
+        floating: true,
+        verticalAlign: "top"
+      },
+      credits: { 
+        enabled: false 
+      },
+      title: null,
+      xAxis: {
+          dateTimeLabelFormats: { year: "%Y" },
+          type: "datetime"
+      },
+      yAxis: {
+          title: null
+      },
+      plotOptions: {
+        line: {
+          animation: false
+        },
+        series: {
+          stacking: 'normal',
+          marker: {
+            fillColor: color,
+            radius: 0,
+            states: {
+              hover: {
+                enabled: true,
+                radius: 5
+              }
+            }
+          },
+          shadow: false
+        }
+      },
+      tooltip: {
+          crosshairs: true,
+          formatter: function() {
+            var s = "<strong>" + ChartHelper.toolTipDateFormat("quarter", this.x) + "</strong>";
+            $.each(this.points, function(i, point) {
+              s += "<br /><span style='color: " + point.series.color + "'>" + point.series.name + ":</span> $" + Highcharts.numberFormat(point.y, 0, '.', ',');
+            });
+            return s;
+          },
+          shared: true
+      },
+      series: seriesData
+    });
+  }
+
 ChartHelper.pointInterval = function(interval) {
   if (interval == "year")
     return 365 * 24 * 3600 * 1000;

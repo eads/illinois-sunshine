@@ -52,6 +52,21 @@
         <h3 id="income-chart-title">Net funds over time</h3>
         <div id="income-chart"></div>
 
+        {% if total_donations > 0 or total_expenditures > 0 %}
+            <h3>Donations and expenditures over time</h3>
+            <table class='table'>
+                <tr>
+                    <td>Total donations since {{committee.creation_date.strftime('%b %d, %Y')}}</td>
+                    <td>{{total_donations|format_money}}</td>
+                </tr>
+                <tr>
+                    <td>Total expenditures since {{committee.creation_date.strftime('%b %d, %Y')}}</td>
+                    <td>{{total_expenditures|format_money}}</td>
+                </tr>
+            </table>
+            <div id="expend-chart"></div>
+        {% endif %}
+
         {% if related_committees %}
             <h3>
                 Related committees
@@ -480,13 +495,18 @@
             })
         }
 
+        // init chart data
         var investments = {{ investments|tojson|safe }};
         var debts = {{ debts|tojson|safe }};
         var ending_funds = {{ ending_funds|tojson|safe }};
+        var donations = {{ donations|tojson|safe }};
+        var expenditures = {{ expenditures|tojson|safe }};
 
         var investments_f = [];
         var debts_f = [];
         var ending_funds_f = [];
+        var donations_f = [];
+        var expenditures_f = [];
 
         // format investments
         for (i = 0; i < investments.length; i++) {
@@ -503,11 +523,25 @@
             ending_funds_f.push([Date.UTC(ending_funds[i][1],ending_funds[i][2]-1,ending_funds[i][3]), ending_funds[i][0]]);
         }
 
+        // format donations
+        for (i = 0; i < donations.length; i++) {
+            donations_f.push([Date.UTC(donations[i][1],donations[i][2]-1,donations[i][3]), donations[i][0]]);
+        }
+
+        // format expenditures
+        for (i = 0; i < expenditures.length; i++) {
+            expenditures_f.push([Date.UTC(expenditures[i][1],expenditures[i][2]-1,expenditures[i][3]), expenditures[i][0]]);
+        }
+
         {% if ending_funds|length > 1 %}
             ChartHelper.netfunds('income-chart', 'Funds over time', '', 'Funds', [ending_funds_f,investments_f,debts_f]);
         {% else %}
             $("#income-chart-title").hide();
             $("#income-chart").hide();
+        {% endif %}
+
+        {% if donations|length > 1 %}
+            ChartHelper.donation_expenditure('expend-chart', 'Donations and expenditures over time', '', 'Money', [donations_f, expenditures_f]);
         {% endif %}
     </script>
 {% endblock %}
