@@ -48,12 +48,33 @@
             </tbody>
         </table>
 
-        <div class='text-center'>
-            <h1>
-                <strong>l</strong><br />
-               <small>{{ expense.d2_part|expense_verb }}</small><br />{{ expense.amount|format_money }}<br />
-                <i class='fa fa-fw fa-chevron-down'></i>
-            </h1>
+        <div class='row'>
+            <div class='col-sm-6 col-sm-offset-3'>
+                <div class='text-center well'>
+                    <p>{{ expense.d2_part|expense_verb }}</p>
+                    <h1>
+                       <label class='label label-danger'>{{ expense.amount|format_money }}</label>
+                    </h1>
+                    <br />
+                    {% if expense.purpose %}
+                        <p>
+                            on {{ expense.purpose }}
+                        </p>
+                    {% endif %}
+                    {% if expense.supporting or expense.opposing %}
+                        {% if expense.supporting %}
+                            <strong>Supporting</strong>
+                        {% elif expense.opposing %}
+                            <strong>Opposing</strong>
+                        {% endif %}
+                        <br /><strong>Candidate</strong>: {{ expense.candidate_name if expense.candidate_name else '' }}
+                        <br /><strong>Office</strong>: {{ expense.office if expense.office else '' }}
+                    {% endif %}
+                </div>
+                <div class='text-center'>
+                    <h1><i class='fa fa-fw fa-chevron-down'></i></h1>
+                </div>
+            </div>
         </div>
 
         <table class="table table-hover">
@@ -65,23 +86,6 @@
                             {{ expense.first_name }}
                         {% endif %}
                         {{ expense.last_name }}
-                    </td>
-                </tr>
-                <tr>
-                    <td><strong>Purpose</strong></td>
-                    <td>
-                        {{ expense.purpose if expense.purpose else '' }}
-
-                        {% if expense.supporting or expense.opposing %}
-                            <br />
-                            {% if expense.supporting %}
-                                <label class='label label-success'>Supporting</label>
-                            {% elif expense.opposing %}
-                                <label class='label label-danger'>Opposing</label>
-                            {% endif %}
-                            <br /><strong>Candidate</strong>: {{ expense.candidate_name if expense.candidate_name else '' }}
-                            <br /><strong>Office</strong>: {{ expense.office if expense.office else '' }}
-                        {% endif %}
                     </td>
                 </tr>
                 <tr>

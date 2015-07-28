@@ -51,12 +51,6 @@
                         {{ receipt.zipcode }}
                     </td>
                 </tr>
-                {% if receipt.description %}
-                    <tr>
-                        <td><strong>Description</strong></td>
-                        <td>{{ receipt.description }}</td>
-                    </tr>
-                {% endif %}
                 {% if receipt.occupation %}
                     <tr>
                         <td><strong>Occupation</strong></td>
@@ -96,13 +90,27 @@
             </tbody>
         </table>
 
-        <div class='text-center'>
-            <h1>
-                <strong>l</strong><br />
-               <small>{{ receipt.d2_part|donation_verb }}</small><br />{{ receipt.amount|format_money }}<br />
-                <i class='fa fa-fw fa-chevron-down'></i>
-            </h1>
+        <div class='row'>
+            <div class='col-sm-6 col-sm-offset-3'>
+                <div class='text-center well'>
+                    <p>{{ receipt.d2_part|donation_verb }}</p>
+                    <h1>
+                       <label class='label label-success'>{{ receipt.amount|format_money }}</label>
+                    </h1>
+                    <br />
+                    {% if receipt.description %}
+                        <p>
+                            for {{ receipt.description }}
+                        </p>
+                    {% endif %}
+                </div>
+                <div class='text-center'>
+                    <h1><i class='fa fa-fw fa-chevron-down'></i></h1>
+                </div>
+            </div>
         </div>
+
+
 
         <table class="table table-hover">
             <tbody>
