@@ -43,7 +43,7 @@
         </thead>
         <tbody>
             {% for donation in days_donations %}
-                {% set committee_slug = [donation.committee.name|slugify, donation.committee.id|string]|join('-') %}
+                {% set committee_slug = [donation.committee_name|slugify, donation.committee_id|string]|join('-') %}
                 <tr>
                     <td>
                         <a href='/search/?term={% if donation.first_name %}{{ donation.first_name }}{% endif %} {{ donation.last_name }}&table_name=candidates&table_name=committees&table_name=officers&table_name=receipts'>{% if donation.first_name %}{{ donation.first_name }}{% endif %} {{ donation.last_name }}</a>
