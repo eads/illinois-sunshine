@@ -43,6 +43,7 @@
         </thead>
         <tbody>
             {% for donation in days_donations %}
+                {% set committee_slug = [donation.committee.name|slugify, donation.committee.id|string]|join('-') %}
                 <tr>
                     <td>
                         <a href='/search/?term={% if donation.first_name %}{{ donation.first_name }}{% endif %} {{ donation.last_name }}&table_name=candidates&table_name=committees&table_name=officers&table_name=receipts'>{% if donation.first_name %}{{ donation.first_name }}{% endif %} {{ donation.last_name }}</a>
@@ -51,7 +52,7 @@
                         <a href="{{ url_for('views.contribution', receipt_id=donation.id )}}">{{ donation.d2_part|donation_verb }} <strong>{{ donation.amount|format_money }}</strong></a> to
                     </td>
                     <td>
-                        <a href="{{ url_for('views.committee', committee_id=donation.committee_id )}}">{{ donation.committee_name }}</a>
+                        <a href="{{ url_for('views.committee', committee_id=committee_slug )}}">{{ donation.committee_name }}</a>
                     </td>
                     <td class='nowrap'>
                         on {{ donation.received_date.strftime('%b %d, %Y') }}
@@ -66,7 +67,7 @@
     <script src="{{ url_for('static', filename='js/jquery.dataTables.min.js') }}"></script>
     <script src="{{ url_for('static', filename='js/jquery.dataTables.sorting.js') }}"></script>
     <script src="{{ url_for('static', filename='js/dataTables.bootstrap.js') }}"></script>
-    
+
     <script src="{{ url_for('static', filename='js/jquery-ui.min.js')}}"></script>
     <script type="text/javascript">
         $(document).ready(function(){

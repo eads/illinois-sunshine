@@ -24,7 +24,8 @@
                 <tr>
                     <td><strong>Committee</strong></td>
                     <td>
-                        <a href="{{ url_for('views.committee', committee_id=expense.committee.id ) }}">
+                        {% set committee_slug = [expense.committee.name|slugify, expense.committee.id|string]|join('-') %}
+                        <a href="{{ url_for('views.committee', committee_id=committee_slug ) }}">
                             {{ expense.committee.name }}
                         </a>
                     </td>

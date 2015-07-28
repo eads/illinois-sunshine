@@ -164,6 +164,9 @@ def search():
 @views.route('/candidates/<candidate_id>/')
 @cache.cached(timeout=CACHE_TIMEOUT, key_prefix=make_cache_key)
 def candidate(candidate_id):
+    
+    candidate_id = candidate_id.rsplit('-', 1)[-1]
+    
     try:
         candidate_id = int(candidate_id)
     except ValueError:
@@ -192,9 +195,6 @@ def candidate(candidate_id):
         supporting.append(ie)
       if ie.opposing:
         opposing.append(ie)
-
-    for ie in ie_committees:
-      print(ie)
 
     engine.dispose()
 
@@ -342,6 +342,9 @@ def committees():
 @views.route('/committees/<committee_id>/')
 @cache.cached(timeout=CACHE_TIMEOUT, key_prefix=make_cache_key)
 def committee(committee_id):
+
+    committee_id = committee_id.rsplit('-', 1)[-1]
+
     try:
         committee_id = int(committee_id)
     except ValueError:
@@ -526,8 +529,6 @@ def committee(committee_id):
 
     quarterlies = list(engine.execute(sa.text(quarterlies), 
                                  committee_id=committee_id))
-
-    #print(quarterlies)
 
     ending_funds = [[r.end_funds_available, 
                      r.reporting_period_end.year,

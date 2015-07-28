@@ -55,6 +55,7 @@ def create_app():
     app.jinja_env.filters['expense_verb'] = tf.expense_verb
     app.jinja_env.filters['expense_name'] = tf.expense_name
     app.jinja_env.filters['committee_description'] = tf.committee_description
+    app.jinja_env.filters['slugify'] = tf.slugify
     
     @app.context_processor
     def inject_date():

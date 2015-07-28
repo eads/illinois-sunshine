@@ -68,3 +68,16 @@ def format_large_number(n):
                       int(math.floor(math.log10(abs(n))/3))))
     return '%.1f %s'%(n/10**(3*millidx),millnames[millidx])
 
+def slugify(text):
+    import re
+    delim = '-'
+
+    if text:
+        punct_re = re.compile(r'[\t !"#$%&\'()*\-/<=>?@\[\\\]^_`{|},.:;]+')
+        result = []
+        for word in punct_re.split(text.lower()):
+            if word:
+                result.append(str(word))
+        return delim.join(result)
+    else: # pragma: no cover
+        return text

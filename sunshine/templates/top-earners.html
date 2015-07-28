@@ -34,7 +34,8 @@
                 {% for earner in top_earners %}
                     <tr>
                         <td>{{ loop.index }}</td>
-                        <td><a href="{{ url_for('views.committee', committee_id=earner.committee_id ) }}">{{ earner.name }}</a></td>
+                        {% set committee_slug = [earner.name|slugify, earner.committee_id|string]|join('-') %}
+                        <td><a href="{{ url_for('views.committee', committee_id=committee_slug ) }}">{{ earner.name }}</a></td>
                         <td>{{ earner.type }}</td>
                         <td class='money-add text-right'>
                             {% if earner.amount %}

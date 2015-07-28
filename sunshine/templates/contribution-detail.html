@@ -117,7 +117,8 @@
                 <tr>
                     <td><strong>Recipient</strong></td>
                     <td>
-                        <a href="{{ url_for('views.committee', committee_id=receipt.committee.id ) }}">
+                        {% set committee_slug = [receipt.committee.name|slugify, receipt.committee.id|string]|join('-') %}
+                        <a href="{{ url_for('views.committee', committee_id=committee_slug ) }}">
                             {{ receipt.committee.name }}
                         </a>
                     </td>
