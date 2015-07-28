@@ -2,6 +2,7 @@ from flask import Flask, render_template
 from sunshine.views import views
 from sunshine.api import api
 import locale
+import traceback
 from dateutil import parser
 from sunshine.app_config import TIME_ZONE
 from sunshine.cache import cache
@@ -31,7 +32,17 @@ def create_app():
     
     @app.errorhandler(404)
     def page_not_found(e):
+        app.logger.info(traceback.format_exc())
+        if sentry:
+            sentry.captureException()
         return render_template('404.html'), 404
+
+    @app.errorhandler(Exception)
+    def error(e):
+        app.logger.info(traceback.format_exc())
+        if sentry:
+            sentry.captureException()
+        return render_template('error.html'), 500
     
     @app.template_filter('format_money')
     def format_money(s):

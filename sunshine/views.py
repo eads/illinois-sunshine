@@ -142,6 +142,10 @@ def donations():
 def about():
     return render_template('about.html')
 
+@views.route('/error/')
+def error():
+    return render_template('error.html')
+
 @views.route('/search/')
 def search():
     term = request.args.get('term')

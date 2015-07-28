@@ -22,6 +22,9 @@ table, label,.control-label,.help-block,.checkbox,.radio { font-size: 14px; }
 
 #spinner h1 { padding-top: 30px; width: 100%; text-align: center; }
 
+.super-sun { font-size: 80px; text-align: center; }
+.super-sun span { font-size: 160px;}
+
 #donation-chart { height: 250px;}
 
 #net-chart, #income-chart { height: 200px; }
