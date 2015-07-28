@@ -60,5 +60,9 @@ def create_app():
     @app.context_processor
     def inject_date():
         return dict(now=datetime.now().replace(tzinfo=TIME_ZONE))
+
+    @app.context_processor
+    def data_quality_note():
+        return dict(data_quality_note="We show data as it is reported by the <a href='http://elections.il.gov/' target='_blank'>Illinois State Board of Elections</a>. There are known issues. <a href='https://docs.google.com/spreadsheets/d/19yXMVn-hpO9mUrlnipLMnAEHm0kxVcqaegRPeYrtKSA/edit#gid=0' target='_blank'>We keep track of them here</a>.")
     
     return app

@@ -111,6 +111,10 @@ table, label,.control-label,.help-block,.checkbox,.radio { font-size: 14px; }
   padding-right: 10px;
 }
 
+.data-quality-note {
+  cursor: pointer;
+}
+
 .footer .credits {
   padding-top: 35px;
 }

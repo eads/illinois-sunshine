@@ -49,11 +49,11 @@
                 </tfoot>
             </table>
         {% endif %}
-        <h3 id="income-chart-title">Net funds over time</h3>
+        <h3 id="income-chart-title"><br />Net funds over time<small class='data-quality-note' data-content='{{data_quality_note}}'>*</small></h3>
         <div id="income-chart"></div>
 
         {% if total_donations > 0 or total_expenditures > 0 %}
-            <h3>Donations and expenditures over time</h3>
+            <h3><br />Donations and expenditures over time<small class='data-quality-note' data-content='{{data_quality_note}}'>*</small></h3>
             <table class='table'>
                 <tr>
                     <td>Total donations since {{committee.creation_date.strftime('%b %d, %Y')}}</td>
@@ -375,7 +375,17 @@
     <script>
         $(document).ready(function(){
 
-            $('#committee-type').popover({trigger: "hover", placement: "bottom"})
+            $('#committee-type').popover({trigger: "hover", placement: "bottom"});
+
+            $('.data-quality-note').popover({trigger: "click", placement: "right", "html": true });
+
+            $('html').on('mouseup', function(e) {
+                if(!$(e.target).closest('.popover').length) {
+                    $('.popover').each(function(){
+                        $(this.previousSibling).popover('hide');
+                    });
+                }
+            });
 
             $.when(getMoney('top_donors', 0)).then(function(resp){
                 var total_rows = parseInt(resp['meta']['total_rows']);
