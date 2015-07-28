@@ -250,7 +250,7 @@
                             </a>
                         </td>
                         <td class='nowrap'>
-                            on <%= moment(transaction.received_date).format('MMMM DD, YYYY') %>
+                            on <%= moment(transaction.expended_date).format('MMMM DD, YYYY') %>
                         </td>
                         <td>
                             <a href='/search/?term=<% if(transaction.first_name){ %><%= transaction.first_name %> <% } %><%= transaction.last_name %>&table_name=candidates&table_name=committees&table_name=officers&table_name=receipts&table_name=expenditures'>
