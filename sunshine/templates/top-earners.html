@@ -1,5 +1,8 @@
 {% extends 'base.html' %}
-{% block title %}Top earners{% endblock %}
+{% from 'macros.html' import header %}
+{% block header_social %}
+    {{ header("Top earners", "Political committees operate by recieving donations, transfers and loans from people, organizations, and other committees. Here's who's raised the most money in the last month.", request.path) }}
+{% endblock %}
 {% block content %}
 
 <div class="row">
