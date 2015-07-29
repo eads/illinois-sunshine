@@ -1,5 +1,13 @@
 {% extends 'base.html' %}
 {% block title %}Search{% endblock %}
+{% from 'macros.html' import header %}
+{% block header_social %}
+    {% if term %}
+        {{ header("Search for '" + term + "'", "Search for candidates, committees and donors in Illinois", request.path) }}
+    {% else %}
+    {{ header("Search", "Search for candidates, committees and donors in Illinois", request.path) }}
+    {% endif %}
+{% endblock %}
 {% block content %}
 <div class="row">
     <div class="col-sm-12">

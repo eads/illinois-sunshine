@@ -1,5 +1,8 @@
 {% extends 'base.html' %}
-{% block title %}{{ expense.last_name }}, {{ expense.first_name }}{% endblock %}
+{% from 'macros.html' import header %}
+{% block header_social %}
+    {{ header(expense.d2_part|expense_name + " from " + expense.committee.name, expense.amount|format_money, request.path) }}
+{% endblock %}
 {% block content %}
 <div class="row">
     <div class="col-sm-12">
@@ -52,7 +55,7 @@
         <div class='row'>
             <div class='col-sm-6 col-sm-offset-3'>
                 <div class='text-center well'>
-                    <p>{{ expense.d2_part|expense_verb1 }}</p>
+                    <p>{{ expense.d2_part|expense_verb }}</p>
                     <h1>
                        <label class='label label-danger'>{{ expense.amount|format_money }}</label>
                     </h1>

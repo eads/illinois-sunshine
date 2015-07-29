@@ -1,5 +1,8 @@
 {% extends 'base.html' %}
-{% block title %}Keep an eye on money in Illinois politics{% endblock %}
+{% from 'macros.html' import header %}
+{% block header_social %}
+    {{ header(None, None, request.path) }}
+{% endblock %}
 {% block content %}
 <div class='jumbotron'>
     <p>Keep an eye on money in Illinois politics</p>

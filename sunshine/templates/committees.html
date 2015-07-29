@@ -1,6 +1,8 @@
 {% extends 'base.html' %}
-{% from 'macros.html' import pager %}
-{% block title %}Committees{% endblock %}
+{% from 'macros.html' import pager, header %}
+{% block header_social %}
+    {{ header(committee_type + " Committees", committee_type | committee_description, request.path) }}
+{% endblock %}
 {% block content %}
 
 <h1><i class='fa fa-group fa-fw'></i> Committees</h1>

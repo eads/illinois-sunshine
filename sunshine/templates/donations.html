@@ -1,5 +1,8 @@
 {% extends 'base.html' %}
-{% block title %}Donations{% endblock %}
+{% from 'macros.html' import header %}
+{% block header_social %}
+    {{ header("Donations on " + date.strftime('%b %d, %Y'), days_total_count|format_number + " donations on " + date.strftime('%b %d, %Y') + " totalling " + days_total_donations|format_money, request.path) }}
+{% endblock %}
 {% block content %}
 
     <div class='row'>

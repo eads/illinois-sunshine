@@ -1,3 +1,57 @@
+{% macro header(title, description, url) -%}
+    {% if title %}
+        <title>{{title}} - Illinois Sunshine</title>
+    {% else %}
+        <title>Illinois Sunshine - Keep an eye on money in Illinois politics</title>
+    {% endif %}
+
+    <meta charset='utf-8' />
+    <meta content='width=device-width, initial-scale=1.0' name='viewport' />
+    {% if description %}
+      <meta content="{{ description }}" name='description' />
+    {% else %}
+      <meta content="{{ config.DESCRIPTION }}" name='description' />
+    {% endif %}
+    <meta content='{{ config.AUTHOR }}' name='author' />
+
+    <!-- Facebook metadata -->
+    <meta content="{{ config.TITLE }}" property="og:site_name">
+    {% if title %}
+      <meta content="{{ title }}" property="og:title">
+    {% else %}
+      <meta content="{{ config.TITLE }}" property="og:title">
+    {% endif %}
+    {% if title %}
+      <meta content="article" property="og:type">
+    {% else %}
+      <meta content="website" property="og:type">
+    {% endif %}
+    {% if description %}
+      <meta content="{{ description }}" property="og:description">
+    {% else %}
+      <meta content="{{ config.DESCRIPTION }}" property="og:description">
+    {% endif %}
+    {% if url %}
+      <meta content="{{ config.URL }}{{ url }}" property="og:url">
+    {% endif %}
+    <meta content="{{ config.URL }}/images/icpr-logo.png" property="og:image">
+
+    <!-- Twitter metadata -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:site" content="@ILCampaign">
+    <meta name="twitter:creator" content="@ILCampaign">
+    <meta name="twitter:description" content="{{ description }}">
+    {% if title %}
+      <meta name="twitter:title" content="{{ title }}">
+    {% else %}
+      <meta name="twitter:title" content="{{ config.TITLE }}">
+    {% endif %}
+    {% if url %}
+      <meta name="twitter:url" content="{{ config.URL }}{{ url }}">
+    {% endif %}
+    <meta name="twitter:image:src" content="{{ config.URL }}/images/icpr-logo.png">
+{%- endmacro %}
+
 {% macro pager(page, pages, url_base) -%}
 {% if '?' in url_base %}
 {% set url_base = url_base + '&' %}

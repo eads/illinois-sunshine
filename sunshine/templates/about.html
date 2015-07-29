@@ -1,5 +1,8 @@
 {% extends 'base.html' %}
-{% block title %}About{% endblock %}
+{% from 'macros.html' import header %}
+{% block header_social %}
+    {{ header("About", None, request.path) }}
+{% endblock %}
 {% block content %}
 
 <div class='col-md-3'>

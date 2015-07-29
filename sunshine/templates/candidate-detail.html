@@ -1,5 +1,9 @@
 {% extends 'base.html' %}
 {% block title %}{{ candidate.last_name }}, {{ candidate.first_name }}{% endblock %}
+{% from 'macros.html' import header %}
+{% block header_social %}
+    {{ header(candidate.first_name + " " + candidate.last_name, "Candidate information for " + candidate.first_name + " " + candidate.last_name, request.path) }}
+{% endblock %}
 {% block content %}
 <div class="row">
     <div class="col-sm-12">
