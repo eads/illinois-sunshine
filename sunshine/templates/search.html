@@ -38,10 +38,10 @@
                             <input type="checkbox" name="table_name" value="officers" {% if 'officers' in table_name %}checked='checked'{% endif %}> Committee officers
                         </label>
                         <label data-title='Donations' data-content='Any person or organization who has given to a political committee'>
-                            <input type="checkbox" name="table_name" value="receipts" {% if 'receipts' in table_name %}checked='checked'{% endif %}> Donations
+                            <input type="checkbox" name="table_name" value="receipts" {% if 'receipts' in table_name %}checked='checked'{% endif %}> Donations to committees
                         </label>
                         <label data-title='Expenditures' data-content='Any person or organization who was given money by a political committee'>
-                            <input type="checkbox" name="table_name" value="expenditures" {% if 'expenditures' in table_name %}checked='checked'{% endif %}> Expenditures
+                            <input type="checkbox" name="table_name" value="expenditures" {% if 'expenditures' in table_name %}checked='checked'{% endif %}> Expenditures by committees
                         </label>
                     </div>
                 </div>
@@ -68,6 +68,9 @@
 <div class="row">
     <div class="col-sm-12">
         <div id="search-results">
+            <div id="no-results" style="display:none;">
+                <h2>No results found for '{{term}}'</h2>
+            </div>
             <div id="committees-results" style="display:none;">
                 <h3>Committees <small></small></h3>
                 <table class="table table-hover" id="committees-table">
@@ -409,10 +412,12 @@
             },
             "initComplete": function(settings, data){
                 if(data['objects'][table_name].length == 0){
-                    $('#' + table_name + '-results').hide()
+                    $('#' + table_name + '-results').hide();
+                    $('#no-results').show();
                 }
                 else {
                     $('#' + table_name + '-results h3 small').html(data['meta'].total_rows + " found");
+                    $('#no-results').hide();
                 }
             },
             "drawCallback": function(settings){
