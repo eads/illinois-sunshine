@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% from 'macros.html' import header %}
 {% block header_social %}
-    {{ header("Top earners", "Political committees operate by recieving donations, transfers and loans from people, organizations, and other committees. Here's who's raised the most money in the last month.", request.path) }}
+    {{ header("Top earners", "Committees with the most donations since " + calc_days_ago.strftime('%b %d, %Y'), request.path) }}
 {% endblock %}
 {% block content %}
 
