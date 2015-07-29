@@ -1,5 +1,10 @@
 from pytz import timezone
 
+TITLE = "Illinois Sunshine"
+AUTHOR = "Illinois Campaign for Political Reform"
+URL = "http://illinoissunshine.org"
+DESCRIPTION = "Keep an eye on money in Illinois politics. Search or browse political committees, donations and expenditures going back to 1994."
+
 TIME_ZONE = timezone('America/Chicago')
 
 DB_USER = ''
