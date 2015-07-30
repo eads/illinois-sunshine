@@ -714,7 +714,13 @@ class SunshineViews(object):
                       NULL::timestamp AS oppose_max_date
                     FROM candidates AS c
                     JOIN expenditures AS e
-                      ON c.first_name || ' ' || c.last_name = e.candidate_name
+                      ON (string_to_array(c.first_name, ' '))[1] || ' ' || c.last_name = e.candidate_name
+                      AND (
+                        string_to_array(c.office, ' ') && string_to_array(e.office, ' ') OR
+                        string_to_array(c.office, '/') && string_to_array(e.office, '/') OR
+                        string_to_array(c.office, ' ') && string_to_array(e.office, '/') OR
+                        string_to_array(c.office, '/') && string_to_array(e.office, ' ')
+                      )
                     JOIN committees AS cm
                       ON e.committee_id = cm.id
                     WHERE supporting = TRUE AND opposing = FALSE
@@ -738,7 +744,13 @@ class SunshineViews(object):
                       MAX(e.expended_date) AS oppose_max_date
                     FROM candidates AS c
                     JOIN expenditures AS e
-                      ON c.first_name || ' ' || c.last_name = e.candidate_name
+                      ON (string_to_array(c.first_name, ' '))[1] || ' ' || c.last_name = e.candidate_name
+                      AND (
+                        string_to_array(c.office, ' ') && string_to_array(e.office, ' ') OR
+                        string_to_array(c.office, '/') && string_to_array(e.office, '/') OR
+                        string_to_array(c.office, ' ') && string_to_array(e.office, '/') OR
+                        string_to_array(c.office, '/') && string_to_array(e.office, ' ')
+                      )
                     JOIN committees AS cm
                       ON e.committee_id = cm.id
                     WHERE opposing = TRUE AND supporting = FALSE
