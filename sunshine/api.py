@@ -12,6 +12,9 @@ from itertools import groupby
 from string import punctuation
 import re
 import sqlalchemy as sa
+from io import StringIO, BytesIO
+import csv
+import zipfile
 
 api = Blueprint('api', __name__)
 
@@ -113,7 +116,10 @@ def advanced_search():
     term = request.args.get('term')
     limit = request.args.get('limit', 50)
     offset = request.args.get('offset', 0)
-    
+    datatype = request.args.get('datatype')
+    order_by_col = None
+    reverse_sort = True
+
     if request.args.get('length'):
         limit = request.args['length']
     
@@ -128,9 +134,14 @@ def advanced_search():
         reverse_sort = True
         if sort_order == 'asc':
             reverse_sort = False
+    
+    default_tables = ['committees', 'candidates', 'receipts', 'expenditures']
 
     table_names = request.args.getlist('table_name')
    
+    if not table_names:
+        table_names = default_tables
+
     if not term:
         resp['status'] = 'error'
         resp['message'] = 'A search term is required'
@@ -157,77 +168,108 @@ def advanced_search():
         start_idx = int(offset)
         end_idx = int(offset) + int(limit)
         total_rows = 0
-
-        for table_name, records in objects.items():
-            
-            if table_name == 'receipts':
-                
-                if not order_by_col:
-                    order_by_col = 'received_date'
-                    reverse_sort = True
-                
-                records = sorted(records, 
-                                 key=lambda r: r[order_by_col] if r[order_by_col] else "", 
-                                 reverse=reverse_sort)
-                
-            elif table_name == 'expenditures':
-                
-                if not order_by_col:
-                    order_by_col = 'expended_date'
-                    reverse_sort = True
-                
-                records = sorted(records, 
-                                 key=lambda r: r[order_by_col] if r[order_by_col] else "", 
-                                 reverse=reverse_sort)
-
-            elif table_name == 'investments':
-                
-                if not order_by_col:
-                    order_by_col = 'purchase_date'
-                    reverse_sort = True
-                
-                records = sorted(records, 
-                                 key=lambda r: r[order_by_col] if r[order_by_col] else "", 
-                                 reverse=reverse_sort)
-            
-            elif table_name == 'committees':
-                
-                if not order_by_col:
-                    order_by_col = 'name'
-                    reverse_sort = False
-                
-                records = sorted(records, 
-                                 key=lambda r: r[order_by_col] if r[order_by_col] else "", 
-                                 reverse=reverse_sort)
-
-            else:
-                
-                if not order_by_col:
-                    order_by_col = 'last_name'
-                    reverse_sort = False
-                
-                records = sorted(records, 
-                                 key=lambda r: r[order_by_col] if r[order_by_col] else "", 
-                                 reverse=reverse_sort)
-            
-            total_rows += len(records)
-            resp['objects'][table_name] = records[start_idx:end_idx]
-
-        resp['meta'] = {
-            'total_rows': total_rows,
-            'limit': limit,
-            'offset': offset,
-            'term': term
-        }
-        resp['recordsTotal'] = total_rows
-        resp['recordsFiltered'] = total_rows
         
-        if request.args.get('draw'):
-            resp['draw'] = int(request.args['draw'])
+        if datatype == 'csv':
+            
+            zfoutp = BytesIO()
+            with zipfile.ZipFile(zfoutp, 'w') as zf:
 
-    response_str = json.dumps(resp, sort_keys=False, default=dthandler)
-    response = make_response(response_str, status_code)
-    response.headers['Content-Type'] = 'application/json'
+                for table_name, records in objects.items():
+                    outp = StringIO()
+                    writer = csv.writer(outp)
+                    writer.writerow(list(records[0].keys()))
+                    writer.writerows([list(r.values()) for r in records])
+                    zf.writestr('%s.csv' % table_name, outp.getvalue())
+
+            response = make_response(zfoutp.getvalue(), 200)
+            
+            filedate = datetime.now().strftime('%Y-%m-%d')
+            response.headers['Content-Type'] = 'application/zip'
+            fname = 'Illinois_Sunshine_Search_%s_%s.zip' % ('_'.join(term.split(' ')), filedate)
+            response.headers['Content-Disposition'] = 'attachment; filename=%s' % (fname)
+
+        else:
+            for table_name, records in objects.items():
+                
+                if table_name == 'receipts':
+                    
+                    receipts_col = order_by_col
+
+                    if not order_by_col:
+                        receipts_col = 'received_date'
+                        reverse_sort = True
+                    
+                    records = sorted(records, 
+                                     key=lambda r: r[receipts_col] if r[receipts_col] else "", 
+                                     reverse=reverse_sort)
+                    
+                elif table_name == 'expenditures':
+                    
+                    exp_col = order_by_col
+
+                    if not order_by_col:
+                        exp_col = 'expended_date'
+                        reverse_sort = True
+                    
+                    records = sorted(records, 
+                                     key=lambda r: r[exp_col] if r[exp_col] else "", 
+                                     reverse=reverse_sort)
+         
+                elif table_name == 'investments':
+                    
+                    inv_col = order_by_col
+
+                    if not order_by_col:
+                        inv_col = 'purchase_date'
+                        reverse_sort = True
+                    
+                    records = sorted(records, 
+                                     key=lambda r: r[inv_col] if r[inv_col] else "", 
+                                     reverse=reverse_sort)
+                
+                elif table_name == 'committees':
+                    
+                    cmt_col = order_by_col
+
+                    if not order_by_col:
+                        cmt_col = 'name'
+                        reverse_sort = False
+                    
+                    records = sorted(records, 
+                                     key=lambda r: r[cmt_col] if r[cmt_col] else "", 
+                                     reverse=reverse_sort)
+         
+                else:
+                    
+                    other_col = order_by_col
+
+                    if not order_by_col:
+                        other_col = 'last_name'
+                        reverse_sort = False
+                    
+                    records = sorted(records, 
+                                     key=lambda r: r[other_col] if r[other_col] else "", 
+                                     reverse=reverse_sort)
+                
+                total_rows += len(records)
+                resp['objects'][table_name] = records[start_idx:end_idx]
+         
+            resp['meta'] = {
+                'total_rows': total_rows,
+                'limit': limit,
+                'offset': offset,
+                'term': term
+            }
+            resp['recordsTotal'] = total_rows
+            resp['recordsFiltered'] = total_rows
+        
+            if request.args.get('draw'):
+                resp['draw'] = int(request.args['draw'])
+
+            response_str = json.dumps(resp, sort_keys=False, default=dthandler)
+            response = make_response(response_str, status_code)
+            response.headers['Content-Type'] = 'application/json'
+
     return response
 
 @api.route('/top-money/')
