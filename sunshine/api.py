@@ -375,12 +375,14 @@ def committees():
 def receipts():
     
     raw_query_params = request.args.copy()
-    limit = request.args.get('limit', 500)
+    limit = request.args.get('limit', 1000)
     offset = request.args.get('offset', 0)
     order_by = request.args.get('order_by', 'received_date')
     sort_order = request.args.get('sort_order', 'desc')
-    if int(limit) > 500:
-        limit = 500
+    datatype = request.args.get('datatype')
+
+    if int(limit) > 1000:
+        limit = 1000
     
     receipts_table = sa.Table('condensed_receipts', sa.MetaData(), 
                               autoload=True, 
@@ -421,6 +423,22 @@ def receipts():
                 receipts.append(receipt_info)
             committee_info['receipts'] = receipts
             objs.append(committee_info)
+        
+        if datatype == 'csv':
+            outp = StringIO()
+            writer = csv.writer(outp)
+            records = committee_info['receipts']
+            writer.writerow(list(records[0].keys()))
+            writer.writerows([list(r.values()) for r in records])
+            
+            response = make_response(outp.getvalue(), 200)
+            
+            filedate = datetime.now().strftime('%Y-%m-%d')
+            response.headers['Content-Type'] = 'text/csv'
+            fname = 'Illinois_Sunshine_Committee_Receipts_%s_%s.csv' % ('_'.join(committee_info['name'].split(' ')), filedate)
+            response.headers['Content-Disposition'] = 'attachment; filename=%s' % (fname)
+            
+            return response
 
         total_rows = base_query.count()
         resp['objects'] = objs
@@ -441,12 +459,14 @@ def receipts():
 def expenditures():
 
     raw_query_params = request.args.copy()
-    limit = request.args.get('limit', 500)
+    limit = request.args.get('limit', 1000)
     offset = request.args.get('offset', 0)
     order_by = request.args.get('order_by', 'expended_date')
     sort_order = request.args.get('sort_order', 'desc')
-    if int(limit) > 500:
-        limit = 500
+    datatype = request.args.get('datatype')
+
+    if int(limit) > 1000:
+        limit = 1000
     
     expenditures_table = sa.Table('condensed_expenditures', sa.MetaData(), 
                                   autoload=True, autoload_with=db_session.bind)
@@ -487,6 +507,22 @@ def expenditures():
             committee_info['expenditures'] = expenditures
             objs.append(committee_info)
         
+        if datatype == 'csv':
+            outp = StringIO()
+            writer = csv.writer(outp)
+            records = committee_info['expenditures']
+            writer.writerow(list(records[0].keys()))
+            writer.writerows([list(r.values()) for r in records])
+            
+            response = make_response(outp.getvalue(), 200)
+            
+            filedate = datetime.now().strftime('%Y-%m-%d')
+            response.headers['Content-Type'] = 'text/csv'
+            fname = 'Illinois_Sunshine_Committee_Expenditures_%s_%s.csv' % ('_'.join(committee_info['name'].split(' ')), filedate)
+            response.headers['Content-Disposition'] = 'attachment; filename=%s' % (fname)
+            
+            return response
+
         total_rows = base_query.count()
         
         resp['objects'] = objs
@@ -524,6 +560,8 @@ def make_query(table, raw_query_params):
         args_keys.remove('limit')
     if 'order_by' in args_keys:
         args_keys.remove('order_by')
+    if 'datatype' in args_keys:
+        args_keys.remove('datatype')
     for query_param in args_keys:
         try:
             field, operator = query_param.split('__')
