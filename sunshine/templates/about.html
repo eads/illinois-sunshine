@@ -264,7 +264,12 @@
 {% block extra_javascript %}
 
   <script src="http://code.highcharts.com/highcharts.js"></script>
-  <script src="/static/js/quality-chart.js"></script>
-  <script>$('#disclosure-explain span').popover({trigger: "hover", placement: "top"})</script>
+  <script src="/static/js/chart_helper.js"></script>
+  <script>
+    (function(){
+      $('#disclosure-explain span').popover({trigger: "hover", placement: "top"})
+      ChartHelper.initQualityChart('quality_chart');
+    })()
+  </script>
 
 {% endblock %}

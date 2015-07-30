@@ -28,7 +28,7 @@ def expense_verb(s):
         '6B': 'transferred',
         '7B': 'loaned',
         '8B': 'spent',
-        '9B': 'spent*',
+        '9B': 'spent',
     }
     return verbs.get(s, 'spent')
 

@@ -117,6 +117,7 @@ table, label,.control-label,.help-block,.checkbox,.radio { font-size: 14px; }
 
 #money-table-guts {
   min-height: 200px;
+  margin-top: 10px;
 }
 
 #money-table-guts h1{
