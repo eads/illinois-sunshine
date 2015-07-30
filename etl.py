@@ -680,24 +680,71 @@ class SunshineViews(object):
             exp = ''' 
                 CREATE MATERIALIZED VIEW expenditures_by_candidate AS (
                   SELECT
-                    c.id AS candidate_id,
-                    MAX(c.first_name) AS first_name,
-                    MAX(c.last_name) AS last_name,
-                    MAX(c.office) AS office,
-                    cm.id AS committee_id,
-                    MAX(cm.name) AS committee_name,
-                    MAX(cm.type) AS committee_type,
-                    bool_or(e.supporting) AS supporting,
-                    bool_or(e.opposing) AS opposing,
-                    SUM(e.amount) AS total_amount,
-                    MIN(e.expended_date) AS min_date,
-                    MAX(e.expended_date) AS max_date
-                  FROM candidates AS c
-                  JOIN expenditures AS e
-                    ON c.first_name || ' ' || c.last_name = e.candidate_name
-                  JOIN committees AS cm
-                    ON e.committee_id = cm.id
-                  GROUP BY cm.id, c.id
+                    candidate_id,
+                    MAX(first_name) AS first_name,
+                    MAX(last_name) AS last_name,
+                    MAX(office) AS office,
+                    committee_id,
+                    MAX(committee_name) AS committee_name,
+                    MAX(committee_type) AS committee_type,
+                    bool_or(supporting) AS supporting,
+                    bool_or(opposing) AS opposing,
+                    SUM(supporting_amount) AS supporting_amount,
+                    SUM(opposing_amount) AS opposing_amount,
+                    MIN(support_min_date) AS support_min_date,
+                    MAX(support_max_date) AS support_max_date,
+                    MIN(oppose_min_date) AS oppose_min_date,
+                    MAX(oppose_max_date) AS oppose_max_date
+                  FROM (
+                    SELECT
+                      c.id AS candidate_id,
+                      MAX(c.first_name) AS first_name,
+                      MAX(c.last_name) AS last_name,
+                      MAX(c.office) AS office,
+                      cm.id AS committee_id,
+                      MAX(cm.name) AS committee_name,
+                      MAX(cm.type) AS committee_type,
+                      bool_or(e.supporting) AS supporting,
+                      bool_or(e.opposing) AS opposing,
+                      SUM(e.amount) AS supporting_amount,
+                      0 AS opposing_amount,
+                      MIN(e.expended_date) AS support_min_date,
+                      MAX(e.expended_date) AS support_max_date,
+                      NULL::timestamp AS oppose_min_date,
+                      NULL::timestamp AS oppose_max_date
+                    FROM candidates AS c
+                    JOIN expenditures AS e
+                      ON c.first_name || ' ' || c.last_name = e.candidate_name
+                    JOIN committees AS cm
+                      ON e.committee_id = cm.id
+                    WHERE supporting = TRUE AND opposing = FALSE
+                    GROUP BY cm.id, c.id
+                    UNION
+                    SELECT
+                      c.id AS candidate_id,
+                      MAX(c.first_name) AS first_name,
+                      MAX(c.last_name) AS last_name,
+                      MAX(c.office) AS office,
+                      cm.id AS committee_id,
+                      MAX(cm.name) AS committee_name,
+                      MAX(cm.type) AS committee_type,
+                      bool_or(e.supporting) AS supporting,
+                      bool_or(e.opposing) AS opposing,
+                      0 AS supporting_amount,
+                      SUM(e.amount) AS opposing_amount,
+                      NULL::timestamp AS support_min_date,
+                      NULL::timestamp AS support_max_date,
+                      MIN(e.expended_date) AS oppose_min_date,
+                      MAX(e.expended_date) AS oppose_max_date
+                    FROM candidates AS c
+                    JOIN expenditures AS e
+                      ON c.first_name || ' ' || c.last_name = e.candidate_name
+                    JOIN committees AS cm
+                      ON e.committee_id = cm.id
+                    WHERE opposing = TRUE AND supporting = FALSE
+                    GROUP BY cm.id, c.id
+                  ) AS subq
+                  GROUP BY subq.committee_id, subq.candidate_id
                 )
             '''
             self.executeTransaction(exp)
@@ -969,7 +1016,7 @@ class SunshineViews(object):
     def expendituresByCandidateIndex(self):
         index = ''' 
             CREATE UNIQUE INDEX CONCURRENTLY expenditures_by_candidate_idx 
-            ON expenditures_by_candidate(candidate_id, committee_id)
+            ON expenditures_by_candidate(candidate_id, committee_id, supporting)
         '''
 
         self.executeOutsideTransaction(index)
