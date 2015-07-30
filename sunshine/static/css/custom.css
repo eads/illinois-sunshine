@@ -115,10 +115,6 @@ table, label,.control-label,.help-block,.checkbox,.radio { font-size: 14px; }
   cursor: pointer;
 }
 
-.footer .credits {
-  padding-top: 35px;
-}
-
 #money-table-guts {
   min-height: 200px;
 }
@@ -127,9 +123,17 @@ table, label,.control-label,.help-block,.checkbox,.radio { font-size: 14px; }
   margin-top: 40px;
 }
 
+@media screen and (max-width: 992px) {
+  body, table { font-size: 12px; }
+  .navbar-default .navbar-brand a { 
+    font-size: 18px;
+  }
+}
+
 /* Responsive: Portrait tablets and up */
 @media screen and (min-width: 768px) {
   /* Remove the padding we set earlier */
+
   .header,
   .marketing,
   .footer {
