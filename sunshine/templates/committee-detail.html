@@ -16,8 +16,112 @@
                 <span class='data-quality-note' data-content='{{committee.type | committee_description}}'><i class='fa fa-fw fa-info-circle'></i></span>
             </small>
         </h1>
+        <br />
+
+
+        {% if committee.purpose %}
+            <p>
+                <strong>Committee purpose:</strong>
+                {{ committee.purpose }}
+            </p><br />
+        {% endif %}
+
+        {% if committee.candidates %}
+            <h3>Primary candidate(s) supported</h3>
+            <p></p>
+            <table class="table">
+                <thead>
+                    <th>Candidate</th>
+                    <th>Office</th>
+                </thead>
+                <tbody>
+                    {% for candidate in committee.candidates %}
+                        <tr>
+                            {% set candidate_slug = [candidate.first_name|slugify, candidate.last_name|slugify, candidate.id|string]|join('-') %}
+                            <td><a href="{{ url_for('views.candidate', candidate_id=candidate_slug )}}">{{ candidate.first_name }} {{ candidate.last_name }}</a></td>
+                            <td>{{ candidate.office }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+        {% endif %}
+
+        {% if supported_candidates %}
+            <h3>Supported candidates</h3>
+            <p>Expenditures by this commitee went to <strong>support</strong> the following candidates.</p>
+            <table class="table">
+                <thead>
+                    <th>Candidate</th>
+                    <th>Office</th>
+                    <th>Amount spent</th>
+                </thead>
+                <tbody>
+                    {% for candidate in supported_candidates %}
+                        <tr>
+                            {% set candidate_slug = [candidate.first_name|slugify, candidate.last_name|slugify, candidate.id|string]|join('-') %}
+                            <td><a href="{{ url_for('views.candidate', candidate_id=candidate_slug )}}">{{ candidate.first_name }} {{ candidate.last_name }}</a></td>
+                            <td>{{ candidate.office }}</td>
+                            <td>{{ candidate.total_amount | format_money }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+        {% endif %}
+
+        {% if opposed_candidates %}
+            <h3>Opposed candidates</h3>
+            <p>Expenditures by this commitee went to <strong>oppose</strong> the following candidates.</p>
+            <table class="table">
+                <thead>
+                    <th>Candidate</th>
+                    <th>Office</th>
+                    <th>Amount spent against</th>
+                </thead>
+                <tbody>
+                    {% for candidate in opposed_candidates %}
+                        <tr>
+                            {% set candidate_slug = [candidate.first_name|slugify, candidate.last_name|slugify, candidate.id|string]|join('-') %}
+                            <td><a href="{{ url_for('views.candidate', candidate_id=candidate_slug )}}">{{ candidate.first_name }} {{ candidate.last_name }}</a></td>
+                            <td>{{ candidate.office }}</td>
+                            <td>{{ candidate.total_amount | format_money }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+        {% endif %}
+
+        {% if related_committees %}
+            <h3>
+                <br />
+                Related committees
+            </h3>
+            <table class="table table-striped">
+                <thead>
+                    <th>Name</th>
+                    <th>Committee type</th>
+                    <th>Funds controlled</th>
+                    <th>Reason for relation</th>
+                </thead>
+                <tbody>
+                    {% for committee in related_committees %}
+                        <tr>
+                            {% set committee_slug = [committee.name|slugify, committee.id|string]|join('-') %}
+                            <td><a href="{{ url_for('views.committee', committee_id=committee_slug )}}">{{ committee.name }}</a></td>
+                            <td>{{ committee.type if committee.type else '' }}</td>
+                            <td>{{ committee.money|format_money if committee.money else ''}}</td>
+                            <td>{{ committee.reason }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+        {% endif %}
 
         {% if latest_filing.reporting_period_end %}
+            <h3>Finances</h3>
             <table class="table table-striped">
                 <thead>
                     <th>{{ latest_filing.reporting_period_end.strftime('%b %d, %Y') }} quarterly report</th>
@@ -69,34 +173,9 @@
             <div id="expend-chart"></div>
         {% endif %}
 
-        {% if related_committees %}
-            <h3>
-                Related committees
-            </h3>
-            <table class="table table-striped">
-                <thead>
-                    <th>Name</th>
-                    <th>Committee type</th>
-                    <th>Funds controlled</th>
-                    <th>Reason for relation</th>
-                </thead>
-                <tbody>
-                    {% for committee in related_committees %}
-                        <tr>
-                            {% set committee_slug = [committee.name|slugify, committee.id|string]|join('-') %}
-                            <td><a href="{{ url_for('views.committee', committee_id=committee_slug )}}">{{ committee.name }}</a></td>
-                            <td>{{ committee.type if committee.type else '' }}</td>
-                            <td>{{ committee.money|format_money if committee.money else ''}}</td>
-                            <td>{{ committee.reason }}</td>
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-
-        {% endif %}
-
         <h3>
-            Donations & Expenditures
+            <br />
+            Donations &amp; Expenditures
         </h3>
 
         <ul class="nav nav-pills">
@@ -112,38 +191,6 @@
     </div>
     <div class='col-sm-4'>
         <div class='well'>
-
-            <table class="table">
-                <tbody>
-                    {% if committee.purpose %}
-                        <tr>
-                            <td>Purpose</td>
-                            <td>{{ committee.purpose }}</td>
-                        </tr>
-                    {% endif %}
-                </tbody>
-            </table>
-
-            {% if committee.candidates %}
-                <table class="table">
-                    <thead>
-                        <th>Supported candidate</th>
-                        <th>Office</th>
-                    </thead>
-                    <tbody>
-                        {% for candidate in committee.candidates %}
-                            <tr>
-                                {% set candidate_slug = [candidate.first_name|slugify, candidate.last_name|slugify, candidate.id|string]|join('-') %}
-                                <td><a href="{{ url_for('views.candidate', candidate_id=candidate_slug )}}">{{ candidate.first_name }} {{ candidate.last_name }}</a></td>
-                                <td>{{ candidate.office }}</td>
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-
-            {% endif %}
-
-            <hr />
             <table class="table">
                 <thead>
                     <th>Officer</th>

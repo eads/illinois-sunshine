@@ -509,6 +509,40 @@ def committee(committee_id):
     
     related_committees = list(engine.execute(sa.text(related_committees),**params))
 
+    supported_candidates = []
+    opposed_candidates = []
+
+    related_candidates_sql = ''' 
+        SELECT first_name, last_name, office, candidate_id as id, 
+        opposing, supporting, total_amount
+        FROM expenditures_by_candidate
+        WHERE committee_id = :committee_id
+        ORDER BY total_amount DESC, supporting ASC
+    '''
+    
+    engine = db_session.bind
+    related_candidates = list(engine.execute(sa.text(related_candidates_sql), 
+                                        committee_id=committee.id))
+
+    for c in related_candidates:
+      if c.supporting:
+        added = False
+        for sc in supported_candidates:
+          if sc['first_name'] == c.first_name and sc['last_name'] == c.last_name:
+            added = True
+            sc['office'] = sc['office'] + ", " + c.office
+        if not added:
+          supported_candidates.append(dict(c.items()))
+      
+      if c.opposing:
+        added = False
+        for sc in opposed_candidates:
+          if sc['first_name'] == c.first_name and sc['last_name'] == c.last_name:
+            added = True
+            sc['office'] = sc['office'] + ", " + c.office
+        if not added:
+          opposed_candidates.append(dict(c.items()))
+
     current_officers = [officer for officer in committee.officers if officer.current]
 
     quarterlies = ''' 
@@ -567,6 +601,8 @@ def committee(committee_id):
 
     return render_template('committee-detail.html', 
                            committee=committee, 
+                           supported_candidates=supported_candidates,
+                           opposed_candidates=opposed_candidates,
                            current_officers=current_officers,
                            related_committees=related_committees,
                            recent_receipts=recent_receipts,
