@@ -59,6 +59,10 @@ table, label,.control-label,.help-block,.checkbox,.radio { font-size: 14px; }
   font-size: 12px;
 }
 
+.navbar-default .navbar-toggle { border-color: #000;}
+.navbar-default .navbar-toggle .icon-bar { background-color: #000; }
+.navbar-default .navbar-collapse { border: none; }
+
 .navbar-default .navbar-brand:hover { color: #000; }
 
 .navbar-default .navbar-nav { padding-top: 3px; } 
