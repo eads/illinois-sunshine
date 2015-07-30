@@ -514,10 +514,10 @@ def committee(committee_id):
 
     related_candidates_sql = ''' 
         SELECT first_name, last_name, office, candidate_id as id, 
-        opposing, supporting, total_amount
+        opposing, supporting, supporting_amount, opposing_amount
         FROM expenditures_by_candidate
         WHERE committee_id = :committee_id
-        ORDER BY total_amount DESC, supporting ASC
+        ORDER BY supporting_amount DESC, supporting ASC
     '''
     
     engine = db_session.bind

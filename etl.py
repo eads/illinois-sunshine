@@ -713,7 +713,7 @@ class SunshineViews(object):
                       NULL::timestamp AS oppose_min_date,
                       NULL::timestamp AS oppose_max_date
                     FROM candidates AS c
-                    JOIN expenditures AS e
+                    JOIN condensed_expenditures AS e
                       ON (string_to_array(c.first_name, ' '))[1] || ' ' || c.last_name = e.candidate_name
                       AND (
                         string_to_array(c.office, ' ') && string_to_array(e.office, ' ') OR
@@ -743,7 +743,7 @@ class SunshineViews(object):
                       MIN(e.expended_date) AS oppose_min_date,
                       MAX(e.expended_date) AS oppose_max_date
                     FROM candidates AS c
-                    JOIN expenditures AS e
+                    JOIN condensed_expenditures AS e
                       ON (string_to_array(c.first_name, ' '))[1] || ' ' || c.last_name = e.candidate_name
                       AND (
                         string_to_array(c.office, ' ') && string_to_array(e.office, ' ') OR
