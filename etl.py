@@ -1180,7 +1180,7 @@ def downloadUnzip():
     import urllib
     import zipfile
     
-    latest_filename = 'IL_Elections_latest.zip'
+    latest_filename = 'IL_Campaign_Disclosure_latest.zip'
     download_path = os.path.abspath(os.path.join(os.path.dirname(__file__), 
                                                      'downloads'))
 

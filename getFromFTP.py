@@ -85,7 +85,7 @@ class SunshineExtract(object):
     def zipper(self):
         outp = BytesIO()
         now = datetime.now().strftime('%Y-%m-%d')
-        zf_name = 'IL_Elections_%s' % now
+        zf_name = 'IL_Campaign_Disclosure_%s' % now
         with zipfile.ZipFile(outp, mode='w') as zf:
             for f in os.listdir(self.download_path):
                 if f.endswith('.txt'):
@@ -101,7 +101,7 @@ class SunshineExtract(object):
         k.set_contents_from_file(outp)
         k.make_public()
         bucket.copy_key(
-            'IL_Elections_latest.zip', 
+            'IL_Campaign_Disclosure_latest.zip', 
             'il-elections', 
             '%s.zip' % zf_name,
             preserve_acl=True)
