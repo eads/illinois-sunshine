@@ -612,6 +612,8 @@ def contribution(receipt_id):
     receipt = db_session.query(Receipt).get(receipt_id)
     if not receipt:
         return abort(404)
+    if not receipt.committee:
+        return abort(404)
     return render_template('contribution-detail.html', receipt=receipt)
 
 @views.route('/expenditures/<expense_id>/')
@@ -623,6 +625,8 @@ def expense(expense_id):
         return abort(404)
     expense = db_session.query(Expenditure).get(expense_id)
     if not expense:
+        return abort(404)
+    if not expense.committee:
         return abort(404)
     return render_template('expense-detail.html', expense=expense)
 
