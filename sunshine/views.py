@@ -178,8 +178,6 @@ def candidate(candidate_id):
 
     supporting = [c for c in candidate.committees]
 
-    engine.dispose()
-
     return render_template('candidate-detail.html', 
                            candidate=candidate,
                            supporting=supporting)
