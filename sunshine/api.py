@@ -175,11 +175,12 @@ def advanced_search():
             with zipfile.ZipFile(zfoutp, 'w') as zf:
 
                 for table_name, records in objects.items():
-                    outp = StringIO()
-                    writer = csv.writer(outp)
-                    writer.writerow(list(records[0].keys()))
-                    writer.writerows([list(r.values()) for r in records])
-                    zf.writestr('%s.csv' % table_name, outp.getvalue())
+                    if records:
+                        outp = StringIO()
+                        writer = csv.writer(outp)
+                        writer.writerow(list(records[0].keys()))
+                        writer.writerows([list(r.values()) for r in records])
+                        zf.writestr('%s.csv' % table_name, outp.getvalue())
 
             response = make_response(zfoutp.getvalue(), 200)
             
