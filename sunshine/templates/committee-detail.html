@@ -59,8 +59,7 @@
                 <tbody>
                     {% for candidate in supported_candidates %}
                         <tr>
-                            {% set candidate_slug = [candidate.first_name|slugify, candidate.last_name|slugify, candidate.id|string]|join('-') %}
-                            <td><a href="{{ url_for('views.candidate', candidate_id=candidate_slug )}}">{{ candidate.first_name }} {{ candidate.last_name }}</a></td>
+                            <td><a href="{{ url_for('views.search', term=candidate.candidate_name )}}">{{ candidate.candidate_name }}</a></td>
                             <td>{{ candidate.office }}</td>
                             <td>{{ candidate.supporting_amount | format_money }}</td>
                         </tr>
@@ -82,8 +81,7 @@
                 <tbody>
                     {% for candidate in opposed_candidates %}
                         <tr>
-                            {% set candidate_slug = [candidate.first_name|slugify, candidate.last_name|slugify, candidate.id|string]|join('-') %}
-                            <td><a href="{{ url_for('views.candidate', candidate_id=candidate_slug )}}">{{ candidate.first_name }} {{ candidate.last_name }}</a></td>
+                            <td><a href="{{ url_for('views.search', term=candidate.candidate_name )}}">{{ candidate.candidate_name }}</a></td>
                             <td>{{ candidate.office }}</td>
                             <td>{{ candidate.opposing_amount | format_money }}</td>
                         </tr>

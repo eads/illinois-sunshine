@@ -189,6 +189,8 @@
 
         if(typeof query.table_name === 'string'){
             table_names = [query.table_name];
+        } else if (typeof query.table_name === 'undefined'){
+            table_names = ['committees', 'receipts', 'expenditures', 'candidates', 'officers']
         } else {
             table_names = query.table_name;
         }

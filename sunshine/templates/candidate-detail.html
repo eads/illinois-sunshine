@@ -42,25 +42,6 @@
             </tbody>
         </table>
 
-        {% if opposing %}
-            {% if opposing|length > 1 %}
-                <h3>Opposing Committees</h3>
-            {% else %}
-                <h3>Opposing Committee</h3>
-            {% endif %}
-            <table class="table table-striped">
-                <tbody>
-                    {% for committee in opposing %}
-                        <tr>
-                            {% set committee_slug = [committee.name|slugify, committee.id|string]|join('-') %}
-                            <td><a href="{{ url_for('views.committee', committee_id=committee_slug ) }}">{{ committee.name }}</a></td>
-                            <td>{{ committee.type }} Committee</td>
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        {% endif %}
-
         {% if candidate.candidacies|length > 1 %}
             <h3>Candidacies</h3>
         {% else %}

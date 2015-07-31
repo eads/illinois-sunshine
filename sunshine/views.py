@@ -152,7 +152,7 @@ def search():
     table_name = request.args.getlist('table_name')
     search_date__le = request.args.get('search_date__le')
     search_date__ge = request.args.get('search_date__ge')
-    if table_name == []:
+    if not table_name:
         table_name = ['candidates', 'committees', 'officers', 'receipts', 'expenditures']
 
     return render_template('search.html', 
@@ -177,31 +177,12 @@ def candidate(candidate_id):
         return abort(404)
 
     supporting = [c for c in candidate.committees]
-    opposing = []
-
-    ie_committees = ''' 
-        SELECT committee_id as id, committee_name as name, 
-        committee_type as type, supporting, opposing, true as active 
-        FROM expenditures_by_candidate
-        WHERE candidate_id = :candidate_id
-    '''
-    
-    engine = db_session.bind
-    ie_committees = list(engine.execute(sa.text(ie_committees), 
-                                        candidate_id=candidate_id))
-
-    for ie in ie_committees:
-      if ie.supporting:
-        supporting.append(ie)
-      if ie.opposing:
-        opposing.append(ie)
 
     engine.dispose()
 
     return render_template('candidate-detail.html', 
                            candidate=candidate,
-                           supporting=supporting,
-                           opposing=opposing)
+                           supporting=supporting)
 
 @views.route('/top-earners/')
 @cache.cached(timeout=CACHE_TIMEOUT, key_prefix=make_cache_key)
@@ -513,8 +494,13 @@ def committee(committee_id):
     opposed_candidates = []
 
     related_candidates_sql = ''' 
-        SELECT first_name, last_name, office, candidate_id as id, 
-        opposing, supporting, supporting_amount, opposing_amount
+        SELECT 
+          candidate_name, 
+          office,
+          opposing, 
+          supporting, 
+          supporting_amount, 
+          opposing_amount
         FROM expenditures_by_candidate
         WHERE committee_id = :committee_id
         ORDER BY supporting_amount DESC, opposing_amount DESC
@@ -525,23 +511,23 @@ def committee(committee_id):
                                         committee_id=committee.id))
 
     for c in related_candidates:
-      if c.supporting:
-        added = False
-        for sc in supported_candidates:
-          if sc['first_name'] == c.first_name and sc['last_name'] == c.last_name:
-            added = True
-            sc['office'] = sc['office'] + ", " + c.office
-        if not added:
-          supported_candidates.append(dict(c.items()))
+        if c.supporting:
+            added = False
+            for sc in supported_candidates:
+                if sc['candidate_name'] == c.candidate_name:
+                    added = True
+                    sc['office'] = sc['office'] + ", " + c.office
+            if not added:
+                supported_candidates.append(dict(c.items()))
       
-      if c.opposing:
-        added = False
-        for sc in opposed_candidates:
-          if sc['first_name'] == c.first_name and sc['last_name'] == c.last_name:
-            added = True
-            sc['office'] = sc['office'] + ", " + c.office
-        if not added:
-          opposed_candidates.append(dict(c.items()))
+        if c.opposing:
+            added = False
+            for sc in opposed_candidates:
+                if sc['candidate_name'] == c.candidate_name:
+                    added = True
+                    sc['office'] = sc['office'] + ", " + c.office
+            if not added:
+                opposed_candidates.append(dict(c.items()))
 
     current_officers = [officer for officer in committee.officers if officer.current]
 

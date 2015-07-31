@@ -135,7 +135,7 @@ def advanced_search():
         if sort_order == 'asc':
             reverse_sort = False
     
-    default_tables = ['committees', 'candidates', 'receipts', 'expenditures']
+    default_tables = ['committees', 'candidates', 'receipts', 'expenditures', 'officers']
 
     table_names = request.args.getlist('table_name')
    

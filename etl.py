@@ -680,10 +680,8 @@ class SunshineViews(object):
             exp = ''' 
                 CREATE MATERIALIZED VIEW expenditures_by_candidate AS (
                   SELECT
-                    candidate_id,
-                    MAX(first_name) AS first_name,
-                    MAX(last_name) AS last_name,
-                    MAX(office) AS office,
+                    candidate_name,
+                    office,
                     committee_id,
                     MAX(committee_name) AS committee_name,
                     MAX(committee_type) AS committee_type,
@@ -697,10 +695,8 @@ class SunshineViews(object):
                     MAX(oppose_max_date) AS oppose_max_date
                   FROM (
                     SELECT
-                      c.id AS candidate_id,
-                      MAX(c.first_name) AS first_name,
-                      MAX(c.last_name) AS last_name,
-                      MAX(c.office) AS office,
+                      e.candidate_name,
+                      e.office,
                       cm.id AS committee_id,
                       MAX(cm.name) AS committee_name,
                       MAX(cm.type) AS committee_type,
@@ -712,25 +708,15 @@ class SunshineViews(object):
                       MAX(e.expended_date) AS support_max_date,
                       NULL::timestamp AS oppose_min_date,
                       NULL::timestamp AS oppose_max_date
-                    FROM candidates AS c
-                    JOIN condensed_expenditures AS e
-                      ON (string_to_array(c.first_name, ' '))[1] || ' ' || c.last_name = e.candidate_name
-                      AND (
-                        string_to_array(c.office, ' ') && string_to_array(e.office, ' ') OR
-                        string_to_array(c.office, '/') && string_to_array(e.office, '/') OR
-                        string_to_array(c.office, ' ') && string_to_array(e.office, '/') OR
-                        string_to_array(c.office, '/') && string_to_array(e.office, ' ')
-                      )
+                    FROM condensed_expenditures AS e
                     JOIN committees AS cm
                       ON e.committee_id = cm.id
                     WHERE supporting = TRUE AND opposing = FALSE
-                    GROUP BY cm.id, c.id
+                    GROUP BY e.candidate_name, e.office, cm.id
                     UNION
                     SELECT
-                      c.id AS candidate_id,
-                      MAX(c.first_name) AS first_name,
-                      MAX(c.last_name) AS last_name,
-                      MAX(c.office) AS office,
+                      e.candidate_name,
+                      e.office,
                       cm.id AS committee_id,
                       MAX(cm.name) AS committee_name,
                       MAX(cm.type) AS committee_type,
@@ -742,21 +728,13 @@ class SunshineViews(object):
                       NULL::timestamp AS support_max_date,
                       MIN(e.expended_date) AS oppose_min_date,
                       MAX(e.expended_date) AS oppose_max_date
-                    FROM candidates AS c
-                    JOIN condensed_expenditures AS e
-                      ON (string_to_array(c.first_name, ' '))[1] || ' ' || c.last_name = e.candidate_name
-                      AND (
-                        string_to_array(c.office, ' ') && string_to_array(e.office, ' ') OR
-                        string_to_array(c.office, '/') && string_to_array(e.office, '/') OR
-                        string_to_array(c.office, ' ') && string_to_array(e.office, '/') OR
-                        string_to_array(c.office, '/') && string_to_array(e.office, ' ')
-                      )
+                    FROM condensed_expenditures AS e
                     JOIN committees AS cm
                       ON e.committee_id = cm.id
                     WHERE opposing = TRUE AND supporting = FALSE
-                    GROUP BY cm.id, c.id
+                    GROUP BY e.candidate_name, e.office, cm.id
                   ) AS subq
-                  GROUP BY subq.committee_id, subq.candidate_id
+                  GROUP BY candidate_name, office, committee_id
                 )
             '''
             self.executeTransaction(exp)
