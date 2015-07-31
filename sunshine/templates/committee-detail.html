@@ -177,11 +177,11 @@
         </h3>
 
         <ul class="nav nav-pills">
-            <li role="presentation" class="active"><a class="transactions" href="javascript://" data-table_type="top_donors">Top Donors</a></li>
-            <li role="presentation"><a class="transactions" href="javascript://" data-table_type="top_recipients">Top Expenses</a></li>
-            <li role="presentation"><a class="transactions" href="javascript://" data-table_type="largest_donations">Largest Donations</a></li>
-            <li role="presentation"><a class="transactions" href="javascript://" data-table_type="receipts">Donations</a></li>
-            <li role="presentation"><a class="transactions" href="javascript://" data-table_type="expenditures">Expenditures</a></li>
+            <li role="presentation" class="active"><a class="transactions" href="javascript://" data-table_type="top_donors">Top donors</a></li>
+            <li role="presentation"><a class="transactions" href="javascript://" data-table_type="top_recipients">Top expenses</a></li>
+            <!-- <li role="presentation"><a class="transactions" href="javascript://" data-table_type="largest_donations">Largest Donations</a></li> -->
+            <li role="presentation"><a class="transactions" href="javascript://" data-table_type="receipts">All donations</a></li>
+            <li role="presentation"><a class="transactions" href="javascript://" data-table_type="expenditures">All expenditures</a></li>
         </ul>
         <div id='money-table-guts'>
             <h1><i class='fa fa-spin fa-sun-o'></i></h1>
@@ -277,6 +277,12 @@
         }
     </script>
     <script type="text/EJS" id="exp-table-guts">
+        <p>
+            <a class='btn btn-primary' href='/api/expenditures/?committee_id={{committee.id}}&datatype=csv&limit=100000'>
+                <i class='fa fa-download'></i> Download all expenditures
+            </a>
+        </p>
+
         <table class="table table-striped">
             <thead>
                 <tr>
@@ -327,6 +333,12 @@
     </script>
 
     <script type="text/EJS" id="rec-table-guts">
+        <p>
+            <a class='btn btn-primary' href='/api/receipts/?committee_id={{committee.id}}&datatype=csv&limit=100000'>
+                <i class='fa fa-download'></i> Download all donations
+            </a>
+        </p>
+
         <table class="table table-striped">
             <thead>
                 <tr>

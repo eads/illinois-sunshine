@@ -380,9 +380,6 @@ def receipts():
     order_by = request.args.get('order_by', 'received_date')
     sort_order = request.args.get('sort_order', 'desc')
     datatype = request.args.get('datatype')
-
-    if int(limit) > 1000:
-        limit = 1000
     
     receipts_table = sa.Table('condensed_receipts', sa.MetaData(), 
                               autoload=True, 

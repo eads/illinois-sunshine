@@ -71,6 +71,14 @@
             <div id="no-results" style="display:none;">
                 <h2>No results found for '{{term}}'</h2>
             </div>
+            <div id="download-results" style="display:none;">
+                <p class='pull-right'>
+                    <a id='download-results-link' class='btn btn-primary' href='#'>
+                        <i class='fa fa-download'></i> Download search results
+                    </a>
+                </p>
+                <div class='clearfix'></div>
+            </div>
             <div id="committees-results" style="display:none;">
                 <h3>Committees <small></small></h3>
                 <table class="table table-hover" id="committees-table">
@@ -415,10 +423,14 @@
             "initComplete": function(settings, data){
                 if(data['objects'][table_name].length == 0){
                     $('#' + table_name + '-results').hide();
+                    $('#download-results').hide();
                     $('#no-results').show();
                 }
                 else {
                     $('#' + table_name + '-results h3 small').html(data['meta'].total_rows + " found");
+                    $('#download-results').show();
+                    var query = window.location.search;
+                    $('#download-results-link').attr('href', '/api/advanced-search/' + query + '&datatype=csv')
                     $('#no-results').hide();
                 }
             },
