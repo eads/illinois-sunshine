@@ -576,11 +576,11 @@ class SunshineViews(object):
         self.executeTransaction('DROP MATERIALIZED VIEW IF EXISTS expenditures_by_candidate')
 
     def makeAllViews(self):
-        self.expendituresByCandidate()
         self.incumbentCandidates()
         self.mostRecentFilings()
         self.condensedReceipts()
         self.condensedExpenditures()
+        self.expendituresByCandidate() # relies on condensed_expenditures
         self.receiptsAggregates() # relies on condensedReceipts
         self.committeeReceiptAggregates() # relies on condensedReceipts
         self.committeeMoney() # relies on mostRecentFilings
@@ -1006,7 +1006,7 @@ class SunshineViews(object):
     def expendituresByCandidateIndex(self):
         index = ''' 
             CREATE UNIQUE INDEX CONCURRENTLY expenditures_by_candidate_idx 
-            ON expenditures_by_candidate(candidate_id, committee_id, supporting)
+            ON expenditures_by_candidate(candidate_name, office, committee_id, supporting)
         '''
 
         self.executeOutsideTransaction(index)
