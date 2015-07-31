@@ -92,7 +92,7 @@ def getSearchResults(term,
     punc = re.compile('[%s]' % re.escape(punctuation))
     term = punc.sub('', term)
 
-    q_params['term'] = ' & '.join([t for t in term.split()])
+    q_params['term'] = ' & '.join(['{0}:*'.format(t) for t in term.split()])
 
     results = engine.execute(sa.text(result), **q_params)
     
