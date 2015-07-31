@@ -224,10 +224,12 @@
                             {{ committee.zipcode }}
                         </td>
                     </tr>
+                    {% if committee.creation_date %}
                     <tr>
                         <td>Founded</td>
                         <td>{{committee.creation_date.strftime('%b %d, %Y')}}</td>
                     </tr>
+                    {% endif %}
                     <tr>
                         <td></td>
                         <td><a href='http://www.elections.il.gov/CampaignDisclosure/CommitteeDetail.aspx?id={{committee.id}}'>View on IL Board of Elections website</a></td>
