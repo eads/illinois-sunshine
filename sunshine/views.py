@@ -98,14 +98,8 @@ def donations():
     date = datetime.now().date() - timedelta(days=1)
 
     if request.args.get('date'):
-      date = parse(request.args.get('date'))
+        date = parse(request.args.get('date'))
     
-    if request.args.get('date'):
-      date = parse(request.args.get('date'))
-
-    prev_day_date = date - timedelta(days=1)
-    next_day_date = date + timedelta(days=1)
-    is_current = (date == datetime.now().date())
     
     engine = db_session.bind
 
@@ -120,9 +114,21 @@ def donations():
       ORDER BY c.received_date DESC
     '''
 
-    days_donations = list(engine.execute(sa.text(days_donations_sql), 
-                                     start_date=date,
-                                     end_date=(date + timedelta(days=1))))
+    days_donations = []
+    
+    # Roll back day until we find something
+    while len(days_donations) == 0:
+        days_donations = list(engine.execute(sa.text(days_donations_sql), 
+                                             start_date=date,
+                                             end_date=(date + timedelta(days=1))))
+        if days_donations:
+            break
+
+        date = date - timedelta(days=1)
+    
+    prev_day_date = date - timedelta(days=1)
+    next_day_date = date + timedelta(days=1)
+    is_current = (date == datetime.now().date())
 
     days_total_count = len(days_donations)
     days_total_donations = sum([d.amount for d in days_donations])
