@@ -312,7 +312,7 @@ def top_money():
         resp['objects'] = [OrderedDict(zip(r.keys(), r.values())) \
                                for r in top_donors]
 
-        resp['meta']['total_rows'] = 20
+        resp['meta']['total_rows'] = len(resp['objects'])
     
     response_str = json.dumps(resp, sort_keys=False, default=dthandler)
     response = make_response(response_str, status_code)

@@ -481,11 +481,11 @@
                         displayTable(transactions, transaction_type, 0, total_rows);
 
                     } else {
-                        if(transaction_type == 'receipts' || transaction_type == 'largest_donations'){
+                        if(transaction_type == 'receipts' || transaction_type == 'largest_donations' || transaction_type == 'top_donors'){
                             $('#money-table-guts').html('<h4>No donations found</h4>');
-                        } else if (transaction_type == 'expenditures'){
+                        } else if (transaction_type == 'expenditures' || transaction_type == 'top_recipients'){
                             $('#money-table-guts').html('<h4>No expenditures found</h4>');
-                        }
+                        } 
                     }
                 })
             });
@@ -539,7 +539,7 @@
         function getMoney(transaction_type, offset){
 
             var params = {
-                'limit' : 50,
+                'limit' : 25,
                 'committee_id': "{{committee.id}}",
                 'offset': offset
             };
@@ -548,7 +548,6 @@
 
             if(transaction_type == 'largest_donations'){
                 params['order_by'] = 'amount';
-                params['limit'] = 20;
                 url = "{{ url_for('api.receipts') }}";
             };
 
