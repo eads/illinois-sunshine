@@ -517,7 +517,7 @@ def committee(committee_id):
         opposing, supporting, supporting_amount, opposing_amount
         FROM expenditures_by_candidate
         WHERE committee_id = :committee_id
-        ORDER BY supporting_amount DESC, supporting ASC
+        ORDER BY supporting_amount DESC, opposing_amount DESC
     '''
     
     engine = db_session.bind
