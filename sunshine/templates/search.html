@@ -68,9 +68,6 @@
 <div class="row">
     <div class="col-sm-12">
         <div id="search-results">
-            <div id="no-results" style="display:none;">
-                <h2>No results found for '{{term}}'</h2>
-            </div>
             <div id="download-results" style="display:none;">
                 <p class='pull-right'>
                     <a id='download-results-link' class='btn btn-primary' href='#'>
@@ -149,6 +146,9 @@
                         </tr>
                     </thead>
                 </table>
+            </div>
+            <div id="no-results" style="display:none;">
+                <h2>No results found for '{{term}}'</h2>
             </div>
         </div>
     </div>
@@ -431,7 +431,8 @@
                     $('#download-results').show();
                     var query = window.location.search;
                     $('#download-results-link').attr('href', '/api/advanced-search/' + query + '&datatype=csv')
-                    $('#no-results').hide();
+
+                    setTimeout(function(){ $('#no-results').hide(); }, 500);
                 }
             },
             "drawCallback": function(settings){
