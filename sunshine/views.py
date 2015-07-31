@@ -542,6 +542,7 @@ def committee(committee_id):
         JOIN filed_docs AS f
           ON r.filed_doc_id = f.id
         WHERE r.committee_id = :committee_id
+          AND f.reporting_period_end IS NOT NULL
         ORDER BY f.reporting_period_end ASC
     '''
 
