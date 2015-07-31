@@ -636,6 +636,10 @@ def flush(secret):
         cache.clear()
     return 'Woop'
 
-@views.route('/sunshine')
+@views.route('/sunshine/')
 def sunshine():
-    return redirect("/")
+    return redirect("/", code=301)
+
+@views.route('/sunshine/<path:the_rest>/')
+def sunshine_the_rest(the_rest):
+    return redirect("/", code=301)
