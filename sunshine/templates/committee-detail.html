@@ -27,7 +27,9 @@
         {% endif %}
 
         {% if committee.candidates %}
-            <h3>Primary candidate(s) supported</h3>
+            <h3>{{committee.candidates|length}} supported 
+                {{ "candidate" if committee.candidates|length == 1 else "candidates" }}
+            </h3>
             <p></p>
             <table class="table">
                 <thead>
@@ -48,7 +50,7 @@
         {% endif %}
 
         {% if supported_candidates %}
-            <h3>Supported candidates</h3>
+            <h3>{{supported_candidates|length}} supported {{ "candidate" if supported_candidates|length == 1 else "candidates" }}</h3>
             <p>Expenditures by this commitee went to <strong>support</strong> the following candidates.</p>
             <table class="table">
                 <thead>
@@ -70,7 +72,7 @@
         {% endif %}
 
         {% if opposed_candidates %}
-            <h3>Opposed candidates</h3>
+            <h3>{{opposed_candidates|length}} opposed {{ "candidate" if opposed_candidates|length == 1 else "candidates" }}</h3>
             <p>Expenditures by this commitee went to <strong>oppose</strong> the following candidates.</p>
             <table class="table">
                 <thead>
