@@ -27,9 +27,12 @@
     <a href='{{ url_for('views.donations') }}'>Donations</a> <small>since 1994</small>
 </h2>
 
-<p>Since 1994, <strong>${{ totals[0][0]|format_large_number }}</strong> has been donated to political campaigns in the State of Illinois. The chart below shows total donations by month. The spikes are fundraising leading up to municipal or general elections. <i class='fa fa-fw fa-hand-pointer-o'></i> Click on a month to see the individual donations.</p>
+<p>Since 1994, <strong>${{ totals[0][0]|format_large_number }}</strong> has been donated to political campaigns in the State of Illinois. The chart below shows total donations over time. The spikes are fundraising leading up to municipal or general elections. <i class='fa fa-fw fa-hand-pointer-o'></i> Click on a month to see the individual donations.</p>
 
-<div id='donation-chart'></div>
+<div class='hidden-sm hidden-xs' id='donation-chart'></div>
+<br />
+
+<div class='visible-sm-block visible-xs-block' id='donation-chart-year'></div>
 <br />
 
 <p><a class='btn btn-primary' href='{{ url_for('views.donations') }}'><i class='fa fa-dollar fa-fw'></i> Browse all donations &raquo;</a></p>
@@ -46,9 +49,9 @@
         <tr>
             <th>Rank</th>
             <th>Committee</th>
-            <th>Type</th>
+            <th class='hidden-sm hidden-xs'>Type</th>
             <th class='text-right'>New funds</th>
-            <th class='text-right'>Current funds</th>
+            <th class='text-right hidden-sm hidden-xs'>Current funds</th>
         </tr>
     </thead>
     <tbody>
@@ -57,7 +60,7 @@
                 <td>{{ loop.index }}</td>
                 {% set committee_slug = [earner.name|slugify, earner.committee_id|string]|join('-') %}
                 <td><a href="{{ url_for('views.committee', committee_id=committee_slug ) }}">{{ earner.name }}</a></td>
-                <td>{{ earner.type }}</td>
+                <td class='hidden-sm hidden-xs'>{{ earner.type }}</td>
                 <td class='money-add text-right'>
                     {% if earner.amount %}
                         +{{earner.amount|format_money}}
@@ -65,7 +68,7 @@
                         $0
                     {% endif %}
                 </td>
-                <td class='text-right'>{{ earner.total|format_money }}</td>
+                <td class='text-right hidden-sm hidden-xs'>{{ earner.total|format_money }}</td>
             </tr>
         {% endfor %}
     </tbody>
@@ -83,7 +86,7 @@
         <tr>
             <th>Rank</th>
             <th>Committee</th>
-            <th>Type</th>
+            <th class='hidden-sm hidden-xs'>Type</th>
             <th class='text-right'>Current funds</th>
         </tr>
     </thead>
@@ -93,7 +96,7 @@
                 <td>{{ loop.index }}</td>
                 {% set committee_slug = [record.committee_name|slugify, record.committee_id|string]|join('-') %}
                 <td><a href="{{ url_for('views.committee', committee_id=committee_slug ) }}">{{ record.committee_name }}</a></td>
-                <td>{{ record.committee_type }}</td>
+                <td class='hidden-sm hidden-xs'>{{ record.committee_type }}</td>
                 <td class='text-right'>{{ record.total|format_money }}</td>
             </tr>
         {% endfor %}
@@ -119,13 +122,23 @@
     <script src="/static/js/chart_helper.js"></script>
     <script>
 
+        //money by month chart
         var money = {{ donations_by_month|tojson|safe }};
         var money_f = [];
         for (i = 0; i < money.length; i++) {
             money_f.push([Date.UTC(money[i][1],money[i][2]-1,money[i][3]), money[i][0]]);
         }
 
-        ChartHelper.donations('donation-chart', 'Campaign donations', '', 'Donations', money_f);
+        ChartHelper.donations('donation-chart', 'Campaign donations', '', 'Donations', money_f, 'month');
+
+        // money by year chart
+        var money_y = {{ donations_by_year|tojson|safe }};
+        var money_y_f = [];
+        for (i = 0; i < money_y.length; i++) {
+            money_y_f.push([Date.UTC(money_y[i][1],money_y[i][2]-1,money_y[i][3]), money_y[i][0]]);
+        }
+
+        ChartHelper.donations('donation-chart-year', 'Campaign donations', '', 'Donations', money_y_f, 'year');
     </script>
 
 {% endblock %}

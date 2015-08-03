@@ -41,7 +41,7 @@
                 <th>Donor</th>
                 <th class='text-right'>Amount</th>
                 <th>Committee</th>
-                <th>Date</th>
+                <th class='hidden-sm hidden-xs'>Date</th>
             </tr>
         </thead>
         <tbody>
@@ -57,7 +57,7 @@
                     <td>
                         <a href="{{ url_for('views.committee', committee_id=committee_slug )}}">{{ donation.committee_name }}</a>
                     </td>
-                    <td class='nowrap'>
+                    <td class='nowrap hidden-sm hidden-xs'>
                         on {{ donation.received_date.strftime('%b %d, %Y') }}
                     </td>
                 </tr>

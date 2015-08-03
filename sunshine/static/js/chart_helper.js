@@ -1,5 +1,5 @@
 var ChartHelper = {};
-ChartHelper.donations = function(el, title, sourceTxt, yaxisLabel, data) {
+ChartHelper.donations = function(el, title, sourceTxt, yaxisLabel, data, pointInterval) {
   // console.log("rendering to: #chart_" + iteration);
   // console.log("title: " + title);
   // console.log("sourceTxt: " + sourceTxt);
@@ -48,8 +48,7 @@ ChartHelper.donations = function(el, title, sourceTxt, yaxisLabel, data) {
       },
       yAxis: {
           title: yaxisLabel,
-          min: 0,
-          max: 100000000
+          min: 0
       },
       plotOptions: {
         line: {
@@ -85,7 +84,7 @@ ChartHelper.donations = function(el, title, sourceTxt, yaxisLabel, data) {
       tooltip: {
           crosshairs: true,
           formatter: function() {
-            var s = "<strong>" + ChartHelper.toolTipDateFormat("month", this.x) + "</strong>";
+            var s = "<strong>" + ChartHelper.toolTipDateFormat(pointInterval, this.x) + "</strong>";
             $.each(this.points, function(i, point) {
               s += "<br /><span style='color: " + point.series.color + "'>" + point.series.name + ":</span> $" + Highcharts.numberFormat(point.y, 0, '.', ',');
             });

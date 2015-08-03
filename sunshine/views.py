@@ -41,6 +41,25 @@ def index():
                           for d in engine.execute(sa.text(donations_by_month_sql), 
                                                   start_date="1994-01-01")]
 
+    donations_by_year_sql = ''' 
+      SELECT 
+        date_trunc('year', month) AS year,
+        SUM(total_amount) AS total_amount,
+        COUNT(donation_count) AS donation_count,
+        AVG(average_donation) AS average_donation
+      FROM receipts_by_month
+      WHERE month >= :start_date
+      GROUP BY date_trunc('year', month)
+      ORDER BY year
+    '''
+
+    donations_by_year = [[d.total_amount,
+                          d.year.year,
+                          d.year.month,
+                          d.year.day] 
+                          for d in engine.execute(sa.text(donations_by_year_sql), 
+                                                  start_date="1994-01-01")]
+
     # top earners in the last week
     top_earners = ''' 
         SELECT 
@@ -89,7 +108,8 @@ def index():
                            top_earners=top_earners,
                            top_ten=top_ten,
                            totals=totals,
-                           donations_by_month=donations_by_month)
+                           donations_by_month=donations_by_month,
+                           donations_by_year=donations_by_year)
 
 @views.route('/donations/')
 @cache.cached(timeout=CACHE_TIMEOUT, key_prefix=make_cache_key)

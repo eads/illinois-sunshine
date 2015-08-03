@@ -28,7 +28,7 @@
                 <tr>
                     <th>Rank</th>
                     <th>Committee</th>
-                    <th>Type</th>
+                    <th class='hidden-sm hidden-xs'>Type</th>
                     <th class='text-right'>New funds</th>
                     <th class='text-right'>Current funds</th>
                 </tr>
@@ -39,7 +39,7 @@
                         <td>{{ loop.index }}</td>
                         {% set committee_slug = [earner.name|slugify, earner.committee_id|string]|join('-') %}
                         <td><a href="{{ url_for('views.committee', committee_id=committee_slug ) }}">{{ earner.name }}</a></td>
-                        <td>{{ earner.type }}</td>
+                        <td class='hidden-sm hidden-xs'>{{ earner.type }}</td>
                         <td class='money-add text-right'>
                             {% if earner.amount %}
                                 +{{earner.amount|format_money}}
@@ -47,7 +47,7 @@
                                 $0
                             {% endif %}
                         </td>
-                        <td class='text-right'>{{ earner.total|format_money }}</td>
+                        <td class='text-right hidden-sm hidden-xs'>{{ earner.total|format_money }}</td>
                     </tr>
                 {% endfor %}
             </tbody>

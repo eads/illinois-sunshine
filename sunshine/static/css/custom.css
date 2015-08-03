@@ -25,7 +25,7 @@ table, label,.control-label,.help-block,.checkbox,.radio { font-size: 14px; }
 .super-sun { font-size: 80px; text-align: center; }
 .super-sun span { font-size: 160px;}
 
-#donation-chart { height: 250px;}
+#donation-chart, #donation-chart-year { height: 250px;}
 
 #net-chart, #income-chart { height: 200px; }
 

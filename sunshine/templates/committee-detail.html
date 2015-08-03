@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% from 'macros.html' import header %}
 {% block header_social %}
-    {{ header(committee.name, "Committee information for " + committee.name, request.path) }}
+    {{ header(committee.name, "Committee purpose: " + committee.purpose, request.path) }}
 {% endblock %}
 {% block content %}
 <div class="row">
