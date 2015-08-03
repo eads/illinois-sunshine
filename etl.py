@@ -615,6 +615,7 @@ class SunshineViews(object):
                       )
                         id AS filed_doc_id
                       FROM filed_docs
+                      WHERE doc_name != 'Pre-election'
                       ORDER BY reporting_period_begin,
                                reporting_period_end,
                                committee_id,
@@ -656,6 +657,7 @@ class SunshineViews(object):
                       )
                         id AS filed_doc_id
                       FROM filed_docs
+                      WHERE doc_name != 'Pre-election'
                       ORDER BY reporting_period_begin,
                                reporting_period_end,
                                committee_id,
