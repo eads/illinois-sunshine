@@ -40,7 +40,11 @@
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:site" content="@ILCampaign">
     <meta name="twitter:creator" content="@ILCampaign">
-    <meta name="twitter:description" content="{{ description }}">
+    {% if description %}
+      <meta name="twitter:description" content="{{ description }}">
+    {% else %}
+      <meta name="twitter:description" content="{{ config.DESCRIPTION }}">
+    {% endif %}
     {% if title %}
       <meta name="twitter:title" content="{{ title }}">
     {% else %}
