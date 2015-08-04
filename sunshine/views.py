@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, abort, request, make_response, redirect, \
-    session as flask_session
+    session as flask_session, g
 from sunshine.database import db_session
 from sunshine.models import Candidate, Committee, Receipt, FiledDoc, Expenditure, D2Report
 from sunshine.cache import cache, make_cache_key, CACHE_TIMEOUT
@@ -17,7 +17,6 @@ views = Blueprint('views', __name__)
 @views.route('/')
 @cache.cached(timeout=CACHE_TIMEOUT, key_prefix=make_cache_key)
 def index():
-    engine = db_session.bind
 
     # summary total text
     totals_sql = '''
@@ -27,7 +26,7 @@ def index():
         AVG(average_donation) as average_donation 
       FROM receipts_by_month'''
 
-    totals = list(engine.execute(sa.text(totals_sql)))
+    totals = list(g.engine.execute(sa.text(totals_sql)))
 
     # donations chart
     donations_by_month_sql = ''' 
@@ -38,7 +37,7 @@ def index():
                           d.month.year,
                           d.month.month,
                           d.month.day] 
-                          for d in engine.execute(sa.text(donations_by_month_sql), 
+                          for d in g.engine.execute(sa.text(donations_by_month_sql), 
                                                   start_date="1994-01-01")]
 
     donations_by_year_sql = ''' 
@@ -57,7 +56,7 @@ def index():
                           d.year.year,
                           d.year.month,
                           d.year.day] 
-                          for d in engine.execute(sa.text(donations_by_year_sql), 
+                          for d in g.engine.execute(sa.text(donations_by_year_sql), 
                                                   start_date="1994-01-01")]
 
     # top earners in the last week
@@ -85,7 +84,7 @@ def index():
     '''
 
     days_ago = datetime.now() - timedelta(days=30)
-    top_earners = engine.execute(sa.text(top_earners),
+    top_earners = g.engine.execute(sa.text(top_earners),
                                  received_date=days_ago)
     
     # committees with the most money
@@ -100,9 +99,7 @@ def index():
         LIMIT 10
     '''
     
-    top_ten = engine.execute(sa.text(committee_sql))
-
-    engine.dispose()
+    top_ten = g.engine.execute(sa.text(committee_sql))
 
     return render_template('index.html', 
                            top_earners=top_earners,
@@ -120,9 +117,6 @@ def donations():
     if request.args.get('date'):
         date = parse(request.args.get('date'))
     
-    
-    engine = db_session.bind
-
     days_donations_sql = '''
       SELECT 
         c.*, 
@@ -138,7 +132,7 @@ def donations():
     
     # Roll back day until we find something
     while len(days_donations) == 0:
-        days_donations = list(engine.execute(sa.text(days_donations_sql), 
+        days_donations = list(g.engine.execute(sa.text(days_donations_sql), 
                                              start_date=date,
                                              end_date=(date + timedelta(days=1))))
         if days_donations:
@@ -152,8 +146,6 @@ def donations():
 
     days_total_count = len(days_donations)
     days_total_donations = sum([d.amount for d in days_donations])
-
-    engine.dispose()
 
     return render_template('donations.html', 
                            days_donations=days_donations,
@@ -219,8 +211,6 @@ def top_earners():
       except:
         pass
 
-    engine = db_session.bind
-    
     top_earners = ''' 
         SELECT 
           sub.*,
@@ -250,10 +240,8 @@ def top_earners():
     
     calc_days_ago = datetime.now() - timedelta(days=days_ago)
 
-    top_earners = engine.execute(sa.text(top_earners),
+    top_earners = g.engine.execute(sa.text(top_earners),
                                  received_date=calc_days_ago.strftime('%Y-%m-%d'))
-
-    engine.dispose()
 
     return render_template('top-earners.html', 
                             top_earners=top_earners,
@@ -310,8 +298,6 @@ def committees():
         OFFSET :offset
     '''
     
-    engine = db_session.bind
-    
     if not flask_session.get('%s_page_count' % type_arg):
 
         result_count = '''
@@ -320,7 +306,7 @@ def committees():
             WHERE committee_type = :committee_type
         '''
         
-        result_count = engine.execute(sa.text(result_count), 
+        result_count = g.engine.execute(sa.text(result_count), 
                                               committee_type=committee_type)\
                                               .first()\
                                               .count
@@ -333,11 +319,9 @@ def committees():
         
         page_count = flask_session['%s_page_count' % type_arg]
 
-    committees = engine.execute(sa.text(sql), 
+    committees = g.engine.execute(sa.text(sql), 
                                 committee_type=committee_type,
                                 offset=offset)
-    
-    engine.dispose()
 
     return render_template('committees.html', 
                            committees=committees, 
@@ -359,8 +343,6 @@ def committee(committee_id):
     if not committee:
         return abort(404)
     
-    engine = db_session.bind
-    
     latest_filing = ''' 
         SELECT * FROM most_recent_filings
         WHERE committee_id = :committee_id
@@ -368,7 +350,7 @@ def committee(committee_id):
         LIMIT 1
     '''
 
-    latest_filing = engine.execute(sa.text(latest_filing), 
+    latest_filing = g.engine.execute(sa.text(latest_filing), 
                                    committee_id=committee_id).first()
     
     params = {'committee_id': committee_id}
@@ -404,7 +386,7 @@ def committee(committee_id):
         
         controlled_amount = 0
 
-    recent_total = engine.execute(sa.text(recent_receipts),**params).first().amount
+    recent_total = g.engine.execute(sa.text(recent_receipts),**params).first().amount
     controlled_amount += recent_total
     
     candidate_ids = tuple(c.id for c in committee.candidates)
@@ -512,7 +494,7 @@ def committee(committee_id):
               AND active = TRUE
         '''
     
-    related_committees = list(engine.execute(sa.text(related_committees),**params))
+    related_committees = list(g.engine.execute(sa.text(related_committees),**params))
 
     supported_candidates = []
     opposed_candidates = []
@@ -530,7 +512,7 @@ def committee(committee_id):
         ORDER BY supporting_amount DESC, opposing_amount DESC
     '''
     
-    related_candidates = list(engine.execute(sa.text(related_candidates_sql), 
+    related_candidates = list(g.engine.execute(sa.text(related_candidates_sql), 
                                         committee_id=committee.id))
 
     for c in related_candidates:
@@ -571,7 +553,7 @@ def committee(committee_id):
         ORDER BY f.reporting_period_end ASC
     '''
 
-    quarterlies = list(engine.execute(sa.text(quarterlies), 
+    quarterlies = list(g.engine.execute(sa.text(quarterlies), 
                                  committee_id=committee_id))
 
     ending_funds = [[r.end_funds_available, 
@@ -606,8 +588,6 @@ def committee(committee_id):
 
     total_donations = sum([r.total_receipts for r in quarterlies])
     total_expenditures = sum([r.total_expenditures for r in quarterlies])
-
-    engine.dispose()
 
     return render_template('committee-detail.html', 
                            committee=committee, 

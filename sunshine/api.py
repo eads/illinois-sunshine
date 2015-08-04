@@ -3,7 +3,7 @@ from sunshine.database import db_session
 from sunshine.models import Candidate, Candidacy, Committee, Officer, \
     D2Report, Receipt, Expenditure, Investment, candidate_committees
 from sunshine.cache import cache, make_cache_key, CACHE_TIMEOUT
-from flask import Blueprint, render_template, request, make_response
+from flask import Blueprint, render_template, request, make_response, g
 import json
 from datetime import datetime, date
 from collections import OrderedDict
@@ -31,8 +31,6 @@ def getSearchResults(term,
                      table_name, 
                      q_params={}):
     
-    engine = db_session.bind
-
     if table_name in ['receipts', 'expenditures', 'investments', 'officers']:
         
         if table_name in ['receipts', 'expenditures']:
@@ -65,7 +63,7 @@ def getSearchResults(term,
         sa_table = sa.Table(table_name, 
                             sa.MetaData(), 
                             autoload=True, 
-                            autoload_with=engine)
+                            autoload_with=g.engine)
 
         valid_query, _, _, _  = make_query(sa_table, q_params)
         
@@ -94,10 +92,8 @@ def getSearchResults(term,
 
     q_params['term'] = ' & '.join(['{0}:*'.format(t) for t in term.split()])
 
-    results = engine.execute(sa.text(result), **q_params)
+    results = g.engine.execute(sa.text(result), **q_params)
     
-    engine.dispose()
-
     return results
 
 @api.route('/advanced-search/')
@@ -304,9 +300,7 @@ def top_money():
             LIMIT 20
         '''.format(table)
 
-        engine = db_session.bind
-
-        top_donors = engine.execute(sa.text(top_donors), 
+        top_donors = g.engine.execute(sa.text(top_donors), 
                                     committee_id=committee_id)
 
         resp['objects'] = [OrderedDict(zip(r.keys(), r.values())) \
@@ -314,8 +308,6 @@ def top_money():
 
         resp['meta']['total_rows'] = len(resp['objects'])
 
-        engine.dispose()
-    
     response_str = json.dumps(resp, sort_keys=False, default=dthandler)
     response = make_response(response_str, status_code)
     response.headers['Content-Type'] = 'application/json'

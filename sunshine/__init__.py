@@ -1,4 +1,4 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, g
 from sunshine.views import views
 from sunshine.api import api
 import locale
@@ -65,4 +65,14 @@ def create_app():
     def data_quality_note():
         return dict(data_quality_note="We show data as it is reported by the <a href='http://elections.il.gov/' target='_blank'>Illinois State Board of Elections</a>. There are known issues. <a href='https://docs.google.com/spreadsheets/d/19yXMVn-hpO9mUrlnipLMnAEHm0kxVcqaegRPeYrtKSA/edit#gid=0' target='_blank'>We keep track of them here</a>.")
     
+    @app.before_request
+    def before_request():
+        from sunshine.database import db_session
+        
+        g.engine = db_session.bind
+
+    @app.teardown_request
+    def teardown_request(exception):
+        g.engine.dispose()
+
     return app
