@@ -313,6 +313,8 @@ def top_money():
                                for r in top_donors]
 
         resp['meta']['total_rows'] = len(resp['objects'])
+
+        engine.dispose()
     
     response_str = json.dumps(resp, sort_keys=False, default=dthandler)
     response = make_response(response_str, status_code)

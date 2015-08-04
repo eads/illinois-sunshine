@@ -530,7 +530,6 @@ def committee(committee_id):
         ORDER BY supporting_amount DESC, opposing_amount DESC
     '''
     
-    engine = db_session.bind
     related_candidates = list(engine.execute(sa.text(related_candidates_sql), 
                                         committee_id=committee.id))
 
