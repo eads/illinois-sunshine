@@ -83,10 +83,9 @@ class SunshineExtract(object):
             self.zipper()
 
     def zipper(self):
-        outp = BytesIO()
         now = datetime.now().strftime('%Y-%m-%d')
         zf_name = 'IL_Campaign_Disclosure_%s' % now
-        with zipfile.ZipFile(outp, mode='w') as zf:
+        with zipfile.ZipFile(zf_name, mode='w') as zf:
             for f in os.listdir(self.download_path):
                 if f.endswith('.txt'):
                     zf.write(os.path.join(self.download_path, f), 
@@ -97,8 +96,7 @@ class SunshineExtract(object):
         bucket = conn.get_bucket(self.bucket_name)
         k = Key(bucket)
         k.key = '%s.zip' % zf_name
-        outp.seek(0)
-        k.set_contents_from_file(outp)
+        k.set_contents_from_filename(zf_name)
         k.make_public()
         bucket.copy_key(
             'IL_Campaign_Disclosure_latest.zip', 
@@ -106,7 +104,6 @@ class SunshineExtract(object):
             '%s.zip' % zf_name,
             preserve_acl=True)
         
-        del outp
 
 if __name__ == "__main__":
     from sunshine import app_config 
