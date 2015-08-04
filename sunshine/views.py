@@ -251,7 +251,7 @@ def top_earners():
     calc_days_ago = datetime.now() - timedelta(days=days_ago)
 
     top_earners = engine.execute(sa.text(top_earners),
-                                 received_date=calc_days_ago)
+                                 received_date=calc_days_ago.strftime('%Y-%m-%d'))
 
     engine.dispose()
 
