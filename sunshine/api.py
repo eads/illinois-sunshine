@@ -404,6 +404,7 @@ def receipts():
         receipt_fields = receipts_table.columns.keys()
         
         rows = sorted(list(limit_query.all()), key=attrgetter('committee_id'))
+        committee_info = {'receipts': [], 'name': ''}
         for committee, grouping in groupby(rows, attrgetter('committee_id')):
             rows = list(grouping)
             committee_values = rows[0][:len(committee_fields)]
@@ -487,6 +488,7 @@ def expenditures():
         committee_fields = committees_table.columns.keys() 
         expenditure_fields = expenditures_table.columns.keys()
         rows = sorted(list(limit_query.all()), key=attrgetter('committee_id'))
+        committee_info = {'receipts': [], 'name': ''}
         for committee, grouping in groupby(rows, attrgetter('committee_id')):
             rows = list(grouping)
             committee_values = rows[0][:len(committee_fields)]
