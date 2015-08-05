@@ -59,7 +59,7 @@ class SunshineTransformLoad(object):
                 self.connection.execute(query, *args)
             trans.commit()
         except sa.exc.ProgrammingError as e:
-            print(e)
+            logger.error(e, exc_info=True)
             trans.rollback()
             if raise_exc:
                 raise e
@@ -212,6 +212,7 @@ class SunshineTransformLoad(object):
                     try:
                         curs.copy_expert(copy_st, f)
                     except psycopg2.IntegrityError as e:
+                        logger.error(e, exc_info=True)
                         print(e)
                         conn.rollback()
         
@@ -555,6 +556,7 @@ class SunshineViews(object):
             self.connection.execute(query, **kwargs)
             trans.commit()
         except sa.exc.ProgrammingError as e:
+            logger.error(e, exc_info=True)
             trans.rollback()
             raise e
     
