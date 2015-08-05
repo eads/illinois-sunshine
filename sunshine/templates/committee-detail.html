@@ -150,7 +150,7 @@
                 <tfoot>
                     <tr>
                         <td><strong>Total funds</strong></td>
-                        <td><strong>{% if controlled_amount %}{{ controlled_amount|format_money }}{% else %}$0{% endif %}</strong></td>
+                        <td class='text-right'><strong>{% if controlled_amount %}{{ controlled_amount|format_money }}{% else %}$0{% endif %}</strong></td>
                     </tr>
                 </tfoot>
             </table>
