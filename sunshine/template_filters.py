@@ -17,7 +17,7 @@ def donation_name(s):
     verbs = {
         '1A': 'Donation',
         '2A': 'Transfer in',
-        '3A': 'Loan recieved',
+        '3A': 'Loan received',
         '4A': 'Other',
         '5A': 'In kind donation'
     }
