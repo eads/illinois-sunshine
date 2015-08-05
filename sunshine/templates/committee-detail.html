@@ -125,25 +125,25 @@
             <table class="table table-striped">
                 <thead>
                     <th>{{ latest_filing.reporting_period_end.strftime('%b %d, %Y') }} quarterly report</th>
-                    <th>Amount</th>
+                    <th class='text-right'>Amount</th>
                 </thead>
                 <tbody>
                     {% if latest_filing and latest_filing.reporting_period_end %}
                         <tr>
                             <td>Funds available</td>
-                            <td>{{ latest_filing.end_funds_available|format_money }}</td>
+                            <td class='text-right'>{{ latest_filing.end_funds_available|format_money }}</td>
                         </tr>
                         <tr>
                             <td>Investments</td>
-                            <td>{{ latest_filing.total_investments|format_money }}</td>
+                            <td class='text-right'>{{ latest_filing.total_investments|format_money }}</td>
                         </tr>
                         <tr>
                             <td>Debts and obligations</td>
-                            <td>-{{ latest_filing.total_debts|format_money }}</td>
+                            <td class='text-right'>-{{ latest_filing.total_debts|format_money }}</td>
                         </tr>
                         <tr>
                             <td>Contributions since {{ latest_filing.reporting_period_end.strftime('%b %d, %Y')}}*</td>
-                            <td>{{ recent_total|format_money }}</td>
+                            <td class='text-right'>{{ recent_total|format_money }}</td>
                         </tr>
                     {% endif %}
                 </tbody>
@@ -163,11 +163,11 @@
             <table class='table'>
                 <tr>
                     <td>Total donations since {{committee.creation_date.strftime('%b %d, %Y')}}</td>
-                    <td>{{total_donations|format_money}}</td>
+                    <td class='text-right'>{{total_donations|format_money}}</td>
                 </tr>
                 <tr>
                     <td>Total expenditures since {{committee.creation_date.strftime('%b %d, %Y')}}</td>
-                    <td>{{total_expenditures|format_money}}</td>
+                    <td class='text-right'>{{total_expenditures|format_money}}</td>
                 </tr>
             </table>
             <div id="expend-chart"></div>
