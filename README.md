@@ -20,7 +20,7 @@ mkvirtualenv illinois-sunshine
 git clone https://github.com/datamade/illinois-sunshine.git
 cd illinois-sunshine
 pip install -r requirements.txt
-cp illinois-sunshine/app_config.py.example illinois-sunshine/app_config.py
+cp sunshine/app_config.py.example sunshine/app_config.py
 ```
 
 In `app_config.py`, put your Postgres user in `DB_USER` and password in `DB_PW`.
