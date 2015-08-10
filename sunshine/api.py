@@ -165,7 +165,7 @@ def advanced_search():
                                        table_name, 
                                        q_params=q_params)
             
-            objects[table_name] = (OrderedDict(zip(r.keys(), r.values())) for r in results)
+            objects[table_name] = [OrderedDict(zip(r.keys(), r.values())) for r in results]
         
         start_idx = int(offset)
         end_idx = int(offset) + int(limit)
