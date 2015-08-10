@@ -190,6 +190,8 @@ def advanced_search():
             response.headers['Content-Type'] = 'application/zip'
             fname = 'Illinois_Sunshine_Search_%s_%s.zip' % ('_'.join(term.split(' ')), filedate)
             response.headers['Content-Disposition'] = 'attachment; filename=%s' % (fname)
+            
+            return response
 
         else:
             for table_name, records in objects.items():
@@ -269,9 +271,9 @@ def advanced_search():
             if request.args.get('draw'):
                 resp['draw'] = int(request.args['draw'])
 
-            response_str = json.dumps(resp, sort_keys=False, default=dthandler)
-            response = make_response(response_str, status_code)
-            response.headers['Content-Type'] = 'application/json'
+    response_str = json.dumps(resp, sort_keys=False, default=dthandler)
+    response = make_response(response_str, status_code)
+    response.headers['Content-Type'] = 'application/json'
 
     return response
 
