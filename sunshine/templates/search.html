@@ -185,8 +185,8 @@
     function do_query(query){
         var term = query['term'];
 
-        if (term == "") {
-            alert("You must enter a search term");
+        if (term == "" || term.length < 3) {
+            alert("You must enter a search term with 3 or more letters.");
             return;
         }
 
