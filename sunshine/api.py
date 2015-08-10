@@ -144,6 +144,12 @@ def advanced_search():
         status_code = 400
         valid = False
     
+    if len(term) < 3:
+        resp['status'] = 'error'
+        resp['message'] = 'Search term must be at least 3 characters long'
+        status_code = 400
+        valid = False
+
     if valid:
 
         # Need to figure a way to do any column. This will 
@@ -381,6 +387,15 @@ def receipts():
                               autoload_with=db_session.bind)
 
     valid_query, query_clauses, resp, status_code = make_query(receipts_table, raw_query_params)
+    
+    if not raw_query_params.get('committee_id'):
+        resp = {
+            'status' : 'error',
+            'message' : 'A committee ID is required',
+        }
+        status_code = 400
+        valid_query = False
+    
     if valid_query:
         committees_table = Committee.__table__
         
@@ -458,13 +473,19 @@ def expenditures():
     sort_order = request.args.get('sort_order', 'desc')
     datatype = request.args.get('datatype')
 
-    if int(limit) > 1000:
-        limit = 1000
-    
     expenditures_table = sa.Table('condensed_expenditures', sa.MetaData(), 
                                   autoload=True, autoload_with=db_session.bind)
     
     valid_query, query_clauses, resp, status_code = make_query(expenditures_table, raw_query_params)
+    
+    if not raw_query_params.get('committee_id'):
+        resp = {
+            'status' : 'error',
+            'message' : 'A committee ID is required',
+        }
+        status_code = 400
+        valid_query = False
+    
     if valid_query:
         committees_table = Committee.__table__
         
