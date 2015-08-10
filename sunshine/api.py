@@ -438,8 +438,10 @@ def receipts():
             outp = StringIO()
             writer = csv.writer(outp)
             records = committee_info['receipts']
-            writer.writerow(list(records[0].keys()))
-            writer.writerows([list(r.values()) for r in records])
+            
+            if records:
+                writer.writerow(list(records[0].keys()))
+                writer.writerows([list(r.values()) for r in records])
             
             response = make_response(outp.getvalue(), 200)
             
@@ -528,8 +530,10 @@ def expenditures():
             outp = StringIO()
             writer = csv.writer(outp)
             records = committee_info['expenditures']
-            writer.writerow(list(records[0].keys()))
-            writer.writerows([list(r.values()) for r in records])
+            
+            if records:
+                writer.writerow(list(records[0].keys()))
+                writer.writerows([list(r.values()) for r in records])
             
             response = make_response(outp.getvalue(), 200)
             
