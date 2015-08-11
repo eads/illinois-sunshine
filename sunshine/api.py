@@ -144,7 +144,7 @@ def advanced_search():
         status_code = 400
         valid = False
     
-    if len(term) < 3:
+    elif len(term) < 3:
         resp['status'] = 'error'
         resp['message'] = 'Search term must be at least 3 characters long'
         status_code = 400
