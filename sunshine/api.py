@@ -70,13 +70,14 @@ def getSearchResults(term,
         if valid_query:
             clauses = []
             for key in q_params.keys():
-                try:
-                    fieldname, operator = key.split('__')
-                    operator = operator_lookup[operator]
-                except ValueError:
-                    fieldname = key
-                    operator = '='
-                clauses.append('%s %s :%s' % (fieldname, operator, key))
+                if key != 'term':
+                    try:
+                        fieldname, operator = key.split('__')
+                        operator = operator_lookup[operator]
+                    except ValueError:
+                        fieldname = key
+                        operator = '='
+                    clauses.append('%s %s :%s' % (fieldname, operator, key))
             
             result = '{0} AND {1}'.format(result, ' AND '.join(clauses))
 
@@ -583,6 +584,8 @@ def make_query(table, raw_query_params):
         args_keys.remove('order_by')
     if 'datatype' in args_keys:
         args_keys.remove('datatype')
+    if 'term' in args_keys:
+        args_keys.remove('term')
     for query_param in args_keys:
         try:
             field, operator = query_param.split('__')
