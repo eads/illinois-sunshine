@@ -644,9 +644,9 @@ class SunshineViews(object):
                     SELECT 
                       r.*
                     FROM receipts AS r
-                    JOIN most_recent_filings AS m
+                    LEFT JOIN most_recent_filings AS m
                       USING(committee_id)
-                    WHERE r.received_date > m.reporting_period_end
+                    WHERE r.received_date > COALESCE(m.reporting_period_end, '1900-01-01')
                   ) UNION (
                     SELECT
                       r.*
