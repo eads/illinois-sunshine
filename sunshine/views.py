@@ -440,8 +440,8 @@ def committee(committee_id):
             LEFT JOIN committee_money AS m
               ON oc.committee_id = m.committee_id
           ) AS o2
-            ON o.first_name = o2.first_name
-            AND o.last_name = o2.last_name
+            ON TRIM(BOTH ' ' FROM REPLACE(o.first_name, '.', '')) = TRIM(BOTH ' ' FROM REPLACE(o2.first_name, '.', ''))
+            AND TRIM(BOTH ' ' FROM REPLACE(o.last_name, '.', '')) = TRIM(BOTH ' ' FROM REPLACE(o2.last_name, '.', ''))
           WHERE o.committee_id != o2.committee_id
             AND (o.committee_id = :committee_id OR o2.committee_id = :committee_id))
     '''
@@ -478,8 +478,8 @@ def committee(committee_id):
                  'Officer with same name as supported candidate' AS reason
                FROM candidates AS cd
                LEFT JOIN officers AS o
-                 ON cd.first_name = o.first_name
-                 AND cd.last_name = o.last_name
+                 ON TRIM(BOTH ' ' FROM REPLACE(cd.first_name, '.', '')) = TRIM(BOTH ' ' FROM REPLACE(o.first_name, '.', ''))
+                 AND TRIM(BOTH ' ' FROM REPLACE(cd.last_name, '.', '')) = TRIM(BOTH ' ' FROM REPLACE(o.last_name, '.', ''))
                LEFT JOIN officer_committees AS oc
                  ON o.id = oc.officer_id
                JOIN committees AS c
