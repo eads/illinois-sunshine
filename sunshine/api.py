@@ -269,7 +269,7 @@ def advanced_search():
                         reverse_sort = False
                     
                     records = sorted(records, 
-                                     key=lambda r: str(r[other_col]) if str(r[other_col]) else "", 
+                                     key=lambda r: str(r[cmt_col]) if str(r[cmt_col]) else "", 
                                      reverse=reverse_sort)
          
                 else:
