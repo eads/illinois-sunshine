@@ -531,34 +531,6 @@ class SunshineOfficerCommittees(SunshineTransformLoad):
             row = [row['CommitteeID'], row['OfficerID']]
             yield OrderedDict(zip(self.header, row))
 
-# class SunshineOfficerCommittees(SunshineTransformLoad):
-#     table_name = 'officer_committees'
-#     header = ['committee_id', 'officer_id']
-#     filename = 'CmteOfficerLinks.txt'
-#     
-#     def transform(self):
-#         for row in self.iterIncomingData():
-#             row = [row['CommitteeID'], row['OfficerID']]
-#             yield OrderedDict(zip(self.header, row))
-#     
-#     def load(self):
-#         self.makeRawTable()
-#         self.writeRawToDisk()
-#         self.bulkLoadRawData()
-# 
-#         update = ''' 
-#             UPDATE officers SET
-#               committee_id = subq."CommitteeID"
-#             FROM (
-#               SELECT 
-#                 "OfficerID", 
-#                 "CommitteeID"
-#               FROM raw_officer_committees
-#             ) AS subq
-#             WHERE officers.id = subq."OfficerID"
-#         '''
-#         
-#         self.executeTransaction(update)
 
 class SunshineD2Reports(SunshineTransformLoad):
     table_name = 'd2_reports'
