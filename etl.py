@@ -61,6 +61,7 @@ class SunshineTransformLoad(object):
         except sa.exc.ProgrammingError as e:
             logger.error(e, exc_info=True)
             trans.rollback()
+            print(e)
             if raise_exc:
                 raise e
 
@@ -495,29 +496,69 @@ class SunshineOfficerCommittees(SunshineTransformLoad):
     header = ['committee_id', 'officer_id']
     filename = 'CmteOfficerLinks.txt'
     
+    def findNewRecords(self):
+        create_new_record_table = ''' 
+            CREATE TABLE new_{0} AS (
+                SELECT 
+                  raw."CommitteeID", 
+                  raw."OfficerID"
+                FROM raw_{0} AS raw
+                LEFT JOIN {0} AS dat
+                  ON raw."CommitteeID" = dat.committee_id
+                  AND raw."OfficerID" = dat.officer_id
+                WHERE dat.committee_id IS NULL
+                  AND dat.officer_id IS NULL
+            )
+        '''.format(self.table_name)
+
+        self.executeTransaction('DROP TABLE IF EXISTS new_{0}'.format(self.table_name))
+        self.executeTransaction(create_new_record_table, rase_exc=True)
+    
+    def iterIncomingData(self):
+        incoming = ''' 
+            SELECT raw.* 
+            FROM raw_{0} AS raw
+            JOIN new_{0} AS new
+              ON raw."CommitteeID" = new."CommitteeID"
+              AND raw."OfficerID" = new."OfficerID"
+        '''.format(self.table_name)
+        
+        for record in self.connection.engine.execute(incoming):
+            yield record
+    
     def transform(self):
         for row in self.iterIncomingData():
             row = [row['CommitteeID'], row['OfficerID']]
             yield OrderedDict(zip(self.header, row))
-    
-    def load(self):
-        self.makeRawTable()
-        self.writeRawToDisk()
-        self.bulkLoadRawData()
 
-        update = ''' 
-            UPDATE officers SET
-              committee_id = subq."CommitteeID"
-            FROM (
-              SELECT 
-                "OfficerID", 
-                "CommitteeID"
-              FROM raw_officer_committees
-            ) AS subq
-            WHERE officers.id = subq."OfficerID"
-        '''
-        
-        self.executeTransaction(update)
+# class SunshineOfficerCommittees(SunshineTransformLoad):
+#     table_name = 'officer_committees'
+#     header = ['committee_id', 'officer_id']
+#     filename = 'CmteOfficerLinks.txt'
+#     
+#     def transform(self):
+#         for row in self.iterIncomingData():
+#             row = [row['CommitteeID'], row['OfficerID']]
+#             yield OrderedDict(zip(self.header, row))
+#     
+#     def load(self):
+#         self.makeRawTable()
+#         self.writeRawToDisk()
+#         self.bulkLoadRawData()
+# 
+#         update = ''' 
+#             UPDATE officers SET
+#               committee_id = subq."CommitteeID"
+#             FROM (
+#               SELECT 
+#                 "OfficerID", 
+#                 "CommitteeID"
+#               FROM raw_officer_committees
+#             ) AS subq
+#             WHERE officers.id = subq."OfficerID"
+#         '''
+#         
+#         self.executeTransaction(update)
 
 class SunshineD2Reports(SunshineTransformLoad):
     table_name = 'd2_reports'

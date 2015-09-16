@@ -411,30 +411,34 @@ def committee(committee_id):
             SELECT
               cm.name,
               cm.active,
-              o.committee_id,
+              oc.committee_id,
               o.first_name,
               o.last_name,
               cm.type,
               m.total AS money
             FROM committees AS cm
+            LEFT JOIN officer_committees AS oc
+              ON cm.id = oc.committee_id
             JOIN officers AS o
-              ON cm.id = o.committee_id
+              ON oc.officer_id = o.id
             LEFT JOIN committee_money AS m
-              ON cm.id = m.committee_id
+              ON oc.committee_id = m.committee_id
           ) AS o
           JOIN (
             SELECT
               cm.name,
-              o.committee_id,
+              oc.committee_id,
               o.first_name,
               o.last_name,
               cm.type,
               m.total AS money
             FROM committees AS cm
+            LEFT JOIN officer_committees AS oc
+              ON cm.id = oc.committee_id
             JOIN officers AS o
-              ON cm.id = o.committee_id
+              ON oc.officer_id = o.id
             LEFT JOIN committee_money AS m
-              ON cm.id = m.committee_id
+              ON oc.committee_id = m.committee_id
           ) AS o2
             ON o.first_name = o2.first_name
             AND o.last_name = o2.last_name
@@ -476,8 +480,10 @@ def committee(committee_id):
                LEFT JOIN officers AS o
                  ON cd.first_name = o.first_name
                  AND cd.last_name = o.last_name
-               LEFT JOIN committees AS oc
-                 ON o.committee_id = oc.id
+               LEFT JOIN officer_committees AS oc
+                 ON o.id = oc.officer_id
+               JOIN committees AS c
+                 ON oc.committee_id = c.id
                LEFT JOIN committee_money AS m
                  ON oc.id = m.committee_id
                WHERE cd.id IN :candidate_ids
@@ -495,7 +501,9 @@ def committee(committee_id):
         '''
     
     related_committees = list(g.engine.execute(sa.text(related_committees),**params))
-
+    
+    print(related_committees)
+    
     supported_candidates = []
     opposed_candidates = []
 

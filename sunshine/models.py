@@ -68,6 +68,11 @@ candidate_committees = sa.Table('candidate_committees', Base.metadata,
                        sa.Column('committee_id', sa.Integer)
 )
 
+officer_committees = sa.Table('officer_committees', Base.metadata,
+                       sa.Column('officer_id', sa.Integer),
+                       sa.Column('committee_id', sa.Integer)
+)
+
 class Committee(Base):
     __tablename__ = 'committees'
     id = sa.Column(sa.Integer, primary_key=True)
@@ -109,6 +114,12 @@ class Committee(Base):
                                      secondaryjoin='candidate_committees.c.candidate_id==Candidate.id',
                                      secondary=candidate_committees,
                                      backref='committees')
+    
+    officers = sa.orm.relationship('Officer',
+                                    primaryjoin='Committee.id==officer_committees.c.committee_id',
+                                    secondaryjoin='officer_committees.c.officer_id==Officer.id',
+                                    secondary=officer_committees,
+                                    backref='committees')
 
     def __repr__(self):
         return '<Committee %r>' % self.name
@@ -121,14 +132,7 @@ class Committee(Base):
 class Officer(Base):
     __tablename__ = 'officers'
     id = sa.Column(sa.Integer, primary_key=True)
-    
     committee_id = sa.Column(sa.Integer)
-    committee = sa.orm.relationship('Committee', 
-                                    primaryjoin='Officer.committee_id==Committee.id',
-                                    foreign_keys='Officer.committee_id',
-                                    remote_side='Committee.id',
-                                    backref='officers')
-    
     last_name = sa.Column(sa.String)
     first_name = sa.Column(sa.String)
     address1 = sa.Column(sa.String)
