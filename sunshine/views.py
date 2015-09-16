@@ -502,8 +502,6 @@ def committee(committee_id):
     
     related_committees = list(g.engine.execute(sa.text(related_committees),**params))
     
-    print(related_committees)
-    
     supported_candidates = []
     opposed_candidates = []
 
