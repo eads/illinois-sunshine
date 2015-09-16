@@ -114,6 +114,7 @@
                             <th>Committee name</th>
                             <th>Title</th>
                             <th>Current officer</th>
+                            <th>Active committee</th>
                             <th>Resign date</th>
                         </tr>
                     </thead>
@@ -266,6 +267,12 @@
                     }
                 },
                 {
+                    "data": "committee_active",
+                    "render": function(data, type, full, meta){
+                        return format_boolean(data);
+                    }
+                },
+                {
                     "data": "resign_date",
                     "render": function(data, type, full, meta){
                         if(data){
@@ -361,7 +368,7 @@
                     }
                 }
             ]
-            var order = [[3, 'desc']];
+            var order = [[4, 'desc']];
 
             init_datatable(term, start_date, end_date, 'expenditures', columns, order);
 

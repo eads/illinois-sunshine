@@ -31,7 +31,7 @@ def getSearchResults(term,
                      table_name, 
                      q_params={}):
     
-    if table_name in ['receipts', 'expenditures', 'investments', 'officers']:
+    if table_name in ['receipts', 'expenditures', 'investments']:
         
         if table_name in ['receipts', 'expenditures']:
             table_name = 'condensed_%s' % table_name
@@ -49,6 +49,33 @@ def getSearchResults(term,
               WHERE query @@ r.search_name
             ) AS {0}
             WHERE 1=1
+        '''.format(table_name)
+    
+    elif table_name == 'officers':
+        result = ''' 
+            SELECT 
+              c.id AS committee_id,
+              c.name AS committee_name,
+              c.active AS committee_active,
+              o.id,
+              o.last_name, 
+              o.first_name, 
+              o.address1,
+              o.address2,
+              o.city,
+              o.state,
+              o.zipcode,
+              o.title,
+              o.phone,
+              o.resign_date,
+              o.redaction_requested,
+              o.current
+            FROM officers AS o
+            JOIN officer_committees AS oc
+              ON o.id = oc.officer_id
+            JOIN committees AS c
+              ON oc.committee_id = c.id
+            WHERE to_tsquery('english', :term) @@ o.search_name
         '''.format(table_name)
 
     else:
@@ -242,7 +269,7 @@ def advanced_search():
                         reverse_sort = False
                     
                     records = sorted(records, 
-                                     key=lambda r: r[cmt_col] if r[cmt_col] else "", 
+                                     key=lambda r: str(r[other_col]) if str(r[other_col]) else "", 
                                      reverse=reverse_sort)
          
                 else:
@@ -252,9 +279,9 @@ def advanced_search():
                     if not order_by_col:
                         other_col = 'last_name'
                         reverse_sort = False
-                    
+
                     records = sorted(records, 
-                                     key=lambda r: r[other_col] if r[other_col] else "", 
+                                     key=lambda r: str(r[other_col]) if str(r[other_col]) else "", 
                                      reverse=reverse_sort)
                 
                 total_rows += len(records)
