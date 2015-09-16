@@ -470,10 +470,10 @@ def committee(committee_id):
               WHERE cd.id IN :candidate_ids)
               UNION
               (SELECT
-                 oc.name,
-                 oc.id,
-                 oc.type,
-                 oc.active,
+                 c.name,
+                 c.id,
+                 c.type,
+                 c.active,
                  m.total AS money,
                  'Officer with same name as supported candidate' AS reason
                FROM candidates AS cd
@@ -485,7 +485,7 @@ def committee(committee_id):
                JOIN committees AS c
                  ON oc.committee_id = c.id
                LEFT JOIN committee_money AS m
-                 ON oc.id = m.committee_id
+                 ON oc.committee_id = m.committee_id
                WHERE cd.id IN :candidate_ids
               )
         '''
