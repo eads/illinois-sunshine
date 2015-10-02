@@ -160,6 +160,10 @@ def donations():
 def about():
     return render_template('about.html')
 
+@views.route('/developers/')
+def developers():
+    return render_template('developers.html')
+
 @views.route('/error/')
 def error():
     return render_template('error.html')

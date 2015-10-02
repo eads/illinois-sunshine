@@ -1,0 +1,948 @@
+{% extends 'base.html' %}
+{% block title %}Developers{% endblock %}
+{% block content %}
+
+<div class="col-md-12">
+
+    <h3 id='api'>API (for the nerds)</h3>
+
+    <p>If you want to access Illinois Sunshine programatically, we have an API
+    for you!  The Illinois Sunshine API can be used to query our data about
+    candidates, committees, and committee finances.</p>
+
+    <p>A few things to know:</p>
+
+    <ul>
+        <li>All API calls should be made with <code>HTTP GET</code></li>
+        <li>All API responses are in <a href='http://www.json.org/'>JSON format</a> by default</li>
+        <li>Some API endpoints (noted below) can also return a comma-separated value file</li>
+        <li>All methods are accessed via: <code>http://illinoissunshine.org/api/SOME-ENDPOINT</code></li>
+    </ul>
+
+    <h4>Data description</h4>
+
+    <p>
+        The data that powers Illinois Sunshine comes directly from the
+        <a target="_blank" href="http://elections.il.gov/">Illinois State
+        Board of Elections</a> and is a direct reflection of that source.
+        Therefore, under the hood, Illinois Sunshine has data on candidates (and
+        their candidacies), committees, receipts by committees, expenditures made
+        by committees, investments made by committees as well as
+        information about all of the various documents that accompany
+        the financial disclosures. Largely due to the way this
+        information is reported, the data in these tables is often
+        messy.Below is a description of the tables that house the
+        information exposed in this API.
+        <strong>Refer to these tables when
+        interpreting the responses made by the endpoints below</strong>.
+    </p>
+    <div class="panel-group" id="accordion-api-candidates">
+        <div class="panel panel-default">
+            <div class="panel-heading" data-toggle="collapse" data-parent="#accordion-api-candidates" href="#collapse-api-candidates" id="api-candidates">
+                <i class="fa fa-chevron-circle-right fa-lg plusminus"></i>
+                <strong><code>candidates</code></strong>
+                <p class='pull-right'><small>Information about candidates</small></p>
+                <div class='clearfix'></div>
+            </div>
+            <div id="collapse-api-candidates" class="panel-collapse collapse">
+                <div class="panel-body">
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Field</th>
+                                <th>Description</th>
+                                <th>Contains null values?</th>
+                                <th>Sample values</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>id</code></td>
+                                <td>Unique numerical identifier for candidate created by the Illinois State Board of Elections</td>
+                                <td>No</td>
+                                <td>
+                                    10109<br />
+                                    18634<br />
+                                      306<br />
+                                      894<br />
+                                     3410<br />
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><code>last_name</code></td>
+                                <td>Candidate last (family) name</td>
+                                <td>No</td>
+                                <td>
+                                    Oncken<br />
+                                    Ruzzier<br />
+                                    Hall, Jr<br />
+                                    Wartan<br />
+                                    McGruder<br />
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><code>first_name</code></td>
+                                <td>Candidate first (given) name</td>
+                                <td>No</td>
+                                <td>
+                                    Martin (Marty)<br />
+                                    John<br />
+                                    Edward J<br />
+                                    Joseph P "Joe"<br />
+                                    Dick<br />
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><code>address_1</code></td>
+                                <td>Candidate contact address line one</td>
+                                <td>Yes</td>
+                                <td>
+                                    508 N Maple<br />
+                                    5315 Fair Elms<br />
+                                    2500 S St Louis Ave<br />
+                                    Rt 1<br />
+                                    460 S Hampshire Ave<br />
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><code>address_2</code></td>
+                                <td>Candidate contact address line two</td>
+                                <td>Yes</td>
+                                <td>
+                                    4625<br />
+                                    Apt 506 B<br />
+                                    PO Box 1149<br />
+                                    Ste 143<br />
+                                    353 N Clark St, Ste 3500<br />
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><code>city</code></td>
+                                <td>Candidate contact address city</td>
+                                <td>Yes</td>
+                                <td>
+                                    Cissna Park<br />
+                                    Olney<br />
+                                    Caseyville<br />
+                                    Colchester<br />
+                                    Western Springs<br />
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><code>state</code></td>
+                                <td>Candidate contact address state</td>
+                                <td>Yes</td>
+                                <td>
+                                    DC<br />
+                                    IL<br />
+                                    I<br />
+                                    IN<br />
+                                    Wi<br />
+                                    il<br />
+                                    ZI<br />
+                                    MI<br />
+                                    Il<br />
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><code>zipcode</code></td>
+                                <td>Candidate contact address ZIP Code</td>
+                                <td>Yes</td>
+                                <td>
+                                    62902-6107<br />
+                                    62082<br />
+                                    62512<br />
+                                    62338<br />
+                                    62816<br />
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><code>office</code></td>
+                                <td>Elected office sought by candidate</td>
+                                <td>Yes</td>
+                                <td>
+                                    Circuit Clerk/McLean County<br />
+                                    Twp Highway Commissioner/Hanover Twp<br />
+                                    County Board Chairman/DuPage County<br />
+                                    Village Trustee/Bethalto<br />
+                                    Judge, Appellate Court/5th Dist<br />
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><code>district_type</code></td>
+                                <td>Type of district covered by office</td>
+                                <td>Yes</td>
+                                <td>
+                                    Vilalge (<em>yes, actually spelled that way</em>)<br />
+                                    Representative<br />
+                                    Municipal<br />
+                                    Trustee<br />
+                                    Township<br />
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><code>district</code></td>
+                                <td>Name of the district covered by office</td>
+                                <td>Yes</td>
+                                <td>
+                                    303<br />
+                                    120<br />
+                                    52<br />
+                                    50<br />
+                                    20<br />
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><code>residence_county</code></td>
+                                <td>Candidate residence county</td>
+                                <td>Yes</td>
+                                <td>
+                                    Randolph<br />
+                                    Jo Davies<br />
+                                    Will<br />
+                                    Cook<br />
+                                    Shelby<br />
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><code>party</code></td>
+                                <td>Candidate political party</td>
+                                <td>Yes</td>
+                                <td>
+                                    Harold Washington<br />
+                                    United<br />
+                                    Tinley '97<br />
+                                    Continued Progress Party<br />
+                                    Community<br />
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><code>redaction_requested</code></td>
+                                <td>Boolean indicating whether the candidate requested that their information be redacted</td>
+                                <td>No</td>
+                                <td>
+                                    true<br />
+                                    false<br />
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><code>date_added</code></td>
+                                <td>Date record was added to Illinois Sunshine</td>
+                                <td>No</td>
+                                <td></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="panel-group" id="accordion-api-committees">
+        <div class="panel panel-default">
+            <div class="panel-heading" data-toggle="collapse" data-parent="#accordion-api-committees" href="#collapse-api-committees" id="api-committees">
+                <i class="fa fa-chevron-circle-right fa-lg plusminus"></i>
+                <strong><code>committees</code></strong>
+                <p class='pull-right'><small>Information about committees</small></p>
+                <div class='clearfix'></div>
+            </div>
+            <div id="collapse-api-committees" class="panel-collapse collapse">
+                <div class="panel-body">
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Field</th>
+                                <th>Description</th>
+                                <th>Null values?</th>
+                                <th>Sample values</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>id</code></td>
+                                <td>Unique numerical identifier for committee created by the Illinois State Board of Elections</td>
+                                <td>No</td>
+                                <td>
+                                      9598<br />
+                                     14146<br />
+                                      2608<br />
+                                     13238<br />
+                                      2203<br />
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><code>type</code></td>
+                                <td>Committee type</td>
+                                <td>Yes</td>
+                                <td>
+                                    Candidate<br />
+                                    Ballot Initiative<br />
+                                    Political Party<br />
+                                    Political Action<br />
+                                    Independent Expenditure<br />
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><code>state_committee</code></td>
+                                <td>Boolean indicating whether committee reports to state board of elections (deprecated?)</td>
+                                <td>No</td>
+                                <td>
+                                    true<br />
+                                    false<br />
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><code>state_id</code></td>
+                                <td>Unique numeric identifier used by the Illinois State Board of Elections (deprecated?)</td>
+                                <td>Yes</td>
+                                <td>
+                                    5555<br />
+                                    9071<br />
+                                    9212<br />
+                                    497<br />
+                                    10003<br />
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><code>local_committee</code></td>
+                                <td>Boolean indicating whether committee reports to local authority (deprecated?)</td>
+                                <td>No</td>
+                                <td>
+                                    true<br />
+                                    false<br />
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><code>local_id</code></td>
+                                <td>Unique numeric identifier used by local election authority (deprecated?)</td>
+                                <td>Yes</td>
+                                <td>
+                                    7204<br />
+                                    10367<br />
+                                    9719<br />
+                                    8558<br />
+                                    7761<br />
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><code>refer_name</code></td>
+                                <td>Abbreviated form of committee name</td>
+                                <td>No</td>
+                                <td>
+                                    97N14.Com<br />
+                                    Voss T<br />
+                                    Diaz R A<br />
+                                    Andolino L<br />
+                                    One Cent<br />
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><code>name</code></td>
+                                <td>Committee name</td>
+                                <td>No</td>
+                                <td>
+                                    Yes For Richland<br />
+                                    Citz For Vaughn<br />
+                                    Northbrook Village Caucus Committee<br />
+                                    Steger Community Party<br />
+                                    Citz To Elect Kathleen Longman<br />
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><code>address1</code></td>
+                                <td>Committee address line 1</td>
+                                <td>Yes</td>
+                                <td>
+                                    807 Brae Burn Ln<br />
+                                    320 S Monroe St<br />
+                                    c/o Fred Turner<br />
+                                    162 Elm Tree Lane<br />
+                                    9933 N Lawler St<br />
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><code>address2</code></td>
+                                <td>Committee address line 2</td>
+                                <td>Yes</td>
+                                <td>
+                                    744 Madelyn Dr<br />
+                                    3-b Club Centre<br />
+                                    Unit 201<br />
+                                    7646 Moore Rd<br />
+                                    2317 S Trumbull<br />
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><code>address3</code></td>
+                                <td>Committee address line 3</td>
+                                <td>Yes</td>
+                                <td>
+                                    5711 N Milwaukee Ave<br />
+                                    PO Box 719<br />
+                                    Attn Mark Flood<br />
+                                    125 S Wacker Dr, Ste 1500<br />
+                                    129 W Joliet Hwy<br />
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><code>city</code></td>
+                                <td>Committee address city</td>
+                                <td>No</td>
+                                <td>
+                                    Crystal Lke<br />
+                                    Schiller Park<br />
+                                    Wapella<br />
+                                    Minier<br />
+                                    South Barrington<br />
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><code>state</code></td>
+                                <td>Committee address state</td>
+                                <td>No</td>
+                                <td>
+                                    NM<br />
+                                    IL<br />
+                                    KS<br />
+                                    MD<br />
+                                    WA<br />
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><code>zipcode</code></td>
+                                <td>Committee address ZIP Code</td>
+                                <td>No</td>
+                                <td>
+                                    46074-2303<br />
+                                    62815<br />
+                                    62568-9601<br />
+                                    61273<br />
+                                    60606-6359<br />
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><code>active</code></td>
+                                <td>Boolean indicating whether committee is active</td>
+                                <td>No</td>
+                                <td>
+                                    true<br />
+                                    false<br />
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><code>status_date</code></td>
+                                <td>Date active status was recorded</td>
+                                <td>No</td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td><code>creation_date</code></td>
+                                <td>Date committee was formed</td>
+                                <td>Yes</td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td><code>creation_amount</code></td>
+                                <td>Funds controlled by committee when created</td>
+                                <td>No</td>
+                                <td>
+                                    290.63<br />
+                                    150.25<br />
+                                    760000<br />
+                                    517.71<br />
+                                    637.8<br />
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><code>candidate_position</code></td>
+                                <td>For candidate centric committees, indicates whether the linked candidates are supported or opposed. Often seems unreliable.</td>
+                                <td>Yes</td>
+                                <td>
+                                    support<br />
+                                    oppose<br />
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><code>policy_position</code></td>
+                                <td>For policy centric committees, indicates whether the policy is supported or opposed.</td>
+                                <td>Yes</td>
+                                <td>
+                                    support<br />
+                                    oppose<br />
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><code>party</code></td>
+                                <td>Committee political party</td>
+                                <td>Yes</td>
+                                <td>
+                                    Non-Partisan<br />
+                                    Republican or Independent<br />
+                                    United Party<br />
+                                    United Party of Justice<br />
+                                    Better Government Party<br />
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><code>purpose</code></td>
+                                <td>Committee stated purpose</td>
+                                <td>Yes</td>
+                                <td>
+                                    To elect Glen R Kuhlemier Mayor of Rock Falls<br />
+                                    To get Michael C  Kirchner elected to the office of County Clerk.<br />
+                                    To elect Michael Scott Jr. to the office of Alderman<br />
+                                    Support Jonathan Baum for the District 65 School Board<br />
+                                    Elect Chris Remhof to the Ogle County Board, and support area democrats.<br />
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <h4>Endpoints</h4>
+
+    <div class="panel-group" id="accordion-api-data-sources">
+      <div class="panel panel-default">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion-api-data-sources" href="#collapse-api-data-sources" id="api-data-sources">
+          <i class="fa fa-chevron-circle-right fa-lg plusminus"></i>
+          <span class='label label-info'>GET</span>
+          <strong><code>/api/advanced-search/</code></strong>
+          <p class='pull-right'><small>search data for a term</small></p>
+          <div class='clearfix'></div>
+        </div>
+        <div id="collapse-api-data-sources" class="panel-collapse collapse">
+          <div class="panel-body">
+            <p>Searches selected tables for a given term. Results are
+            ordered in reverse order by date.</p>
+
+            <p><strong>Query Parameters</strong></p>
+            <p>All query parameters are optional except for <code>term</code></p>
+            <table class='table table-bordered'>
+              <thead>
+                <tr>
+                  <th>Parameter</th>
+                  <th>Default value</th>
+                  <th>Possible values</th>
+                  <th>Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong><code>term</code></strong></td>
+                  <td>none</td>
+                  <td>Any string</td>
+                  <td>The term to search for across selected tables. Must be at least three characters long.</td>
+                </tr>
+                <tr>
+                  <td><strong><code>limit</code></strong></td>
+                  <td>50</td>
+                  <td>Any positive integer</td>
+                  <td>The number of results to return. Use this in combination with <code>offset</code> to paginate results.</td>
+                </tr>
+                <tr>
+                  <td><strong><code>offset</code></strong></td>
+                  <td>0</td>
+                  <td>Any positive integer</td>
+                  <td>Skip this number of results from the beginning of the response. Use this in combination with <code>limit</code> to paginate results.</td>
+                </tr>
+                <tr>
+                  <td><strong><code>datatype</code></strong></td>
+                  <td>json</td>
+                  <td><code>csv</code> or <code>json</code></td>
+                  <td>Format to return the data in. <code>csv</code> returns a zip file containing CSV files with the results from each of the selected tables.</td>
+                </tr>
+                <tr>
+                  <td><strong><code>table_name</code></strong></td>
+                  <td>
+                      <code>committees</code><br />
+                      <code>candidates</code><br />
+                      <code>receipts</code><br />
+                      <code>expenditures</code><br />
+                      <code>officers</code>
+                  </td>
+                  <td>
+                      <code>committees</code><br />
+                      <code>candidates</code><br />
+                      <code>receipts</code><br />
+                      <code>expenditures</code><br />
+                      <code>officers</code>
+                      <code>investments</code>
+                  </td>
+                  <td>The name of the table to search within. Multiple
+                      <code>table_name</code> allow you to search within
+                      multiple tables. So, to search within the
+                      <code>receipts</code> and <code>expenditures</code>
+                      tables, add this to your querystring:
+                      <code>&table_name=receipts&table_name=expenditures</code>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+
+            <p><strong>Response</strong></p>
+            <table class='table table-bordered'>
+              <thead>
+                <tr>
+                  <th>Parameter</th>
+                  <th>Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong><code>objects</code></strong></td>
+                  <td>
+                      A JSON object containing arrays of results from
+                      each of the selected tables. The fields returned
+                      depend on the table. See <strong>data
+                      description</strong> above for details above for
+                      descriptions of each data table.
+                  </td>
+                </tr>
+                <tr>
+                  <td><strong><code>meta</code></strong></td>
+                  <td>Data source description</td>
+                </tr>
+                <tr>
+                  <td><strong><code>info_url</code></strong></td>
+                  <td>Link to more information on data source</td>
+                </tr>
+                <tr>
+                  <td><strong><code>base_url</code></strong></td>
+                  <td>API url root</td>
+                </tr>
+                <tr>
+                  <td><strong><code>data_types</code></strong></td>
+                  <td>
+                    <table class='table table-bordered'>
+                      <thead>
+                        <tr>
+                          <th>Parameter</th>
+                          <th>Description</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td><strong><code>count</code></strong></td>
+                          <td>Number of tables in data source</td>
+                        </tr>
+                        <tr>
+                          <td><strong><code>source_name</code></strong></td>
+                          <td>Name of data source</td>
+                        </tr>
+                        <tr>
+                          <td><strong><code>description</code></strong></td>
+                          <td>Description of table</td>
+                        </tr>
+                        <tr>
+                          <td><strong><code>geo_types</code></strong></td>
+                          <td>Geographic types supported</td>
+                        </tr>
+                        <tr>
+                          <td><strong><code>source_url</code></strong></td>
+                          <td>API endpoint for this table</td>
+                        </tr>
+                        <tr>
+                          <td><strong><code>table_id</code></strong></td>
+                          <td>API unique identifier of table</td>
+                        </tr>
+                        <tr>
+                          <td><strong><code>human_name</code></strong></td>
+                          <td>Friendly name of table</td>
+                        </tr>
+                        <tr>
+                          <td><strong><code>columns</code></strong></td>
+                          <td>List of columns that will be added from this table</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <div class='well examples'>
+              <p><strong>Example</strong></p>
+              <p>
+                <a href='/api/data-sources'>http://geomancer.io/api/data-sources/</a><br />
+                Returns a list of data sources and tables in Geomancer
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel-group" id="accordion-api-geo-types">
+      <div class="panel panel-default">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion-api-geo-types" href="#collapse-api-geo-types" id="api-geo-types">
+          <i class="fa fa-chevron-circle-right fa-lg plusminus"></i>
+          <span class='label label-info'>GET</span>
+          <strong><code>/api/geo-types/</code></strong>
+          <p class='pull-right'><small>list all supported geographic types</small></p>
+          <div class='clearfix'></div>
+        </div>
+        <div id="collapse-api-geo-types" class="panel-collapse collapse">
+          <div class="panel-body">
+            <p>This returns all supported geographic types and related data sources in Geomancer.</p>
+
+            <p><strong>Query Parameters</strong></p>
+            <p>All query parameters are optional.</p>
+            <table class='table table-bordered'>
+              <thead>
+                <tr>
+                  <th>Parameter</th>
+                  <th>Default value</th>
+                  <th>Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong><code>geo_type</code></strong></td>
+                  <td>none</td>
+                  <td>Geography type. Used to fetch a single geographic type and related data sources.</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <p><strong>Response</strong></p>
+            <table class='table table-bordered'>
+              <thead>
+                <tr>
+                  <th>Parameter</th>
+                  <th>Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong><code>machine_name</code></strong></td>
+                  <td>Name of geographic type</td>
+                </tr>
+                <tr>
+                  <td><strong><code>human_name</code></strong></td>
+                  <td>Friendly name of geographic type</td>
+                </tr>
+                <tr>
+                  <td><strong><code>formatting_notes</code></strong></td>
+                  <td>Instructions on expected format for this geographic type</td>
+                </tr>
+                <tr>
+                  <td><strong><code>formatting_example</code></strong></td>
+                  <td>Example of properly formatted geographic type</td>
+                </tr>
+                <tr>
+                  <td><strong><code>tables</code></strong></td>
+                  <td>
+                    <table class='table table-bordered'>
+                      <thead>
+                        <tr>
+                          <th>Parameter</th>
+                          <th>Description</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td><strong><code>count</code></strong></td>
+                          <td>Number of tables in data source</td>
+                        </tr>
+                        <tr>
+                          <td><strong><code>human_name</code></strong></td>
+                          <td>Friendly name of table</td>
+                        </tr>
+                        <tr>
+                          <td><strong><code>table_id</code></strong></td>
+                          <td>API unique identifier of table</td>
+                        </tr>
+                        <tr>
+                          <td><strong><code>source_name</code></strong></td>
+                          <td>Name of data source</td>
+                        </tr>
+                        <tr>
+                          <td><strong><code>source_url</code></strong></td>
+                          <td>API endpoint for this table</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <div class='well examples'>
+              <p><strong>Example</strong></p>
+              <p>
+                <a href='/api/geo-types'>http://geomancer.io/api/geo-types/</a><br />
+                Returns a list of all supported geographic types and related data sources in Geomancer
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel-group" id="accordion-api-geomance">
+      <div class="panel panel-default">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion-api-geomance" href="#collapse-api-geomance" id="api-geomance">
+          <i class="fa fa-chevron-circle-right fa-lg plusminus"></i>
+          <span class='label label-success'>POST</span>
+          <strong><code>/api/geomance/</code></strong>
+          <p class='pull-right'><small>run geomancer on a posted file</small></p>
+          <div class='clearfix'></div>
+        </div>
+        <div id="collapse-api-geomance" class="panel-collapse collapse">
+          <div class="panel-body">
+
+            <p>Once you've figured out what geographic types and data sources you want to use, you can <strong>geomance</strong> a spreadsheet via an API call by posting a file and a JSON configuration as a <code>multipart POST</code>.</p>
+
+            <p>Once a task is started, geomancer will start processing the request and give you back a link to your file with the additional columns by polling the <strong><code>/api/geomance-results/&lt;session_key&gt;/</code></strong> endpoint.</p>
+
+            <p><strong>Post Parameters</strong></p>
+
+            <table class='table table-bordered'>
+              <thead>
+                <tr>
+                  <th>Parameter</th>
+                  <th>Default value</th>
+                  <th>Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong><code>file</code></strong></td>
+                  <td>none</td>
+                  <td>Must be in CSV, XLS or XLSX format. See more on <a href='/upload-formats/'> spreadsheet formatting</a></td>
+                </tr>
+                <tr>
+                  <td><strong><code>form</code></strong></td>
+                  <td>none</td>
+                  <td>
+
+                    Field definitions in a string encoded JSON blob like so:</p>
+<pre>
+{
+  10: {
+    'type': 'city_state',
+    'append_columns': ['total_population', 'median_age']
+  }
+}
+</pre>
+          <p>The key is the zero-indexed position of the columns within the posted spreadsheet.</p>
+
+          <p>The value is a dict containing the geographic type and the columns to append. The values in that list can be fetched from <strong><code>/api/data-sources/</code></strong> and <strong><code>/api/geo-type/</code></strong>.</p>
+
+          <p>You can also match on two columns. To do so, separate the column indexes and geotypes with a semicolon like so: </p>
+
+<pre>
+{
+  10;2: {
+    'type': 'city;state',
+    'append_columns': ['total_population', 'median_age']
+  }
+}
+</pre>
+            <p>In this example, column 10 contains the <code>city</code> and column 2 contains the <code>state</code>.</p>
+
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+
+            <p><strong>Response</strong></p>
+            <p>Responds with a key that can be used to poll for results.</p>
+
+            <table class='table table-bordered'>
+              <thead>
+                <tr>
+                  <th>Parameter</th>
+                  <th>Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong><code>session_key</code></strong></td>
+                  <td>Unique identifier of a task. Poll the <strong><code>/api/geomance-results/&lt;session_key&gt;/</code></strong> endpoint to get your result and see when the task finishes</td>
+                </tr>
+              </tbody>
+            </table>
+
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel-group" id="accordion-api-geomance-results">
+      <div class="panel panel-default">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion-api-geomance-results" href="#collapse-api-geomance-results" id="api-geomance-results">
+          <i class="fa fa-chevron-circle-right fa-lg plusminus"></i>
+          <span class='label label-info'>GET</span>
+          <strong><code>/api/geomance-results/&lt;session_key&gt;/</code></strong>
+          <p class='pull-right'><small>query the status of a geomancer task</small></p>
+          <div class='clearfix'></div>
+        </div>
+        <div id="collapse-api-geomance-results" class="panel-collapse collapse">
+          <div class="panel-body">
+            <p><strong>Query Parameters</strong></p>
+            <table class='table table-bordered'>
+              <thead>
+                <tr>
+                  <th>Parameter</th>
+                  <th>Default value</th>
+                  <th>Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong><code>session_key</code></strong></td>
+                  <td>none</td>
+                  <td>Unique identifier of a task. Returned after posting to the <strong><code>/api/geomance/</code></strong> endpoint</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <p><strong>Response</strong></p>
+            <p>Responds with a key that can be used to poll for results.</p>
+
+            <table class='table table-bordered'>
+              <thead>
+                <tr>
+                  <th>Parameter</th>
+                  <th>Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong><code>ready</code></strong></td>
+                  <td>Returns <code>true</code> if the task is completed, <code>false</code> otherwise.</td>
+                </tr>
+                <tr>
+                  <td><strong><code>result</code></strong></td>
+                  <td>Link to download your completed file. Only available if <strong><code>ready</code></strong> is <code>true</code></td>
+                </tr>
+                <tr>
+                  <td><strong><code>status</code></strong></td>
+                  <td>Success or failure of task. Only available if <strong><code>ready</code></strong> is <code>true</code></td>
+                </tr>
+              </tbody>
+            </table>
+
+          </div>
+        </div>
+      </div>
+    </div>
+
+{% endblock %}
+
+{% block extra_javascript %}
+  <script>
+    $(document).ready(function() {
+      $(".plusminus").parent().parent().click(function () {
+        if ($(this).children().eq(1).hasClass("panel-collapse collapse")){
+          $(this).find('i').removeClass("fa-chevron-circle-right").addClass("fa-chevron-circle-down");
+        } else{
+          $(this).find('i').removeClass("fa-chevron-circle-down").addClass("fa-chevron-circle-right");
+        }
+      });
+    });
+  </script>
+{% endblock %}
