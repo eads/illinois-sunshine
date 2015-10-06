@@ -680,7 +680,7 @@
                                 <th>Field</th>
                                 <th>Description</th>
                                 <th>Null values?</th>
-                                <th>Sample values</th>
+                                <th></th>
                             </tr>
                         </thead>
                         <tbody>
@@ -698,79 +698,169 @@
                             </tr>
                             <tr>
                                 <td><code>filed_doc_id</code></td>
-                                <td>Unique numerical identifier for the filing that </td>
+                                <td>Unique numerical identifier for the filing that this receipt was part of</td>
+                                <td>No</td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td><code>etrans_id</code></td>
+                                <td>Unknown</td>
+                                <td>Yes</td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td><code>last_name</code></td>
+                                <td>Donor's last (family) or organization name (in the case where the donation was not made by an individual)</td>
                                 <td>No</td>
                                 <td></td>
                             </tr>
                             <tr>
                                 <td><code>first_name</code></td>
-                                <td>Committee officer first (given) name</td>
+                                <td>Donor's first (given) name (blank in the case where the donation was made by an organization)</td>
+                                <td>Yes</td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td><code>received_date</code></td>
+                                <td>Date the donation was reported as received by the committee</td>
+                                <td>No</td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td><code>amount</code></td>
+                                <td>Dollar amount of the donation</td>
+                                <td>No</td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td><code>aggregate_amount</code></td>
+                                <td>In the case of multiple donations by the same origanization or individual during a reporting period, the aggregate amount given. If only one donation was given, this will be 0</td>
+                                <td>Yes</td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td><code>loan_amount</code></td>
+                                <td>Amount of the donation loaned to the committee</td>
+                                <td>Yes</td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td><code>occupation</code></td>
+                                <td>Donor's occupation</td>
+                                <td>Yes</td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td><code>employer</code></td>
+                                <td>Donor's employer</td>
                                 <td>Yes</td>
                                 <td></td>
                             </tr>
                             <tr>
                                 <td><code>address1</code></td>
-                                <td>Committee officer address line 1</td>
+                                <td>Donor's address line 1</td>
                                 <td>Yes</td>
                                 <td></td>
                             </tr>
                             <tr>
                                 <td><code>address2</code></td>
-                                <td>Committee officer address line 2</td>
+                                <td>Donor's address line 2</td>
                                 <td>Yes</td>
                                 <td></td>
                             </tr>
                             <tr>
                                 <td><code>city</code></td>
-                                <td>Committee officer address city</td>
+                                <td>Donor's address city</td>
                                 <td>Yes</td>
                                 <td></td>
                             </tr>
                             <tr>
                                 <td><code>state</code></td>
-                                <td>Committee officer address state</td>
+                                <td>Donor's address state</td>
                                 <td>Yes</td>
                                 <td></td>
                             </tr>
                             <tr>
                                 <td><code>zipcode</code></td>
-                                <td>Committee officer address ZIP Code</td>
+                                <td>Donor's address zipcode</td>
                                 <td>Yes</td>
                                 <td></td>
                             </tr>
                             <tr>
-                                <td><code>title</code></td>
-                                <td>Committee officer title</td>
+                                <td><code>d2_part</code></td>
+                                <td>Part of the D2 Report that this donation falls into. </td>
                                 <td>No</td>
                                 <td>
-                                    Contact/Person<br />
-                                    Asst Treasurer<br />
-                                    Asst Chairman<br />
-                                    Acting Treas<br />
-                                    Vice President<br />
+                                    1A - Itemized individual contribution< br />
+                                    2A - Itemized transfer in<br />
+                                    3A - Itemized loans received<br />
+                                    4A - Itemized "other" receipts (such as refunds, reimbursements, interest accrued, etc)<br />
+                                    5A - Itemized in-kind contribution<br />
                                 </td>
                             </tr>
                             <tr>
-                                <td><code>phone</code></td>
-                                <td>Committee officer phone number</td>
+                                <td><code>description</code></td>
+                                <td>Donation description</td>
                                 <td>Yes</td>
                                 <td></td>
                             </tr>
                             <tr>
-                                <td><code>resign_date</code></td>
-                                <td>Date officer resigned committee post</td>
+                                <td><code>vendor_last_name</code></td>
+                                <td>Last name of individual or organization name of vendor providing a good or service or loan</td>
+                                <td>Yes</td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td><code>vendor_first_name</code></td>
+                                <td>First name of individual vendor providing a good or service or loan</td>
+                                <td>Yes</td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td><code>vendor_address1</code></td>
+                                <td>Address line 1 of vendor providing a good or service or loan</td>
+                                <td>Yes</td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td><code>vendor_address2</code></td>
+                                <td>Address line 2 of vendor providing a good or service or loan</td>
+                                <td>Yes</td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td><code>vendor_city</code></td>
+                                <td>Address city of vendor providing a good or service or loan</td>
+                                <td>Yes</td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td><code>vendor_state</code></td>
+                                <td>Address state of vendor providing a good or service or loan</td>
+                                <td>Yes</td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td><code>vendor_zipcode</code></td>
+                                <td>Address state of vendor providing a good or service or loan</td>
+                                <td>Yes</td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td><code>archived</code></td>
+                                <td>Unknown (boolean)</td>
+                                <td>No</td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td><code>country</code></td>
+                                <td>Donor country</td>
                                 <td>Yes</td>
                                 <td></td>
                             </tr>
                             <tr>
                                 <td><code>redaction_requested</code></td>
-                                <td>Boolean indicating if committee officer requested personal information be redacted</td>
-                                <td>No</td>
-                                <td></td>
-                            </tr>
-                            <tr>
-                                <td><code>current</code></td>
-                                <td>Boolean indicating if committee officer is currently serving</td>
+                                <td>Boolean indicating if donor requested personal information be redacted</td>
                                 <td>No</td>
                                 <td></td>
                             </tr>
