@@ -870,6 +870,175 @@
             </div>
         </div>
     </div>
+    <div class="panel-group" id="accordion-api-expenditures">
+        <div class="panel panel-default">
+            <div class="panel-heading" data-toggle="collapse" data-parent="#accordion-api-expenditures" href="#collapse-api-expenditures" id="api-expenditures">
+                <i class="fa fa-chevron-circle-right fa-lg plusminus"></i>
+                <strong><code>expenditures</code></strong>
+                <p class='pull-right'><small>Information about committee expenditures</small></p>
+                <div class='clearfix'></div>
+            </div>
+            <div id="collapse-api-expenditures" class="panel-collapse collapse">
+                <div class="panel-body">
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Field</th>
+                                <th>Description</th>
+                                <th>Null values?</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>id</code></td>
+                                <td>Unique numerical identifier for expenditure created by the Illinois State Board of Elections</td>
+                                <td>No</td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td><code>committee_id</code></td>
+                                <td>Unique numerical identifier for reporting committee (foreign key to committees table)</td>
+                                <td>No</td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td><code>filed_doc_id</code></td>
+                                <td>Unique numerical identifier for the filing that this expenditure was part of</td>
+                                <td>No</td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td><code>etrans_id</code></td>
+                                <td>Unknown</td>
+                                <td>Yes</td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td><code>last_name</code></td>
+                                <td>Last (family) or name of individual or organization listed as receiving expense</td>
+                                <td>No</td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td><code>first_name</code></td>
+                                <td>First (given) name of individual who received expense (blank in the case where the expense was received by an organization)</td>
+                                <td>Yes</td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td><code>expended_date</code></td>
+                                <td>Date the expense was reported as being spent by the committee</td>
+                                <td>No</td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td><code>amount</code></td>
+                                <td>Dollar amount of the expense</td>
+                                <td>No</td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td><code>aggregate_amount</code></td>
+                                <td>In the case of multiple expenses received by the same origanization or individual during a reporting period, the aggregate amount received. If only one expense was received, this will be 0</td>
+                                <td>Yes</td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td><code>address1</code></td>
+                                <td>Expense address line 1</td>
+                                <td>Yes</td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td><code>address2</code></td>
+                                <td>Expense address line 2</td>
+                                <td>Yes</td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td><code>city</code></td>
+                                <td>Expense address city</td>
+                                <td>Yes</td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td><code>state</code></td>
+                                <td>Expense address state</td>
+                                <td>Yes</td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td><code>zipcode</code></td>
+                                <td>Expense address zipcode</td>
+                                <td>Yes</td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td><code>d2_part</code></td>
+                                <td>Part of the D2 Report that this expense falls into. </td>
+                                <td>No</td>
+                                <td>
+                                    6B - Itemized transfers out< br />
+                                    7B - Itemized loans made<br />
+                                    8B - Itemized individual expenditures<br />
+                                    9B - Itemized independent expenditures<br />
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><code>purpose</code></td>
+                                <td>Expense purpose</td>
+                                <td>Yes</td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td><code>candidate_name</code></td>
+                                <td>In the case of expenditures made in support of or in opposition a candidate, the name of the candidate supported or opposed.</td>
+                                <td>Yes</td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td><code>office</code></td>
+                                <td>Office sought by candidate supported or opposed.</td>
+                                <td>Yes</td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td><code>supporting</code></td>
+                                <td>Boolean indicating whether candidate was supported</td>
+                                <td>No</td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td><code>opposed</code></td>
+                                <td>Boolean indicating whether candidate was opposed</td>
+                                <td>No</td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td><code>archived</code></td>
+                                <td>Unknown (boolean)</td>
+                                <td>No</td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td><code>country</code></td>
+                                <td>Expense country</td>
+                                <td>Yes</td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td><code>redaction_requested</code></td>
+                                <td>Boolean indicating if individual or organization listed as receiving expense requested personal information be redacted</td>
+                                <td>No</td>
+                                <td></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
 
 
     <h4>Endpoints</h4>
