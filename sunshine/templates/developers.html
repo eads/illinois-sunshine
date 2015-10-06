@@ -454,6 +454,51 @@
                                 </td>
                             </tr>
                             <tr>
+                                <td><code>disp_funds_return</code></td>
+                                <td>Unknown (Boolean)</td>
+                                <td>No</td>
+                                <td>
+                                    true<br />
+                                    false<br />
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><code>disp_funds_political_committee</code></td>
+                                <td>Unknown (Boolean)</td>
+                                <td>No</td>
+                                <td>
+                                    true<br />
+                                    false<br />
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><code>disp_funds_charity</code></td>
+                                <td>Unknown (Boolean)</td>
+                                <td>No</td>
+                                <td>
+                                    true<br />
+                                    false<br />
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><code>disp_funds_95</code></td>
+                                <td>Unknown (Boolean)</td>
+                                <td>No</td>
+                                <td>
+                                    true<br />
+                                    false<br />
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><code>disp_funds_description</code></td>
+                                <td>Unknown (Boolean)</td>
+                                <td>No</td>
+                                <td>
+                                    true<br />
+                                    false<br />
+                                </td>
+                            </tr>
+                            <tr>
                                 <td><code>candidate_position</code></td>
                                 <td>For candidate centric committees, indicates whether the linked candidates are supported or opposed. Often seems unreliable.</td>
                                 <td>Yes</td>
@@ -494,6 +539,240 @@
                                     Support Jonathan Baum for the District 65 School Board<br />
                                     Elect Chris Remhof to the Ogle County Board, and support area democrats.<br />
                                 </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="panel-group" id="accordion-api-officers">
+        <div class="panel panel-default">
+            <div class="panel-heading" data-toggle="collapse" data-parent="#accordion-api-officers" href="#collapse-api-officers" id="api-officers">
+                <i class="fa fa-chevron-circle-right fa-lg plusminus"></i>
+                <strong><code>officers</code></strong>
+                <p class='pull-right'><small>Information about committee officers</small></p>
+                <div class='clearfix'></div>
+            </div>
+            <div id="collapse-api-officers" class="panel-collapse collapse">
+                <div class="panel-body">
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Field</th>
+                                <th>Description</th>
+                                <th>Null values?</th>
+                                <th>Sample values</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>id</code></td>
+                                <td>Unique numerical identifier for committee officer created by the Illinois State Board of Elections</td>
+                                <td>No</td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td><code>committee_id</code></td>
+                                <td>Unique numerical identifier for committee (foreign key to committees table)</td>
+                                <td>No</td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td><code>last_name</code></td>
+                                <td>Committee officer last (family) name</td>
+                                <td>No</td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td><code>first_name</code></td>
+                                <td>Committee officer first (given) name</td>
+                                <td>Yes</td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td><code>address1</code></td>
+                                <td>Committee officer address line 1</td>
+                                <td>Yes</td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td><code>address2</code></td>
+                                <td>Committee officer address line 2</td>
+                                <td>Yes</td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td><code>city</code></td>
+                                <td>Committee officer address city</td>
+                                <td>Yes</td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td><code>state</code></td>
+                                <td>Committee officer address state</td>
+                                <td>Yes</td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td><code>zipcode</code></td>
+                                <td>Committee officer address ZIP Code</td>
+                                <td>Yes</td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td><code>title</code></td>
+                                <td>Committee officer title</td>
+                                <td>No</td>
+                                <td>
+                                    Contact/Person<br />
+                                    Asst Treasurer<br />
+                                    Asst Chairman<br />
+                                    Acting Treas<br />
+                                    Vice President<br />
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><code>phone</code></td>
+                                <td>Committee officer phone number</td>
+                                <td>Yes</td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td><code>resign_date</code></td>
+                                <td>Date officer resigned committee post</td>
+                                <td>Yes</td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td><code>redaction_requested</code></td>
+                                <td>Boolean indicating if committee officer requested personal information be redacted</td>
+                                <td>No</td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td><code>current</code></td>
+                                <td>Boolean indicating if committee officer is currently serving</td>
+                                <td>No</td>
+                                <td></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="panel-group" id="accordion-api-receipts">
+        <div class="panel panel-default">
+            <div class="panel-heading" data-toggle="collapse" data-parent="#accordion-api-receipts" href="#collapse-api-receipts" id="api-receipts">
+                <i class="fa fa-chevron-circle-right fa-lg plusminus"></i>
+                <strong><code>receipts</code></strong>
+                <p class='pull-right'><small>Information about committee receipts</small></p>
+                <div class='clearfix'></div>
+            </div>
+            <div id="collapse-api-receipts" class="panel-collapse collapse">
+                <div class="panel-body">
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Field</th>
+                                <th>Description</th>
+                                <th>Null values?</th>
+                                <th>Sample values</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>id</code></td>
+                                <td>Unique numerical identifier for receipt created by the Illinois State Board of Elections</td>
+                                <td>No</td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td><code>committee_id</code></td>
+                                <td>Unique numerical identifier for reporting committee (foreign key to committees table)</td>
+                                <td>No</td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td><code>filed_doc_id</code></td>
+                                <td>Unique numerical identifier for the filing that </td>
+                                <td>No</td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td><code>first_name</code></td>
+                                <td>Committee officer first (given) name</td>
+                                <td>Yes</td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td><code>address1</code></td>
+                                <td>Committee officer address line 1</td>
+                                <td>Yes</td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td><code>address2</code></td>
+                                <td>Committee officer address line 2</td>
+                                <td>Yes</td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td><code>city</code></td>
+                                <td>Committee officer address city</td>
+                                <td>Yes</td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td><code>state</code></td>
+                                <td>Committee officer address state</td>
+                                <td>Yes</td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td><code>zipcode</code></td>
+                                <td>Committee officer address ZIP Code</td>
+                                <td>Yes</td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td><code>title</code></td>
+                                <td>Committee officer title</td>
+                                <td>No</td>
+                                <td>
+                                    Contact/Person<br />
+                                    Asst Treasurer<br />
+                                    Asst Chairman<br />
+                                    Acting Treas<br />
+                                    Vice President<br />
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><code>phone</code></td>
+                                <td>Committee officer phone number</td>
+                                <td>Yes</td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td><code>resign_date</code></td>
+                                <td>Date officer resigned committee post</td>
+                                <td>Yes</td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td><code>redaction_requested</code></td>
+                                <td>Boolean indicating if committee officer requested personal information be redacted</td>
+                                <td>No</td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td><code>current</code></td>
+                                <td>Boolean indicating if committee officer is currently serving</td>
+                                <td>No</td>
+                                <td></td>
                             </tr>
                         </tbody>
                     </table>

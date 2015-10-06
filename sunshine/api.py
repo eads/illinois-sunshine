@@ -367,29 +367,39 @@ def committees():
         committee_cols = [c.label('committee_%s' % c.name) for c in committee_table.columns]
         candidate_cols = [c.label('candidate_%s' % c.name) for c in candidates_table.columns]
         all_columns = committee_cols + candidate_cols
+        
         base_query = db_session.query(*all_columns)\
-                .join(candidate_committees)\
-                .join(candidates_table)
+                .join(candidate_committees, 
+                    candidate_committees.c.committee_id == committee_table.c.id)\
+                .join(candidates_table, 
+                    candidate_committees.c.candidate_id == candidates_table.c.id)
+        
         for clause in query_clauses:
             base_query = base_query.filter(clause)
+        
         order_by_col = getattr(committee_table.c, order_by)
         base_query = base_query.order_by(getattr(order_by_col, sort_order)())
         base_query = base_query.limit(limit)
+        
         objs = []
         committee_fields = committee_table.columns.keys() 
         candidate_fields = candidates_table.columns.keys()
         rows = sorted(list(base_query.all()), key=attrgetter('committee_id'))
+        
         for committee, grouping in groupby(rows, attrgetter('committee_id')):
             rows = list(grouping)
             committee_values = rows[0][:len(committee_fields)]
             committee_info = OrderedDict(zip(committee_fields, committee_values))
             candidates = []
+            
             for row in rows:
                 candidate_values = row[len(committee_fields):]
                 candidate_info = OrderedDict(zip(candidate_fields, candidate_values))
                 candidates.append(candidate_info)
+            
             committee_info['candidates'] = candidates
             objs.append(committee_info)
+        
         resp['objects'] = objs
         resp['meta']['query'].update({
             'limit': limit,
@@ -397,6 +407,7 @@ def committees():
             'sort_order': sort_order,
             'order_by': order_by,
         })
+    
     response = make_response(json.dumps(resp, default=dthandler, sort_keys=False))
     response.headers['Content-Type'] = 'application/json'
     return response

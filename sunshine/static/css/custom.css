@@ -65,29 +65,29 @@ table, label,.control-label,.help-block,.checkbox,.radio { font-size: 14px; }
 
 .navbar-default .navbar-brand:hover { color: #000; }
 
-.navbar-default .navbar-nav { padding-top: 3px; } 
-.navbar-default .navbar-nav > li > a:hover { color: #000; } 
+.navbar-default .navbar-nav { padding-top: 3px; }
+.navbar-default .navbar-nav > li > a:hover { color: #000; }
 
-.navbar-default .navbar-nav > .active > a, 
-.navbar-default .navbar-nav > .active > a:hover, 
+.navbar-default .navbar-nav > .active > a,
+.navbar-default .navbar-nav > .active > a:hover,
 .navbar-default .navbar-nav > .active > a:focus { color: #000; }
 
-.pagination > .active > a, 
-.pagination > .active > span, 
-.pagination > .active > a:hover, 
-.pagination > .active > span:hover, 
-.pagination > .active > a:focus, 
+.pagination > .active > a,
+.pagination > .active > span,
+.pagination > .active > a:hover,
+.pagination > .active > span:hover,
+.pagination > .active > a:focus,
 .pagination > .active > span:focus,
-.pagination > li > a:hover, 
-.pagination > li > a:focus, 
+.pagination > li > a:hover,
+.pagination > li > a:focus,
 .pagination > li > span:focus {
   background-color: #FFCB08;
   border-color: #FFCB08;
   color: #000;
 }
 
-.nav-pills > li.active > a, 
-.nav-pills > li.active > a:hover, 
+.nav-pills > li.active > a,
+.nav-pills > li.active > a:hover,
 .nav-pills > li.active > a:focus {
   background-color: #FFCB08;
   border-color: #FFCB08;
@@ -130,7 +130,7 @@ table, label,.control-label,.help-block,.checkbox,.radio { font-size: 14px; }
 
 @media screen and (max-width: 992px) {
   body, table { font-size: 12px; }
-  .navbar-default .navbar-brand a { 
+  .navbar-default .navbar-brand a {
     font-size: 18px;
   }
 }
@@ -248,4 +248,8 @@ table, label,.control-label,.help-block,.checkbox,.radio { font-size: 14px; }
 .ui-tooltip {
     width: 25%;
     overflow: hidden;
+}
+
+.panel-group {
+    cursor: pointer;
 }
