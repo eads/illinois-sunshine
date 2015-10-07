@@ -36,15 +36,15 @@
         <strong>Refer to these tables when
         interpreting the responses made by the endpoints below</strong>.
     </p>
-    <div class="panel-group" id="accordion-api-candidates">
+    <div class="panel-group" id="accordion-candidates">
         <div class="panel panel-default">
-            <div class="panel-heading" data-toggle="collapse" data-parent="#accordion-api-candidates" href="#collapse-api-candidates" id="api-candidates">
+            <div class="panel-heading" data-toggle="collapse" data-parent="#accordion-candidates" href="#collapse-candidates" id="candidates">
                 <i class="fa fa-chevron-circle-right fa-lg plusminus"></i>
                 <strong><code>candidates</code></strong>
                 <p class='pull-right'><small>Information about candidates</small></p>
                 <div class='clearfix'></div>
             </div>
-            <div id="collapse-api-candidates" class="panel-collapse collapse">
+            <div id="collapse-candidates" class="panel-collapse collapse">
                 <div class="panel-body">
                     <table class="table table-bordered">
                         <thead>
@@ -238,15 +238,15 @@
         </div>
     </div>
 
-    <div class="panel-group" id="accordion-api-committees">
+    <div class="panel-group" id="accordion-committees">
         <div class="panel panel-default">
-            <div class="panel-heading" data-toggle="collapse" data-parent="#accordion-api-committees" href="#collapse-api-committees" id="api-committees">
+            <div class="panel-heading" data-toggle="collapse" data-parent="#accordion-committees" href="#collapse-committees" id="committees">
                 <i class="fa fa-chevron-circle-right fa-lg plusminus"></i>
                 <strong><code>committees</code></strong>
                 <p class='pull-right'><small>Information about committees</small></p>
                 <div class='clearfix'></div>
             </div>
-            <div id="collapse-api-committees" class="panel-collapse collapse">
+            <div id="collapse-committees" class="panel-collapse collapse">
                 <div class="panel-body">
                     <table class="table table-bordered">
                         <thead>
@@ -547,15 +547,15 @@
         </div>
     </div>
 
-    <div class="panel-group" id="accordion-api-officers">
+    <div class="panel-group" id="accordion-officers">
         <div class="panel panel-default">
-            <div class="panel-heading" data-toggle="collapse" data-parent="#accordion-api-officers" href="#collapse-api-officers" id="api-officers">
+            <div class="panel-heading" data-toggle="collapse" data-parent="#accordion-officers" href="#collapse-officers" id="officers">
                 <i class="fa fa-chevron-circle-right fa-lg plusminus"></i>
                 <strong><code>officers</code></strong>
                 <p class='pull-right'><small>Information about committee officers</small></p>
                 <div class='clearfix'></div>
             </div>
-            <div id="collapse-api-officers" class="panel-collapse collapse">
+            <div id="collapse-officers" class="panel-collapse collapse">
                 <div class="panel-body">
                     <table class="table table-bordered">
                         <thead>
@@ -664,15 +664,15 @@
         </div>
     </div>
 
-    <div class="panel-group" id="accordion-api-receipts">
+    <div class="panel-group" id="accordion-receipts">
         <div class="panel panel-default">
-            <div class="panel-heading" data-toggle="collapse" data-parent="#accordion-api-receipts" href="#collapse-api-receipts" id="api-receipts">
+            <div class="panel-heading" data-toggle="collapse" data-parent="#accordion-receipts" href="#collapse-receipts" id="receipts">
                 <i class="fa fa-chevron-circle-right fa-lg plusminus"></i>
                 <strong><code>receipts</code></strong>
                 <p class='pull-right'><small>Information about committee receipts</small></p>
                 <div class='clearfix'></div>
             </div>
-            <div id="collapse-api-receipts" class="panel-collapse collapse">
+            <div id="collapse-receipts" class="panel-collapse collapse">
                 <div class="panel-body">
                     <table class="table table-bordered">
                         <thead>
@@ -870,15 +870,15 @@
             </div>
         </div>
     </div>
-    <div class="panel-group" id="accordion-api-expenditures">
+    <div class="panel-group" id="accordion-expenditures">
         <div class="panel panel-default">
-            <div class="panel-heading" data-toggle="collapse" data-parent="#accordion-api-expenditures" href="#collapse-api-expenditures" id="api-expenditures">
+            <div class="panel-heading" data-toggle="collapse" data-parent="#accordion-expenditures" href="#collapse-expenditures" id="expenditures">
                 <i class="fa fa-chevron-circle-right fa-lg plusminus"></i>
                 <strong><code>expenditures</code></strong>
                 <p class='pull-right'><small>Information about committee expenditures</small></p>
                 <div class='clearfix'></div>
             </div>
-            <div id="collapse-api-expenditures" class="panel-collapse collapse">
+            <div id="collapse-expenditures" class="panel-collapse collapse">
                 <div class="panel-body">
                     <table class="table table-bordered">
                         <thead>
@@ -1043,16 +1043,16 @@
 
     <h4>Endpoints</h4>
 
-    <div class="panel-group" id="accordion-api-data-sources">
+    <div class="panel-group" id="accordion-api-advanced-search">
       <div class="panel panel-default">
-        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion-api-data-sources" href="#collapse-api-data-sources" id="api-data-sources">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion-api-advanced-search" href="#collapse-api-advanced-search" id="api-advanced-search">
           <i class="fa fa-chevron-circle-right fa-lg plusminus"></i>
           <span class='label label-info'>GET</span>
           <strong><code>/api/advanced-search/</code></strong>
           <p class='pull-right'><small>search data for a term</small></p>
           <div class='clearfix'></div>
         </div>
-        <div id="collapse-api-data-sources" class="panel-collapse collapse">
+        <div id="collapse-api-advanced-search" class="panel-collapse collapse">
           <div class="panel-body">
             <p>Searches selected tables for a given term. Results are
             ordered in reverse order by date.</p>
@@ -1144,6 +1144,424 @@
             </table>
             <div class='well examples'>
               <p><strong>Example</strong></p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel-group" id="accordion-api-top-money">
+      <div class="panel panel-default">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion-api-top-money" href="#collapse-api-top-money" id="api-top-money">
+          <i class="fa fa-chevron-circle-right fa-lg plusminus"></i>
+          <span class='label label-info'>GET</span>
+          <strong><code>/api/top-money/</code></strong>
+          <p class='pull-right'><small>Find top donors or expenses for a committee</small></p>
+          <div class='clearfix'></div>
+        </div>
+        <div id="collapse-api-top-money" class="panel-collapse collapse">
+          <div class="panel-body">
+            <p>Returns top 20 donors or expenses for a given committee</p>
+
+            <p><strong>Query Parameters</strong></p>
+            <p>All query parameters are required</p>
+            <table class='table table-bordered'>
+              <thead>
+                <tr>
+                  <th>Parameter</th>
+                  <th>Default value</th>
+                  <th>Possible values</th>
+                  <th>Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong><code>committee_id</code></strong></td>
+                  <td>none</td>
+                  <td>Valid unique numeric identifier for a committee</td>
+                  <td></td>
+                </tr>
+                <tr>
+                  <td><strong><code>type</code></strong></td>
+                  <td>none</td>
+                  <td>
+                      receipts<br />
+                      expenditures<br />
+                  </td>
+                  <td>Either receipts or expenditures depending on the type of transaction you're interested in</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <p><strong>Response</strong></p>
+            <table class='table table-bordered'>
+              <thead>
+                <tr>
+                  <th>Parameter</th>
+                  <th>Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong><code>total</code></strong></td>
+                  <td>
+                      Total amount donated or received by individual or organization
+                  </td>
+                </tr>
+                <tr>
+                  <td><strong><code>first_name</code></strong></td>
+                  <td>
+                      First (given) name of individual who either received the <code>total</code> or gave the <code>total</code>, depending on transaction type
+                  </td>
+                </tr>
+                <tr>
+                  <td><strong><code>last_name</code></strong></td>
+                  <td>
+                      Last (family) name of individual or name of organization who either received the <code>total</code> or gave the <code>total</code>, depending on transaction type
+                  </td>
+                </tr>
+                <tr>
+                  <td><strong><code>total_date</code></strong></td>
+                  <td>
+                      Date of most recent transaction
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <div class='well examples'>
+              <p><strong>Example</strong></p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel-group" id="accordion-api-committees">
+      <div class="panel panel-default">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion-api-committees" href="#collapse-api-committees" id="api-committees">
+          <i class="fa fa-chevron-circle-right fa-lg plusminus"></i>
+          <span class='label label-info'>GET</span>
+          <strong><code>/api/committees/</code></strong>
+          <p class='pull-right'><small>Query committees table</small></p>
+          <div class='clearfix'></div>
+        </div>
+        <div id="collapse-api-committees" class="panel-collapse collapse">
+          <div class="panel-body">
+            <p>Filter committee table based upon its attributes</p>
+
+            <p><strong>Query Parameters</strong></p>
+            <p>All query parameters are optional</p>
+            <table class='table table-bordered'>
+              <thead>
+                <tr>
+                  <th>Parameter</th>
+                  <th>Default value</th>
+                  <th>Possible values</th>
+                  <th>Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong><code>[dataset_field]*</code></strong></td>
+                  <td>none</td>
+                  <td>
+                    <p>Any available dataset field. Refer to the <code>committees</code> data description above for what fields are available. Any number of these query parameters can be chained together and are linked together with a SQL <code>AND</code> under the hood.</p>
+
+                    <p><strong>Query operators</strong><br/> For any given <code>dataset_field</code>, the query can be modified with any of the following operators (where they make sense given the data type of the field)</p>
+
+                    <table class='table table-bordered'>
+                      <thead>
+                        <tr>
+                          <th>Operator</th>
+                          <th>Description</th>
+                          <th>Valid data types</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td><strong><code>__gt</code></strong> </td>
+                          <td>greater than (<code>&gt;</code>)</td>
+                          <td>Integers, Floats, Dates, and Datetimes</td>
+                        </tr>
+                        <tr>
+                          <td><strong><code>__ge</code></strong></td>
+                          <td>greater than or equal to (<code>&gt;=</code>)</td>
+                          <td>Integers, Floats, Dates, and Datetimes</td>
+                        </tr>
+                        <tr>
+                          <td><strong><code>__lt</code></strong> </td>
+                          <td>less than (<code>&lt;</code>)</td>
+                          <td>Integers, Floats, Dates, and Datetimes</td>
+                        </tr>
+                        <tr>
+                          <td><strong><code>__le</code></strong></td>
+                          <td>less than or equal to (<code>&lt;=</code>)</td>
+                          <td>Integers, Floats, Dates, and Datetimes</td>
+                        </tr>
+                        <tr>
+                          <td><strong><code>__ne</code></strong> </td>
+                          <td>not equal (<code>!=</code>)</td>
+                          <td>Any</td>
+                        </tr>
+                        <tr>
+                          <td><strong><code>__like</code></strong> </td>
+                          <td>like value with % wildcards, case sensitive (<code>LIKE 'State%'</code>)</td>
+                          <td>Strings</td>
+                        </tr>
+                        <tr>
+                          <td><strong><code>__ilike</code></strong> </td>
+                          <td>like value with % wildcards, case insensitive (<code>ILIKE 'state%'</code>)</td>
+                          <td>Strings</td>
+                        </tr>
+                        <tr>
+                          <td><strong><code>__in</code></strong> </td>
+                          <td>within a list of provided values (<code>IN ('list', 'of', 'values')</code>). Values should be supplied as a comma-seperated list</td>
+                          <td>Any</td>
+                        </tr>
+                      </tbody>
+                    </table>
+
+                    <p><strong>Example:</strong> <code>name__ilike=%Democratic%</code> translates to "name ILIKE %Democratic%" in SQL</p>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+
+            <p><strong>Response</strong></p>
+            <p>Returns a list of <code>committees</code> (described above) matching query. Within each <code>committees</code> block is a <code>candidates</code> block containing a list of supported candidates (if any)</p>
+            <div class='well examples'>
+              <p><strong>Example</strong></p>
+                <p><a href='/api/committees/?name__ilike=%25democratic%25&type=Political Party'>http://illinoissunshine.org/api/committees/?name__ilike=%democratic%&type=Political Party</a><br />
+                Returns committees where the name is like "democratic" and are Political Parties</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel-group" id="accordion-api-receipts">
+      <div class="panel panel-default">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion-api-receipts" href="#collapse-api-receipts" id="api-receipts">
+          <i class="fa fa-chevron-circle-right fa-lg plusminus"></i>
+          <span class='label label-info'>GET</span>
+          <strong><code>/api/receipts/</code></strong>
+          <p class='pull-right'><small>Query receipts table</small></p>
+          <div class='clearfix'></div>
+        </div>
+        <div id="collapse-api-receipts" class="panel-collapse collapse">
+          <div class="panel-body">
+            <p>Filter receipts table based upon its attributes</p>
+
+            <p><strong>Query Parameters</strong></p>
+            <p>All query parameters are optional except <code>committee_id</code></p>
+            <table class='table table-bordered'>
+              <thead>
+                <tr>
+                  <th>Parameter</th>
+                  <th>Default value</th>
+                  <th>Possible values</th>
+                  <th>Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong><code>committee_id</code></strong></td>
+                  <td>none</td>
+                  <td>Any valid numeric identfier for a committee</td>
+                </tr>
+                <tr>
+                  <td><strong><code>datatype</code></strong></td>
+                  <td>json</td>
+                  <td>csv, json</td>
+                  <td>Indicates what data format to respond with</td>
+                </tr>
+                <tr>
+                  <td><strong><code>[dataset_field]*</code></strong></td>
+                  <td>none</td>
+                  <td colspan=2>
+                    <p>Any available dataset field. Refer to the <code>receipts</code> data description above for what fields are available. Any number of these query parameters can be chained together and are linked together with a SQL <code>AND</code> under the hood.</p>
+
+                    <p><strong>Query operators</strong><br/> For any given <code>dataset_field</code>, the query can be modified with any of the following operators (where they make sense given the data type of the field)</p>
+
+                    <table class='table table-bordered'>
+                      <thead>
+                        <tr>
+                          <th>Operator</th>
+                          <th>Description</th>
+                          <th>Valid data types</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td><strong><code>__gt</code></strong> </td>
+                          <td>greater than (<code>&gt;</code>)</td>
+                          <td>Integers, Floats, Dates, and Datetimes</td>
+                        </tr>
+                        <tr>
+                          <td><strong><code>__ge</code></strong></td>
+                          <td>greater than or equal to (<code>&gt;=</code>)</td>
+                          <td>Integers, Floats, Dates, and Datetimes</td>
+                        </tr>
+                        <tr>
+                          <td><strong><code>__lt</code></strong> </td>
+                          <td>less than (<code>&lt;</code>)</td>
+                          <td>Integers, Floats, Dates, and Datetimes</td>
+                        </tr>
+                        <tr>
+                          <td><strong><code>__le</code></strong></td>
+                          <td>less than or equal to (<code>&lt;=</code>)</td>
+                          <td>Integers, Floats, Dates, and Datetimes</td>
+                        </tr>
+                        <tr>
+                          <td><strong><code>__ne</code></strong> </td>
+                          <td>not equal (<code>!=</code>)</td>
+                          <td>Any</td>
+                        </tr>
+                        <tr>
+                          <td><strong><code>__like</code></strong> </td>
+                          <td>like value with % wildcards, case sensitive (<code>LIKE 'State%'</code>)</td>
+                          <td>Strings</td>
+                        </tr>
+                        <tr>
+                          <td><strong><code>__ilike</code></strong> </td>
+                          <td>like value with % wildcards, case insensitive (<code>ILIKE 'state%'</code>)</td>
+                          <td>Strings</td>
+                        </tr>
+                        <tr>
+                          <td><strong><code>__in</code></strong> </td>
+                          <td>within a list of provided values (<code>IN ('list', 'of', 'values')</code>). Values should be supplied as a comma-seperated list</td>
+                          <td>Any</td>
+                        </tr>
+                      </tbody>
+                    </table>
+
+                    <p><strong>Example:</strong> <code>amount__ge=50000</code> translates to "amount >= 50000" in SQL</p>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+
+            <p><strong>Response</strong></p>
+            <p>Returns a list of <code>receipts</code> (described above) matching query as well as all information about the committee that received them</p>
+            <div class='well examples'>
+              <p><strong>Example</strong></p>
+                <p><a href='/api/receipts/?committee_id=25185&amount__ge=50000&received_date__ge=2015-01-01'>http://illinoissunshine.org/api/receipts/?committee_id=25185&amount__ge=50000&received_date__ge=2015-01-01</a><br />
+                Returns receipts greater than or equal to $50,000 and received after January 1, 2015 by Citizens for Rauner, Inc</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel-group" id="accordion-api-expenditures">
+      <div class="panel panel-default">
+        <div class="panel-heading" data-toggle="collapse" data-parent="#accordion-api-expenditures" href="#collapse-api-expenditures" id="api-expenditures">
+          <i class="fa fa-chevron-circle-right fa-lg plusminus"></i>
+          <span class='label label-info'>GET</span>
+          <strong><code>/api/expenditures/</code></strong>
+          <p class='pull-right'><small>Query receipts table</small></p>
+          <div class='clearfix'></div>
+        </div>
+        <div id="collapse-api-expenditures" class="panel-collapse collapse">
+          <div class="panel-body">
+            <p>Filter expenditures table based upon attributes</p>
+
+            <p><strong>Query Parameters</strong></p>
+            <p>All query parameters are optional except <code>committee_id</code></p>
+            <table class='table table-bordered'>
+              <thead>
+                <tr>
+                  <th>Parameter</th>
+                  <th>Default value</th>
+                  <th>Possible values</th>
+                  <th>Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong><code>committee_id</code></strong></td>
+                  <td>none</td>
+                  <td>Any valid numeric identfier for a committee</td>
+                  <td></td>
+                </tr>
+                <tr>
+                  <td><strong><code>datatype</code></strong></td>
+                  <td>json</td>
+                  <td>csv, json</td>
+                  <td>Indicates what data format to respond with</td>
+                </tr>
+                <tr>
+                  <td><strong><code>[dataset_field]*</code></strong></td>
+                  <td>none</td>
+                  <td colspan=2>
+                    <p>Any available dataset field. Refer to the <code>expenditures</code> data description above for what fields are available. Any number of these query parameters can be chained together and are linked together with a SQL <code>AND</code> under the hood.</p>
+
+                    <p><strong>Query operators</strong><br/> For any given <code>dataset_field</code>, the query can be modified with any of the following operators (where they make sense given the data type of the field)</p>
+
+                    <table class='table table-bordered'>
+                      <thead>
+                        <tr>
+                          <th>Operator</th>
+                          <th>Description</th>
+                          <th>Valid data types</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td><strong><code>__gt</code></strong> </td>
+                          <td>greater than (<code>&gt;</code>)</td>
+                          <td>Integers, Floats, Dates, and Datetimes</td>
+                        </tr>
+                        <tr>
+                          <td><strong><code>__ge</code></strong></td>
+                          <td>greater than or equal to (<code>&gt;=</code>)</td>
+                          <td>Integers, Floats, Dates, and Datetimes</td>
+                        </tr>
+                        <tr>
+                          <td><strong><code>__lt</code></strong> </td>
+                          <td>less than (<code>&lt;</code>)</td>
+                          <td>Integers, Floats, Dates, and Datetimes</td>
+                        </tr>
+                        <tr>
+                          <td><strong><code>__le</code></strong></td>
+                          <td>less than or equal to (<code>&lt;=</code>)</td>
+                          <td>Integers, Floats, Dates, and Datetimes</td>
+                        </tr>
+                        <tr>
+                          <td><strong><code>__ne</code></strong> </td>
+                          <td>not equal (<code>!=</code>)</td>
+                          <td>Any</td>
+                        </tr>
+                        <tr>
+                          <td><strong><code>__like</code></strong> </td>
+                          <td>like value with % wildcards, case sensitive (<code>LIKE 'State%'</code>)</td>
+                          <td>Strings</td>
+                        </tr>
+                        <tr>
+                          <td><strong><code>__ilike</code></strong> </td>
+                          <td>like value with % wildcards, case insensitive (<code>ILIKE 'state%'</code>)</td>
+                          <td>Strings</td>
+                        </tr>
+                        <tr>
+                          <td><strong><code>__in</code></strong> </td>
+                          <td>within a list of provided values (<code>IN ('list', 'of', 'values')</code>). Values should be supplied as a comma-seperated list</td>
+                          <td>Any</td>
+                        </tr>
+                      </tbody>
+                    </table>
+
+                    <p><strong>Example:</strong> <code>expended_date__ge=2015-01-01</code> translates to "expended_date >= 2015-01-01" in SQL</p>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+
+            <p><strong>Response</strong></p>
+            <p>Returns a list of <code>expenditures</code> (described above) matching query as well as all information about the committee that made them</p>
+            <div class='well examples'>
+              <p><strong>Example</strong></p>
+                <p><a href='/api/expenditures/?committee_id=25960&last_name__ilike=Democratic%20Party%25'>http://illinoissunshine.org/api/expenditures/?committee_id=25960&last_name__ilike=Democratic%20Party%25</a><br />
+                Returns expenditures made by Chicago Forward to organizations or individuals with a name like "Democratic Party"</p>
             </div>
           </div>
         </div>
