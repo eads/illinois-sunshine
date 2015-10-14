@@ -8,18 +8,19 @@
 <div class='col-md-3 hidden-sm hidden-xs'>
   <div class='well'>
     <h3><i class='fa fa-info-circle fa-fw'></i> About</h3>
-    <ol>
+    <ul class='list-unstyled'>
       <li><a href='#what-is-this'>What is this?</a></li>
       <li><a href='#who-has-to-report-campaign-finance'>Who has to report campaign finance?</a></li>
       <li><a href='#what-gets-reported'>What gets reported?</a></li>
       <li><a href='#how-is-campaign-finance-disclosed'>How is campaign finance disclosed?</a></li>
       <li><a href='#data-quality'>Data quality</a></li>
       <li><a href='#more-resources'>More resources</a></li>
-      <li><a href='#data'>Data</a></li>
+      <li><a href='#data'>Data download</a></li>
+      <li><a href='#api'>API (for the nerds)</a></li>
       <li><a href='#code'>We're open source!</a></li>
       <li><a href='#team-and-credits'>Team and credits</a></li>
       <li><a href='#contact-us'>Contact us</a></li>
-    </ol>
+    </ul>
   </div>
 </div>
 <div class="col-md-9">
@@ -227,17 +228,21 @@
     <li><a href='http://www.elections.il.gov/CampaignDisclosure/faq.aspx'>Frequently Asked Questions about Campaign Disclosure</a></li>
   </ul>
 
-  <h3 id='data'>Download the data</h3>
+  <h3 id='data'>Data download</h3>
 
   <p>Want to download the raw data powering this website?</p>
 
   <p>We get <strong>daily updates</strong> directly from the <a href='http://www.elections.il.gov'>Illinois State Board of Elections</a> and make everything open and availabe for download in a handy zip file:</p>
 
-  <a class='btn btn-success btn-lg' href='http://il-elections.s3.amazonaws.com/IL_Campaign_Disclosure_latest.zip'>
-    <i class='fa fa-download'></i> Download <small>(226mb zip)</small>
-  </a>
+  <p><a class='btn btn-primary' href='http://il-elections.s3.amazonaws.com/IL_Campaign_Disclosure_latest.zip'>
+    <i class='fa fa-fw fa-download'></i> Download <small>(226mb zip)</small>
+  </a></p>
 
-  <p>To learn more about how to understand and work with this data, check out our <a href='/api-documentation/'>data documentation</a>.</p>
+  <h3 id='api'>API (for the nerds)</h3>
+
+  <p><a href='/api-documentation/'>We also have an API</a> for the developers out there. The Illinois Sunshine API can be used to do powerful searches, get the top donors to a committee, and fetch detailed data about individual donations, expenditures and committees.</p>
+
+  <p><a class='btn btn-primary' href='/api-documentation/'><i class='fa fa-fw fa-gears'></i> See our API documentation &raquo;</a></p>
 
   <h3 id='code'>We're open source!</h3>
 
