@@ -1,25 +1,20 @@
 {% extends 'base.html' %}
-{% block title %}Developers{% endblock %}
+{% from 'macros.html' import header %}
+{% block header_social %}
+    {{ header("API documentation (for the nerds)", "Want to use our data? We have an API for you!  The Illinois Sunshine API can be used to query data about Illinois candidates, committees, and committee finances going back to 1994.", request.path) }}
+{% endblock %}
 {% block content %}
 
 <div class="col-md-12">
 
-    <h3 id='api'>API (for the nerds)</h3>
+    <h1 id='api'>API documentation (for the nerds)</h1>
 
-    <p>If you want to access Illinois Sunshine programatically, we have an API
-    for you!  The Illinois Sunshine API can be used to query our data about
-    candidates, committees, and committee finances.</p>
+    <p>Want to use our data? We have an API
+    for you!  The Illinois Sunshine API can be used to query data about Illinois candidates, committees, and committee finances going back to 1994.</p>
 
-    <p>A few things to know:</p>
+    <p>If you'd rather just <a href='/about/#data'>download all of the data</a>, you can do that too.</p>
 
-    <ul>
-        <li>All API calls should be made with <code>HTTP GET</code></li>
-        <li>All API responses are in <a href='http://www.json.org/'>JSON format</a> by default</li>
-        <li>Some API endpoints (noted below) can also return a comma-separated value file</li>
-        <li>All methods are accessed via: <code>http://illinoissunshine.org/api/SOME-ENDPOINT</code></li>
-    </ul>
-
-    <h4>Data description</h4>
+    <h2 id='about-the-data'>About the data</h2>
 
     <p>
         The data that powers Illinois Sunshine comes directly from the
@@ -28,14 +23,16 @@
         Therefore, under the hood, Illinois Sunshine has data on candidates (and
         their candidacies), committees, receipts by committees, expenditures made
         by committees, investments made by committees as well as
-        information about all of the various documents that accompany
-        the financial disclosures. Largely due to the way this
+        information about all of the <a href='/about/#how-is-campaign-finance-disclosed'>various documents that accompany
+        the financial disclosures</a>.</p>
+
+        <p>Largely due to the way this
         information is reported, the data in these tables is often
-        messy.Below is a description of the tables that house the
-        information exposed in this API.
-        <strong>Refer to these tables when
-        interpreting the responses made by the endpoints below</strong>.
-    </p>
+        messy. Below is a description of the tables that house the
+        information exposed in this API. Refer to these tables when
+        interpreting the responses made by the endpoints below.</p>
+
+        <br />
     <div class="panel-group" id="accordion-candidates">
         <div class="panel panel-default">
             <div class="panel-heading" data-toggle="collapse" data-parent="#accordion-candidates" href="#collapse-candidates" id="candidates">
@@ -1040,8 +1037,18 @@
         </div>
     </div>
 
+    <h2 id='using-the-api'>Using the API</h2>
+    <p>A few things to know:</p>
 
-    <h4>Endpoints</h4>
+    <ul>
+        <li>All API calls should be made with <code>HTTP GET</code></li>
+        <li>All API responses are in <a href='http://www.json.org/'>JSON format</a> by default</li>
+        <li>Some API endpoints (noted below) can also return a comma-separated value file (CSV)</li>
+        <li>All methods are accessed via: <code>http://illinoissunshine.org/api/SOME-ENDPOINT</code></li>
+    </ul>
+
+
+    <h2 id='api-endpoints' >API endpoints</h2>
 
     <div class="panel-group" id="accordion-api-advanced-search">
       <div class="panel panel-default">
@@ -1144,6 +1151,8 @@
             </table>
             <div class='well examples'>
               <p><strong>Example</strong></p>
+              <p><a href='/api/advanced-search/?term=cullerton'>http://illinoissunshine.org/api/advanced-search/?term=cullerton</a><br />
+                Returns all committees, candidates, receipts, officers and expenditures containing the word 'cullerton'</p>
             </div>
           </div>
         </div>
@@ -1161,7 +1170,7 @@
         </div>
         <div id="collapse-api-top-money" class="panel-collapse collapse">
           <div class="panel-body">
-            <p>Returns top 20 donors or expenses for a given committee</p>
+            <p>Returns top 25 donors or expenses for a given committee</p>
 
             <p><strong>Query Parameters</strong></p>
             <p>All query parameters are required</p>
@@ -1230,6 +1239,8 @@
             </table>
             <div class='well examples'>
               <p><strong>Example</strong></p>
+              <p><a href='/api/top-money/?type=receipts&limit=25&committee_id=1212'>http://illinoissunshine.org/api/top-money/?type=receipts&limit=25&committee_id=1212</a><br />
+                Returns the top 25 donors to Taxpayers for Quinn (committee ID 1212)</p>
             </div>
           </div>
         </div>

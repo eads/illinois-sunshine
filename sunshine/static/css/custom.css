@@ -250,6 +250,6 @@ table, label,.control-label,.help-block,.checkbox,.radio { font-size: 14px; }
     overflow: hidden;
 }
 
-.panel-group {
+.panel-heading {
     cursor: pointer;
 }

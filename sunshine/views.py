@@ -160,9 +160,9 @@ def donations():
 def about():
     return render_template('about.html')
 
-@views.route('/developers/')
-def developers():
-    return render_template('developers.html')
+@views.route('/api-documentation/')
+def api_documentation():
+    return render_template('api-documentation.html')
 
 @views.route('/error/')
 def error():
@@ -655,6 +655,10 @@ def flush(secret):
 @views.route('/sunshine/')
 def sunshine():
     return redirect("/", code=301)
+
+@views.route('/developers/')
+def developers():
+    return redirect("/api-documentation/", code=301)
 
 @views.route('/sunshine/<path:the_rest>/')
 def sunshine_the_rest(the_rest):
