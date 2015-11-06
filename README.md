@@ -71,6 +71,22 @@ python runserver.py
 
 navigate to http://localhost:5000/
 
+## Optionally configure PostgreSQL stop words
+
+While developing this, we noticed that PostgreSQL treats some names od
+individuals and organizations as stop words. We added a custom stop word list
+to the repo that can be used to make sure that these names will show up in
+search results.
+
+* Create a symbolic link from the stop words list in this repo to the
+PostgreSQL shared directory (this example will work on Debian and Ubuntu):
+
+``` bash
+sudo ln -s /path/to/this/repo/sunshine.stop /usr/share/postgresql/9.4/tsearch_data/sunshine.stop
+```
+
+You'll then need to change the ``STOP_WORD_LIST`` configuration in ``app_config.py`` to ``sunshine``
+
 ## Team
 
 * Eric van Zanten - developer

@@ -35,3 +35,8 @@ CACHE_CONFIG = {
 SENTRY_DSN = ''
 
 FLUSH_KEY = 'super secret junk'
+
+# Change this configuration to have PostgreSQL use a custom list of stop words
+# for full text search (see README.md for more details)
+
+STOP_WORD_LIST = 'english'

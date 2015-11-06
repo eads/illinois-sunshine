@@ -1217,6 +1217,25 @@ def downloadUnzip():
         move_to = os.path.join(download_path, member)
         os.rename(move_from, move_to)
 
+def alterSearchDictionary():
+    from sunshine.app_config import DB_HOST, DB_PORT, DB_NAME, STOP_WORD_LIST
+    
+    alter = ''' 
+        ALTER TEXT SEARCH DICTIONARY english_stem (StopWords = '{0}');
+    '''.format(STOP_WORD_LIST)
+    
+    DB_USER = 'postgres'
+    DB_PW = ''
+
+    DB_CONN='postgresql+psycopg2://{0}:{1}@{2}:{3}/{4}'\
+            .format(DB_USER, DB_PW, DB_HOST, DB_PORT, DB_NAME)
+    
+    engine = sa.create_engine(DB_CONN, 
+                              convert_unicode=True, 
+                              server_side_cursors=True)
+        
+    with engine.begin() as conn:
+        conn.execute(alter)
 
 if __name__ == "__main__":
     import sys
@@ -1253,6 +1272,9 @@ if __name__ == "__main__":
     if args.load_data:
         print("loading data start %s ..." % datetime.now().isoformat())
         
+        if app_config.STOP_WORD_LIST != 'english':
+            alterSearchDictionary()
+
         chunk_size = 50000
 
         if args.chunk_size:
