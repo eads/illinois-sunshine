@@ -27,6 +27,45 @@ operator_lookup = {
     'lt': '<'
 }
 
+
+def sanitizeSearchTerm(term):
+    allowed_punctuation = set(['&', '|', '"', "'"])
+    all_punctuation = set(punctuation)
+    punct = "".join(all_punctuation - allowed_punctuation)
+    term = re.sub(r"[{}]+".format(re.escape(punct)), " ", \
+            term)
+
+    term = term.replace('"', "'")
+    term = re.sub(r"[']+", "'", term)
+
+    quoted_strings_re = re.compile(r"('[^']*')")
+    space_between_words_re = re.compile(r'([^ &|])[ ]+([^ &|])')
+    spaces_surrounding_letter_re = re.compile(r'[ ]+([^ &|])[ ]+')
+    multiple_operator_re = re.compile(r"[ &]+(&|\|)[ &]+")
+
+    tokens = quoted_strings_re.split(term)
+    processed_tokens = []
+    for token in tokens:
+        token = token.strip()
+
+        if token in ['', "'"]:
+            continue
+
+        if token[0] != "'":
+            token = spaces_surrounding_letter_re.sub(r' & \1 & ', token)
+
+            token = space_between_words_re.sub(r'\1 & \2', token)
+
+            token = re.sub(r'([^ &|]+)', r'\1:*', token)
+
+        processed_tokens.append(token)
+
+    term = " & ".join(processed_tokens)
+
+    term = multiple_operator_re.sub(r" \1 ", term)
+
+    return term.replace("'", "''")
+
 def getSearchResults(term, 
                      table_name, 
                      q_params={}):
@@ -108,17 +147,14 @@ def getSearchResults(term,
             
             result = '{0} AND {1}'.format(result, ' AND '.join(clauses))
 
-            q_params['term'] = term
+            q_params['term'] = sanitizeSearchTerm(term)
 
         else:
             raise ValueError
     else:
-        q_params = {'term': term}
+        q_params = {'term': sanitizeSearchTerm(term)}
 
-    punc = re.compile('[%s]' % re.escape(punctuation))
-    term = punc.sub('', term)
-
-    q_params['term'] = ' & '.join(['{0}:*'.format(t) for t in term.split()])
+    q_params['term'] = sanitizeSearchTerm(term)
 
     results = g.engine.execute(sa.text(result), **q_params)
     

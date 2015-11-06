@@ -92,7 +92,7 @@ class SunshineTransformLoad(object):
             add_names = ''' 
                 UPDATE {0} SET
                   search_name = to_tsvector('english', COALESCE(first_name, '') || ' ' ||
-                                                       COALESCE(last_name, ''))
+                                                       COALESCE(REPLACE(last_name, '&', ''), ''))
             '''.format(self.table_name)
 
             self.executeTransaction(add_names)
@@ -316,7 +316,7 @@ class SunshineCommittees(SunshineTransformLoad):
 
             add_names = ''' 
                 UPDATE {0} SET
-                  search_name = to_tsvector('english', name)
+                  search_name = to_tsvector('english', REPLACE(name, '&', ''))
             '''.format(self.table_name)
 
             self.executeTransaction(add_names)
