@@ -253,7 +253,7 @@ def advanced_search():
             filedate = datetime.now().strftime('%Y-%m-%d')
             response.headers['Content-Type'] = 'application/zip'
             fname = 'Illinois_Sunshine_Search_%s_%s.zip' % ('_'.join(term.split(' ')), filedate)
-            response.headers['Content-Disposition'] = 'attachment; filename=%s' % (fname)
+            response.headers['Content-Disposition'] = 'attachment; filename="%s"' % (fname)
             
             return response
 
@@ -523,7 +523,7 @@ def receipts():
             filedate = datetime.now().strftime('%Y-%m-%d')
             response.headers['Content-Type'] = 'text/csv'
             fname = 'Illinois_Sunshine_Committee_Receipts_%s_%s.csv' % ('_'.join(committee_info['name'].split(' ')), filedate)
-            response.headers['Content-Disposition'] = 'attachment; filename=%s' % (fname)
+            response.headers['Content-Disposition'] = 'attachment; filename="%s"' % (fname)
             
             return response
 
@@ -615,7 +615,7 @@ def expenditures():
             filedate = datetime.now().strftime('%Y-%m-%d')
             response.headers['Content-Type'] = 'text/csv'
             fname = 'Illinois_Sunshine_Committee_Expenditures_%s_%s.csv' % ('_'.join(committee_info['name'].split(' ')), filedate)
-            response.headers['Content-Disposition'] = 'attachment; filename=%s' % (fname)
+            response.headers['Content-Disposition'] = 'attachment; filename="%s"' % (fname)
             
             return response
 
