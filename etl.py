@@ -1240,7 +1240,7 @@ def alterSearchDictionary():
 if __name__ == "__main__":
     import sys
     import argparse
-    from sunshine import app_config 
+    from sunshine.app_config import STOP_WORD_LIST
     from sunshine.database import engine, Base
 
     parser = argparse.ArgumentParser(description='Download and import campaign disclosure data from the IL State Board of Elections.')
@@ -1272,7 +1272,7 @@ if __name__ == "__main__":
     if args.load_data:
         print("loading data start %s ..." % datetime.now().isoformat())
         
-        if app_config.STOP_WORD_LIST != 'english':
+        if STOP_WORD_LIST != 'english':
             alterSearchDictionary()
 
         chunk_size = 50000
