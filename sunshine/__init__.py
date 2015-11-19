@@ -48,6 +48,7 @@ def create_app():
     
     # register template filters from template_filters module
     app.jinja_env.filters['format_money'] = tf.format_money
+    app.jinja_env.filters['format_money_short'] = tf.format_money_short
     app.jinja_env.filters['format_number'] = tf.format_number
     app.jinja_env.filters['format_large_number'] = tf.format_large_number
     app.jinja_env.filters['donation_verb'] = tf.donation_verb

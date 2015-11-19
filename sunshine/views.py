@@ -646,6 +646,55 @@ def expense(expense_id):
         return abort(404)
     return render_template('expense-detail.html', expense=expense)
 
+# Widgets
+@views.route('/widgets/top-earners/')
+@cache.cached(timeout=CACHE_TIMEOUT, key_prefix=make_cache_key)
+def widget_top_earners():
+    days_ago = 30
+    if request.args.get('days_ago'):
+      try: 
+        days_ago = int(request.args.get('days_ago'))
+      except:
+        pass
+
+    top_earners = ''' 
+        SELECT 
+          sub.*,
+          m.total,
+          c.name,
+          c.type
+        FROM (
+          SELECT 
+            SUM(amount) AS amount,
+            committee_id
+          FROM condensed_receipts'''
+
+    if days_ago > 0:
+      top_earners += " WHERE received_date >= :received_date"
+
+    top_earners += '''
+          GROUP BY committee_id
+          ORDER BY amount DESC
+        ) AS sub
+        JOIN committees AS c
+          ON sub.committee_id = c.id
+        JOIN committee_money as m
+          ON c.id = m.committee_id
+        ORDER BY sub.amount DESC
+        LIMIT 5
+    '''
+    
+    calc_days_ago = datetime.now() - timedelta(days=days_ago)
+
+    top_earners = g.engine.execute(sa.text(top_earners),
+                                 received_date=calc_days_ago.strftime('%Y-%m-%d'))
+
+    return render_template('widgets/top-earners.html', 
+                            top_earners=top_earners,
+                            days_ago=days_ago,
+                            calc_days_ago=calc_days_ago)
+
+
 @views.route('/flush-cache/<secret>/')
 def flush(secret):
     if secret == FLUSH_KEY:

@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en" style="height: 100%;">
+  <head>
+
+    {% block header_social %}{% endblock %}
+
+    <link rel="icon" href="/static/images/favicon.png" type="image/png">
+    <link rel="shortcut icon" href="/static/images/favicon.png" type="image/png">
+
+    <!-- Bootstrap core CSS -->
+    <link href="{{ url_for('static', filename='css/bootstrap.simplex.min.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/dataTables.bootstrap.css') }}" rel="stylesheet">
+    <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css" rel="stylesheet">
+
+    <!-- Custom styles for this template -->
+    {% block extra_styles %}{% endblock %}
+    <link href="{{ url_for('static', filename='css/custom.css') }}" rel="stylesheet">
+
+    <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+      <script src="static/js/html5shiv.js"></script>
+      <script src="static/js/respond.min.js"></script>
+    <![endif]-->
+  </head>
+
+  <body>
+      <div class="container-fluid">
+
+        {% block content %}{% endblock %}
+
+      </div>
+
+    <!-- Bootstrap core JavaScript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script src="{{ url_for('static', filename='js/jquery-1.10.1.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/analytics_lib.js') }}"></script>
+
+    <script src="{{ url_for('static', filename='js/moment.min.js') }}"></script>
+    {% block extra_javascript %}{% endblock %}
+
+  </body>
+</html>

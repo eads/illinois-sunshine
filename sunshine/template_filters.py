@@ -3,6 +3,14 @@ def format_money(s):
     locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
     return locale.currency(s, grouping=True)
 
+def format_money_short(n):
+    import math
+    millnames=['','K','M','B']
+    n = float(n)
+    millidx=max(0,min(len(millnames)-1,
+                      int(math.floor(math.log10(abs(n))/3))))
+    return '$%.2f%s'%(n/10**(3*millidx),millnames[millidx])
+
 def donation_verb(s):
     verbs = {
         '1A': 'donated',
