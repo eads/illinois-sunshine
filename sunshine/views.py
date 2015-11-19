@@ -699,7 +699,7 @@ def widget_top_earners():
 @cache.cached(timeout=CACHE_TIMEOUT, key_prefix=make_cache_key)
 def widgets_top_donations():
 
-    date = datetime.now().date() - timedelta(days=150)
+    date = datetime.now().date()
     
     days_donations_sql = '''
       SELECT 
@@ -718,12 +718,8 @@ def widgets_top_donations():
     # Roll back day until we find something
     while len(days_donations) == 0:
         days_donations = list(g.engine.execute(sa.text(days_donations_sql), 
-                                             start_date=date,
-                                             end_date=(date + timedelta(days=1))))
-        if days_donations:
-            break
-
-        date = date - timedelta(days=1)
+                                             start_date=(date - timedelta(days=7)),
+                                             end_date=date))
 
     return render_template('widgets/top-donations.html', 
                            days_donations=days_donations)

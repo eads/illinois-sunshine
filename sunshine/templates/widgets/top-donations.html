@@ -23,9 +23,9 @@
             <td>
                 {% if donation.first_name %}{{ donation.first_name }}{% endif %} {{ donation.last_name }}
 
-                <a href="{{ url_for('views.contribution', receipt_id=donation.id )}}">{{ donation.d2_part|donation_verb }} <strong>{{ donation.amount|format_money }}</strong></a> to
+                <a href="{{ url_for('views.contribution', receipt_id=donation.id )}}" target='_blank'>{{ donation.d2_part|donation_verb }} <strong>{{ donation.amount|format_money }}</strong></a> to
 
-                <a href="{{ url_for('views.committee', committee_id=committee_slug )}}">{{ donation.committee_name }}</a>
+                <a href="{{ url_for('views.committee', committee_id=committee_slug )}}" target='_blank'>{{ donation.committee_name }}</a>
             </td>
         </tr>
     {% endfor %}
