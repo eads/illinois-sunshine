@@ -695,6 +695,40 @@ def widget_top_earners():
                             calc_days_ago=calc_days_ago)
 
 
+@views.route('/widgets/top-donations/')
+@cache.cached(timeout=CACHE_TIMEOUT, key_prefix=make_cache_key)
+def widgets_top_donations():
+
+    date = datetime.now().date() - timedelta(days=150)
+    
+    days_donations_sql = '''
+      SELECT 
+        c.*, 
+        cm.name as committee_name
+      FROM condensed_receipts AS c 
+      JOIN committees AS cm ON c.committee_id = cm.id
+      WHERE c.received_date >= :start_date
+        AND c.received_date < :end_date
+      ORDER BY c.amount DESC
+      LIMIT 10
+    '''
+
+    days_donations = []
+    
+    # Roll back day until we find something
+    while len(days_donations) == 0:
+        days_donations = list(g.engine.execute(sa.text(days_donations_sql), 
+                                             start_date=date,
+                                             end_date=(date + timedelta(days=1))))
+        if days_donations:
+            break
+
+        date = date - timedelta(days=1)
+
+    return render_template('widgets/top-donations.html', 
+                           days_donations=days_donations)
+
+
 @views.route('/flush-cache/<secret>/')
 def flush(secret):
     if secret == FLUSH_KEY:

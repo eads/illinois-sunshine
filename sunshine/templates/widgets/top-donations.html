@@ -1,0 +1,39 @@
+{% extends 'base-iframe.html' %}
+{% from 'macros.html' import header %}
+{% block header_social %}
+    {{ header("Top donations", None, request.path) }}
+{% endblock %}
+{% block content %}
+
+<h3>
+    <a href='{{ url_for('views.donations') }}' target='_blank'>Top Donations</a>
+</h3>
+
+<p>Top donations to Illinois political committees in the last 7 days.</p>
+<table class="table table-striped" id='donations-table'>
+<thead>
+    <tr>
+        <th>Donation</th>
+    </tr>
+</thead>
+<tbody>
+    {% for donation in days_donations %}
+        {% set committee_slug = [donation.committee_name|slugify, donation.committee_id|string]|join('-') %}
+        <tr>
+            <td>
+                {% if donation.first_name %}{{ donation.first_name }}{% endif %} {{ donation.last_name }}
+
+                <a href="{{ url_for('views.contribution', receipt_id=donation.id )}}">{{ donation.d2_part|donation_verb }} <strong>{{ donation.amount|format_money }}</strong></a> to
+
+                <a href="{{ url_for('views.committee', committee_id=committee_slug )}}">{{ donation.committee_name }}</a>
+            </td>
+        </tr>
+    {% endfor %}
+</tbody>
+</table>
+
+{% endblock %}
+
+{% block extra_javascript %}
+
+{% endblock %}
