@@ -129,7 +129,7 @@ table, label,.control-label,.help-block,.checkbox,.radio { font-size: 14px; }
 }
 
 @media screen and (max-width: 992px) {
-  body, table { font-size: 12px; }
+  body, table { font-size: 12px; color: #333;}
   .navbar-default .navbar-brand a {
     font-size: 18px;
   }
