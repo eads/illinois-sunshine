@@ -33,6 +33,7 @@ class SunshineExtract(object):
         fpaths = []
         with ftplib.FTP(self.ftp_host) as ftp:
             ftp.login(self.ftp_user, self.ftp_pw)
+            print(ftp.dir(self.ftp_path))
             files = ftp.nlst(self.ftp_path)
             for f in files:
                 print('downloading %s' % f)
