@@ -253,3 +253,7 @@ table, label,.control-label,.help-block,.checkbox,.radio { font-size: 14px; }
 .panel-heading {
     cursor: pointer;
 }
+
+.advertisement .img-responsive {
+    margin: 0 auto;
+}
