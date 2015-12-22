@@ -457,10 +457,10 @@ class SunshineCandidacy(SunshineTransformLoad):
             row = OrderedDict(zip(row.keys(), row.values()))
 
             # Get election type
-            row['ElectionType'] = self.election_types.get(row['ElectionType'])
+            row['ElectionType'] = self.election_types.get(row['ElectionType'].strip())
             
             # Get race type
-            row['IncChallOpen'] = self.race_types.get(row['IncChallOpen'])
+            row['IncChallOpen'] = self.race_types.get(row['IncChallOpen'].strip())
             
             # Get outcome
             if row['WonLost'] == 'Won':
