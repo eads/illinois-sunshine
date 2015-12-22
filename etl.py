@@ -183,13 +183,13 @@ class SunshineTransformLoad(object):
     def writeRawToDisk(self):
         with open(self.file_path, 'r', encoding='latin-1') as inp:
             reader = csv.reader(inp, delimiter='\t', quoting=csv.QUOTE_NONE)
-            header = next(reader)
+            self.raw_header = next(reader)
             checker = RowChecker(reader)
             
             with open('%s_raw.csv' % self.file_path, 'w') as outp:
                 writer = csv.writer(outp)
 
-                writer.writerow(header)
+                writer.writerow(self.raw_header)
                 
                 for row in checker.checked_rows():
                     writer.writerow(row)
@@ -265,12 +265,34 @@ class SunshineTransformLoad(object):
                    ','.join(self.header),
                    ','.join([':%s' % h for h in self.header]))
 
-    def load(self):
+    def load(self, update_existing=False):
         self.makeRawTable()
         self.writeRawToDisk()
         self.bulkLoadRawData()
-        self.findNewRecords()
 
+        if update_existing:
+            self.updateExistingRecords()
+        
+        self.findNewRecords()
+        self.insertNewRecords()
+
+    def updateExistingRecords(self):
+        fields = ','.join(['{0}=s."{1}"'.format(clean, raw) \
+                for clean, raw in zip(self.header, self.raw_header)])
+        
+        update = ''' 
+            UPDATE {table_name} SET
+              {fields}
+            FROM (
+              SELECT * FROM raw_{table_name}
+            ) AS s
+            WHERE {table_name}.id = s."ID"
+        '''.format(table_name=self.table_name,
+                   fields=fields)
+
+        self.executeTransaction(update)
+
+    def insertNewRecords(self):
         rows = []
         i = 0
         for row in self.transform():
@@ -1291,7 +1313,7 @@ if __name__ == "__main__":
         del Base.metadata
 
         candidates = SunshineCandidates(connection, chunk_size=chunk_size)
-        candidates.load()
+        candidates.load(update_existing=True)
         candidates.addNameColumn()
         candidates.addDateColumn('NULL')
         
