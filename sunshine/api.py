@@ -3,7 +3,7 @@ from sunshine.database import db_session
 from sunshine.models import Candidate, Candidacy, Committee, Officer, \
     D2Report, Receipt, Expenditure, Investment, candidate_committees
 from sunshine.cache import cache, make_cache_key, CACHE_TIMEOUT
-from flask import Blueprint, render_template, request, make_response, g
+from flask import Blueprint, render_template, request, make_response, g, abort
 import json
 from datetime import datetime, date
 from collections import OrderedDict
@@ -633,6 +633,49 @@ def expenditures():
     
     response = make_response(json.dumps(resp, default=dthandler, sort_keys=False))
     response.headers['Content-Type'] = 'application/json'
+    return response
+
+@api.route('/elections/')
+@cache.cached(timeout=CACHE_TIMEOUT, key_prefix=make_cache_key)
+def elections():
+    election_type = request.args.get('election_type')
+    election_year = request.args.get('election_year')
+
+    if not election_type and not election_year:
+        abort(400)
+
+    candidates = ''' 
+        SELECT cd.*
+        FROM candidates AS cd
+        JOIN candidacies AS cc
+          ON cd.id = cc.candidate_id
+        WHERE 1=1
+    '''
+    
+    query_args = {}
+
+    if election_type:
+        candidates = '{0} AND cc.election_type = :election_type'.format(candidates)
+        query_args['election_type'] = election_type
+
+    if election_year:
+        candidates = '{0} AND cc.election_year = :election_year'.format(candidates)
+        query_args['election_year'] = election_year
+    
+    candidates = [OrderedDict(zip(r.keys(), r.values())) for r in \
+                      g.engine.execute(sa.text(candidates),**query_args)]
+    
+    resp = {
+        'meta': {
+            'status': 'ok',
+            'message': '',
+            'total_rows': len(candidates)
+        },
+        'objects': candidates
+    }
+
+    response = make_response(json.dumps(resp, default=dthandler))
+    response.headers['content-type'] = 'application/json'
     return response
 
 def make_query(table, raw_query_params):
