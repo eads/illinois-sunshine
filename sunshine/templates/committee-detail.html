@@ -31,7 +31,7 @@
         {% endif %}
 
         {% if committee.candidates %}
-            <h3>{{committee.candidates|length}} supported 
+            <h3>{{committee.candidates|length}} supported
                 {{ "candidate" if committee.candidates|length == 1 else "candidates" }}
             </h3>
             <p></p>
@@ -247,7 +247,7 @@
 
 {% endblock %}
 {% block extra_javascript %}
-    <script src="http://code.highcharts.com/highcharts.js"></script>
+    <script src="https://code.highcharts.com/highcharts.js"></script>
     <script src="{{ url_for('static', filename='js/ejs_production.js') }}"></script>
     <script src="{{ url_for('static', filename='js/accounting.min.js') }}"></script>
     <script src="{{ url_for('static', filename='js/moment.min.js') }}"></script>
@@ -479,7 +479,7 @@
                             $('#money-table-guts').html('<h4>No donations found</h4>');
                         } else if (transaction_type == 'expenditures' || transaction_type == 'top_recipients'){
                             $('#money-table-guts').html('<h4>No expenditures found</h4>');
-                        } 
+                        }
                     }
                 })
             });
