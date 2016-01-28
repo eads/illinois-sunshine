@@ -64,7 +64,7 @@ def sanitizeSearchTerm(term):
 
     term = multiple_operator_re.sub(r" \1 ", term)
 
-    return term.replace("'", "''")
+    return term
 
 def getSearchResults(term, 
                      table_name, 
