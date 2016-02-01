@@ -560,7 +560,7 @@ def committee(committee_id):
           ON r.filed_doc_id = f.id
         WHERE r.committee_id = :committee_id
           AND f.reporting_period_end IS NOT NULL
-          AND f.doc_name != 'Pre-election'
+          AND f.doc_name = 'Quarterly'
         ORDER BY f.reporting_period_end ASC
     '''
 

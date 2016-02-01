@@ -32,8 +32,9 @@ def sanitizeSearchTerm(term):
     allowed_punctuation = set(['&', '|', '"', "'"])
     all_punctuation = set(punctuation)
     punct = "".join(all_punctuation - allowed_punctuation)
-    term = re.sub(r"[{}]+".format(re.escape(punct)), " ", \
-            term)
+    term = re.sub(r"[{}]+".format(re.escape(punct)), 
+                  " ", \
+                  term)
 
     term = term.replace('"', "'")
     term = re.sub(r"[']+", "'", term)
@@ -116,6 +117,7 @@ def getSearchResults(term,
               ON oc.committee_id = c.id
             WHERE to_tsquery('english', :term) @@ o.search_name
         '''.format(table_name)
+        
 
     else:
         result = ''' 
@@ -124,6 +126,7 @@ def getSearchResults(term,
                  to_tsquery('english', :term) AS query
             WHERE query @@ search_name
         '''.format(table_name)
+        
     
     if q_params:
         sa_table = sa.Table(table_name, 
@@ -143,7 +146,12 @@ def getSearchResults(term,
                     except ValueError:
                         fieldname = key
                         operator = '='
-                    clauses.append('%s %s :%s' % (fieldname, operator, key))
+                    
+                    if table_name == 'officers' and key.startswith('search_date'):
+                        clauses.append('o.%s %s :%s' % (fieldname, operator, key))
+                    
+                    else:
+                        clauses.append('%s %s :%s' % (fieldname, operator, key))
             
             result = '{0} AND {1}'.format(result, ' AND '.join(clauses))
 
@@ -703,7 +711,13 @@ def make_query(table, raw_query_params):
         args_keys.remove('datatype')
     if 'term' in args_keys:
         args_keys.remove('term')
-    for query_param in args_keys:
+    
+    query_dict = {f: raw_query_params[f] for f in args_keys}
+
+    for query_param, query_value in query_dict.items():
+        if not query_value:
+            continue
+
         try:
             field, operator = query_param.split('__')
         except ValueError:
