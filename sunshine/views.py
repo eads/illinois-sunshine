@@ -258,18 +258,23 @@ def top_earners():
 def committees():
 
     committee_type = "Candidate"
+    committee_title = "Candidate Committees"
     type_arg = 'candidate'
 
     if request.args.get('type'):
       type_arg = request.args.get('type', 'candidate')
       if type_arg == "independent":
         committee_type = "Independent Expenditure"
+        committee_title = "Super PACs"
       if type_arg == "action":
         committee_type = "Political Action"
+        committee_title = "Political Action Committees"
       if type_arg == "party":
         committee_type = "Political Party"
+        committee_title = "Political Party Committees"
       if type_arg == "ballot":
         committee_type = "Ballot Initiative"
+        committee_title = "Ballot Initiative Committees"
 
     page = request.args.get('page', 1)
     offset = (int(page) * 50) - 50
@@ -330,6 +335,7 @@ def committees():
     return render_template('committees.html', 
                            committees=committees, 
                            committee_type=committee_type,
+                           committee_title=committee_title,
                            page_count=page_count)
 
 @views.route('/committees/<committee_id>/')

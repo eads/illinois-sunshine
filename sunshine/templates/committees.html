@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% from 'macros.html' import pager, header %}
 {% block header_social %}
-    {{ header(committee_type + " Committees", committee_type | committee_description, request.path) }}
+    {{ header(committee_title, committee_type | committee_description, request.path) }}
 {% endblock %}
 {% block content %}
 
@@ -12,13 +12,13 @@
 
         <ul class="nav nav-pills">
           <li role="presentation" {% if committee_type == "Candidate"%}class="active"{% endif %}><a href="{{ url_for('views.committees') }}?type=candidate">Candidate</a></li>
-          <li role="presentation" {% if committee_type == "Independent Expenditure"%}class="active"{% endif %}><a href="{{ url_for('views.committees') }}?type=independent">Independent Expenditure</a></li>
+          <li role="presentation" {% if committee_type == "Independent Expenditure"%}class="active"{% endif %}><a href="{{ url_for('views.committees') }}?type=independent">Super PACs</a></li>
           <li role="presentation" {% if committee_type == "Political Action"%}class="active"{% endif %}><a href="{{ url_for('views.committees') }}?type=action">Political Action</a></li>
           <li role="presentation" {% if committee_type == "Political Party"%}class="active"{% endif %}><a href="{{ url_for('views.committees') }}?type=party">Political Party</a></li>
           <li role="presentation" {% if committee_type == "Ballot Initiative"%}class="active"{% endif %}><a href="{{ url_for('views.committees') }}?type=ballot">Ballot Initiative</a></li>
         </ul>
 
-        <h2>{{committee_type}} Committees</h3>
+        <h2>{{committee_title}}</h3>
 
         <p>{{ committee_type | committee_description }}</p>
 
@@ -27,7 +27,7 @@
                 <tr>
                     <th>Rank</th>
                     <th>Committee</th>
-                    {% if committee_type == "Candidate" %}
+                    {% if committee_type == "Candidate Committees" %}
                         <th>Candidate</th>
                     {% endif %}
                     <th class='text-right'>Funds</th>
@@ -39,7 +39,7 @@
                     <tr>
                         <td>{{ loop.index + ((request.args.get('page', 1)|int * 50) - 50) }}</td>
                         <td><a href="{{ url_for('views.committee', committee_id=committee_slug ) }}">{{ c.committee_name }}</a></td>
-                        {% if committee_type == "Candidate" %}
+                        {% if committee_type == "Candidate Committees" %}
                             {% set candidate_slug = [c.first_name|slugify, c.last_name|slugify, c.id|string]|join('-') %}
                             <td><a href='{{ url_for('views.candidate', candidate_id=candidate_slug ) }}'>{{c.first_name}} {{c.last_name}}</a></td>
                         {% endif %}
