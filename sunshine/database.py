@@ -10,7 +10,7 @@ engine = create_engine(DB_CONN,
                        server_side_cursors=True)
 
 db_session = scoped_session(sessionmaker(bind=engine,
-                                         autocommit=False,
+                                         autocommit=True,
                                          autoflush=False))
 
 Base = declarative_base()
