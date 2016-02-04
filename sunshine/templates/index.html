@@ -47,6 +47,49 @@
 <div class='visible-sm-block visible-xs-block' id='donation-chart-year'></div>
 <br />
 
+
+<h3>
+    <a href='{{ url_for('views.donations') }}' target='_blank'>Recent Donations</a>
+</h3>
+
+<p>Top donations to Illinois political committees in the last 7 days.</p>
+<table class="table table-striped" id='donations-table'>
+    <thead>
+        <tr>
+            <th>Donor</th>
+            <th class='text-right'>Amount</th>
+            <th>Recipient</th>
+            <th class='hidden-sm hidden-xs'>Date</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for donation in days_donations %}
+            {% set committee_slug = [donation.committee_name|slugify, donation.committee_id|string]|join('-') %}
+            <tr>
+                <td>
+                    <a href='/search/?term={% if donation.first_name %}{{ donation.first_name }}{% endif %} {{ donation.last_name }}&table_name=candidates&table_name=committees&table_name=officers&table_name=receipts'>{% if donation.first_name %}{{ donation.first_name }}{% endif %} {{ donation.last_name }}</a>
+                </td>
+                <td class='nowrap text-right visible-sm-block visible-xs-block'>
+                    <a href="{{ url_for('views.contribution', receipt_id=donation.id )}}">
+                        <strong>{{ donation.amount|format_money_short }}</strong>
+                    </a>
+                </td>
+                <td class='nowrap text-right hidden-sm hidden-xs'>
+                    <a href="{{ url_for('views.contribution', receipt_id=donation.id )}}">
+                        {{ donation.d2_part|donation_verb }} <strong>{{ donation.amount|format_money }}</strong>
+                    </a> to
+                </td>
+                <td>
+                    <a href="{{ url_for('views.committee', committee_id=committee_slug )}}">{{ donation.committee_name }}</a>
+                </td>
+                <td class='nowrap hidden-sm hidden-xs'>
+                    on {{ donation.received_date.strftime('%b %d, %Y') }}
+                </td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
 <p><a class='btn btn-primary' href='{{ url_for('views.donations') }}'><i class='fa fa-dollar fa-fw'></i> Browse all donations &raquo;</a></p>
 <br /><br />
 

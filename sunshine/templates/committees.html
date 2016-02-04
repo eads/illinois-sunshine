@@ -12,7 +12,7 @@
 
         <ul class="nav nav-pills">
           <li role="presentation" {% if committee_type == "Candidate"%}class="active"{% endif %}><a href="{{ url_for('views.committees') }}?type=candidate">Candidate</a></li>
-          <li role="presentation" {% if committee_type == "Independent Expenditure"%}class="active"{% endif %}><a href="{{ url_for('views.committees') }}?type=independent">Super PACs</a></li>
+          <li role="presentation" {% if committee_type == "Super PAC"%}class="active"{% endif %}><a href="{{ url_for('views.committees') }}?type=super_pac">Super PACs</a></li>
           <li role="presentation" {% if committee_type == "Political Action"%}class="active"{% endif %}><a href="{{ url_for('views.committees') }}?type=action">Political Action</a></li>
           <li role="presentation" {% if committee_type == "Political Party"%}class="active"{% endif %}><a href="{{ url_for('views.committees') }}?type=party">Political Party</a></li>
           <li role="presentation" {% if committee_type == "Ballot Initiative"%}class="active"{% endif %}><a href="{{ url_for('views.committees') }}?type=ballot">Ballot Initiative</a></li>

@@ -100,13 +100,37 @@ def index():
     '''
     
     top_ten = g.engine.execute(sa.text(committee_sql))
+    
+    date = datetime.now().date()
+    
+    days_donations_sql = '''
+      SELECT 
+        c.*, 
+        cm.name as committee_name
+      FROM condensed_receipts AS c 
+      JOIN committees AS cm ON c.committee_id = cm.id
+      WHERE c.received_date >= :start_date
+        AND c.received_date < :end_date
+      ORDER BY c.amount DESC
+      LIMIT 10
+    '''
+
+    days_donations = []
+    
+    # Roll back day until we find something
+    while len(days_donations) == 0:
+        days_donations = list(g.engine.execute(sa.text(days_donations_sql), 
+                                             start_date=(date - timedelta(days=7)),
+                                             end_date=date))
+        date = date - timedelta(days=1)
 
     return render_template('index.html', 
                            top_earners=top_earners,
                            top_ten=top_ten,
                            totals=totals,
                            donations_by_month=donations_by_month,
-                           donations_by_year=donations_by_year)
+                           donations_by_year=donations_by_year,
+                           days_donations=days_donations)
 
 @views.route('/donations/')
 @cache.cached(timeout=CACHE_TIMEOUT, key_prefix=make_cache_key)
@@ -263,8 +287,8 @@ def committees():
 
     if request.args.get('type'):
       type_arg = request.args.get('type', 'candidate')
-      if type_arg == "independent":
-        committee_type = "Independent Expenditure"
+      if type_arg == "super_pac":
+        committee_type = "Super PAC"
         committee_title = "Super PACs"
       if type_arg == "action":
         committee_type = "Political Action"
