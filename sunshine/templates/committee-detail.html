@@ -13,7 +13,13 @@
         <h1>
             {{ committee.name }}
             <small>
-                {{ committee.type if committee.type else '' }} Committee
+                {% if committee.type == 'Super PAC' %}
+                    {{ committee.type }}
+                {% elif committee.type %}
+                   {{ committee.type }} Committee
+                {% else %}
+                    Committee
+                {% endif %}
                 {% if not committee.active %}
                     (inactive)
                 {% endif %}
