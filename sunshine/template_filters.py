@@ -52,7 +52,7 @@ def expense_name(s):
 def committee_description(s):
   if s == "Candidate":
     description = "Candidate committees accept campaign contributions and make expenditures under the candidate's authority in order to further their bid for election or re-election to public office. They are subject to state and federal contribution limits."
-  elif s == "Independent Expenditure":
+  elif s == "Super PAC":
     description = "Super PACs, known as Independent Expenditure Committees in the Illinois Election Code, may raise unlimited sums of money from corporations, unions, associations and individuals, then spend unlimited sums to overtly advocate for or against political candidates or issues. Unlike traditional PACs, independent expenditure committees are prohibited from donating money directly to political candidates."
   elif s == "Political Action":
     description = "A political action committee (PAC) is a type of organization that gathers campaign contributions from members and spends those funds to support or oppose candidates, ballot initiatives, or legislation. These committees are subject to state and federal contribution limits."
