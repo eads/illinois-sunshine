@@ -5,6 +5,12 @@
 {% endblock %}
 {% block content %}
 
+<div class="alert alert-info" role="alert">
+    <a href="http://www.ilcampaign.org/illinois-sunshine/illinois-sunshine-weekly-update/" class="alert-link" target="_blank">
+        Click here
+    </a>
+    for campaign finance analysis and updates from The Illinois Campaign for Political Reform.
+</div>
 <div class='row'>
     <div class='col-sm-10'>
         <div class='jumbotron'>
@@ -33,7 +39,6 @@
         </a></p>
     </div>
 </div>
-
 <h2>
     <i class='fa fa-dollar fa-fw'></i>
     <a href='{{ url_for('views.donations') }}'>Donations</a> <small>since 1994</small>
@@ -52,7 +57,7 @@
     <a href='{{ url_for('views.donations') }}' target='_blank'>Recent Donations</a>
 </h3>
 
-<p>Top donations to Illinois political committees in the last 7 days.</p>
+<p>Top donations to Illinois political committees in the last 7 days, updated daily.</p>
 <table class="table table-striped" id='donations-table'>
     <thead>
         <tr>
@@ -93,12 +98,9 @@
 <p><a class='btn btn-primary' href='{{ url_for('views.donations') }}'><i class='fa fa-dollar fa-fw'></i> Browse all donations &raquo;</a></p>
 <br /><br />
 
-<p class='text-center advertisement'><small>Advertisement</samll><br /><a href='https://trackbill.com/r/ilcampaign'><img class='img-responsive' src='/static/images/ads/trackbill.gif' alt='TrackBill: Real-Time Legislative Updates ' /></a></p>
-<br /><br />
-
 <h2>
     <i class='fa fa-plus-circle fa-fw'></i>
-    <a href='{{ url_for('views.top_earners') }}'>Top earners</a> <small>last 30 days</small>
+    <a href='{{ url_for('views.top_earners') }}'>Top earners</a> <small>last 30 days, updated daily</small>
 </h2>
 
 <p>Political committees operate by receiving donations, transfers and loans from people, organizations, and other committees. Here's who's raised the most money in the last month.</p>
