@@ -335,7 +335,7 @@
             </tbody>
         </table>
         <p>
-            <% if ( offset >= 50){ %>
+            <% if ( offset >= 25){ %>
                 <a href='javascript://' class='btn btn-sm btn-primary prev-page' data-transaction_type="<%= transaction_type %>" data-offset="<%= offset %>">&laquo; Previous page</a>
             <% } %>
             <% if (offset >= 0){ %>
@@ -387,7 +387,7 @@
             </tbody>
         </table>
         <p>
-            <% if ( offset >= 50){ %>
+            <% if ( offset >= 25){ %>
                 <a href='javascript://' class='btn btn-sm btn-primary prev-page' data-transaction_type="<%= transaction_type %>" data-offset="<%= offset %>">&laquo; Previous page</a>
             <% } %>
             <% if (offset >= 0){ %>
@@ -515,7 +515,7 @@
             if(['expenditures', 'receipts'].indexOf(type) >= 0){
                 $('.next-page').on('click', function(e){
                     var transaction_type = $(this).data('transaction_type');
-                    var offset = parseInt($(this).data('offset')) + 50;
+                    var offset = parseInt($(this).data('offset')) + 25;
                     $.when(getMoney(transaction_type, offset)).then(function(resp){
                         var objects = resp['objects'][0][transaction_type];
                         var offset = parseInt(resp['meta']['query']['offset']);
@@ -525,7 +525,7 @@
                 })
                 $('.prev-page').on('click', function(e){
                     var transaction_type = $(this).data('transaction_type');
-                    var offset = parseInt($(this).data('offset')) - 50;
+                    var offset = parseInt($(this).data('offset')) - 25;
                     $.when(getMoney(transaction_type, offset)).then(function(resp){
                         var objects = resp['objects'][0][transaction_type];
                         var offset = parseInt(resp['meta']['query']['offset']);
