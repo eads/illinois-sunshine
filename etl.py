@@ -596,7 +596,8 @@ class SunshineViews(object):
             self.connection.execute(query, **kwargs)
             trans.commit()
         except (sa.exc.ProgrammingError, psycopg2.ProgrammingError) as e:
-            logger.error(e, exc_info=True)
+            # TODO: this line seems to break when creating views for the first time.
+            # logger.error(e, exc_info=True)
             trans.rollback()
             raise e
     
