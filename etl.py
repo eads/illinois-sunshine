@@ -595,7 +595,7 @@ class SunshineViews(object):
         try:
             self.connection.execute(query, **kwargs)
             trans.commit()
-        except sa.exc.ProgrammingError as e:
+        except (sa.exc.ProgrammingError, psycopg2.ProgrammingError) as e:
             logger.error(e, exc_info=True)
             trans.rollback()
             raise e
@@ -842,7 +842,7 @@ class SunshineViews(object):
             
             self.executeTransaction('REFRESH MATERIALIZED VIEW CONCURRENTLY incumbent_candidates')
 
-        except sa.exc.ProgrammingError:
+        except (sa.exc.ProgrammingError, psycopg2.ProgrammingError):
             
             incumbents = '''
                 CREATE MATERIALIZED VIEW incumbent_candidates AS (
