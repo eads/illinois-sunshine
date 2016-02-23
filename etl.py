@@ -380,7 +380,7 @@ class SunshineCommittees(SunshineTransformLoad):
                 else:
                     row[idx] = None
             
-            if 'Independent Expenditure' in row['TypeOfCommittee']:
+            if 'Independent Expenditure' in row.get('TypeOfCommittee', ''):
                 row['TypeOfCommittee'] = 'Super PAC'
 
             yield OrderedDict(zip(self.header, list(row.values())))
