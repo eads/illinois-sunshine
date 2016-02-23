@@ -380,8 +380,9 @@ class SunshineCommittees(SunshineTransformLoad):
                 else:
                     row[idx] = None
             
-            if 'Independent Expenditure' in row.get('TypeOfCommittee', ''):
-                row['TypeOfCommittee'] = 'Super PAC'
+            if row.get('TypeOfCommittee'):
+                if 'Independent Expenditure' in row['TypeOfCommittee']:
+                    row['TypeOfCommittee'] = 'Super PAC'
 
             yield OrderedDict(zip(self.header, list(row.values())))
     
@@ -463,7 +464,8 @@ class SunshineCandidacy(SunshineTransformLoad):
             row['ElectionType'] = self.election_types.get(row['ElectionType'].strip())
             
             # Get race type
-            row['IncChallOpen'] = self.race_types.get(row['IncChallOpen'].strip())
+            if row.get('IncChallOpen'):
+                row['IncChallOpen'] = self.race_types.get(row['IncChallOpen'].strip())
             
             # Get outcome
             if row['WonLost'] == 'Won':
