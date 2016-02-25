@@ -277,6 +277,7 @@ class SunshineTransformLoad(object):
         self.insertNewRecords()
 
     def updateExistingRecords(self):
+
         fields = ','.join(['{0}=s."{1}"'.format(clean, raw) \
                 for clean, raw in zip(self.header, self.raw_header)])
         
@@ -415,6 +416,28 @@ class SunshineOfficers(SunshineTransformLoad):
             row_list.append(self.current)
             
             yield OrderedDict(zip(self.header, row_list))
+    
+    def updateExistingRecords(self):
+        ignore_fields = ['committee_id', 'resign_date', 'current']
+
+        header = [f for f in self.header if f not in ignore_fields]
+
+        fields = ','.join(['{0}=s."{1}"'.format(clean, raw) \
+                for clean, raw in zip(header, self.raw_header)])
+        
+        update = ''' 
+            UPDATE {table_name} SET
+              {fields},
+              current=TRUE
+            FROM (
+              SELECT * FROM raw_{table_name}
+            ) AS s
+            WHERE {table_name}.id = s."ID"
+        '''.format(table_name=self.table_name,
+                   fields=fields)
+
+        self.executeTransaction(update)
+
 
 class SunshinePrevOfficers(SunshineOfficers):
     table_name = 'officers'
@@ -1326,7 +1349,7 @@ if __name__ == "__main__":
         del candidates
 
         officers = SunshineOfficers(connection, chunk_size=chunk_size)
-        officers.load()
+        officers.load(update_existing=True)
         officers.addNameColumn()
         officers.addDateColumn('NULL')
         
