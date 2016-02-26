@@ -270,11 +270,11 @@ class SunshineTransformLoad(object):
         self.writeRawToDisk()
         self.bulkLoadRawData()
 
-        if update_existing:
-            self.updateExistingRecords()
-        
         self.findNewRecords()
         self.insertNewRecords()
+        
+        if update_existing:
+            self.updateExistingRecords()
 
     def updateExistingRecords(self):
 
@@ -427,8 +427,7 @@ class SunshineOfficers(SunshineTransformLoad):
         
         update = ''' 
             UPDATE {table_name} SET
-              {fields},
-              current=TRUE
+              {fields}
             FROM (
               SELECT * FROM raw_{table_name}
             ) AS s
@@ -455,8 +454,28 @@ class SunshinePrevOfficers(SunshineOfficers):
 
             # Add current flag
             row_list.append(self.current)
-
+            
             yield OrderedDict(zip(self.header, row_list))
+    
+    def updateExistingRecords(self):
+
+        header = [f for f in self.header if f != 'phone']
+
+        fields = ','.join(['{0}=s."{1}"'.format(clean, raw) \
+                for clean, raw in zip(header, self.raw_header)])
+        
+        update = ''' 
+            UPDATE {table_name} SET
+              {fields}
+            FROM (
+              SELECT * FROM raw_{table_name}
+              WHERE "ResignDate" IS NOT NULL
+            ) AS s
+            WHERE {table_name}.id = s."ID"
+        '''.format(table_name=self.table_name,
+                   fields=fields)
+
+        self.executeTransaction(update)
 
 class SunshineCandidacy(SunshineTransformLoad):
     table_name = 'candidacies'
@@ -580,6 +599,19 @@ class SunshineOfficerCommittees(SunshineTransformLoad):
         for row in self.iterIncomingData():
             row = [row['CommitteeID'], row['OfficerID']]
             yield OrderedDict(zip(self.header, row))
+    
+    def updateExistingRecords(self):
+
+        update = ''' 
+            UPDATE officers SET
+              committee_id=s."CommitteeID"
+            FROM (
+              SELECT * FROM raw_{table_name}
+            ) AS s
+            WHERE officers.id = s."OfficerID"
+        '''.format(table_name=self.table_name)
+
+        self.executeTransaction(update)
 
 
 class SunshineD2Reports(SunshineTransformLoad):
@@ -668,7 +700,7 @@ class SunshineViews(object):
                     FROM expenditures AS e
                     JOIN most_recent_filings AS m
                       USING(committee_id)
-                    WHERE e.expended_date > m.reporting_period_end
+                    WHERE e.expended_date > COALESCE(m.reporting_period_end, '1900-01-01')
                   ) UNION (
                     SELECT
                       e.*
@@ -1356,7 +1388,7 @@ if __name__ == "__main__":
         del officers
 
         prev_off = SunshinePrevOfficers(connection, chunk_size=chunk_size)
-        prev_off.load()
+        prev_off.load(update_existing=True)
         
         del prev_off
 
@@ -1371,7 +1403,7 @@ if __name__ == "__main__":
         del can_cmte_xwalk
 
         off_cmte_xwalk = SunshineOfficerCommittees(connection, chunk_size=chunk_size)
-        off_cmte_xwalk.load()
+        off_cmte_xwalk.load(update_existing=True)
         
         del off_cmte_xwalk
 
