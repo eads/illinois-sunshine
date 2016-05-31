@@ -199,8 +199,8 @@ class SunshineTransformLoad(object):
         from sunshine.app_config import DB_USER, DB_PW, DB_HOST, \
             DB_PORT, DB_NAME
         
-        DB_CONN_STR = 'host={0} dbname={1} user={2} port={3}'\
-            .format(DB_HOST, DB_NAME, DB_USER, DB_PORT)
+        DB_CONN_STR = 'host={0} dbname={1} user={2} port={3} password={4}'\
+            .format(DB_HOST, DB_NAME, DB_USER, DB_PORT, DB_PW)
 
         copy_st = ''' 
             COPY raw_{0} FROM STDIN WITH CSV HEADER DELIMITER ','
@@ -380,7 +380,7 @@ class SunshineCommittees(SunshineTransformLoad):
                     row[idx] = 'support'
                 else:
                     row[idx] = None
-            
+
             if row.get('TypeOfCommittee'):
                 if 'Independent Expenditure' in row['TypeOfCommittee']:
                     row['TypeOfCommittee'] = 'Super PAC'

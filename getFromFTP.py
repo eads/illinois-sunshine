@@ -26,7 +26,7 @@ class SunshineExtract(object):
         self.aws_key = aws_key
         self.aws_secret = aws_secret
         
-        self.bucket_name = 'il-elections'
+        self.bucket_name = 'illinoissunshine-etl'
         self.download_path = download_path
     
     def downloadRaw(self):
@@ -55,7 +55,7 @@ class SunshineExtract(object):
         
         print('caching %s.%s' % (fname, fext))
 
-        conn = S3Connection(self.aws_key, self.aws_secret)
+        conn = S3Connection()
         bucket = conn.get_bucket(self.bucket_name)
         
         k = Key(bucket)
@@ -93,7 +93,7 @@ class SunshineExtract(object):
                              '%s/%s' % (zf_name, f),
                              compress_type=zipfile.ZIP_DEFLATED)
         
-        conn = S3Connection(self.aws_key, self.aws_secret)
+        conn = S3Connection()
         bucket = conn.get_bucket(self.bucket_name)
         k = Key(bucket)
         k.key = '%s.zip' % zf_name
