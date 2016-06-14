@@ -45,12 +45,15 @@
     </a> <br />
 Every Thursday, we recap the week’s political contributions, top earners, and highest grossing committees from across the state.
 </div>
+<div class='img-responsive center-block'>
+    <a href='http://www.ilcampaign.org/advertise-with-us/'><img src='/static/images/icpr-interested-in-advertising.png' /></a> 
+</div>
 <h2>
     <i class='fa fa-dollar fa-fw'></i>
     <a href='{{ url_for('views.donations') }}'>Donations</a> <small>since 1994</small>
 </h2>
 
-<p>Since 1994, <strong>${{ totals[0][0]|format_large_number }}</strong> has been donated to political campaigns in the State of Illinois. The chart below shows total donations over time. The spikes are fundraising leading up to municipal or general elections. <i class='fa fa-fw fa-hand-pointer-o'></i> Click on a month to see the individual donations.</p>
+<p>The chart below shows total political donations over time. The spikes are fundraising leading up to municipal or general elections. <i class='fa fa-fw fa-hand-pointer-o'></i> Click on a month to see the individual donations.</p>
 
 <div class='hidden-sm hidden-xs' id='donation-chart'></div>
 <br />
