@@ -35,6 +35,8 @@ table, label,.control-label,.help-block,.checkbox,.radio { font-size: 14px; }
   background-color: #ffe47f;
 }
 
+.panel-body {background:#ffe47f;}
+
 .navbar-default {
   height: 70px;
   background-color: #FFCB08;
@@ -98,6 +100,24 @@ table, label,.control-label,.help-block,.checkbox,.radio { font-size: 14px; }
   background-color: #FFCB08;
   border-color: #FFCB08;
   color: #000;
+}
+
+.nav-pills > li.inactive > a,
+.nav-pills > li.inactive > a:hover,
+.nav-pills > li.inactive > a:focus {
+  background-color: #eaeaea;
+  border-color: #eaeaea;
+  color: #000; 
+}
+
+.form-control::-moz-placeholder {
+  color: #B6B6B4;
+}
+.form-control:-ms-input-placeholder {
+  color: #B6B6B4;
+}
+.form-control::-webkit-input-placeholder {
+  color: #B6B6B4;
 }
 
 .btn-primary, .btn-primary:hover {
