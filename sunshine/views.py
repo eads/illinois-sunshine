@@ -11,6 +11,8 @@ from datetime import datetime, timedelta
 from itertools import groupby
 from operator import attrgetter
 from dateutil.parser import parse
+import csv
+import os
 
 views = Blueprint('views', __name__)
 
@@ -276,7 +278,111 @@ def top_earners():
                             days_ago=days_ago,
                             calc_days_ago=calc_days_ago)
 
+@views.route('/contested-races/')
+@cache.cached(timeout=CACHE_TIMEOUT, key_prefix=make_cache_key)
+def contested_races():
 
+    contested_races_type = "House of Representatives"
+    contested_races_title= "Illinois House of Representatives Contested Races"
+    type_arg = 'house_of_representatives'
+    
+    input_file = csv.DictReader(open(os.getcwd()+'/sunshine/contested_races.csv'))
+    entries = []
+    for row in input_file:
+        entries.append(row)
+
+
+    house_dict = {}
+    senate_dict = {}
+
+
+    for e in entries:
+        district = int(e['District'])
+        candidate_name = e['First'] + ' ' + e['Last']
+        supporting_funds, opposing_funds = get_candidate_funds(candidate_name)
+        if e['Candidate ID']:
+            candidate_id = int(float(e['Candidate ID']))
+        else:
+            candidate_id = e['Candidate ID']
+
+         
+        if(e['ID'] == 'na' or e['ID'] == ''):
+            
+            if e['Senate/House'] == 'H':
+                if district in house_dict:
+                    house_dict[district].append({'last': e['Last'], 'first': e['First'],'committee_name': e['Committee'],'incumbent': e['Incumbent'],'id': e['ID'],'party': e['Party'], 'supporting_funds': supporting_funds, 'opposing_funds': opposing_funds, 'candidate_id' : candidate_id})
+                else:
+                    house_dict[district] = []
+                    house_dict[district].append({'last': e['Last'], 'first': e['First'],'committee_name': e['Committee'],'incumbent': e['Incumbent'],'id': e['ID'],'party': e['Party'], 'supporting_funds': supporting_funds, 'opposing_funds': opposing_funds, 'candidate_id' : candidate_id})
+            
+
+            elif e['Senate/House'] == 'S':
+                if district in senate_dict:
+                    senate_dict[district].append({'last': e['Last'], 'first': e['First'],'committee_name': e['Committee'],'incumbent': e['Incumbent'],'id': e['ID'],'party': e['Party'], 'supporting_funds': supporting_funds, 'opposing_funds': opposing_funds, 'candidate_id' : candidate_id})
+                else:
+                    senate_dict[district] = []
+                    senate_dict[district].append({'last': e['Last'], 'first': e['First'],'committee_name': e['Committee'],'incumbent': e['Incumbent'],'id': e['ID'],'party': e['Party'], 'supporting_funds': supporting_funds, 'opposing_funds': opposing_funds, 'candidate_id' : candidate_id})
+            
+        else:
+            committee, recent_receipts, recent_total, latest_filing, controlled_amount, ending_funds, investments, debts, expenditures, total_expenditures = get_committee_details(e['ID'])
+
+            if e['Senate/House'] == 'H':
+                if district in house_dict:
+                
+                    house_dict[district].append({'last': e['Last'], 'first': e['First'],'committee_name': e['Committee'],'incumbent': e['Incumbent'],'id': e['ID'],'party': e['Party'],'committee':committee, 'recent_receipts': recent_receipts, 'recent_total': recent_total, 'latest_filing': latest_filing, 'controlled_amount': controlled_amount, 'ending_funds': ending_funds, 'investments': investments, 'debts': debts, 'expenditures': expenditures, 'total_expenditures': total_expenditures, 'supporting_funds': supporting_funds, 'opposing_funds': opposing_funds, 'candidate_id' : candidate_id})
+
+            
+                else:
+                
+                    house_dict[district] = []
+                    house_dict[district].append({'last': e['Last'], 'first': e['First'],'committee_name': e['Committee'],'incumbent': e['Incumbent'],'id': e['ID'],'party': e['Party'],'committee':committee, 'recent_receipts': recent_receipts, 'recent_total': recent_total, 'latest_filing': latest_filing, 'controlled_amount': controlled_amount, 'ending_funds': ending_funds, 'investments': investments, 'debts': debts, 'expenditures': expenditures, 'total_expenditures': total_expenditures, 'supporting_funds': supporting_funds, 'opposing_funds': opposing_funds, 'candidate_id' : candidate_id})
+
+
+            elif e['Senate/House'] == 'S':
+                if district in senate_dict:
+                
+                    senate_dict[district].append({'last': e['Last'], 'first': e['First'],'committee_name': e['Committee'],'incumbent': e['Incumbent'],'id': e['ID'],'party': e['Party'],'committee':committee, 'recent_receipts': recent_receipts, 'recent_total': recent_total, 'latest_filing': latest_filing, 'controlled_amount': controlled_amount, 'ending_funds': ending_funds, 'investments': investments, 'debts': debts, 'expenditures': expenditures, 'total_expenditures': total_expenditures, 'supporting_funds': supporting_funds, 'opposing_funds': opposing_funds, 'candidate_id' : candidate_id})
+
+            
+                else:
+                
+                    senate_dict[district] = []
+                    senate_dict[district].append({'last': e['Last'], 'first': e['First'],'committee_name': e['Committee'],'incumbent': e['Incumbent'],'id': e['ID'],'party': e['Party'],'committee':committee, 'recent_receipts': recent_receipts, 'recent_total': recent_total, 'latest_filing': latest_filing, 'controlled_amount': controlled_amount, 'ending_funds': ending_funds, 'investments': investments, 'debts': debts, 'expenditures': expenditures, 'total_expenditures': total_expenditures, 'supporting_funds': supporting_funds, 'opposing_funds': opposing_funds, 'candidate_id' : candidate_id})
+         
+         
+    if request.args.get('type'):
+      type_arg = request.args.get('type', 'house_of_reprsentatives')
+      if type_arg == "senate":
+        contested_races_type = "Senate"
+        contested_races_title = "Illinois Senate Contested Races"
+
+    if contested_races_type == "House of Representatives":
+      contested_dict = house_dict
+    else:
+      contested_dict = senate_dict
+
+    total_funds = {}
+    for key in contested_dict:
+        funds = 0
+        for item in contested_dict[key]:
+            funds += item['supporting_funds'] + item['opposing_funds']
+            if 'controlled_amount' in item:
+                funds += item['controlled_amount']
+        
+        total_funds[key] = funds
+        
+
+    with open('contested_dict.csv', 'w') as f:  # Just use 'w' mode in 3.x
+        w = csv.DictWriter(f, contested_dict.keys())
+        w.writeheader()
+        w.writerow(contested_dict)
+ 
+    return render_template('contested-races.html',
+                           contested_races_type=contested_races_type,
+                           contested_races_title=contested_races_title,
+                           contested_dict=contested_dict,
+                           total_funds=total_funds)
+    
 @views.route('/committees/')
 @cache.cached(timeout=CACHE_TIMEOUT, key_prefix=make_cache_key)
 def committees():
@@ -362,6 +468,186 @@ def committees():
                            committee_title=committee_title,
                            page_count=page_count)
 
+def get_candidate_id(first_name, last_name):
+
+    params = {'last_name': last_name}
+    params = {'first_name': first_name}
+
+    candidate_id_sql = '''
+        SELECT
+          id AS candidate_id
+        FROM candidates
+        WHERE last_name = :last_name 
+          AND first_name = :first_name
+    '''
+    candidate_id = ""
+    all_ids = list(g.engine.execute(sa.text(candidate_id_sql), last_name = last_name, first_name =first_name))
+    if not all_ids:
+        id_sql = '''
+            SELECT
+              id AS candidate_id,
+              first_name AS f_name 
+            FROM candidates
+            WHERE last_name = :last_name
+        '''
+        last_name_ids = list(g.engine.execute(sa.text(id_sql),last_name=last_name))
+
+        if not last_name_ids:
+            candidate_id=""
+        else:
+            for l_id in last_name_ids:
+                fname_arr = (l_id.f_name).split(" ")
+                if fname_arr[0] == first_name:
+                    candidate_id = l_id.candidate_id
+
+    else:
+        candidate_id = all_ids[0].candidate_id
+
+
+    return candidate_id
+
+def get_candidate_funds(candidate_name):
+    params= {'candidate_name': candidate_name}   
+    d2_part = '9B'
+ 
+    params= {'d2_part': d2_part}
+
+    supporting_funds_sql = ''' 
+        SELECT 
+          COALESCE(SUM(supporting_amount), 0) AS amount
+        FROM expenditures_by_candidate
+        WHERE candidate_name = :candidate_name
+          AND d2_part = :d2_part
+    '''
+    
+    supporting_funds = g.engine.execute(sa.text(supporting_funds_sql), candidate_name=candidate_name, d2_part=d2_part).first().amount
+
+    opposing_funds_sql = ''' 
+        SELECT 
+          COALESCE(SUM(opposing_amount), 0) AS amount
+        FROM expenditures_by_candidate
+        WHERE candidate_name = :candidate_name
+          AND d2_part = :d2_part
+    '''
+    
+    opposing_funds = g.engine.execute(sa.text(opposing_funds_sql), candidate_name=candidate_name, d2_part=d2_part).first().amount
+
+
+    return supporting_funds, opposing_funds
+
+
+
+def get_committee_details(committee_id):
+
+    committee_id = committee_id.rsplit('-', 1)[-1]
+
+    try:
+        committee_id = int(committee_id)
+    except ValueError:
+        return abort(404)
+    committee = db_session.query(Committee).get(committee_id)
+    
+    if not committee:
+        return abort(404)
+    
+    latest_filing = ''' 
+        SELECT * FROM most_recent_filings
+        WHERE committee_id = :committee_id
+        ORDER BY received_datetime DESC
+        LIMIT 1
+    '''
+
+    latest_filing = g.engine.execute(sa.text(latest_filing), 
+                                   committee_id=committee_id).first()
+    
+    params = {'committee_id': committee_id}
+
+    if latest_filing.end_funds_available \
+        or latest_filing.end_funds_available == 0:
+
+        recent_receipts = ''' 
+            SELECT 
+              COALESCE(SUM(receipts.amount), 0) AS amount
+            FROM condensed_receipts AS receipts
+            JOIN filed_docs AS filed
+              ON receipts.filed_doc_id = filed.id
+            WHERE receipts.committee_id = :committee_id
+              AND receipts.received_date > :end_date
+        '''
+        controlled_amount = latest_filing.end_funds_available 
+        
+        params['end_date'] = latest_filing.reporting_period_end
+
+    else:
+
+        recent_receipts = ''' 
+            SELECT 
+              COALESCE(SUM(receipts.amount), 0) AS amount
+            FROM condensed_receipts
+            JOIN filed_docs AS filed
+              ON receipts.filed_doc_id = filed.id
+            WHERE receipts.committee_id = :committee_id
+        '''
+        
+        controlled_amount = 0
+
+    recent_total = g.engine.execute(sa.text(recent_receipts),**params).first().amount
+    controlled_amount += recent_total
+    
+       
+    params = {'committee_id': committee_id}
+    
+
+    quarterlies = ''' 
+        SELECT DISTINCT ON (f.doc_name, f.reporting_period_end)
+          r.end_funds_available,
+          r.total_investments,
+          r.total_receipts,
+          (r.debts_itemized * -1) as debts_itemized,
+          (r.debts_non_itemized * -1) as debts_non_itemized,
+          (r.total_expenditures * -1) as total_expenditures,
+          f.reporting_period_end
+        FROM d2_reports AS r
+        JOIN filed_docs AS f
+          ON r.filed_doc_id = f.id
+        WHERE r.committee_id = :committee_id
+          AND f.reporting_period_end IS NOT NULL
+          AND f.doc_name = 'Quarterly'
+        ORDER BY f.reporting_period_end ASC
+    '''
+
+    quarterlies = list(g.engine.execute(sa.text(quarterlies), 
+                                 committee_id=committee_id))
+
+    ending_funds = [[r.end_funds_available, 
+                     r.reporting_period_end.year,
+                     r.reporting_period_end.month,
+                     r.reporting_period_end.day] 
+                     for r in quarterlies]
+
+    investments = [[r.total_investments, 
+                    r.reporting_period_end.year,
+                    r.reporting_period_end.month,
+                    r.reporting_period_end.day] 
+                    for r in quarterlies]
+
+    debts = [[(r.debts_itemized + r.debts_non_itemized), 
+               r.reporting_period_end.year,
+               r.reporting_period_end.month,
+               r.reporting_period_end.day] 
+               for r in quarterlies]
+
+    expenditures = [[r.total_expenditures, 
+                     r.reporting_period_end.year,
+                     r.reporting_period_end.month,
+                     r.reporting_period_end.day] 
+                     for r in quarterlies]
+
+    total_expenditures = sum([r.total_expenditures for r in quarterlies])
+
+    return committee, recent_receipts, recent_total, latest_filing, controlled_amount, ending_funds, investments, debts, expenditures, total_expenditures
+
+
 @views.route('/committees/<committee_id>/')
 @cache.cached(timeout=CACHE_TIMEOUT, key_prefix=make_cache_key)
 def committee(committee_id):
@@ -401,9 +687,7 @@ def committee(committee_id):
             WHERE receipts.committee_id = :committee_id
               AND receipts.received_date > :end_date
         '''
-        controlled_amount = latest_filing.end_funds_available + \
-                            latest_filing.total_investments - \
-                            latest_filing.total_debts
+        controlled_amount = latest_filing.end_funds_available 
         
         params['end_date'] = latest_filing.reporting_period_end
 
@@ -647,6 +931,83 @@ def committee(committee_id):
                            expenditures=expenditures,
                            total_donations=total_donations,
                            total_expenditures=total_expenditures)
+
+@views.route('/independent-expenditures/<candidate_id>-<stance>/')
+@cache.cached(timeout=CACHE_TIMEOUT, key_prefix=make_cache_key)
+def independent_expenditures(candidate_id, stance):
+   
+        
+    candidate_id = candidate_id.rsplit('-', 1)[-1]
+    
+    try:
+        candidate_id = int(candidate_id)
+    except ValueError:
+        return abort(404)
+    
+    candidate = db_session.query(Candidate).get(candidate_id)
+    
+    if not candidate:
+        return abort(404)
+
+    cname = [candidate.first_name, candidate.last_name]
+    candidate_name = " ".join(cname)
+    
+    independent_expenditures_type = 'Supporting'
+    independent_expenditures_title = "Supporting Independent Expenditures" 
+    independent_expenditures_description = "All independent expenditures in support of " + candidate_name
+
+    type_arg = 'supporting'
+
+    if stance == 'opposing':
+        independent_expenditures_type = 'Opposing'
+        independent_expenditures_title = "Opposing Independent Expenditures" 
+        independent_expenditures_description = "All independent expenditures in opposition to " + candidate_name
+
+
+    params={'candidate_name': candidate_name}
+    d2_part = '9B'
+    params={'d2_part': d2_part}
+
+    if independent_expenditures_type == "Supporting":
+        
+        ind_expenditures_sql = ''' 
+            SELECT 
+              committee_name, 
+              supporting_amount AS amount, 
+              support_min_date AS date
+            FROM expenditures_by_candidate
+            WHERE candidate_name = :candidate_name
+              AND d2_part = :d2_part
+        '''
+
+    else:
+        ind_expenditures_sql = ''' 
+            SELECT 
+              committee_name, 
+              opposing_amount AS amount, 
+              support_min_date AS date
+            FROM expenditures_by_candidate
+            WHERE candidate_name = :candidate_name
+              AND d2_part = :d2_part
+        '''
+
+    ind_expends = list(g.engine.execute(sa.text(ind_expenditures_sql),     
+                                        candidate_name=candidate_name,
+                                        d2_part=d2_part))
+    independent_expenditures =[] 
+    for ie in ind_expends:
+        independent_expenditures.append(dict(ie.items()))
+     
+
+    #candidate_id = get_candidate_id(name_arr[0], name_arr[1])
+      
+    return render_template('independent-expenditures.html',
+                            independent_expenditures_type=independent_expenditures_type,
+                            independent_expenditures_title=independent_expenditures_title,
+                            independent_expenditures=independent_expenditures,
+                            independent_expenditures_description=independent_expenditures_description,
+                            candidate_name=candidate_name,
+                            candidate_id=candidate_id)
 
 @views.route('/contributions/<receipt_id>/')
 @cache.cached(timeout=CACHE_TIMEOUT, key_prefix=make_cache_key)
