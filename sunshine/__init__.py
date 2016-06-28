@@ -57,7 +57,8 @@ def create_app():
     app.jinja_env.filters['expense_name'] = tf.expense_name
     app.jinja_env.filters['committee_description'] = tf.committee_description
     app.jinja_env.filters['slugify'] = tf.slugify
-    
+    app.jinja_env.filters['contested_races_description'] = tf.contested_races_description
+ 
     @app.context_processor
     def inject_date():
         return dict(now=datetime.now().replace(tzinfo=TIME_ZONE))
