@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% from 'macros.html' import pager, header %}
+{% block header_social %}
+    {{ header(independent_expenditures_title, independent_expenditures_type ) }}
+{% endblock %}
+{% block content %}
+
+{% if independent_expenditures_type == "Supporting" %}
+    {% set stance_slug = "supporting" %}
+{% else %}
+    {% set stance_slug = "opposing" %}
+
+{% endif %}
+<h1><i class='fa-money'></i> Independent Expenditures <small><strong> {{ independent_expenditures_type }}</strong> </small></h1>
+<h2>{% if candidate_id %}<a href='{{ url_for('views.candidate', candidate_id=candidate_id)}}'>{{ candidate_name }}</a>{% else %} {{ candidate_name }} {% endif %}</h2>
+<div class="row">
+    <div class="col-sm-12">
+
+        <h3>{{independent_expenditures_title}}</h3>
+
+        <p>{{ independent_expenditures_description }}</p>
+
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Committee</th>
+                    <th>Date</th>
+                    <th class='text-right'>Funds</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for ie in independent_expenditures %}
+                    {% set committee_slug = [ie.committee_name|slugify, ie.committee_id|string]|join('-') %}
+                    <tr>
+                        <td><a href="{{ url_for('views.committee', committee_id=committee_slug ) }}">{{ ie.committee_name }}</a></td>
+                        <td class='nowrap hidden-sm hidden-xs'>
+                            on {% if ie.date %}{{ie.date.strftime('%b %d, %Y') }}{% else %}N/A{%endif%}
+                        </td>
+                        <td class='text-right'>
+                            {% if ie.amount %}
+                                {{ie.amount|format_money}}
+                            {% else %}
+                                $0
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+
+{% endblock %}
