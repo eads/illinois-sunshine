@@ -49,6 +49,16 @@ def expense_name(s):
     }
     return verbs.get(s, 'spent')
 
+def contested_races_description(s):
+  if s == "House of Representatives":
+    description = "Contested 2016 General Election Races for the Illinois State House of Representatives in all districts."
+  elif s == "Senate":
+    description = "Contested 2016 General Election Races for the Illinois Senate in all districts."
+  else:
+    description = ""
+
+  return description
+
 def committee_description(s):
   if s == "Candidate":
     description = "Candidate committees accept campaign contributions and make expenditures under the candidate's authority in order to further their bid for election or re-election to public office. They are subject to state and federal contribution limits."
