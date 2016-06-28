@@ -278,26 +278,94 @@ def top_earners():
                             days_ago=days_ago,
                             calc_days_ago=calc_days_ago)
 
+
+
 @views.route('/contested-races/')
 @cache.cached(timeout=CACHE_TIMEOUT, key_prefix=make_cache_key)
 def contested_races():
-
+    
     contested_races_type = "House of Representatives"
     contested_races_title= "Illinois House of Representatives Contested Races"
     type_arg = 'house_of_representatives'
+
+    if request.args.get('type'):
+      type_arg = request.args.get('type', 'house_of_representatives')
+      if type_arg == "senate":
+        contested_races_type = "Senate"
+        contested_races_title = "Illinois Senate Contested Races"
+
+    page = request.args.get('page', 1)
+    offset = (int(page) * 50) - 50
     
     input_file = csv.DictReader(open(os.getcwd()+'/sunshine/contested_races.csv'))
     entries = []
     for row in input_file:
         entries.append(row)
 
+    if contested_races_type == "House of Representatives":
+        race_sig = "H"
+    else:
+        race_sig = "S"
 
-    house_dict = {}
-    senate_dict = {}
+    contested_races = filter(lambda race: race['Senate/House'] == race_sig, entries)
+    contested_dict = {}
 
-
-    for e in entries:
+    for e in contested_races:
         district = int(e['District'])
+         
+        if district in contested_dict:
+            contested_dict[district].append({'last': e['Last'], 'first': e['First'],'incumbent': e['Incumbent'],'party': e['Party']})
+        else:
+            contested_dict[district] = []
+            contested_dict[district].append({'last': e['Last'], 'first': e['First'],'incumbent': e['Incumbent'],'party': e['Party']})
+    
+   
+     
+    if not flask_session.get('%s_page_count' % type_arg):
+
+        page_count = int(round(len(contested_dict), -2) / 50)
+        
+        flask_session['%s_page_count' % type_arg] = page_count
+    
+    else:
+        
+        page_count = flask_session['%s_page_count' % type_arg]
+
+
+    return render_template('contested-races.html', 
+                           contested_dict=contested_dict, 
+                           contested_races_type=contested_races_type,
+                           contested_races_title=contested_races_title,
+                           page_count=page_count)
+
+
+    
+
+
+
+@views.route('/contested-race-detail/<race_type>-<district>/')
+@cache.cached(timeout=CACHE_TIMEOUT, key_prefix=make_cache_key)
+def contested_race_detail(race_type, district):
+
+    input_file = csv.DictReader(open(os.getcwd()+'/sunshine/contested_races.csv'))
+    entries = []
+    for row in input_file:
+        entries.append(row)
+    
+    
+    contested_race_title = "District " + district + " - Contested Race "
+    if race_type == "house":
+        contested_list = filter(lambda race: race['Senate/House'] == "H" and int(float(race['District'])) == district, entries)
+        contested_race_description = "Contested race information for District " + district + " in the Illinois House of Representatives"
+    else:
+        contested_list = filter(lambda race: race['Senate/House'] == "S" and int(float(race['District'])) == district, entries)
+        contested_race_description = "Contested race information for District " + district + " in the Illinois Senate"
+    
+
+    district = int(float(district))
+    contested_races = []
+
+    for e in contested_list:
         candidate_name = e['First'] + ' ' + e['Last']
         supporting_funds, opposing_funds = get_candidate_funds(candidate_name)
         if e['Candidate ID']:
@@ -308,80 +376,35 @@ def contested_races():
          
         if(e['ID'] == 'na' or e['ID'] == ''):
             
-            if e['Senate/House'] == 'H':
-                if district in house_dict:
-                    house_dict[district].append({'last': e['Last'], 'first': e['First'],'committee_name': e['Committee'],'incumbent': e['Incumbent'],'id': e['ID'],'party': e['Party'], 'supporting_funds': supporting_funds, 'opposing_funds': opposing_funds, 'candidate_id' : candidate_id})
-                else:
-                    house_dict[district] = []
-                    house_dict[district].append({'last': e['Last'], 'first': e['First'],'committee_name': e['Committee'],'incumbent': e['Incumbent'],'id': e['ID'],'party': e['Party'], 'supporting_funds': supporting_funds, 'opposing_funds': opposing_funds, 'candidate_id' : candidate_id})
-            
-
-            elif e['Senate/House'] == 'S':
-                if district in senate_dict:
-                    senate_dict[district].append({'last': e['Last'], 'first': e['First'],'committee_name': e['Committee'],'incumbent': e['Incumbent'],'id': e['ID'],'party': e['Party'], 'supporting_funds': supporting_funds, 'opposing_funds': opposing_funds, 'candidate_id' : candidate_id})
-                else:
-                    senate_dict[district] = []
-                    senate_dict[district].append({'last': e['Last'], 'first': e['First'],'committee_name': e['Committee'],'incumbent': e['Incumbent'],'id': e['ID'],'party': e['Party'], 'supporting_funds': supporting_funds, 'opposing_funds': opposing_funds, 'candidate_id' : candidate_id})
+            contested_races.append({'last': e['Last'], 'first': e['First'],'committee_name': e['Committee'],'incumbent': e['Incumbent'],'id': e['ID'],'party': e['Party'], 'supporting_funds': supporting_funds, 'opposing_funds': opposing_funds, 'candidate_id' : candidate_id})
             
         else:
             committee, recent_receipts, recent_total, latest_filing, controlled_amount, ending_funds, investments, debts, expenditures, total_expenditures = get_committee_details(e['ID'])
 
-            if e['Senate/House'] == 'H':
-                if district in house_dict:
-                
-                    house_dict[district].append({'last': e['Last'], 'first': e['First'],'committee_name': e['Committee'],'incumbent': e['Incumbent'],'id': e['ID'],'party': e['Party'],'committee':committee, 'recent_receipts': recent_receipts, 'recent_total': recent_total, 'latest_filing': latest_filing, 'controlled_amount': controlled_amount, 'ending_funds': ending_funds, 'investments': investments, 'debts': debts, 'expenditures': expenditures, 'total_expenditures': total_expenditures, 'supporting_funds': supporting_funds, 'opposing_funds': opposing_funds, 'candidate_id' : candidate_id})
+            contested_races.append({'last': e['Last'], 'first': e['First'],'committee_name': e['Committee'],'incumbent': e['Incumbent'],'id': e['ID'],'party': e['Party'],'committee':committee, 'recent_receipts': recent_receipts, 'recent_total': recent_total, 'latest_filing': latest_filing, 'controlled_amount': controlled_amount, 'ending_funds': ending_funds, 'investments': investments, 'debts': debts, 'expenditures': expenditures, 'total_expenditures': total_expenditures, 'supporting_funds': supporting_funds, 'opposing_funds': opposing_funds, 'candidate_id' : candidate_id})
 
             
-                else:
-                
-                    house_dict[district] = []
-                    house_dict[district].append({'last': e['Last'], 'first': e['First'],'committee_name': e['Committee'],'incumbent': e['Incumbent'],'id': e['ID'],'party': e['Party'],'committee':committee, 'recent_receipts': recent_receipts, 'recent_total': recent_total, 'latest_filing': latest_filing, 'controlled_amount': controlled_amount, 'ending_funds': ending_funds, 'investments': investments, 'debts': debts, 'expenditures': expenditures, 'total_expenditures': total_expenditures, 'supporting_funds': supporting_funds, 'opposing_funds': opposing_funds, 'candidate_id' : candidate_id})
 
-
-            elif e['Senate/House'] == 'S':
-                if district in senate_dict:
-                
-                    senate_dict[district].append({'last': e['Last'], 'first': e['First'],'committee_name': e['Committee'],'incumbent': e['Incumbent'],'id': e['ID'],'party': e['Party'],'committee':committee, 'recent_receipts': recent_receipts, 'recent_total': recent_total, 'latest_filing': latest_filing, 'controlled_amount': controlled_amount, 'ending_funds': ending_funds, 'investments': investments, 'debts': debts, 'expenditures': expenditures, 'total_expenditures': total_expenditures, 'supporting_funds': supporting_funds, 'opposing_funds': opposing_funds, 'candidate_id' : candidate_id})
-
-            
-                else:
-                
-                    senate_dict[district] = []
-                    senate_dict[district].append({'last': e['Last'], 'first': e['First'],'committee_name': e['Committee'],'incumbent': e['Incumbent'],'id': e['ID'],'party': e['Party'],'committee':committee, 'recent_receipts': recent_receipts, 'recent_total': recent_total, 'latest_filing': latest_filing, 'controlled_amount': controlled_amount, 'ending_funds': ending_funds, 'investments': investments, 'debts': debts, 'expenditures': expenditures, 'total_expenditures': total_expenditures, 'supporting_funds': supporting_funds, 'opposing_funds': opposing_funds, 'candidate_id' : candidate_id})
-         
-         
-    if request.args.get('type'):
-      type_arg = request.args.get('type', 'house_of_reprsentatives')
-      if type_arg == "senate":
-        contested_races_type = "Senate"
-        contested_races_title = "Illinois Senate Contested Races"
-
-    if contested_races_type == "House of Representatives":
-      contested_dict = house_dict
-    else:
-      contested_dict = senate_dict
-
-    total_funds = {}
-    for key in contested_dict:
-        funds = 0
-        for item in contested_dict[key]:
-            funds += item['supporting_funds'] + item['opposing_funds']
-            if 'controlled_amount' in item:
-                funds += item['controlled_amount']
-        
-        total_funds[key] = funds
+    total_funds = 0
+    for c in contested_races:
+        total_funds += c['supporting_funds'] + c['opposing_funds']
+        if 'controlled_amount' in c:
+            total_funds += c['controlled_amount']
         
 
-    with open('contested_dict.csv', 'w') as f:  # Just use 'w' mode in 3.x
-        w = csv.DictWriter(f, contested_dict.keys())
-        w.writeheader()
-        w.writerow(contested_dict)
+   # with open('contested_dict.csv', 'w') as f:  # Just use 'w' mode in 3.x
+   #     w = csv.DictWriter(f, contested_dict.keys())
+   #     w.writeheader()
+   #     w.writerow(contested_dict)
  
-    return render_template('contested-races.html',
-                           contested_races_type=contested_races_type,
-                           contested_races_title=contested_races_title,
-                           contested_dict=contested_dict,
-                           total_funds=total_funds)
+    return render_template('contested-race-detail.html',
+                            race_type=race_type,
+                            district=district, 
+                            contested_race_title=contested_race_title,
+                            contested_race_description=contested_race_description,
+                            contested_races=contested_races,
+                            total_funds=total_funds)
+
     
 @views.route('/committees/')
 @cache.cached(timeout=CACHE_TIMEOUT, key_prefix=make_cache_key)
