@@ -1,0 +1,101 @@
+{% extends 'base.html' %}
+{% from 'macros.html' import pager, header %}
+{% block header_social %}
+    {{ header(contested_races_title, contested_races_type | contested_races_description, request.path) }}
+{% endblock %}
+{% block content %}
+
+<h1><i class='fa fa-flag-checkered'></i> District {{ district }} - Contested Race<small><strong>{% if race_type == "house" %} House of Representatives {% else %} Senate {% endif %}</strong></small></h1>
+
+<div class="row">
+    <div class="col-sm-12">
+        <h3>Total Money in Race: <strong>{{ total_funds | format_money }}</strong></h3>
+        <p>{{ contested_race_description }}</p>
+        <div class="panel panel-default">
+            <div class="panel-body"></div>
+        </div>
+
+    </div>
+</div>	
+<br/>
+<div class="row">
+    <div class="col-sm-12">
+        {% for c in contested_races %}
+            <div class="col-sm-6">
+                {%set candidate_slug = [c.first|string, c.last|string]|join('-') %}
+                    <h2>{% if c.candidate_id %}<a href='{{ url_for('views.candidate', candidate_id=c.candidate_id ) }}'>{{c.first}} {{c.last}}</a>{% else %} <u>{{ c.first }}  {{ c.last }}</u>{% endif %} ({{ c.party }}) <small><strong> {% if c.incumbent|string() == 'Y' %}  *INCUMBENT{% endif %}</strong></small></h2> 
+                    {% if c.committee %} 
+                        <h3><a href='{{ url_for('views.committee', committee_id = c.id) }}'>{{ c.committee_name }}</a></h3>
+                        <table class="table table-striped table-bordered">
+                            <thead>
+                                <th>Committee Funds</th>
+                                <th class='text-right'>Amount</th>
+                            </thead>
+                            <tbody>
+                                    <tr>
+                                        {% if c.latest_filing and c.latest_filing.reporting_period_end %}
+                                            <td>Funds available on {{ c.latest_filing.reporting_period_end.strftime('%b %d, %Y') }} quarterly report</td>
+                                            <td class='text-right'>{{ c.latest_filing.end_funds_available|format_money }}</td>
+                                        {% else %}
+                                            <td>Funds available</td>
+                                            <td class='text-right'>$0</td>
+                                        {% endif %}
+                                    </tr>
+                                    <tr>
+                                        {% if c.latest_filing and c.latest_filing.reporting_period_end %}
+                                            <td>Contributions since {{ c.latest_filing.reporting_period_end.strftime('%b %d, %Y')}}</td>
+                                        {% else %}                
+                                            <td>Contributions</td> 
+                                        {% endif %}
+                                        <td class='text-right'>{% if c.recent_total %}{{ c.recent_total|format_money }}{% else %}$0{% endif %}</td>
+                                    </tr>
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <td><strong>Total funds</strong></td>
+                                    <td class='text-right'><strong>{% if c.controlled_amount %}{{ c.controlled_amount|format_money }}{% else %}$0{% endif %}</strong></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                        <br />
+                        <div class="row">
+                            <div class="col-sm-9">
+                                <table class = "table table-striped table-bordered">
+                                    <tbody>
+                                            <tr>
+                                                <td>Investments</td>
+                                                <td class='text-right'>{% if c.latest_filing and c.latest_filing.total_investments %}{{ c.latest_filing.total_investments|format_money }}{% else %}$0{% endif %}</td>
+                                            </tr>
+                                            <tr>
+                                                <td>Debts and obligations</td>
+                                                <td class='text-right'>{% if c.latest_filing and c.latest_filing.total_debts %}{{ c.latest_filing.total_debts|format_money }}{% else %}$0{% endif %}</td>
+                                            </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <h2><small>Total Independent Expenditures Supporting: {% if c.supporting_funds and c.candidate_id %}<a href="{{ url_for('views.independent_expenditures', candidate_id=c.candidate_id, stance="supporting" )}}">
+                            <strong>{{ c.supporting_funds|format_money }}</strong></a>{% else %}</strong>$0</strong>{% endif %}<br />Total Independent Expenditures Opposing: {% if c.opposing_funds and c.candidate_id %}<a href="{{ url_for('views.independent_expenditures', candidate_id=c.candidate_id,stance="opposing" )}}">
+                            <strong>{{ c.opposing_funds|format_money }}</strong></a>{% else %}<strong>$0</strong>{% endif %}</small></h2>
+                        <br />
+                {% else %}
+                    <h3> <br/></h3>
+                    <div class="well well-lg">
+                        <table class="table">
+                            <thead>
+                                <th>Committee N/A</th>
+                            </thead>
+                        </table>
+                        <h3><i class='fa fa-fw fa-info-circle'></i> No candidate committee filed at this time.</h3>
+                        <br /><br /></br />
+                    </div>    
+                {% endif %}
+
+            </div>
+        {% endfor %}
+    </div>
+</div>
+
+
+{% endblock %}
