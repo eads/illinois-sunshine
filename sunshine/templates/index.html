@@ -18,7 +18,7 @@
 
             <form action='/search' method='GET'>
                 <div class="input-group input-group-lg">
-                    <input type="text" class="form-control" placeholder="Search for candidates, committees and donors in Illinois" name="term">
+                    <input type="text" class="form-control" placeholder="Search for names of candidates, committees and donors in Illinois" name="term">
                     <input type='hidden' name='table_name' value='candidates' />
                     <input type='hidden' name='table_name' value='committees' />
                     <input type='hidden' name='table_name' value='officers' />
@@ -47,7 +47,7 @@ Every Thursday, we recap the week’s political contributions, top earners, and 
 </div>
 <h2>
     <i class='fa fa-dollar fa-fw'></i>
-    <a href='{{ url_for('views.donations') }}'>Donations</a> <small>since 1994</small>
+    <a href='{{ url_for('views.donations') }}'>Political Donations</a> <small>since 1994</small>
 </h2>
 
 <p>The chart below shows total political donations over time. The spikes are fundraising leading up to municipal or general elections. <i class='fa fa-fw fa-hand-pointer-o'></i> Click on a month to see the individual donations.</p>
@@ -64,7 +64,7 @@ Every Thursday, we recap the week’s political contributions, top earners, and 
 <br />
 
 <h3>
-    <a href='{{ url_for('views.donations') }}' target='_blank'>Recent Donations</a>
+    <a href='{{ url_for('views.donations') }}' target='_blank'>Recent Political Donations</a>
 </h3>
 
 <p>Top donations to Illinois political committees in the last 7 days, updated daily.</p>
@@ -110,10 +110,10 @@ Every Thursday, we recap the week’s political contributions, top earners, and 
 
 <h2>
     <i class='fa fa-plus-circle fa-fw'></i>
-    <a href='{{ url_for('views.top_earners') }}'>Top earners</a> <small>last 30 days, updated daily</small>
+    <a href='{{ url_for('views.top_earners') }}'>Top Earners</a> <small>last 30 days, updated daily</small>
 </h2>
 
-<p>Political committees operate by receiving donations, transfers and loans from people, organizations, and other committees. Here's who's raised the most money in the last month.</p>
+<p>Political committees operate by receiving donations, transfers and loans from people, organizations, and other committees. Here's who's raised the most money in the last month</p>
 <table class="table table-striped">
     <thead>
         <tr>
@@ -149,7 +149,7 @@ Every Thursday, we recap the week’s political contributions, top earners, and 
 </p>
 <br /><br />
 
-<h2><i class='fa fa-group fa-fw'></i> <a href='{{ url_for('views.committees') }}'>Committees</a> <small>highest current funds</small></h2>
+<h2><i class='fa fa-group fa-fw'></i> <a href='{{ url_for('views.committees') }}'>Top Political Committees</a> <small>highest current funds, updated daily</small></h2>
 <p>Political committees must report their current funds, along with donations and expenditures <a href='/about/#how-is-campaign-finance-disclosed'>every quarter</a>. Here's the committees that have the most investments and cash on hand.</p>
 <table class="table table-hover">
     <thead>
