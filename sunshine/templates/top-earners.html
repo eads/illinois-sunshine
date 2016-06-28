@@ -1,13 +1,13 @@
 {% extends 'base.html' %}
 {% from 'macros.html' import header %}
 {% block header_social %}
-    {{ header("Top earners", "Committees with the most donations since " + calc_days_ago.strftime('%b %d, %Y'), request.path) }}
+    {{ header("Top Earners", "Committees that have raised the most money since " + calc_days_ago.strftime('%b %d, %Y'), request.path) }}
 {% endblock %}
 {% block content %}
 
 <div class="row">
     <div class="col-sm-12">
-        <h2><i class='fa fa-plus-circle fa-fw'></i> Top earners</h2>
+        <h2><i class='fa fa-plus-circle fa-fw'></i> Top Earners</h2>
 
         <ul class="nav nav-pills">
           <li role="presentation" {% if days_ago == 1%}class="active"{% endif %}><a href="{{ url_for('views.top_earners') }}?days_ago=1">Yesterday</a></li>
