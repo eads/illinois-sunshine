@@ -936,12 +936,13 @@ def committee(committee_id):
           expended_date
         FROM condensed_expenditures
         WHERE expended_date > :expended_date
+          AND committee_id = :committee_id
         ORDER BY expended_date DESC 
     '''
     
     recent_expenditures = list(g.engine.execute(sa.text(recent_expenditures_sql), 
-                                        expended_date=expended_date))
-
+                                        expended_date=expended_date,
+                                        committee_id=committee_id))
 
     ending_funds = [[r.end_funds_available, 
                      r.reporting_period_end.year,
