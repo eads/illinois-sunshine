@@ -5,19 +5,18 @@
 {% endblock %}
 {% block content %}
 
-<h1><i class='fa fa-flag-checkered'></i> District {{ district }} - Contested Race<small><strong>{% if race_type == "house" %} House of Representatives {% else %} Senate {% endif %}</strong></small></h1>
+<h1><i class='fa fa-flag-checkered'></i> District {{ district }} - Contested Race <small><strong>{% if race_type == "house" %} House of Representatives{% else %} Senate{% endif %}</strong>, updated daily</small></h1>
 
 <div class="row">
     <div class="col-sm-12">
-        <h3>Total Money in Race: <strong>{{ total_funds | format_money }}</strong></h3>
-        <p>{{ contested_race_description }}</p>
         <div class="panel panel-default">
-            <div class="panel-body"></div>
+            <div class="panel-body">
+                <h4>Total Money in Race: <strong>{{ total_funds | format_money }}</strong></h4>
+            </div>
         </div>
 
     </div>
 </div>	
-<br/>
 <div class="row">
     <div class="col-sm-12">
         {% for c in contested_races %}
@@ -76,7 +75,7 @@
                         </div>
 
                         <h2><small>Total Independent Expenditures Supporting: {% if c.supporting_funds and c.candidate_id %}<a href="{{ url_for('views.independent_expenditures', candidate_id=c.candidate_id, stance="supporting" )}}">
-                            <strong>{{ c.supporting_funds|format_money }}</strong></a>{% else %}</strong>$0</strong>{% endif %}<br />Total Independent Expenditures Opposing: {% if c.opposing_funds and c.candidate_id %}<a href="{{ url_for('views.independent_expenditures', candidate_id=c.candidate_id,stance="opposing" )}}">
+                            <strong>{{ c.supporting_funds|format_money }}</strong></a>{% else %}<strong>$0</strong>{% endif %}<br />Total Independent Expenditures Opposing: {% if c.opposing_funds and c.candidate_id %}<a href="{{ url_for('views.independent_expenditures', candidate_id=c.candidate_id,stance="opposing" )}}">
                             <strong>{{ c.opposing_funds|format_money }}</strong></a>{% else %}<strong>$0</strong>{% endif %}</small></h2>
                         <br />
                 {% else %}
