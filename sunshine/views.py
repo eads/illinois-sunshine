@@ -314,7 +314,10 @@ def contested_races():
         district = int(e['District'])
          
         if district in contested_dict:
-            contested_dict[district].append({'last': e['Last'], 'first': e['First'],'incumbent': e['Incumbent'],'party': e['Party']})
+            if e['Incumbent'] == 'Y':
+                contested_dict[district].insert(0,{'last': e['Last'], 'first': e['First'],'incumbent': e['Incumbent'],'party': e['Party']})
+            else:
+                contested_dict[district].append({'last': e['Last'], 'first': e['First'],'incumbent': e['Incumbent'],'party': e['Party']})
         else:
             contested_dict[district] = []
             contested_dict[district].append({'last': e['Last'], 'first': e['First'],'incumbent': e['Incumbent'],'party': e['Party']})
@@ -366,10 +369,11 @@ def contested_race_detail(race_type, district):
     contested_races = []
 
     for e in contested_list:
-        candidate_name = e['First'] + ' ' + e['Last']
-        supporting_funds, opposing_funds = get_candidate_funds(candidate_name)
+        supporting_funds = 0
+        opposing_funds = 0
         if e['Candidate ID']:
             candidate_id = int(float(e['Candidate ID']))
+            supporting_funds, opposing_funds = get_candidate_funds(candidate_id)
         else:
             candidate_id = e['Candidate ID']
 
@@ -529,11 +533,26 @@ def get_candidate_id(first_name, last_name):
 
     return candidate_id
 
-def get_candidate_funds(candidate_name):
+def get_candidate_funds(candidate_id):
+    
+    try:
+        candidate_id = int(candidate_id)
+    except ValueError:
+        return abort(404)
+    
+    candidate = db_session.query(Candidate).get(candidate_id)
+    
+    if not candidate:
+        return abort(404)
+
+    candidate_name = candidate.first_name + " " + candidate.last_name
     params= {'candidate_name': candidate_name}   
     d2_part = '9B'
  
     params= {'d2_part': d2_part}
+    
+    support_min_date = datetime(2016, 3, 16, 0, 0)
+    params = {'support_min_date': support_min_date}
 
     supporting_funds_sql = ''' 
         SELECT 
@@ -541,6 +560,7 @@ def get_candidate_funds(candidate_name):
         FROM expenditures_by_candidate
         WHERE candidate_name = :candidate_name
           AND d2_part = :d2_part
+          AND support_min_date > support_min_date 
     '''
     
     supporting_funds = g.engine.execute(sa.text(supporting_funds_sql), candidate_name=candidate_name, d2_part=d2_part).first().amount
@@ -551,6 +571,7 @@ def get_candidate_funds(candidate_name):
         FROM expenditures_by_candidate
         WHERE candidate_name = :candidate_name
           AND d2_part = :d2_part
+          AND support_min_date > support_min_date 
     '''
     
     opposing_funds = g.engine.execute(sa.text(opposing_funds_sql), candidate_name=candidate_name, d2_part=d2_part).first().amount
@@ -600,6 +621,7 @@ def get_committee_details(committee_id):
         controlled_amount = latest_filing.end_funds_available 
         
         params['end_date'] = latest_filing.reporting_period_end
+        end_date = latest_filing.reporting_period_end
 
     else:
 
@@ -665,7 +687,9 @@ def get_committee_details(committee_id):
                      r.reporting_period_end.month,
                      r.reporting_period_end.day] 
                      for r in quarterlies]
-
+    
+    #accomodate for independent expenditures past last filing date
+    
     total_expenditures = sum([r.total_expenditures for r in quarterlies])
 
     return committee, recent_receipts, recent_total, latest_filing, controlled_amount, ending_funds, investments, debts, expenditures, total_expenditures
@@ -904,6 +928,21 @@ def committee(committee_id):
     quarterlies = list(g.engine.execute(sa.text(quarterlies), 
                                  committee_id=committee_id))
 
+    expended_date = latest_filing.reporting_period_end
+    
+    recent_expenditures_sql = ''' 
+        SELECT 
+          (amount * -1) AS amount, 
+          expended_date
+        FROM condensed_expenditures
+        WHERE expended_date > :expended_date
+        ORDER BY expended_date DESC 
+    '''
+    
+    recent_expenditures = list(g.engine.execute(sa.text(recent_expenditures_sql), 
+                                        expended_date=expended_date))
+
+
     ending_funds = [[r.end_funds_available, 
                      r.reporting_period_end.year,
                      r.reporting_period_end.month,
@@ -928,15 +967,20 @@ def committee(committee_id):
                   r.reporting_period_end.day] 
                   for r in quarterlies]
 
-    expenditures = [[r.total_expenditures, 
+    expenditures = []
+    for r in recent_expenditures:
+        expenditures.append([r.amount, r.expended_date.year, r.expended_date.month, r.expended_date.day])
+
+   
+    for r in quarterlies:
+        expenditures.append([r.total_expenditures, 
                      r.reporting_period_end.year,
                      r.reporting_period_end.month,
-                     r.reporting_period_end.day] 
-                     for r in quarterlies]
+                     r.reporting_period_end.day]) 
 
     total_donations = sum([r.total_receipts for r in quarterlies])
-    total_expenditures = sum([r.total_expenditures for r in quarterlies])
-
+    total_expenditures = sum([r.total_expenditures for r in quarterlies]) + sum([r.amount for r in recent_expenditures])
+    
     return render_template('committee-detail.html', 
                            committee=committee, 
                            supported_candidates=supported_candidates,
@@ -995,7 +1039,8 @@ def independent_expenditures(candidate_id, stance):
         
         ind_expenditures_sql = ''' 
             SELECT 
-              committee_name, 
+              committee_name,
+              committee_id, 
               supporting_amount AS amount, 
               support_min_date AS date
             FROM expenditures_by_candidate
@@ -1006,7 +1051,8 @@ def independent_expenditures(candidate_id, stance):
     else:
         ind_expenditures_sql = ''' 
             SELECT 
-              committee_name, 
+              committee_name,
+              committee_id, 
               opposing_amount AS amount, 
               support_min_date AS date
             FROM expenditures_by_candidate
@@ -1021,8 +1067,6 @@ def independent_expenditures(candidate_id, stance):
     for ie in ind_expends:
         independent_expenditures.append(dict(ie.items()))
      
-
-    #candidate_id = get_candidate_id(name_arr[0], name_arr[1])
       
     return render_template('independent-expenditures.html',
                             independent_expenditures_type=independent_expenditures_type,
