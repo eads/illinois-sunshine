@@ -5,7 +5,7 @@
 {% endblock %}
 {% block content %}
 
-<h1><i class='fa fa-times-circle fa-fw'></i>Contested Races <small><strong> Illinois General Assembly, updated daily</strong></small></h1>
+<h1><i class='fa fa-times-circle fa-fw'></i>Contested Races <small><strong> Illinois General Assembly</strong>, updated daily</small></h1>
 
 <div class="row">
     <div class="col-sm-12">
@@ -33,7 +33,7 @@
             </thead>
             <tbody>
             {% for key,value in contested_dict | dictsort %}
-                <tr style= "cursor: Pointer;" onclick="window.location.href = '{{ url_for('views.contested_race_detail', race_type=r_type, district=key) }}';">
+                <tr class = 'clickable' style= "cursor: Pointer;" onclick="window.location.href = '{{ url_for('views.contested_race_detail', race_type=r_type, district=key) }}';">
                     <td class='text-center'>
                         <a href= '{{ url_for('views.contested_race_detail', race_type=r_type, district=key) }}'>{{ key }}</a>
                     </td>
