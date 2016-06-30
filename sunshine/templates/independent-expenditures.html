@@ -30,9 +30,8 @@
             </thead>
             <tbody>
                 {% for ie in independent_expenditures %}
-                    {% set committee_slug = [ie.committee_name|slugify, ie.committee_id|string]|join('-') %}
                     <tr>
-                        <td><a href="{{ url_for('views.committee', committee_id=committee_slug ) }}">{{ ie.committee_name }}</a></td>
+                        <td><a href="{{ url_for('views.committee', committee_id=ie.committee_id ) }}">{{ ie.committee_name }}</a></td>
                         <td class='nowrap hidden-sm hidden-xs'>
                             on {% if ie.date %}{{ie.date.strftime('%b %d, %Y') }}{% else %}N/A{%endif%}
                         </td>
