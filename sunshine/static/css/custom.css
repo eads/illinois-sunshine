@@ -35,8 +35,8 @@ table, label,.control-label,.help-block,.checkbox,.radio { font-size: 14px; }
   background-color: #ffe47f;
 }
 
-tr:hover td { 
-   background: #ffe47f !important; 
+.clickable:hover { 
+   background-color: #ffe47f !important; 
 }
 
 .panel-body {background:#ffe47f;}
