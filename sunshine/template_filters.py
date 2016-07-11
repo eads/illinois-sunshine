@@ -51,9 +51,11 @@ def expense_name(s):
 
 def contested_races_description(s):
   if s == "House of Representatives":
-    description = "Contested 2016 General Election Races for the Illinois State House of Representatives in all districts."
+    description = "Contested 2016 General Election Races for the Illinois State House of Representatives in all districts. Click on a row to see detailed information."
   elif s == "Senate":
-    description = "Contested 2016 General Election Races for the Illinois Senate in all districts."
+    description = "Contested 2016 General Election Races for the Illinois Senate in all districts. Click on a row to see detailed information."
+  elif s == "State Comptroller":
+    description = "Contested 2016 Race for Illinois State Comptroller. Click on a row to see detailed information."
   else:
     description = ""
 
