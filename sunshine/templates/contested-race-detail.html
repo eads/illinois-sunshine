@@ -5,8 +5,11 @@
 {% endblock %}
 {% block content %}
 
+{% if race_type == "comptroller" %}
+<h1><i class='fa fa-flag-checkered'></i> Contested Race <small><strong> State Comptroller</strong>, updated daily</small></h1>
+{% else %}
 <h1><i class='fa fa-flag-checkered'></i> District {{ district }} - Contested Race <small><strong>{% if race_type == "house" %} House of Representatives{% else %} Senate{% endif %}</strong>, updated daily</small></h1>
-
+{% endif %}
 <div class="row">
     <div class="col-sm-12">
         <div class="panel panel-default">

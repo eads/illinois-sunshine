@@ -293,25 +293,39 @@ def contested_races():
       if type_arg == "senate":
         contested_races_type = "Senate"
         contested_races_title = "Illinois Senate Contested Races"
-
+      elif type_arg == "comptroller":
+        contested_races_type = "State Comptroller"
+        contested_races_title = "Illinois State Comptroller Contested Races"
+  
     page = request.args.get('page', 1)
     offset = (int(page) * 50) - 50
     
-    input_file = csv.DictReader(open(os.getcwd()+'/sunshine/contested_races.csv'))
+    if contested_races_type == "State Comptroller":
+        input_file = csv.DictReader(open(os.getcwd()+'/sunshine/comptroller_contested_race_2016.csv'))
+    else:
+        input_file = csv.DictReader(open(os.getcwd()+'/sunshine/contested_races_2016.csv'))
+    
     entries = []
     for row in input_file:
         entries.append(row)
-
-    if contested_races_type == "House of Representatives":
-        race_sig = "H"
+    
+    if contested_races_type == "State Comptroller":
+        contested_races = entries
     else:
-        race_sig = "S"
-
-    contested_races = filter(lambda race: race['Senate/House'] == race_sig, entries)
+        if contested_races_type == "House of Representatives":
+            race_sig = "H"
+        else:
+            race_sig = "S"
+    
+        contested_races = filter(lambda race: race['Senate/House'] == race_sig, entries)
+    
     contested_dict = {}
 
     for e in contested_races:
-        district = int(e['District'])
+        if contested_races_type == "State Comptroller":
+            district = 0 
+        else:
+            district = int(e['District'])
          
         if district in contested_dict:
             if e['Incumbent'] == 'Y':
@@ -350,19 +364,27 @@ def contested_races():
 @cache.cached(timeout=CACHE_TIMEOUT, key_prefix=make_cache_key)
 def contested_race_detail(race_type, district):
 
-    input_file = csv.DictReader(open(os.getcwd()+'/sunshine/contested_races.csv'))
+    if race_type == 'comptroller':
+        input_file = csv.DictReader(open(os.getcwd()+'/sunshine/comptroller_contested_race_2016.csv'))
+        contested_race_title = "State Comptroller - Contested Race"
+    else:
+        input_file = csv.DictReader(open(os.getcwd()+'/sunshine/contested_races_2016.csv'))
+        contested_race_title = "District " + district + " - Contested Race "
+    
     entries = []
     for row in input_file:
         entries.append(row)
     
     
-    contested_race_title = "District " + district + " - Contested Race "
     if race_type == "house":
         contested_list = filter(lambda race: race['Senate/House'] == "H" and int(float(race['District'])) == district, entries)
         contested_race_description = "Contested race information for District " + district + " in the Illinois House of Representatives"
-    else:
+    elif race_type == "senate":
         contested_list = filter(lambda race: race['Senate/House'] == "S" and int(float(race['District'])) == district, entries)
         contested_race_description = "Contested race information for District " + district + " in the Illinois Senate"
+    else:
+        contested_list = entries
+        contested_race_description = "Contested race information for Illinois State Comptroller"
     
 
     district = int(float(district))
