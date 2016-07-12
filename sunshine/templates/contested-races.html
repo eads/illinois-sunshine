@@ -5,11 +5,14 @@
 {% endblock %}
 {% block content %}
 
-<h1><i class='fa fa-times-circle fa-fw'></i>Contested Races <small><strong> Illinois General Assembly</strong>, updated daily</small></h1>
-
 <div class="row">
-    <div class="col-sm-12">
-
+    <div class="col-sm-8">
+    </div>
+   </div>
+<div class="row">
+    <div class="col-sm-8">
+        <h1><i class='fa fa-times-circle fa-fw'></i>Contested State Races <small>Updated Daily</small></h1>
+        <br />
         <ul class="nav nav-pills">
           <li role="presentation" {% if contested_races_type == "House of Representatives"%}class="active"{% else %}class="inactive"{% endif %}><a href="{{ url_for('views.contested_races') }}?type=house_of_representatives">House of Representatives  </a></li>
           <li role="presentation" {% if contested_races_type == "Senate"%}class="active"{% else %}class="inactive"{% endif %}><a href="{{ url_for('views.contested_races') }}?type=senate">  Senate  </a></li>
@@ -20,6 +23,13 @@
         <h2>{{contested_races_title}}</h3>
 
         <p>{{ contested_races_type | contested_races_description }}</p>
+    </div>        
+    <div class="col-sm-4">
+        <img src='/static/images/illinois_state_seal.gif' class='img-responsive center-block'/>
+    </div>
+ </div>
+<div class="row">
+    <div class="col-sm-12">
         {% set cand_span = "2" %}
         {% if contested_races_type == "House of Representatives" %}
             {% set r_type = "house" %}
