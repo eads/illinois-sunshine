@@ -42,7 +42,7 @@
             <ul class="nav navbar-nav">
               <li class="{% if request.path == url_for('views.search') %}active{% endif %}"><a href='{{ url_for('views.search') }}'><i class='fa fa-search fa-fw'></i> Search</a></li>
               <li class="{% if request.path == url_for('views.contested_races') %}active{% endif %}"><a href='{{ url_for('views.contested_races') }}'><i class='fa fa-times-circle fa-fw'></i> Contested Races</a></li>
-              <li class="{% if request.path == url_for('views.donations') %}active{% endif %}"><a href='{{ url_for('views.donations') }}'><i class='fa fa-dollar fa-fw'></i> Political Donations</a></li>
+              <li class="{% if request.path == url_for('views.donations') %}active{% endif %}"><a href='{{ url_for('views.donations') }}'><i class='fa fa-dollar fa-fw'></i> Donations</a></li>
               <li class="{% if request.path == url_for('views.top_earners') %}active{% endif %}"><a href='{{ url_for('views.top_earners') }}'><i class='fa fa-plus-circle fa-fw'></i> Top Earners</a></li>
               <li class="{% if request.path == url_for('views.committees') %}active{% endif %}"><a href='{{ url_for('views.committees') }}'><i class='fa fa-group fa-fw'></i> Committees</a></li>
               <li class="{% if request.path == url_for('views.about') %}active{% endif %}"><a href='{{ url_for('views.about') }}'><i class='fa fa-info-circle fa-fw'></i> About</a></li>
