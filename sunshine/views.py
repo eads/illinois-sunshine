@@ -295,7 +295,7 @@ def contested_races():
         contested_races_title = "Illinois Senate Contested Races"
       elif type_arg == "comptroller":
         contested_races_type = "State Comptroller"
-        contested_races_title = "Illinois State Comptroller Contested Races"
+        contested_races_title = "Illinois State Comptroller Contested Race"
   
     page = request.args.get('page', 1)
     offset = (int(page) * 50) - 50
@@ -398,7 +398,7 @@ def contested_race_detail(race_type, district):
             supporting_funds, opposing_funds = get_candidate_funds(candidate_id)
         else:
             candidate_id = e['Candidate ID']
-
+            supporting_funds, opposing_funds = get_candidate_funds_byname(e['First'],e['Last'])
          
         if(e['ID'] == 'na' or e['ID'] == ''):
             
@@ -576,31 +576,75 @@ def get_candidate_funds(candidate_id):
     support_min_date = datetime(2016, 3, 16, 0, 0)
     params = {'support_min_date': support_min_date}
 
+    expended_date = support_min_date
+    params = {'expended_date': expended_date}
+
     supporting_funds_sql = ''' 
         SELECT 
           COALESCE(SUM(supporting_amount), 0) AS amount
         FROM expenditures_by_candidate
         WHERE candidate_name = :candidate_name
           AND d2_part = :d2_part
-          AND support_min_date > support_min_date 
+          AND support_min_date > :support_min_date 
     '''
     
-    supporting_funds = g.engine.execute(sa.text(supporting_funds_sql), candidate_name=candidate_name, d2_part=d2_part).first().amount
+    supporting_funds = g.engine.execute(sa.text(supporting_funds_sql), candidate_name=candidate_name, d2_part=d2_part, support_min_date=support_min_date).first().amount
 
     opposing_funds_sql = ''' 
         SELECT 
-          COALESCE(SUM(opposing_amount), 0) AS amount
-        FROM expenditures_by_candidate
+          COALESCE(SUM(amount), 0) AS amount
+        FROM condensed_expenditures
         WHERE candidate_name = :candidate_name
           AND d2_part = :d2_part
-          AND support_min_date > support_min_date 
+          AND expended_date > :expended_date
+          AND opposing = 'true' 
     '''
     
-    opposing_funds = g.engine.execute(sa.text(opposing_funds_sql), candidate_name=candidate_name, d2_part=d2_part).first().amount
+    opposing_funds = g.engine.execute(sa.text(opposing_funds_sql), candidate_name=candidate_name, d2_part=d2_part, expended_date=expended_date).first().amount
 
 
     return supporting_funds, opposing_funds
 
+
+def get_candidate_funds_byname(candidate_firstname, candidate_lastname):
+    
+    
+    
+    candidate_name = candidate_firstname + " " + candidate_lastname
+    params= {'candidate_name': candidate_name}   
+    d2_part = '9B'
+    print(candidate_name) 
+    params= {'d2_part': d2_part}
+    
+    expended_date = datetime(2016, 3, 16, 0, 0)
+    params = {'expended_date': expended_date}
+
+    supporting_funds_sql = ''' 
+        SELECT 
+          COALESCE(SUM(amount), 0) AS amount
+        FROM expenditures
+        WHERE candidate_name = :candidate_name
+          AND d2_part = :d2_part
+          AND expended_date > :expended_date
+          AND supporting = 'true' 
+    '''
+    
+    supporting_funds = g.engine.execute(sa.text(supporting_funds_sql), candidate_name=candidate_name, d2_part=d2_part, expended_date=expended_date).first().amount
+
+    opposing_funds_sql = ''' 
+        SELECT 
+          COALESCE(SUM(amount), 0) AS amount
+        FROM expenditures
+        WHERE candidate_name = :candidate_name
+          AND d2_part = :d2_part
+          AND expended_date > :expended_date 
+          AND opposing = 'true'
+    '''
+    
+    opposing_funds = g.engine.execute(sa.text(opposing_funds_sql), candidate_name=candidate_name, d2_part=d2_part, expended_date=expended_date).first().amount
+
+
+    return supporting_funds, opposing_funds
 
 
 def get_committee_details(committee_id):
