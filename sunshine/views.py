@@ -400,7 +400,7 @@ def contested_race_detail(race_type, district):
             candidate_id = e['Candidate ID']
             supporting_funds, opposing_funds = get_candidate_funds_byname(e['First'],e['Last'])
          
-        if(e['ID'] == 'na' or e['ID'] == ''):
+        if(e['ID'] == 'na' or e['ID'] == '' or e['ID'] == 'n/a'):
             
             contested_races.append({'last': e['Last'], 'first': e['First'],'committee_name': e['Committee'],'incumbent': e['Incumbent'],'id': e['ID'],'party': e['Party'], 'supporting_funds': supporting_funds, 'opposing_funds': opposing_funds, 'candidate_id' : candidate_id})
             
