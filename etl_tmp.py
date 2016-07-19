@@ -65,8 +65,6 @@ class SunshineTransformLoad(object):
             print(e)
             if raise_exc:
                 raise e
-	finally:
-            self.connection.close()	
 
     def executeOutsideTransaction(self, query):
         
@@ -642,10 +640,6 @@ class SunshineInvestments(SunshineTransformLoad):
     header = Investment.__table__.columns.keys()
     filename = 'Investments.txt'
 
-class SunshineContestedRaces(SunshineTransformLoad):
-    table_name = 'contested_races'
-    header = ContestedRaces.__table__.columns.keys()
-    
 class SunshineViews(object):
     
     def __init__(self, connection):
@@ -662,8 +656,6 @@ class SunshineViews(object):
             # logger.error(e, exc_info=True)
             trans.rollback()
             raise e
-    	finally:
-            self.connection.close()	
 
     def executeOutsideTransaction(self, query):
         
@@ -1480,8 +1472,6 @@ class SunshineIndexes(object):
             trans.commit()
         except sa.exc.ProgrammingError as e:
             trans.rollback()
-    	finally:
-            self.connection.close()	
 
     def executeOutsideTransaction(self, query):
         
