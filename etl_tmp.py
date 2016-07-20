@@ -658,13 +658,13 @@ class SunshineViews(object):
             trans.rollback()
             raise e
 
-    def executeOutsideTransaction(self, query):
+    def executeOutsideTransaction(self, query, **kwargs):
         
         self.connection.connection.set_isolation_level(0)
         curs = self.connection.connection.cursor()
 
         try:
-            curs.execute(query)
+            curs.execute(query, **kwargs)
         except psycopg2.ProgrammingError:
             pass
     
@@ -960,7 +960,7 @@ class SunshineViews(object):
             )
         '''
     
-        supporting_funds = self.executeTransaction(sa.text(supporting_funds_sql), candidate_name=candidate_name, d2_part=d2_part, expended_date=expended_date).first().amount
+        supporting_funds = self.executeOutsideTransaction(sa.text(supporting_funds_sql), candidate_name=candidate_name, d2_part=d2_part, expended_date=expended_date).first().amount
 
         opposing_funds_sql = '''( 
             SELECT 
@@ -973,7 +973,7 @@ class SunshineViews(object):
             ) 
         '''
     
-        opposing_funds = self.executeTransaction(sa.text(opposing_funds_sql), candidate_name=candidate_name, d2_part=d2_part, expended_date=expended_date).first().amount
+        opposing_funds = self.executeOutsideTransaction(sa.text(opposing_funds_sql), candidate_name=candidate_name, d2_part=d2_part, expended_date=expended_date).first().amount
 
 
         return supporting_funds, opposing_funds
@@ -999,7 +999,7 @@ class SunshineViews(object):
             ) 
         '''
     
-        supporting_funds = self.executeTransaction(sa.text(supporting_funds_sql), candidate_name=candidate_name, d2_part=d2_part, expended_date=expended_date).first().amount
+        supporting_funds = self.executeOutsideTransaction(sa.text(supporting_funds_sql), candidate_name=candidate_name, d2_part=d2_part, expended_date=expended_date).first().amount
 
         opposing_funds_sql = '''( 
             SELECT 
@@ -1012,7 +1012,7 @@ class SunshineViews(object):
             )
         '''
     
-        opposing_funds = self.executeTransaction(sa.text(opposing_funds_sql), candidate_name=candidate_name, d2_part=d2_part, expended_date=expended_date).first().amount
+        opposing_funds = self.executeOutsideTransaction(sa.text(opposing_funds_sql), candidate_name=candidate_name, d2_part=d2_part, expended_date=expended_date).first().amount
 
 
         return supporting_funds, opposing_funds
@@ -1040,7 +1040,7 @@ class SunshineViews(object):
             )
         '''
 
-        latest_filing = self.executeTransaction(sa.text(latest_filing), 
+        latest_filing = self.executeOutsideTransaction(sa.text(latest_filing), 
                                        committee_id=committee_id).first()
         
         params = {'committee_id': committee_id}
@@ -1077,7 +1077,7 @@ class SunshineViews(object):
             
             controlled_amount = 0
 
-        recent_total = self.executeTransaction(sa.text(recent_receipts),**params).first().amount
+        recent_total = self.executeOutsideTransaction(sa.text(recent_receipts),**params).first().amount
         controlled_amount += recent_total
         
            
@@ -1103,7 +1103,7 @@ class SunshineViews(object):
             )
         '''
 
-        quarterlies = list(self.executeTransaction(sa.text(quarterlies), 
+        quarterlies = list(self.executeOutsideTransaction(sa.text(quarterlies), 
                                      committee_id=committee_id))
 
         ending_funds = [[r.end_funds_available, 
