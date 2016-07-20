@@ -862,7 +862,7 @@ class SunshineViews(object):
             entries.append(row)
 
         contested_races = []
-
+        counter = 0
         for e in entries:
             supporting_funds = 0
             opposing_funds = 0
@@ -879,9 +879,13 @@ class SunshineViews(object):
             else:
                 candidate_id = e['Candidate ID']
                 supporting_funds, opposing_funds = self.get_candidate_funds_byname(e['First'],e['Last'])
-     
-            if(e['ID'] != 'na' and e['ID'] != '' and e['ID'] != 'n/a'):
-                
+            
+            if (supporting_funds != 0.0 or opposing_funds != 0.0):
+                print('nonzero: ' + str(supporting_funds) + ' and ' + str(opposing_funds) )
+            if(e['ID'] != 'na' and e['ID'] != '' and e['ID'] != 'n/a' and e['ID'] != 'NA'):
+                print('snarf')
+                counter=counter+1
+                print(str(counter)+ ': ' + e['ID']) 
                 committee, recent_receipts, recent_total, latest_filing, controlled_amount, ending_funds, investments, debts, expenditures, total_expenditures = self.get_committee_details(e['ID'])
 
                 funds_available = latest_filing.end_funds_available
@@ -900,13 +904,13 @@ class SunshineViews(object):
 
         exp = '''
             CREATE TABLE contested_races(
-                district TEXT PRIMARY KEY,
+                district REAL PRIMARY KEY,
                 branch TEXT,
                 last_name TEXT,
                 first_name TEXT,
                 committee_name TEXT,
                 incumbent TEXT,
-                committee_id TEXT,
+                committee_id REAL,
                 party TEXT,
                 funds_available REAL,
                 contributions REAL,
@@ -915,12 +919,14 @@ class SunshineViews(object):
                 debts REAL,
                 supporting_funds REAL,
                 opposing_funds REAL,
-                candidate_id TEXT,
+                candidate_id REAL,
                 total_money REAL
             );
         '''
         
         self.executeTransaction(exp)
+        curs = self.connection.connection.cursor()
+        curs.executemany("""INSERT INTO contested_races(district,branch,last_name,first_name,committee_name,incumbent,committee_id,party,funds_available,contributions.total_funds,investments,debts,supporting_funds,opposing_funds,candidate_id,total_money) VALUES (%(first_name)s, %(last_name)s)""", namedict)
 
         insert_statement = 'INSERT INTO contested_races (%s) VALUES %s'
         
@@ -1101,7 +1107,7 @@ class SunshineViews(object):
         '''
 
         quarterlies = self.executeTransaction(sa.text(quarterlies), 
-                                     committee_id=committee_id).fetchall()
+                                     committee_id=committee_id)
 
         ending_funds = [[r.end_funds_available, 
                          r.reporting_period_end.year,
