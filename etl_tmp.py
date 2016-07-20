@@ -669,16 +669,6 @@ class SunshineViews(object):
         except psycopg2.ProgrammingError:
             pass
 
-    def executeQuery(self, query, data):
-        curs = self.connection.connection.cursor()
-    
-        try:
-            sqlstr = curs.mogrify(query, data)
-            return curs.execute(sqlstr)
-        except psycopg2.ProgrammingError:
-            pass
-
-    
     def dropViews(self):
         self.executeTransaction('DROP MATERIALIZED VIEW IF EXISTS receipts_by_month')
         self.executeTransaction('DROP MATERIALIZED VIEW IF EXISTS committee_receipts_by_week')
@@ -971,8 +961,7 @@ class SunshineViews(object):
             )
         '''
  
-        supporting_funds = self.executeTransaction(sa.text(supporting_funds_sql), candidate_name = candidate_name, d2_part = d2_part, expended_date=expended_date)
-        print(supporting_funds)
+        supporting_funds = self.executeTransaction(sa.text(supporting_funds_sql), candidate_name = candidate_name, d2_part = d2_part, expended_date=expended_date).fetchone().amount
 
         opposing_funds_sql = '''( 
             SELECT 
@@ -986,8 +975,6 @@ class SunshineViews(object):
         '''
     
         opposing_funds = self.executeTransaction(sa.text(opposing_funds_sql), candidate_name=candidate_name,d2_part=d2_part,expended_date=expended_date).fetchone().amount
-        print('OPPOSING FUNDS: ')
-        print(opposing_funds)
 
         return supporting_funds, opposing_funds
 
@@ -1012,10 +999,6 @@ class SunshineViews(object):
             ) 
         '''
     
-        params = {'candidate_name': candidate_name}
-        params['d2_part'] = d2_part
-        params['expended_date'] = expended_date
- 
         supporting_funds = self.executeTransaction(sa.text(supporting_funds_sql), candidate_name=candidate_name,d2_part=d2_part,expended_date=expended_date).fetchone().amount
 
         opposing_funds_sql = '''( 
@@ -1097,9 +1080,6 @@ class SunshineViews(object):
         recent_total = self.executeTransaction(sa.text(recent_receipts),**params).fetchone().amount
         controlled_amount += recent_total
         
-           
-        params = {'committee_id': committee_id}
-        
 
         quarterlies = '''( 
             SELECT DISTINCT ON (f.doc_name, f.reporting_period_end)
@@ -1120,8 +1100,8 @@ class SunshineViews(object):
             )
         '''
 
-        quarterlies = list(self.executeTransaction(sa.text(quarterlies), 
-                                     committee_id=committee_id))
+        quarterlies = self.executeTransaction(sa.text(quarterlies), 
+                                     committee_id=committee_id).fetchall()
 
         ending_funds = [[r.end_funds_available, 
                          r.reporting_period_end.year,
