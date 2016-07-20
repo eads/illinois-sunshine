@@ -960,7 +960,11 @@ class SunshineViews(object):
             )
         '''
     
-        supporting_funds = self.executeOutsideTransaction(sa.text(supporting_funds_sql), candidate_name=candidate_name, d2_part=d2_part, expended_date=expended_date).first().amount
+        params = {'candidate_name': candidate_name}
+        params['d2_part'] = d2_part
+        params['expended_date'] = expended_date
+ 
+        supporting_funds = self.executeOutsideTransaction(sa.text(supporting_funds_sql), **params).first().amount
 
         opposing_funds_sql = '''( 
             SELECT 
@@ -973,7 +977,7 @@ class SunshineViews(object):
             ) 
         '''
     
-        opposing_funds = self.executeOutsideTransaction(sa.text(opposing_funds_sql), candidate_name=candidate_name, d2_part=d2_part, expended_date=expended_date).first().amount
+        opposing_funds = self.executeOutsideTransaction(sa.text(opposing_funds_sql), **params).first().amount
 
 
         return supporting_funds, opposing_funds
@@ -999,7 +1003,11 @@ class SunshineViews(object):
             ) 
         '''
     
-        supporting_funds = self.executeOutsideTransaction(sa.text(supporting_funds_sql), candidate_name=candidate_name, d2_part=d2_part, expended_date=expended_date).first().amount
+        params = {'candidate_name': candidate_name}
+        params['d2_part'] = d2_part
+        params['expended_date'] = expended_date
+ 
+        supporting_funds = self.executeOutsideTransaction(sa.text(supporting_funds_sql), **params).first().amount
 
         opposing_funds_sql = '''( 
             SELECT 
@@ -1012,7 +1020,7 @@ class SunshineViews(object):
             )
         '''
     
-        opposing_funds = self.executeOutsideTransaction(sa.text(opposing_funds_sql), candidate_name=candidate_name, d2_part=d2_part, expended_date=expended_date).first().amount
+        opposing_funds = self.executeOutsideTransaction(sa.text(opposing_funds_sql), **params).first().amount
 
 
         return supporting_funds, opposing_funds
