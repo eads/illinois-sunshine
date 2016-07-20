@@ -581,14 +581,15 @@ def get_candidate_funds(candidate_id):
 
     supporting_funds_sql = ''' 
         SELECT 
-          COALESCE(SUM(supporting_amount), 0) AS amount
-        FROM expenditures_by_candidate
+          COALESCE(SUM(amount), 0) AS amount
+        FROM condensed_expenditures
         WHERE candidate_name = :candidate_name
           AND d2_part = :d2_part
-          AND support_min_date > :support_min_date 
+          AND expended_date > :expended_date
+          AND supporting = 'true' 
     '''
     
-    supporting_funds = g.engine.execute(sa.text(supporting_funds_sql), candidate_name=candidate_name, d2_part=d2_part, support_min_date=support_min_date).first().amount
+    supporting_funds = g.engine.execute(sa.text(supporting_funds_sql), candidate_name=candidate_name, d2_part=d2_part, expended_date=expended_date).first().amount
 
     opposing_funds_sql = ''' 
         SELECT 
