@@ -941,12 +941,15 @@ class SunshineViews(object):
   
         candidate = db_session.query(Candidate).get(candidate_id)
 
+        if not candidate:
+            return
+
         candidate_name = candidate.first_name + " " + candidate.last_name
         d2_part = '9B'
  
         expended_date = datetime(2016, 3, 16, 0, 0)
 
-        supporting_funds_sql = ''' 
+        supporting_funds_sql = '''( 
             SELECT 
               COALESCE(SUM(amount), 0) AS amount
             FROM expenditures
@@ -954,18 +957,20 @@ class SunshineViews(object):
               AND d2_part = :d2_part
               AND expended_date > :expended_date 
               AND supporting = 'true'
+            )
         '''
     
         supporting_funds = self.executeTransaction(sa.text(supporting_funds_sql), candidate_name=candidate_name, d2_part=d2_part, expended_date=expended_date).first().amount
 
-        opposing_funds_sql = ''' 
+        opposing_funds_sql = '''( 
             SELECT 
               COALESCE(SUM(amount), 0) AS amount
             FROM expenditures
             WHERE candidate_name = :candidate_name
               AND d2_part = :d2_part
               AND expended_date > :expended_date
-              AND opposing = 'true' 
+              AND opposing = 'true'
+            ) 
         '''
     
         opposing_funds = self.executeTransaction(sa.text(opposing_funds_sql), candidate_name=candidate_name, d2_part=d2_part, expended_date=expended_date).first().amount
@@ -983,19 +988,20 @@ class SunshineViews(object):
     
         expended_date = datetime(2016, 3, 16, 0, 0)
 
-        supporting_funds_sql = ''' 
+        supporting_funds_sql = '''( 
             SELECT 
               COALESCE(SUM(amount), 0) AS amount
             FROM expenditures
             WHERE candidate_name = :candidate_name
               AND d2_part = :d2_part
               AND expended_date > :expended_date
-              AND supporting = 'true' 
+              AND supporting = 'true'
+            ) 
         '''
     
         supporting_funds = self.executeTransaction(sa.text(supporting_funds_sql), candidate_name=candidate_name, d2_part=d2_part, expended_date=expended_date).first().amount
 
-        opposing_funds_sql = ''' 
+        opposing_funds_sql = '''( 
             SELECT 
               COALESCE(SUM(amount), 0) AS amount
             FROM expenditures
@@ -1003,6 +1009,7 @@ class SunshineViews(object):
               AND d2_part = :d2_part
               AND expended_date > :expended_date 
               AND opposing = 'true'
+            )
         '''
     
         opposing_funds = self.executeTransaction(sa.text(opposing_funds_sql), candidate_name=candidate_name, d2_part=d2_part, expended_date=expended_date).first().amount
@@ -1020,21 +1027,17 @@ class SunshineViews(object):
         except ValueError:
             return 
 
-        committee_sql - '''
-            SELECT * FROM committees
-            WHERE id = :committee_id
-        '''
-        
-        committee = self.executeTransaction(sa.text(committee_sql), committee_id = committee_id)
-        
+        committee = db_session.query(Committee).get(committee_id)
+         
         if not committee:
             return 
         
-        latest_filing = ''' 
+        latest_filing = '''( 
             SELECT * FROM most_recent_filings
             WHERE committee_id = :committee_id
             ORDER BY received_datetime DESC
             LIMIT 1
+            )
         '''
 
         latest_filing = self.executeTransaction(sa.text(latest_filing), 
@@ -1045,7 +1048,7 @@ class SunshineViews(object):
         if latest_filing.end_funds_available \
             or latest_filing.end_funds_available == 0:
 
-            recent_receipts = ''' 
+            recent_receipts = '''( 
                 SELECT 
                   COALESCE(SUM(receipts.amount), 0) AS amount
                 FROM condensed_receipts AS receipts
@@ -1053,6 +1056,7 @@ class SunshineViews(object):
                   ON receipts.filed_doc_id = filed.id
                 WHERE receipts.committee_id = :committee_id
                   AND receipts.received_date > :end_date
+                )
             '''
             controlled_amount = latest_filing.end_funds_available 
             
@@ -1061,13 +1065,14 @@ class SunshineViews(object):
 
         else:
 
-            recent_receipts = ''' 
+            recent_receipts = '''( 
                 SELECT 
                   COALESCE(SUM(receipts.amount), 0) AS amount
                 FROM condensed_receipts
                 JOIN filed_docs AS filed
                   ON receipts.filed_doc_id = filed.id
                 WHERE receipts.committee_id = :committee_id
+                )
             '''
             
             controlled_amount = 0
@@ -1079,7 +1084,7 @@ class SunshineViews(object):
         params = {'committee_id': committee_id}
         
 
-        quarterlies = ''' 
+        quarterlies = '''( 
             SELECT DISTINCT ON (f.doc_name, f.reporting_period_end)
               r.end_funds_available,
               r.total_investments,
@@ -1095,6 +1100,7 @@ class SunshineViews(object):
               AND f.reporting_period_end IS NOT NULL
               AND f.doc_name = 'Quarterly'
             ORDER BY f.reporting_period_end ASC
+            )
         '''
 
         quarterlies = list(self.executeTransaction(sa.text(quarterlies), 
