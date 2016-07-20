@@ -650,8 +650,9 @@ class SunshineViews(object):
         trans = self.connection.begin()
 
         try:
-            self.connection.execute(query, **kwargs)
+            rows = self.connection.execute(query, **kwargs)
             trans.commit()
+            return rows
         except (sa.exc.ProgrammingError, psycopg2.ProgrammingError) as e:
             # TODO: this line seems to break when creating views for the first time.
             # logger.error(e, exc_info=True)
@@ -668,11 +669,12 @@ class SunshineViews(object):
         except psycopg2.ProgrammingError:
             pass
 
-    def executeQuery(self, query, **kwargs):
+    def executeQuery(self, query, data):
         curs = self.connection.connection.cursor()
     
         try:
-            curs.execute(query, **kwargs)
+            sqlstr = curs.mogrify(query, data)
+            return curs.execute(sqlstr)
         except psycopg2.ProgrammingError:
             pass
 
@@ -968,12 +970,9 @@ class SunshineViews(object):
               AND e.supporting = 'true'
             )
         '''
-    
-        params = {'candidate_name': candidate_name}
-        params['d2_part'] = d2_part
-        params['expended_date'] = expended_date
  
-        supporting_funds = self.executeTransaction(sa.text(supporting_funds_sql), candidate_name = candidate_name, d2_part = d2_part, expended_date=expended_date).fetchone().amount
+        supporting_funds = self.executeTransaction(sa.text(supporting_funds_sql), candidate_name = candidate_name, d2_part = d2_part, expended_date=expended_date)
+        print(supporting_funds)
 
         opposing_funds_sql = '''( 
             SELECT 
@@ -987,7 +986,8 @@ class SunshineViews(object):
         '''
     
         opposing_funds = self.executeTransaction(sa.text(opposing_funds_sql), candidate_name=candidate_name,d2_part=d2_part,expended_date=expended_date).fetchone().amount
-
+        print('OPPOSING FUNDS: ')
+        print(opposing_funds)
 
         return supporting_funds, opposing_funds
 
