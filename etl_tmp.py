@@ -12,6 +12,7 @@ from collections import OrderedDict
 from typeinferer import TypeInferer
 import psycopg2
 from psycopg2.extensions import AsIs
+from sunshine.database import db_session
 
 import logging
 logger = logging.getLogger(__name__)
@@ -787,7 +788,6 @@ class SunshineViews(object):
                     candidate_name,
                     office,
                     committee_id,
-                    d2_part,
                     MAX(committee_name) AS committee_name,
                     MAX(committee_type) AS committee_type,
                     bool_or(supporting) AS supporting,
@@ -802,7 +802,6 @@ class SunshineViews(object):
                     SELECT
                       e.candidate_name,
                       e.office,
-                      e.d2_part,
                       cm.id AS committee_id,
                       MAX(cm.name) AS committee_name,
                       MAX(cm.type) AS committee_type,
@@ -824,7 +823,6 @@ class SunshineViews(object):
                     SELECT
                       e.candidate_name,
                       e.office,
-                      e.d2_part,
                       cm.id AS committee_id,
                       MAX(cm.name) AS committee_name,
                       MAX(cm.type) AS committee_type,
@@ -876,14 +874,14 @@ class SunshineViews(object):
 
             if e['Candidate ID']:
                 candidate_id = int(float(e['Candidate ID']))
-                supporting_funds, opposing_funds = get_candidate_funds(candidate_id)
+                supporting_funds, opposing_funds = self.get_candidate_funds(candidate_id)
             else:
                 candidate_id = e['Candidate ID']
-                supporting_funds, opposing_funds = get_candidate_funds_byname(e['First'],e['Last'])
+                supporting_funds, opposing_funds = self.get_candidate_funds_byname(e['First'],e['Last'])
      
             if(e['ID'] != 'na' and e['ID'] != '' and e['ID'] != 'n/a'):
                 
-                committee, recent_receipts, recent_total, latest_filing, controlled_amount, ending_funds, investments, debts, expenditures, total_expenditures = get_committee_details(e['ID'])
+                committee, recent_receipts, recent_total, latest_filing, controlled_amount, ending_funds, investments, debts, expenditures, total_expenditures = self.get_committee_details(e['ID'])
 
                 funds_available = latest_filing.end_funds_available
                 contributions = recent_total
@@ -934,19 +932,14 @@ class SunshineViews(object):
 
 
 
-    def get_candidate_funds(candidate_id):
+    def get_candidate_funds(self,candidate_id):
     
         try:
             candidate_id = int(candidate_id)
         except ValueError:
             return 
-   
-        candidate_sql = '''
-            SELECT * FROM candidates
-            WHERE id = :candidate_id
-        '''
- 
-        candidate = self.executeTransaction(sa.text(candidate_sql), candidate_id = candidate_id)
+  
+        candidate = db_session.query(Candidate).get(candidate_id)
 
         candidate_name = candidate.first_name + " " + candidate.last_name
         d2_part = '9B'
@@ -981,7 +974,7 @@ class SunshineViews(object):
         return supporting_funds, opposing_funds
 
 
-    def get_candidate_funds_byname(candidate_firstname, candidate_lastname):
+    def get_candidate_funds_byname(self,candidate_firstname, candidate_lastname):
     
     
     
@@ -1018,7 +1011,7 @@ class SunshineViews(object):
         return supporting_funds, opposing_funds
 
 
-    def get_committee_details(committee_id):
+    def get_committee_details(self,committee_id):
 
         committee_id = committee_id.rsplit('-', 1)[-1]
 
