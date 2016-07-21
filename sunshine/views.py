@@ -400,7 +400,7 @@ def contested_race_detail(race_type, district):
             candidate_id = e['Candidate ID']
             supporting_funds, opposing_funds = get_candidate_funds_byname(e['First'],e['Last'])
          
-        if(e['ID'] == 'na' or e['ID'] == '' or e['ID'] == 'n/a'):
+        if(e['ID'].lower() == 'na' or e['ID'].lower() == '' or e['ID'].lower() == 'n/a'):
             
             contested_races.append({'last': e['Last'], 'first': e['First'],'committee_name': e['Committee'],'incumbent': e['Incumbent'],'id': e['ID'],'party': e['Party'], 'supporting_funds': supporting_funds, 'opposing_funds': opposing_funds, 'candidate_id' : candidate_id})
             
@@ -1107,25 +1107,25 @@ def independent_expenditures(candidate_id, stance):
         
         ind_expenditures_sql = ''' 
             SELECT 
-              committee_name,
               committee_id, 
-              supporting_amount AS amount, 
-              support_min_date AS date
-            FROM expenditures_by_candidate
+              amount AS amount, 
+              expended_date AS date
+            FROM condensed_expenditures
             WHERE candidate_name = :candidate_name
               AND d2_part = :d2_part
+              AND supporting = 'true'
         '''
 
     else:
         ind_expenditures_sql = ''' 
             SELECT 
-              committee_name,
               committee_id, 
-              opposing_amount AS amount, 
-              support_min_date AS date
-            FROM expenditures_by_candidate
+              amount AS amount, 
+              expended_date AS date
+            FROM condensed_expenditures 
             WHERE candidate_name = :candidate_name
               AND d2_part = :d2_part
+              AND opposing = 'true'
         '''
 
     ind_expends = list(g.engine.execute(sa.text(ind_expenditures_sql),     
@@ -1133,7 +1133,9 @@ def independent_expenditures(candidate_id, stance):
                                         d2_part=d2_part))
     independent_expenditures =[] 
     for ie in ind_expends:
-        independent_expenditures.append(dict(ie.items()))
+        ie_dict = dict(ie.items())
+        ie_dict['committee_name'] = db_session.query(Committee).get(ie_dict['committee_id']).name
+        independent_expenditures.append(ie_dict)
      
       
     return render_template('independent-expenditures.html',
@@ -1249,6 +1251,31 @@ def widgets_top_donations():
 
     return render_template('widgets/top-donations.html', 
                            days_donations=days_donations)
+
+
+@views.route('/widgets/top-contested-races/')
+@cache.cached(timeout=CACHE_TIMEOUT, key_prefix=make_cache_key)
+def widgets_top_contested_races():
+    
+    date = datetime.now().date()
+    
+    top_races_sql = '''
+        SELECT 
+          c.* 
+        FROM contested_races AS c 
+        ORDER BY c.total_money DESC
+    '''
+
+    top_races = list(g.engine.execute(sa.text(top_races_sql))) 
+
+    for tr in top_races:
+        print('NEW RACE: ' + str(tr.district) + ', ' +  str(tr.branch) + ', ' + str(tr.total_money))        
+        print('SNARF')
+        #tops.append[{'district': tr.district, 'branch' = tr.branch, 'total_money' = tr.total_money,'contested_race_info': contested_races}]
+    
+
+    return render_template('widgets/top-contested-races.html', 
+                           top_races=top_races)
 
 
 @views.route('/flush-cache/<secret>/')
