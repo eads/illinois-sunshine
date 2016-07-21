@@ -1258,24 +1258,66 @@ def widgets_top_donations():
 def widgets_top_contested_races():
     
     date = datetime.now().date()
-    
+
     top_races_sql = '''
-        SELECT 
-          c.* 
-        FROM contested_races AS c 
-        ORDER BY c.total_money DESC
+        SELECT
+          topc.* 
+        FROM (
+          SELECT DISTINCT ON (c.district) 
+            c.district,
+            c.branch,
+            c.total_money
+          FROM contested_races AS c
+        ) AS topc
+        ORDER BY topc.total_money DESC
+        LIMIT 5 
     '''
 
-    top_races = list(g.engine.execute(sa.text(top_races_sql))) 
+    races = list(g.engine.execute(sa.text(top_races_sql))) 
+    top_races = {}
+    counter = 0 
+    maxc = 2
+    for tr in races:
 
-    for tr in top_races:
-        print('NEW RACE: ' + str(tr.district) + ', ' +  str(tr.branch) + ', ' + str(tr.total_money))        
-        print('SNARF')
-        #tops.append[{'district': tr.district, 'branch' = tr.branch, 'total_money' = tr.total_money,'contested_race_info': contested_races}]
+        district = tr.district
+        branch = tr.branch
+
+        candidates_sql = '''
+            SELECT
+              c.*
+            FROM contested_races as c
+            WHERE
+              c.district = :district
+              AND
+                c.branch = :branch
+        '''
+
+        candidates = list(g.engine.execute(sa.text(candidates_sql),district=district,branch=branch))
+        if (branch == 'H'):
+            branch = 'House'
+        elif (branch == 'S'):
+            branch = 'Senate'
+        else:
+            branch = 'Comptroller'
+            district = 0
+
+        if len(candidates) > maxc:
+            maxc = len(candidates)
+        cands=[]
+        for c in candidates:
+            cand_name = c.first_name + " " + c.last_name
+            if (cands and c.incumbent == 'Y'):
+                cands.insert(0,{'candidate_id': c.candidate_id,'party': c.party, 'incumbent': c.incumbent,'name': cand_name})
+            else:
+                cands.append({'candidate_id': c.candidate_id,'party': c.party, 'incumbent': c.incumbent,'name': cand_name})
+            
+        top_races[counter] = {'district': district, 'branch': branch, 'total_money': tr.total_money, 'candidates': cands}
+        counter = counter+1
     
 
     return render_template('widgets/top-contested-races.html', 
-                           top_races=top_races)
+                           top_races=top_races,maxc=maxc)
+                
 
 
 @views.route('/flush-cache/<secret>/')

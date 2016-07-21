@@ -1,0 +1,57 @@
+{% extends 'base-iframe.html' %}
+{% from 'macros.html' import header %}
+{% block header_social %}
+    {{ header("Top Contested Races", None, request.path) }}
+{% endblock %}
+{% block content %}
+
+<h3>
+    <a href='{{ url_for('views.contested_races') }}' target='_blank'>Top Contested Races</a>
+</h3>
+
+<p>Contested Races in the state of Illinois with the highest money, updated daily.</p>
+<table class = "table table-striped table-hover">
+    <thead>
+        <tr>
+            <th class = 'text-center'>District</th>
+            <th class = 'text-left'>Branch</th>
+            <th class = 'text-left' colspan = 4>Candidates</th>
+            <th class = 'text-right'>Total Money in Race</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for key,value in top_races | dictsort %}
+            {% if value.branch == "House" %}
+                {% set r_type = "house" %}
+            {% elif value.branch == "Senate" %}
+                {% set r_type = "senate" %}
+            {% else %}
+                {% set r_type = "comptroller" %}
+            {% endif %} 
+            <tr class = 'clickable' style= "cursor: Pointer;" onclick="window.location.href = '{{ url_for('views.contested_race_detail', race_type=r_type, district=value.district) }}';">
+                <td class='text-center'>
+                    <a href= '{{ url_for('views.contested_race_detail', race_type=r_type, district=key) }}'>{{ value.district }}</a>
+                </td>
+                <td class ='text-left'>{{ value.branch }}</td>
+                {% for c in value.candidates %}
+                    <td class='text-left'>
+                        {{ c.name }} ({{ c.party }}) {% if c.incumbent|string() == 'Y' %} *INCUMBENT {% endif %}
+
+                    </td>
+                {% endfor %}
+                {% set tabbies = maxc-value.candidates|length %}
+                {% for n in range(tabbies) %}
+                    <td>&nbsp;</td>
+                {% endfor %}
+                <td class='text-right'>{{ value.total_money|format_money }}</td>
+            </a></tr>
+
+        {% endfor %}
+    </tbody>
+</table> 
+
+{% endblock %}
+
+{% block extra_javascript %}
+
+{% endblock %}
