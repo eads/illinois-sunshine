@@ -11,6 +11,8 @@ from csvkit.table import Table
 from collections import OrderedDict
 from typeinferer import TypeInferer
 import psycopg2
+from psycopg2.extensions import AsIs
+from sunshine.database import db_session
 
 import logging
 logger = logging.getLogger(__name__)
@@ -655,7 +657,7 @@ class SunshineViews(object):
             # logger.error(e, exc_info=True)
             trans.rollback()
             raise e
-    
+
     def executeOutsideTransaction(self, query):
         
         self.connection.connection.set_isolation_level(0)
@@ -665,13 +667,14 @@ class SunshineViews(object):
             curs.execute(query)
         except psycopg2.ProgrammingError:
             pass
-    
+
     def dropViews(self):
         self.executeTransaction('DROP MATERIALIZED VIEW IF EXISTS receipts_by_month')
         self.executeTransaction('DROP MATERIALIZED VIEW IF EXISTS committee_receipts_by_week')
         self.executeTransaction('DROP MATERIALIZED VIEW IF EXISTS incumbent_candidates')
         self.executeTransaction('DROP MATERIALIZED VIEW IF EXISTS most_recent_filings CASCADE')
         self.executeTransaction('DROP MATERIALIZED VIEW IF EXISTS expenditures_by_candidate')
+        self.executeTransaction('DROP TABLE IF EXISTS contested_races')
 
     def makeAllViews(self):
         self.incumbentCandidates()
@@ -683,7 +686,8 @@ class SunshineViews(object):
         self.committeeReceiptAggregates() # relies on condensedReceipts
         self.committeeMoney() # relies on mostRecentFilings
         self.candidateMoney() # relies on committeeMoney and mostRecentFilings
-    
+        self.contestedRaces() # relies on sunshine/contested_races_2016.csv and sunshine/comptroller_contested_race_2016.csv
+ 
     def condensedExpenditures(self):
         
         try:
@@ -701,6 +705,7 @@ class SunshineViews(object):
                     JOIN most_recent_filings AS m
                       USING(committee_id)
                     WHERE e.expended_date > COALESCE(m.reporting_period_end, '1900-01-01')
+                      AND archived = FALSE
                   ) UNION (
                     SELECT
                       e.*
@@ -743,6 +748,7 @@ class SunshineViews(object):
                     LEFT JOIN most_recent_filings AS m
                       USING(committee_id)
                     WHERE r.received_date > COALESCE(m.reporting_period_end, '1900-01-01')
+                      AND archived = FALSE
                   ) UNION (
                     SELECT
                       r.*
@@ -812,6 +818,7 @@ class SunshineViews(object):
                     JOIN committees AS cm
                       ON e.committee_id = cm.id
                     WHERE supporting = TRUE AND opposing = FALSE
+                      AND archived = FALSE
                     GROUP BY e.candidate_name, e.office, cm.id
                     UNION
                     SELECT
@@ -832,6 +839,7 @@ class SunshineViews(object):
                     JOIN committees AS cm
                       ON e.committee_id = cm.id
                     WHERE opposing = TRUE AND supporting = FALSE
+                      AND archived = FALSE
                     GROUP BY e.candidate_name, e.office, cm.id
                   ) AS subq
                   GROUP BY candidate_name, office, committee_id
@@ -840,6 +848,308 @@ class SunshineViews(object):
             self.executeTransaction(exp)
             
             self.expendituresByCandidateIndex()
+
+    def contestedRaces(self):
+        
+        try:
+            comptroller_input_file = csv.DictReader(open(os.getcwd()+'/sunshine/comptroller_contested_race_2016.csv'))
+            races_input_file = csv.DictReader(open(os.getcwd()+'/sunshine/contested_races_2016.csv'))
+
+            entries = []
+            for row in races_input_file:
+                entries.append(row)
+            
+            for row in comptroller_input_file:
+                entries.append(row)
+
+            contested_races = []
+            counter = 0
+            for e in entries:
+                supporting_funds = 0
+                opposing_funds = 0
+                funds_available = 0
+                contributions = 0
+                total_funds = 0
+                investments = 0
+                debts = 0
+                total_money = 0
+                try:
+                    candidate_id = int(float(e['Candidate ID']))
+                except:
+                    candidate_id = None
+
+                try:
+                    committee_id = int(float(e['ID']))
+                except:
+                    committee_id = None
+
+                try:
+                    district = int(float(e['District']))
+                except:
+                    district = None
+
+                if candidate_id:
+                    supporting_funds, opposing_funds = self.get_candidate_funds(candidate_id)
+                else:
+                    supporting_funds, opposing_funds = self.get_candidate_funds_byname(e['First'],e['Last'])
+                
+                if committee_id:
+                    committee, recent_receipts, recent_total, latest_filing, controlled_amount, ending_funds, investments, debts, expenditures, total_expenditures = self.get_committee_details(e['ID'])
+
+                    funds_available = latest_filing.end_funds_available
+                    contributions = recent_total
+                    total_funds = controlled_amount
+                    investments = latest_filing.total_investments
+                    debts = latest_filing.total_debts
+                        
+                
+                total_money = supporting_funds + opposing_funds + controlled_amount 
+                inds = []
+                for index,d in enumerate(contested_races):
+                    if (d['district'] == district and d['branch'] == e['Senate/House']):
+                        inds.append(index)
+ 
+                for i in inds:
+                    contested_races[i]['total_money'] = contested_races[i]['total_money'] + total_money
+
+                contested_races.append({'district': district, 'branch': e['Senate/House'], 'last_name': e['Last'], 'first_name': e['First'],'committee_name': e['Committee'],'incumbent': e['Incumbent'],'committee_id': committee_id,'party': e['Party'], 'funds_available': funds_available, 'contributions': contributions, 'total_funds': total_funds, 'investments': investments, 'debts': debts, 'supporting_funds': supporting_funds, 'opposing_funds': opposing_funds, 'candidate_id' : candidate_id, 'total_money': total_money})
+
+            exp = '''
+                CREATE TABLE contested_races(
+                    total_money DOUBLE PRECISION,
+                    branch TEXT,
+                    last_name TEXT,
+                    first_name TEXT,
+                    committee_name TEXT,
+                    incumbent TEXT,
+                    committee_id INTEGER,
+                    party TEXT,
+                    funds_available DOUBLE PRECISION,
+                    contributions DOUBLE PRECISION,
+                    total_funds DOUBLE PRECISION,
+                    investments DOUBLE PRECISION,
+                    debts DOUBLE PRECISION,
+                    supporting_funds DOUBLE PRECISION,
+                    opposing_funds DOUBLE PRECISION,
+                    district INTEGER,
+                    candidate_id INTEGER
+                )
+            '''
+            
+            trans = self.connection.begin()	
+            curs = self.connection.connection.cursor()
+            curs.execute(exp)   
+            insert_statement = 'INSERT INTO contested_races (%s) VALUES %s'
+            cols = ['last_name', 'committee_id', 'incumbent', 'district', 'first_name', 'total_funds', 'candidate_id', 'investments', 'committee_name', 'supporting_funds', 'opposing_funds', 'party', 'branch', 'contributions', 'debts', 'total_money', 'funds_available']
+            for cr in contested_races:
+
+                values = [cr[column] for column in cols]
+                curs.execute(insert_statement, (AsIs(','.join(cols)), tuple(values)))
+                
+            trans.commit()
+        except sa.exc.ProgrammingError:
+            print('Problem in creating contested_races table')
+
+    def get_candidate_funds(self,candidate_id):
+    
+        try:
+            candidate_id = int(candidate_id)
+        except ValueError:
+            return 
+  
+        candidate = db_session.query(Candidate).get(candidate_id)
+
+        if not candidate:
+            return
+
+        candidate_name = candidate.first_name + " " + candidate.last_name
+        d2_part = '9B'
+ 
+        expended_date = datetime(2016, 3, 16, 0, 0)
+
+        supporting_funds_sql = '''( 
+            SELECT 
+              COALESCE(SUM(e.amount), 0) AS amount
+            FROM expenditures AS e
+            WHERE e.candidate_name = :candidate_name
+              AND e.d2_part = :d2_part
+              AND e.expended_date > :expended_date 
+              AND e.supporting = 'true'
+            )
+        '''
+ 
+        supporting_funds = self.executeTransaction(sa.text(supporting_funds_sql), candidate_name = candidate_name, d2_part = d2_part, expended_date=expended_date).fetchone().amount
+
+        opposing_funds_sql = '''( 
+            SELECT 
+              COALESCE(SUM(e.amount), 0) AS amount
+            FROM expenditures AS e
+            WHERE e.candidate_name = :candidate_name
+              AND e.d2_part = :d2_part
+              AND e.expended_date > :expended_date
+              AND e.opposing = 'true'
+            ) 
+        '''
+    
+        opposing_funds = self.executeTransaction(sa.text(opposing_funds_sql), candidate_name=candidate_name,d2_part=d2_part,expended_date=expended_date).fetchone().amount
+
+        return supporting_funds, opposing_funds
+
+
+    def get_candidate_funds_byname(self,candidate_firstname, candidate_lastname):
+    
+    
+    
+        candidate_name = candidate_firstname + " " + candidate_lastname
+        d2_part = '9B'
+    
+        expended_date = datetime(2016, 3, 16, 0, 0)
+
+        supporting_funds_sql = '''( 
+            SELECT 
+              COALESCE(SUM(e.amount), 0) AS amount
+            FROM expenditures AS e
+            WHERE e.candidate_name = :candidate_name
+              AND e.d2_part = :d2_part
+              AND e.expended_date > :expended_date
+              AND e.supporting = 'true'
+            ) 
+        '''
+    
+        supporting_funds = self.executeTransaction(sa.text(supporting_funds_sql), candidate_name=candidate_name,d2_part=d2_part,expended_date=expended_date).fetchone().amount
+
+        opposing_funds_sql = '''( 
+            SELECT 
+              COALESCE(SUM(e.amount), 0) AS amount
+            FROM expenditures AS e
+            WHERE e.candidate_name = :candidate_name
+              AND e.d2_part = :d2_part
+              AND e.expended_date > :expended_date 
+              AND e.opposing = 'true'
+            )
+        '''
+    
+        opposing_funds = self.executeTransaction(sa.text(opposing_funds_sql), candidate_name=candidate_name,d2_part=d2_part,expended_date=expended_date).fetchone().amount
+
+
+        return supporting_funds, opposing_funds
+
+
+    def get_committee_details(self,committee_id):
+
+        committee_id = committee_id.rsplit('-', 1)[-1]
+
+        try:
+            committee_id = int(committee_id)
+        except ValueError:
+            return 
+
+        committee = db_session.query(Committee).get(committee_id)
+         
+        if not committee:
+            return 
+        
+        latest_filing = '''( 
+            SELECT * FROM most_recent_filings
+            WHERE committee_id = :committee_id
+            ORDER BY received_datetime DESC
+            LIMIT 1
+            )
+        '''
+
+        latest_filing = self.executeTransaction(sa.text(latest_filing), 
+                                       committee_id=committee_id).fetchone()
+        
+        params = {'committee_id': committee_id}
+
+        if latest_filing.end_funds_available \
+            or latest_filing.end_funds_available == 0:
+
+            recent_receipts = '''( 
+                SELECT 
+                  COALESCE(SUM(receipts.amount), 0) AS amount
+                FROM condensed_receipts AS receipts
+                JOIN filed_docs AS filed
+                  ON receipts.filed_doc_id = filed.id
+                WHERE receipts.committee_id = :committee_id
+                  AND receipts.received_date > :end_date
+                )
+            '''
+            controlled_amount = latest_filing.end_funds_available 
+            
+            params['end_date'] = latest_filing.reporting_period_end
+            end_date = latest_filing.reporting_period_end
+
+        else:
+
+            recent_receipts = '''( 
+                SELECT 
+                  COALESCE(SUM(receipts.amount), 0) AS amount
+                FROM condensed_receipts
+                JOIN filed_docs AS filed
+                  ON receipts.filed_doc_id = filed.id
+                WHERE receipts.committee_id = :committee_id
+                )
+            '''
+            
+            controlled_amount = 0
+
+        recent_total = self.executeTransaction(sa.text(recent_receipts),**params).fetchone().amount
+        controlled_amount += recent_total
+        
+
+        quarterlies = '''( 
+            SELECT DISTINCT ON (f.doc_name, f.reporting_period_end)
+              r.end_funds_available,
+              r.total_investments,
+              r.total_receipts,
+              (r.debts_itemized * -1) as debts_itemized,
+              (r.debts_non_itemized * -1) as debts_non_itemized,
+              (r.total_expenditures * -1) as total_expenditures,
+              f.reporting_period_end
+            FROM d2_reports AS r
+            JOIN filed_docs AS f
+              ON r.filed_doc_id = f.id
+            WHERE r.committee_id = :committee_id
+              AND f.reporting_period_end IS NOT NULL
+              AND f.doc_name = 'Quarterly'
+            ORDER BY f.reporting_period_end ASC
+            )
+        '''
+
+        quarterlies = self.executeTransaction(sa.text(quarterlies), 
+                                     committee_id=committee_id)
+
+        ending_funds = [[r.end_funds_available, 
+                         r.reporting_period_end.year,
+                         r.reporting_period_end.month,
+                         r.reporting_period_end.day] 
+                         for r in quarterlies]
+
+        investments = [[r.total_investments, 
+                        r.reporting_period_end.year,
+                        r.reporting_period_end.month,
+                        r.reporting_period_end.day] 
+                        for r in quarterlies]
+
+        debts = [[(r.debts_itemized + r.debts_non_itemized), 
+                   r.reporting_period_end.year,
+                   r.reporting_period_end.month,
+                   r.reporting_period_end.day] 
+                   for r in quarterlies]
+
+        expenditures = [[r.total_expenditures, 
+                         r.reporting_period_end.year,
+                         r.reporting_period_end.month,
+                         r.reporting_period_end.day] 
+                         for r in quarterlies]
+        
+        #accomodate for independent expenditures past last filing date
+        
+        total_expenditures = sum([r.total_expenditures for r in quarterlies])
+
+        return committee, recent_receipts, recent_total, latest_filing, controlled_amount, ending_funds, investments, debts, expenditures, total_expenditures
+
 
     def receiptsAggregates(self):
 
@@ -1013,6 +1323,7 @@ class SunshineViews(object):
                  LEFT JOIN receipts
                    ON receipts.committee_id = filings.committee_id
                    AND receipts.received_date > filings.reporting_period_end
+                    AND receipts.archived = FALSE
                  GROUP BY filings.committee_id
                  ORDER BY total DESC NULLS LAST
                )
@@ -1173,7 +1484,7 @@ class SunshineIndexes(object):
             trans.commit()
         except sa.exc.ProgrammingError as e:
             trans.rollback()
-    
+
     def executeOutsideTransaction(self, query):
         
         self.connection.connection.set_isolation_level(0)
@@ -1276,6 +1587,7 @@ class SunshineIndexes(object):
          
          self.executeOutsideTransaction(index)
 
+           
 def downloadUnzip():
     import urllib
     import zipfile

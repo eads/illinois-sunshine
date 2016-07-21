@@ -675,6 +675,7 @@ class SunshineViews(object):
         self.executeTransaction('DROP MATERIALIZED VIEW IF EXISTS incumbent_candidates')
         self.executeTransaction('DROP MATERIALIZED VIEW IF EXISTS most_recent_filings CASCADE')
         self.executeTransaction('DROP MATERIALIZED VIEW IF EXISTS expenditures_by_candidate')
+        self.executeTransaction('DROP TABLE IF EXISTS contested_races')
 
     def makeAllViews(self):
         self.incumbentCandidates()
@@ -873,15 +874,27 @@ class SunshineViews(object):
                 investments = 0
                 debts = 0
                 total_money = 0
-
-                if e['Candidate ID']:
+                try:
                     candidate_id = int(float(e['Candidate ID']))
+                except:
+                    candidate_id = None
+
+                try:
+                    committee_id = int(float(e['ID']))
+                except:
+                    committee_id = None
+
+                try:
+                    district = int(float(e['District']))
+                except:
+                    district = None
+
+                if candidate_id:
                     supporting_funds, opposing_funds = self.get_candidate_funds(candidate_id)
                 else:
-                    candidate_id = e['Candidate ID']
                     supporting_funds, opposing_funds = self.get_candidate_funds_byname(e['First'],e['Last'])
                 
-                if(e['ID'] != 'na' and e['ID'] != '' and e['ID'] != 'n/a' and e['ID'] != 'NA'):
+                if committee_id:
                     committee, recent_receipts, recent_total, latest_filing, controlled_amount, ending_funds, investments, debts, expenditures, total_expenditures = self.get_committee_details(e['ID'])
 
                     funds_available = latest_filing.end_funds_available
@@ -892,40 +905,51 @@ class SunshineViews(object):
                         
                 
                 total_money = supporting_funds + opposing_funds + controlled_amount 
-                contested_races.append({'district': e['District'], 'branch': e['Senate/House'], 'last_name': e['Last'], 'first_name': e['First'],'committee_name': e['Committee'],'incumbent': e['Incumbent'],'committee_id': e['ID'],'party': e['Party'], 'funds_available': funds_available, 'contributions': contributions, 'total_funds': total_funds, 'investments': investments, 'debts': debts, 'supporting_funds': supporting_funds, 'opposing_funds': opposing_funds, 'candidate_id' : candidate_id, 'total_money': total_money})
+                inds = []
+                for index,d in enumerate(contested_races):
+                    if (d['district'] == district and d['branch'] == e['Senate/House']):
+                        inds.append(index)
+ 
+                for i in inds:
+                    contested_races[i]['total_money'] = contested_races[i]['total_money'] + total_money
 
-
-            columns = contested_races[0].keys()
+                contested_races.append({'district': district, 'branch': e['Senate/House'], 'last_name': e['Last'], 'first_name': e['First'],'committee_name': e['Committee'],'incumbent': e['Incumbent'],'committee_id': committee_id,'party': e['Party'], 'funds_available': funds_available, 'contributions': contributions, 'total_funds': total_funds, 'investments': investments, 'debts': debts, 'supporting_funds': supporting_funds, 'opposing_funds': opposing_funds, 'candidate_id' : candidate_id, 'total_money': total_money})
 
             exp = '''
                 CREATE TABLE contested_races(
-                    district REAL PRIMARY KEY,
+                    total_money DOUBLE PRECISION,
                     branch TEXT,
                     last_name TEXT,
                     first_name TEXT,
                     committee_name TEXT,
                     incumbent TEXT,
-                    committee_id REAL,
+                    committee_id INTEGER,
                     party TEXT,
-                    funds_available REAL,
-                    contributions REAL,
-                    total_funds REAL,
-                    investments REAL,
-                    debts REAL,
-                    supporting_funds REAL,
-                    opposing_funds REAL,
-                    candidate_id REAL,
-                    total_money REAL
-                );
+                    funds_available DOUBLE PRECISION,
+                    contributions DOUBLE PRECISION,
+                    total_funds DOUBLE PRECISION,
+                    investments DOUBLE PRECISION,
+                    debts DOUBLE PRECISION,
+                    supporting_funds DOUBLE PRECISION,
+                    opposing_funds DOUBLE PRECISION,
+                    district INTEGER,
+                    candidate_id INTEGER
+                )
             '''
             
-            self.executeTransaction(exp)
+            trans = self.connection.begin()	
             curs = self.connection.connection.cursor()
-            curs.executemany("""INSERT INTO contested_races(district,branch,last_name,first_name,committee_name,incumbent,committee_id,party,funds_available,contributions,total_funds,investments,debts,supporting_funds,opposing_funds,candidate_id,total_money) VALUES (%(district)s,%(branch)s,%(last_name)s,%(first_name)s,%(committee_name)s,%(incumbent)s,%(committee_id)s,%(party)s,%(funds_available)s,%(contributions)s,%(total_funds)s,%(investments)s,%(debts)s,%(supporting_funds)s,%(opposing_funds)s,%(candidate_id)s,%(total_money)s)""", contested_races)
+            curs.execute(exp)   
+            insert_statement = 'INSERT INTO contested_races (%s) VALUES %s'
+            cols = ['last_name', 'committee_id', 'incumbent', 'district', 'first_name', 'total_funds', 'candidate_id', 'investments', 'committee_name', 'supporting_funds', 'opposing_funds', 'party', 'branch', 'contributions', 'debts', 'total_money', 'funds_available']
+            for cr in contested_races:
 
-
+                values = [cr[column] for column in cols]
+                curs.execute(insert_statement, (AsIs(','.join(cols)), tuple(values)))
+                
+            trans.commit()
         except sa.exc.ProgrammingError:
-            pass
+            print('Problem in creating contested_races table')
 
     def get_candidate_funds(self,candidate_id):
     
@@ -1358,7 +1382,6 @@ class SunshineViews(object):
         self.candidateMoneyIndex()
         self.committeeMoneyIndex()
         self.mostRecentFilingsIndex()
-        self.expendituresByContestedRacesIndex()
 
     def condensedExpendituresIndex(self):
         index = ''' 
