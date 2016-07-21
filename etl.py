@@ -650,8 +650,9 @@ class SunshineViews(object):
         trans = self.connection.begin()
 
         try:
-            self.connection.execute(query, **kwargs)
+            rows = self.connection.execute(query, **kwargs)
             trans.commit()
+            return rows
         except (sa.exc.ProgrammingError, psycopg2.ProgrammingError) as e:
             # TODO: this line seems to break when creating views for the first time.
             # logger.error(e, exc_info=True)
@@ -961,7 +962,7 @@ class SunshineViews(object):
 
         if not candidate:
             return
-
+        print(candidate_id)
         candidate_name = candidate.first_name + " " + candidate.last_name
         d2_part = '9B'
  
