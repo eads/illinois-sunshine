@@ -1270,7 +1270,7 @@ def widgets_top_contested_races():
           FROM contested_races AS c
         ) AS topc
         ORDER BY topc.total_money DESC
-        LIMIT 5 
+        LIMIT 10
     '''
 
     races = list(g.engine.execute(sa.text(top_races_sql))) 
