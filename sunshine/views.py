@@ -31,18 +31,15 @@ def index():
     totals = list(g.engine.execute(sa.text(totals_sql)))
 
     # contested races chart
-    top_races_sql = '''
-        SELECT
-          topc.* 
-        FROM (
-          SELECT DISTINCT ON (c.district) 
-            c.district,
-            c.branch,
-            c.total_money
-          FROM contested_races AS c
-        ) AS topc
-        ORDER BY topc.total_money DESC
-        LIMIT 10
+    top_races_sql = '''       
+        SELECT 
+          district, 
+          branch, 
+          SUM(total_money) AS total_money 
+        FROM contested_races 
+        GROUP BY district, branch 
+        ORDER BY SUM(total_money) DESC 
+        LIMIT 10;
     '''
 
     races = list(g.engine.execute(sa.text(top_races_sql))) 
@@ -1316,22 +1313,17 @@ def widgets_top_donations():
 @cache.cached(timeout=CACHE_TIMEOUT, key_prefix=make_cache_key)
 def widgets_top_contested_races():
     
-    date = datetime.now().date()
-
     top_races_sql = '''
-        SELECT
-          topc.* 
-        FROM (
-          SELECT DISTINCT ON (c.district) 
-            c.district,
-            c.branch,
-            c.total_money
-          FROM contested_races AS c
-        ) AS topc
-        ORDER BY topc.total_money DESC
-        LIMIT 10
+        SELECT 
+          district, 
+          branch, 
+          SUM(total_money) AS total_money 
+        FROM contested_races 
+        GROUP BY district, branch 
+        ORDER BY SUM(total_money) DESC 
+        LIMIT 10;
     '''
-
+        
     races = list(g.engine.execute(sa.text(top_races_sql))) 
     top_races = {}
     counter = 0 
