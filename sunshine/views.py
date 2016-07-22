@@ -30,6 +30,63 @@ def index():
 
     totals = list(g.engine.execute(sa.text(totals_sql)))
 
+    # contested races chart
+    top_races_sql = '''
+        SELECT
+          topc.* 
+        FROM (
+          SELECT DISTINCT ON (c.district) 
+            c.district,
+            c.branch,
+            c.total_money
+          FROM contested_races AS c
+        ) AS topc
+        ORDER BY topc.total_money DESC
+        LIMIT 10
+    '''
+
+    races = list(g.engine.execute(sa.text(top_races_sql))) 
+    top_races = {}
+    counter = 0 
+    maxc = 2
+    for tr in races:
+
+        district = tr.district
+        branch = tr.branch
+
+        candidates_sql = '''
+            SELECT
+              c.*
+            FROM contested_races as c
+            WHERE
+              c.district = :district
+              AND
+                c.branch = :branch
+        '''
+
+        candidates = list(g.engine.execute(sa.text(candidates_sql),district=district,branch=branch))
+        if (branch == 'H'):
+            branch = 'House'
+        elif (branch == 'S'):
+            branch = 'Senate'
+        else:
+            branch = 'Comptroller'
+            district = 0
+
+        if len(candidates) > maxc:
+            maxc = len(candidates)
+        cands=[]
+        for c in candidates:
+            cand_name = c.first_name + " " + c.last_name
+            if (cands and c.incumbent == 'Y'):
+                cands.insert(0,{'candidate_id': c.candidate_id,'party': c.party, 'incumbent': c.incumbent,'name': cand_name})
+            else:
+                cands.append({'candidate_id': c.candidate_id,'party': c.party, 'incumbent': c.incumbent,'name': cand_name})
+            
+        top_races[counter] = {'district': district, 'branch': branch, 'total_money': tr.total_money, 'candidates': cands}
+        counter = counter+1
+    
+
     # donations chart
     donations_by_month_sql = ''' 
       SELECT * FROM receipts_by_month WHERE month >= :start_date
@@ -126,7 +183,9 @@ def index():
                                              end_date=date))
         date = date - timedelta(days=1)
 
-    return render_template('index.html', 
+    return render_template('index.html',
+                           top_races=top_races,
+                           maxc = maxc, 
                            top_earners=top_earners,
                            top_ten=top_ten,
                            totals=totals,
