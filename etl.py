@@ -868,7 +868,8 @@ class SunshineViews(object):
             for e in entries:
                 supporting_funds = 0
                 opposing_funds = 0
-                funds_available = 0
+                controlled_amount = 0
+                funds_available  = 0
                 contributions = 0
                 total_funds = 0
                 investments = 0
@@ -1029,8 +1030,6 @@ class SunshineViews(object):
 
 
     def get_committee_details(self,committee_id):
-
-        committee_id = committee_id.rsplit('-', 1)[-1]
 
         try:
             committee_id = int(committee_id)
