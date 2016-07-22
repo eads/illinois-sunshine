@@ -895,7 +895,7 @@ class SunshineViews(object):
                     supporting_funds, opposing_funds = self.get_candidate_funds_byname(e['First'],e['Last'])
                 
                 if committee_id:
-                    committee, recent_receipts, recent_total, latest_filing, controlled_amount, ending_funds, investments, debts, expenditures, total_expenditures = self.get_committee_details(e['ID'])
+                    committee, recent_receipts, recent_total, latest_filing, controlled_amount, ending_funds, investments, debts, expenditures, total_expenditures = self.get_committee_details(committee_id)
 
                     funds_available = latest_filing.end_funds_available
                     contributions = recent_total
@@ -905,14 +905,6 @@ class SunshineViews(object):
                         
                 
                 total_money = supporting_funds + opposing_funds + controlled_amount 
-                inds = []
-                for index,d in enumerate(contested_races):
-                    if (d['district'] == district and d['branch'] == e['Senate/House']):
-                        inds.append(index)
- 
-                for i in inds:
-                    contested_races[i]['total_money'] = contested_races[i]['total_money'] + total_money
-
                 contested_races.append({'district': district, 'branch': e['Senate/House'], 'last_name': e['Last'], 'first_name': e['First'],'committee_name': e['Committee'],'incumbent': e['Incumbent'],'committee_id': committee_id,'party': e['Party'], 'funds_available': funds_available, 'contributions': contributions, 'total_funds': total_funds, 'investments': investments, 'debts': debts, 'supporting_funds': supporting_funds, 'opposing_funds': opposing_funds, 'candidate_id' : candidate_id, 'total_money': total_money})
 
             exp = '''
@@ -971,7 +963,7 @@ class SunshineViews(object):
         supporting_funds_sql = '''( 
             SELECT 
               COALESCE(SUM(e.amount), 0) AS amount
-            FROM expenditures AS e
+            FROM condensed_expenditures AS e
             WHERE e.candidate_name = :candidate_name
               AND e.d2_part = :d2_part
               AND e.expended_date > :expended_date 
@@ -984,7 +976,7 @@ class SunshineViews(object):
         opposing_funds_sql = '''( 
             SELECT 
               COALESCE(SUM(e.amount), 0) AS amount
-            FROM expenditures AS e
+            FROM condensed_expenditures AS e
             WHERE e.candidate_name = :candidate_name
               AND e.d2_part = :d2_part
               AND e.expended_date > :expended_date
@@ -1009,7 +1001,7 @@ class SunshineViews(object):
         supporting_funds_sql = '''( 
             SELECT 
               COALESCE(SUM(e.amount), 0) AS amount
-            FROM expenditures AS e
+            FROM condensed_expenditures AS e
             WHERE e.candidate_name = :candidate_name
               AND e.d2_part = :d2_part
               AND e.expended_date > :expended_date
@@ -1022,7 +1014,7 @@ class SunshineViews(object):
         opposing_funds_sql = '''( 
             SELECT 
               COALESCE(SUM(e.amount), 0) AS amount
-            FROM expenditures AS e
+            FROM condensed_expenditures AS e
             WHERE e.candidate_name = :candidate_name
               AND e.d2_part = :d2_part
               AND e.expended_date > :expended_date 
