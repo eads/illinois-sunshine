@@ -6,7 +6,6 @@ body {
   font-family: Verdana,sans-serif;
 }
 
-a, a:active, a:hover, a:focus { color: #48d; }
 
 table, label,.control-label,.help-block,.checkbox,.radio { font-size: 14px; }
 .alert { font-size: 1em; font-weight: 500; }
@@ -134,6 +133,14 @@ table, label,.control-label,.help-block,.checkbox,.radio { font-size: 14px; }
 
 .label:hover { text-decoration: none; }
 
+a.header-link:link {text-decoration: none; color: #0000e6 !important;}
+a.header-link:visited {text-decoration: none; color: #0000e6 !important;}
+a.header-link:hover {text-decoration: none; color: #0000e6 !important;}
+a.header-link:active {text-decoration: none; color: #0000e6 !important;}
+a.header-link{color: #0000e6 !important;}
+a.header-link:focus {text-decoration: none; color: #0000e6 !important;}
+
+a, a:active, a:hover, a:focus { color: #48d; } 
 /* Custom page footer */
 .footer {
   padding: 20px 0 20px 0;
