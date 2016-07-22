@@ -35,7 +35,7 @@ def index():
         SELECT 
           district, 
           branch, 
-          SUM(total_money) AS total_money 
+          SUM(total_money) AS money_sum 
         FROM contested_races 
         GROUP BY district, branch 
         ORDER BY SUM(total_money) DESC 
@@ -80,7 +80,7 @@ def index():
             else:
                 cands.append({'candidate_id': c.candidate_id,'party': c.party, 'incumbent': c.incumbent,'name': cand_name})
             
-        top_races[counter] = {'district': district, 'branch': branch, 'total_money': tr.total_money, 'candidates': cands}
+        top_races[counter] = {'district': district, 'branch': branch, 'total_money': tr.money_sum, 'candidates': cands}
         counter = counter+1
     
 
@@ -1317,7 +1317,7 @@ def widgets_top_contested_races():
         SELECT 
           district, 
           branch, 
-          SUM(total_money) AS total_money 
+          SUM(total_money) AS money_sum 
         FROM contested_races 
         GROUP BY district, branch 
         ORDER BY SUM(total_money) DESC 
@@ -1362,7 +1362,7 @@ def widgets_top_contested_races():
             else:
                 cands.append({'candidate_id': c.candidate_id,'party': c.party, 'incumbent': c.incumbent,'name': cand_name})
             
-        top_races[counter] = {'district': district, 'branch': branch, 'total_money': tr.total_money, 'candidates': cands}
+        top_races[counter] = {'district': district, 'branch': branch, 'total_money': tr.money_sum, 'candidates': cands}
         counter = counter+1
     
 
