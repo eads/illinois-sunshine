@@ -49,7 +49,7 @@ Every Thursday, we recap the week’s political contributions, top earners, and 
     <i class='fa fa-times-circle fa-fw'></i>
     <a class="header-link" href='{{ url_for('views.contested_races') }}'>Contested Races</a> <small>updated daily</small>
 </h2>
-<p>Contested State Races in Illinois with the most donations and Super PAC spending, updated daily. <i class='fa fa-fw fa-hand-pointer-o'></i> Click on a row to see individual races.</p>
+<p>Contested races for the Illinois General Assembly and Illinois Comptroller with the highest available funds and most Super PAC spending. <i class='fa fa-fw fa-hand-pointer-o'></i> Click on a row to see individual races.</p>
 <table class = "table table-striped table-hover">
     <thead>
         <tr>
@@ -90,14 +90,14 @@ Every Thursday, we recap the week’s political contributions, top earners, and 
     </tbody>
 </table>
 <p>
-    <a class='btn btn-primary' href='{{ url_for('views.contested_races') }}'><i class='fa fa-times-circle fa-fw'></i> More contested races &raquo;</a>
+    <a class='btn btn-primary' href='{{ url_for('views.contested_races') }}'><i class='fa fa-times-circle fa-fw'></i> All Contested Races &raquo;</a>
 </p><br /><br />
 <h2>
     <i class='fa fa-dollar fa-fw'></i>
-    <a class="header-link" href='{{ url_for('views.donations') }}'>Political Donations</a> <small>since 1994</small>
+    <a class="header-link" href='{{ url_for('views.donations') }}'>Tracking Political Donations</a> <small>by month and year</small>
 </h2>
 
-<p>The chart below shows total political donations over time. The spikes are fundraising leading up to municipal or general elections. <i class='fa fa-fw fa-hand-pointer-o'></i> Click on a month to see the individual donations.</p>
+<p>The chart below shows political donations since 1994. <i class='fa fa-fw fa-hand-pointer-o'></i> Hover over a month to see total donations and transfers during that time period. To see total donations and transfers by year, decrease the size of your browser window until you see dark green bars.</p>
 
 <div class='hidden-sm hidden-xs' id='donation-chart'></div>
 <br />
