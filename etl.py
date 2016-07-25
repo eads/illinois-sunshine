@@ -951,11 +951,17 @@ class SunshineViews(object):
         except ValueError:
             return 
   
-        candidate = db_session.query(Candidate).get(candidate_id)
+        cand_sql = '''(
+            SELECT *
+            FROM candidates 
+            WHERE id = :candidate_id
+            )
+        '''
+        candidate = self.executeTransaction(sa.text(cand_sql),candidate_id=candidate_id).fetchone()
+        #candidate = db_session.query(Candidate).get(candidate_id)
 
         if not candidate:
             return
-        print(candidate_id)
         candidate_name = candidate.first_name + " " + candidate.last_name
         d2_part = '9B'
  
@@ -1036,7 +1042,14 @@ class SunshineViews(object):
         except ValueError:
             return 
 
-        committee = db_session.query(Committee).get(committee_id)
+        comm_sql = '''(
+            SELECT *
+            FROM committees
+            WHERE id = :committee_id
+            )
+        '''
+        committee = self.executeTransaction(sa.text(comm_sql),committee_id=committee_id).fetchone()
+        #committee = db_session.query(Committee).get(committee_id)
          
         if not committee:
             return 
