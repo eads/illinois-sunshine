@@ -14,7 +14,7 @@
             {{ expense.last_name }}
             <strong> from {{ expense.committee.name }}</strong>
             {% if expense.expended_date %}
-                on {{ expense.expended_date.strftime('%B %-m, %Y') }}
+                on {{ expense.expended_date.strftime('%B %d, %Y') }}
             {% endif %}
         </h2>
         <br />
