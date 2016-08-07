@@ -875,6 +875,8 @@ class SunshineViews(object):
                 investments = 0
                 debts = 0
                 total_money = 0
+                candidate_names = [] #list of all possible candidate name possibilities
+
                 try:
                     candidate_id = int(float(e['Candidate ID']))
                 except:
@@ -891,10 +893,24 @@ class SunshineViews(object):
                     district = None
 
                 if candidate_id:
-                    supporting_funds, opposing_funds = self.get_candidate_funds(candidate_id)
-                else:
-                    supporting_funds, opposing_funds = self.get_candidate_funds_byname(e['First'],e['Last'])
-                
+                    candidate_names.append(self.get_candidate_name(candidate_id))
+
+                first_names = e['First'].split(';')
+                last_names = e['Last'].split(';')
+
+                for fn in first_names:
+                    for ln in last_names:
+                        candidate_names.append(fn.lstrip() + " " + ln.lstrip())
+                        candidate_names.append(ln.lstrip() + " " + fn.lstrip())
+
+                cand_names = set(candidate_names)
+
+                for cn in cand_names:
+                    supp_funds, opp_funds = self.get_candidate_funds_byname(cn)
+                    supporting_funds = supporting_funds + supp_funds
+                    opposing_funds = opposing_funds + opp_funds
+
+ 
                 if committee_id:
                     committee, recent_receipts, recent_total, latest_filing, controlled_amount, ending_funds, investments, debts, expenditures, total_expenditures = self.get_committee_details(committee_id)
 
@@ -944,7 +960,7 @@ class SunshineViews(object):
         except sa.exc.ProgrammingError:
             print('Problem in creating contested_races table')
 
-    def get_candidate_funds(self,candidate_id):
+    def get_candidate_name(self,candidate_id):
     
         try:
             candidate_id = int(candidate_id)
@@ -961,48 +977,14 @@ class SunshineViews(object):
         #candidate = db_session.query(Candidate).get(candidate_id)
 
         if not candidate:
-            return
-        candidate_name = candidate.first_name + " " + candidate.last_name
+            return ""
+        else:
+            candidate_name = candidate.first_name + " " + candidate.last_name
+            return candidate_name
+              
+    def get_candidate_funds_byname(self,candidate_name):
+    
         d2_part = '9B'
- 
-        expended_date = datetime(2016, 3, 16, 0, 0)
-
-        supporting_funds_sql = '''( 
-            SELECT 
-              COALESCE(SUM(e.amount), 0) AS amount
-            FROM condensed_expenditures AS e
-            WHERE e.candidate_name = :candidate_name
-              AND e.d2_part = :d2_part
-              AND e.expended_date > :expended_date 
-              AND e.supporting = 'true'
-            )
-        '''
- 
-        supporting_funds = self.executeTransaction(sa.text(supporting_funds_sql), candidate_name = candidate_name, d2_part = d2_part, expended_date=expended_date).fetchone().amount
-
-        opposing_funds_sql = '''( 
-            SELECT 
-              COALESCE(SUM(e.amount), 0) AS amount
-            FROM condensed_expenditures AS e
-            WHERE e.candidate_name = :candidate_name
-              AND e.d2_part = :d2_part
-              AND e.expended_date > :expended_date
-              AND e.opposing = 'true'
-            ) 
-        '''
-    
-        opposing_funds = self.executeTransaction(sa.text(opposing_funds_sql), candidate_name=candidate_name,d2_part=d2_part,expended_date=expended_date).fetchone().amount
-
-        return supporting_funds, opposing_funds
-
-
-    def get_candidate_funds_byname(self,candidate_firstname, candidate_lastname):
-    
-    
-    
-        candidate_name = candidate_firstname + " " + candidate_lastname
-        d2_part = '9B'
-    
         expended_date = datetime(2016, 3, 16, 0, 0)
 
         supporting_funds_sql = '''( 
