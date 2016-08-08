@@ -383,14 +383,20 @@ def contested_races():
         else:
             district = int(e['District'])
          
+        first_names = e['First'].split(';')
+        last_names = e['Last'].split(';')
+
+        first_name = first_names[0].strip()
+        last_name = last_names[0].strip()
+
         if district in contested_dict:
             if e['Incumbent'] == 'Y':
-                contested_dict[district].insert(0,{'last': e['Last'], 'first': e['First'],'incumbent': e['Incumbent'],'party': e['Party']})
+                contested_dict[district].insert(0,{'last': last_name, 'first': first_name,'incumbent': e['Incumbent'],'party': e['Party']})
             else:
-                contested_dict[district].append({'last': e['Last'], 'first': e['First'],'incumbent': e['Incumbent'],'party': e['Party']})
+                contested_dict[district].append({'last': last_name, 'first': first_name,'incumbent': e['Incumbent'],'party': e['Party']})
         else:
             contested_dict[district] = []
-            contested_dict[district].append({'last': e['Last'], 'first': e['First'],'incumbent': e['Incumbent'],'party': e['Party']})
+            contested_dict[district].append({'last': last_name, 'first': first_name,'incumbent': e['Incumbent'],'party': e['Party']})
     
    
      
@@ -420,72 +426,54 @@ def contested_races():
 @cache.cached(timeout=CACHE_TIMEOUT, key_prefix=make_cache_key)
 def contested_race_detail(race_type, district):
 
+
     if race_type == 'comptroller':
-        input_file = csv.DictReader(open(os.getcwd()+'/sunshine/comptroller_contested_race_2016.csv'))
         contested_race_title = "State Comptroller - Contested Race"
     else:
-        input_file = csv.DictReader(open(os.getcwd()+'/sunshine/contested_races_2016.csv'))
         contested_race_title = "District " + district + " - Contested Race "
-    
-    entries = []
-    for row in input_file:
-        entries.append(row)
-    
-    
+
     if race_type == "house":
-        contested_list = filter(lambda race: race['Senate/House'] == "H" and int(float(race['District'])) == district, entries)
+        branch = 'H'
         contested_race_description = "Contested race information for District " + district + " in the Illinois House of Representatives"
     elif race_type == "senate":
-        contested_list = filter(lambda race: race['Senate/House'] == "S" and int(float(race['District'])) == district, entries)
+        branch = 'S'
         contested_race_description = "Contested race information for District " + district + " in the Illinois Senate"
     else:
-        contested_list = entries
+        branch = 'C'   
         contested_race_description = "Contested race information for Illinois State Comptroller"
     
 
     district = int(float(district))
+    contested_races_sql = '''
+        SELECT *
+        FROM contested_races
+        WHERE district = :district
+          AND branch = :branch
+    '''
+        
+    races = list(g.engine.execute(sa.text(contested_races_sql),district=district,branch=branch)) 
+ 
     contested_races = []
-
-    for e in contested_list:
-        supporting_funds = 0
-        opposing_funds = 0
-        if e['Candidate ID']:
-            candidate_id = int(float(e['Candidate ID']))
-            supporting_funds, opposing_funds = get_candidate_funds(candidate_id)
+    for race in races:
+        if race.incumbent == 'Y':
+            contested_races.insert(0,{'last': race.last_name, 'first': race.first_name,'committee_name': race.committee_name,'incumbent': race.incumbent,'committee_id': race.committee_id,'party': race.party,'investments': race.investments, 'debts': race.debts, 'supporting_funds': race.supporting_funds, 'opposing_funds': race.opposing_funds, 'contributions' : race.contributions, 'total_funds' : race.total_funds, 'funds_available' : race.funds_available, 'total_money' : race.total_money, 'candidate_id' : race.candidate_id, 'reporting_period_end' : race.reporting_period_end})
         else:
-            candidate_id = e['Candidate ID']
-            supporting_funds, opposing_funds = get_candidate_funds_byname(e['First'],e['Last'])
-         
-        if(e['ID'].lower() == 'na' or e['ID'].lower() == '' or e['ID'].lower() == 'n/a'):
-            
-            contested_races.append({'last': e['Last'], 'first': e['First'],'committee_name': e['Committee'],'incumbent': e['Incumbent'],'id': e['ID'],'party': e['Party'], 'supporting_funds': supporting_funds, 'opposing_funds': opposing_funds, 'candidate_id' : candidate_id})
-            
-        else:
-            committee, recent_receipts, recent_total, latest_filing, controlled_amount, ending_funds, investments, debts, expenditures, total_expenditures = get_committee_details(e['ID'])
-
-            contested_races.append({'last': e['Last'], 'first': e['First'],'committee_name': e['Committee'],'incumbent': e['Incumbent'],'id': e['ID'],'party': e['Party'],'committee':committee, 'recent_receipts': recent_receipts, 'recent_total': recent_total, 'latest_filing': latest_filing, 'controlled_amount': controlled_amount, 'ending_funds': ending_funds, 'investments': investments, 'debts': debts, 'expenditures': expenditures, 'total_expenditures': total_expenditures, 'supporting_funds': supporting_funds, 'opposing_funds': opposing_funds, 'candidate_id' : candidate_id})
+            contested_races.append({'last': race.last_name, 'first': race.first_name,'committee_name': race.committee_name,'incumbent': race.incumbent,'committee_id': race.committee_id,'party': race.party,'investments': race.investments, 'debts': race.debts, 'supporting_funds': race.supporting_funds, 'opposing_funds': race.opposing_funds, 'contributions' : race.contributions, 'total_funds' : race.total_funds, 'funds_available' : race.funds_available, 'total_money' : race.total_money, 'candidate_id' : race.candidate_id, 'reporting_period_end' : race.reporting_period_end})
 
             
 
-    total_funds = 0
+    total_money = 0
     for c in contested_races:
-        total_funds += c['supporting_funds'] + c['opposing_funds']
-        if 'controlled_amount' in c:
-            total_funds += c['controlled_amount']
+            total_money += c['total_money']
         
 
-   # with open('contested_dict.csv', 'w') as f:  # Just use 'w' mode in 3.x
-   #     w = csv.DictWriter(f, contested_dict.keys())
-   #     w.writeheader()
-   #     w.writerow(contested_dict)
- 
     return render_template('contested-race-detail.html',
                             race_type=race_type,
                             district=district, 
                             contested_race_title=contested_race_title,
                             contested_race_description=contested_race_description,
                             contested_races=contested_races,
-                            total_funds=total_funds)
+                            total_money=total_money)
 
     
 @views.route('/committees/')
@@ -1154,50 +1142,71 @@ def independent_expenditures(candidate_id, stance):
         independent_expenditures_title = "Opposing Independent Expenditures" 
         independent_expenditures_description = "All independent expenditures in opposition to " + candidate_name
 
+    all_names = []
+    all_names.append(candidate_name)
 
-    params={'candidate_name': candidate_name}
+    #get all possible names for candidate
+    alternate_names_sql = '''
+        SELECT
+          alternate_names
+        FROM contested_races
+        WHERE candidate_id = :candidate_id
+    '''
+
+    alternate_names = g.engine.execute(sa.text(alternate_names_sql), candidate_id=candidate_id).first()
+    if alternate_names:
+        alt_names = alternate_names.alternate_names.split(';')
+
+        for name in alt_names:
+            all_names.append(name.strip())
+
     d2_part = '9B'
-    params={'d2_part': d2_part}
 
-    if independent_expenditures_type == "Supporting":
+    independent_expenditures =[]
+    master_names = set(all_names) 
+    for candidate_name in master_names:
         
-        ind_expenditures_sql = ''' 
-            SELECT 
-              committee_id, 
-              amount AS amount, 
-              expended_date AS date
-            FROM condensed_expenditures
-            WHERE candidate_name = :candidate_name
-              AND d2_part = :d2_part
-              AND supporting = 'true'
-        '''
+        if independent_expenditures_type == "Supporting":
+            
+            ind_expenditures_sql = ''' 
+                SELECT 
+                  committee_id, 
+                  amount AS amount, 
+                  expended_date AS date
+                FROM condensed_expenditures
+                WHERE candidate_name = :candidate_name
+                  AND d2_part = :d2_part
+                  AND supporting = 'true'
+            '''
 
-    else:
-        ind_expenditures_sql = ''' 
-            SELECT 
-              committee_id, 
-              amount AS amount, 
-              expended_date AS date
-            FROM condensed_expenditures 
-            WHERE candidate_name = :candidate_name
-              AND d2_part = :d2_part
-              AND opposing = 'true'
-        '''
+        else:
+            ind_expenditures_sql = ''' 
+                SELECT 
+                  committee_id, 
+                  amount AS amount, 
+                  expended_date AS date
+                FROM condensed_expenditures 
+                WHERE candidate_name = :candidate_name
+                  AND d2_part = :d2_part
+                  AND opposing = 'true'
+            '''
 
-    ind_expends = list(g.engine.execute(sa.text(ind_expenditures_sql),     
-                                        candidate_name=candidate_name,
-                                        d2_part=d2_part))
-    independent_expenditures =[] 
-    for ie in ind_expends:
-        ie_dict = dict(ie.items())
-        ie_dict['committee_name'] = db_session.query(Committee).get(ie_dict['committee_id']).name
-        independent_expenditures.append(ie_dict)
-     
+        ind_expends = list(g.engine.execute(sa.text(ind_expenditures_sql),     
+                                            candidate_name=candidate_name,
+                                            d2_part=d2_part))
+        for ie in ind_expends:
+            ie_dict = dict(ie.items())
+            ie_dict['committee_name'] = db_session.query(Committee).get(ie_dict['committee_id']).name
+            independent_expenditures.append(ie_dict)
+         
       
+    newlist = sorted(independent_expenditures, key=lambda k: k['date'])
+    candidate_name = " ".join(cname)
+
     return render_template('independent-expenditures.html',
                             independent_expenditures_type=independent_expenditures_type,
                             independent_expenditures_title=independent_expenditures_title,
-                            independent_expenditures=independent_expenditures,
+                            independent_expenditures=newlist,
                             independent_expenditures_description=independent_expenditures_description,
                             candidate_name=candidate_name,
                             candidate_id=candidate_id)
