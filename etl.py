@@ -895,14 +895,14 @@ class SunshineViews(object):
                 first_names = e['First'].split(';')
                 last_names = e['Last'].split(';')
 
+                first_name = first_names[0].lstrip()
+                last_name = last_names[0].lstrip()
+ 
                 if candidate_id:
                     first_name, last_name = self.get_candidate_name(candidate_id)
                     if first_name and last_name:
                         candidate_names.append(first_name + " " + last_name)
-                    else:
-                        first_name = first_names[0].lstrip()
-                        last_name = last_names[0].lstrip()
-                        
+                       
                 for fn in first_names:
                     for ln in last_names:
                         candidate_names.append(fn.lstrip() + " " + ln.lstrip())
