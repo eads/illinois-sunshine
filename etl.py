@@ -895,8 +895,8 @@ class SunshineViews(object):
                 first_names = e['First'].split(';')
                 last_names = e['Last'].split(';')
 
-                first_name = first_names[0].lstrip()
-                last_name = last_names[0].lstrip()
+                first_name = first_names[0].strip()
+                last_name = last_names[0].strip()
  
                 if candidate_id:
                     first_name, last_name = self.get_candidate_name(candidate_id)
@@ -905,8 +905,8 @@ class SunshineViews(object):
                        
                 for fn in first_names:
                     for ln in last_names:
-                        candidate_names.append(fn.lstrip() + " " + ln.lstrip())
-                        candidate_names.append(ln.lstrip() + " " + fn.lstrip())
+                        candidate_names.append(fn.strip() + " " + ln.strip())
+                        candidate_names.append(ln.strip() + " " + fn.strip())
 
                 cand_names = set(candidate_names)
 
@@ -927,7 +927,7 @@ class SunshineViews(object):
                         
                 
                 total_money = supporting_funds + opposing_funds + controlled_amount 
-                contested_races.append({'district': district, 'branch': e['Senate/House'], 'last_name': last_name, 'first_name': first_name,'committee_name': e['Committee'],'incumbent': e['Incumbent'],'committee_id': committee_id,'party': e['Party'], 'funds_available': funds_available, 'contributions': contributions, 'total_funds': total_funds, 'investments': investments, 'debts': debts, 'supporting_funds': supporting_funds, 'opposing_funds': opposing_funds, 'candidate_id' : candidate_id, 'total_money': total_money, 'reporting_period_end' : latest_filing.reporting_period_end})
+                contested_races.append({'district': district, 'branch': e['Senate/House'], 'last_name': last_name, 'first_name': first_name,'committee_name': e['Committee'],'incumbent': e['Incumbent'],'committee_id': committee_id,'party': e['Party'], 'funds_available': funds_available, 'contributions': contributions, 'total_funds': total_funds, 'investments': investments, 'debts': debts, 'supporting_funds': supporting_funds, 'opposing_funds': opposing_funds, 'candidate_id' : candidate_id, 'total_money': total_money, 'reporting_period_end' : latest_filing.reporting_period_end, 'alternate_names' : ';'.join(cand_names)})
 
             exp = '''
                 CREATE TABLE contested_races(
@@ -948,7 +948,8 @@ class SunshineViews(object):
                     opposing_funds DOUBLE PRECISION,
                     reporting_period_end DATE,
                     district INTEGER,
-                    candidate_id INTEGER
+                    candidate_id INTEGER,
+                    alternate_names TEXT
                 )
             '''
             
@@ -956,7 +957,7 @@ class SunshineViews(object):
             curs = self.connection.connection.cursor()
             curs.execute(exp)   
             insert_statement = 'INSERT INTO contested_races (%s) VALUES %s'
-            cols = ['last_name', 'committee_id', 'incumbent', 'district', 'first_name', 'total_funds', 'candidate_id', 'investments', 'committee_name', 'supporting_funds', 'opposing_funds', 'party', 'branch', 'contributions', 'debts', 'total_money', 'funds_available','reporting_period_end']
+            cols = ['last_name', 'committee_id', 'incumbent', 'district', 'first_name', 'total_funds', 'candidate_id', 'investments', 'committee_name', 'supporting_funds', 'opposing_funds', 'party', 'branch', 'contributions', 'debts', 'total_money', 'funds_available','reporting_period_end','alternate_names']
             for cr in contested_races:
 
                 values = [cr[column] for column in cols]
