@@ -101,7 +101,7 @@ class SunshineExtract(object):
         k.make_public()
         bucket.copy_key(
             'IL_Campaign_Disclosure_latest.zip', 
-            'il-elections', 
+            'illinoissunshine-etl', 
             '%s.zip' % zf_name,
             preserve_acl=True)
         
