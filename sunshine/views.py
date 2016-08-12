@@ -1161,6 +1161,7 @@ def independent_expenditures(candidate_id, stance):
             all_names.append(name.strip())
 
     d2_part = '9B'
+    expended_date = datetime(2016, 3, 16, 0, 0)
 
     independent_expenditures =[]
     master_names = set(all_names) 
@@ -1176,6 +1177,7 @@ def independent_expenditures(candidate_id, stance):
                 FROM condensed_expenditures
                 WHERE candidate_name = :candidate_name
                   AND d2_part = :d2_part
+                  AND expended_date > :expended_date
                   AND supporting = 'true'
             '''
 
@@ -1188,12 +1190,14 @@ def independent_expenditures(candidate_id, stance):
                 FROM condensed_expenditures 
                 WHERE candidate_name = :candidate_name
                   AND d2_part = :d2_part
+                  AND expended_date > :expended_date
                   AND opposing = 'true'
             '''
 
         ind_expends = list(g.engine.execute(sa.text(ind_expenditures_sql),     
                                             candidate_name=candidate_name,
-                                            d2_part=d2_part))
+                                            d2_part=d2_part,
+                                            expended_date=expended_date))
         for ie in ind_expends:
             ie_dict = dict(ie.items())
             ie_dict['committee_name'] = db_session.query(Committee).get(ie_dict['committee_id']).name
