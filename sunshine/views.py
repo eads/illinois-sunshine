@@ -1140,7 +1140,6 @@ def independent_expenditures(candidate_id, stance):
         independent_expenditures_type = 'Opposing'
         independent_expenditures_title = "Opposing Independent Expenditures" 
         independent_expenditures_description = "Independent expenditures in opposition to " + candidate_name + " since March 16, 2016"
-	type_arg = 'opposing'
 
     all_names = []
     all_names.append(candidate_name)
