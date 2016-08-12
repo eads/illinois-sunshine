@@ -907,6 +907,7 @@ class SunshineViews(object):
                     for ln in last_names:
                         candidate_names.append(fn.strip() + " " + ln.strip())
                         candidate_names.append(ln.strip() + " " + fn.strip())
+                        candidate_names.append(ln.strip())
 
                 cand_names = set(candidate_names)
 
