@@ -833,8 +833,9 @@ def committee(committee_id):
     
     params = {'committee_id': committee_id}
 
-    if latest_filing.end_funds_available \
-        or latest_filing.end_funds_available == 0:
+    if (latest_filing.end_funds_available \
+        or latest_filing.end_funds_available == 0) \
+        and latest_filing.reporting_period_end:
 
         recent_receipts = ''' 
             SELECT 
@@ -854,7 +855,7 @@ def committee(committee_id):
         recent_receipts = ''' 
             SELECT 
               COALESCE(SUM(receipts.amount), 0) AS amount
-            FROM condensed_receipts
+            FROM condensed_receipts AS receipts
             JOIN filed_docs AS filed
               ON receipts.filed_doc_id = filed.id
             WHERE receipts.committee_id = :committee_id
@@ -864,7 +865,6 @@ def committee(committee_id):
 
     recent_total = g.engine.execute(sa.text(recent_receipts),**params).first().amount
     controlled_amount += recent_total
-    
     candidate_ids = tuple(c.id for c in committee.candidates)
     
     related_committees = ''' 

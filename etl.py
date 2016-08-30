@@ -1038,7 +1038,6 @@ class SunshineViews(object):
             )
         '''
         committee = self.executeTransaction(sa.text(comm_sql),committee_id=committee_id).fetchone()
-        #committee = db_session.query(Committee).get(committee_id)
          
         if not committee:
             return 
@@ -1056,8 +1055,9 @@ class SunshineViews(object):
         
         params = {'committee_id': committee_id}
 
-        if latest_filing.end_funds_available \
-            or latest_filing.end_funds_available == 0:
+        if (latest_filing.end_funds_available \
+            or latest_filing.end_funds_available == 0) \
+            and latest_filing.reporting_period_end:
 
             recent_receipts = '''( 
                 SELECT 
@@ -1079,7 +1079,7 @@ class SunshineViews(object):
             recent_receipts = '''( 
                 SELECT 
                   COALESCE(SUM(receipts.amount), 0) AS amount
-                FROM condensed_receipts
+                FROM condensed_receipts AS receipts
                 JOIN filed_docs AS filed
                   ON receipts.filed_doc_id = filed.id
                 WHERE receipts.committee_id = :committee_id
