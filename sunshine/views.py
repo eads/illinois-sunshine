@@ -561,250 +561,6 @@ def committees():
                            committee_title=committee_title,
                            page_count=page_count)
 
-def get_candidate_id(first_name, last_name):
-
-    params = {'last_name': last_name}
-    params = {'first_name': first_name}
-
-    candidate_id_sql = '''
-        SELECT
-          id AS candidate_id
-        FROM candidates
-        WHERE last_name = :last_name 
-          AND first_name = :first_name
-    '''
-    candidate_id = ""
-    all_ids = list(g.engine.execute(sa.text(candidate_id_sql), last_name = last_name, first_name =first_name))
-    if not all_ids:
-        id_sql = '''
-            SELECT
-              id AS candidate_id,
-              first_name AS f_name 
-            FROM candidates
-            WHERE last_name = :last_name
-        '''
-        last_name_ids = list(g.engine.execute(sa.text(id_sql),last_name=last_name))
-
-        if not last_name_ids:
-            candidate_id=""
-        else:
-            for l_id in last_name_ids:
-                fname_arr = (l_id.f_name).split(" ")
-                if fname_arr[0] == first_name:
-                    candidate_id = l_id.candidate_id
-
-    else:
-        candidate_id = all_ids[0].candidate_id
-
-
-    return candidate_id
-
-def get_candidate_funds(candidate_id):
-    
-    try:
-        candidate_id = int(candidate_id)
-    except ValueError:
-        return abort(404)
-    
-    candidate = db_session.query(Candidate).get(candidate_id)
-    
-    if not candidate:
-        return abort(404)
-
-    candidate_name = candidate.first_name + " " + candidate.last_name
-    params= {'candidate_name': candidate_name}   
-    d2_part = '9B'
- 
-    params= {'d2_part': d2_part}
-    
-    support_min_date = datetime(2016, 3, 16, 0, 0)
-    params = {'support_min_date': support_min_date}
-
-    expended_date = support_min_date
-    params = {'expended_date': expended_date}
-
-    supporting_funds_sql = ''' 
-        SELECT 
-          COALESCE(SUM(amount), 0) AS amount
-        FROM condensed_expenditures
-        WHERE candidate_name = :candidate_name
-          AND d2_part = :d2_part
-          AND expended_date > :expended_date
-          AND supporting = 'true' 
-    '''
-    
-    supporting_funds = g.engine.execute(sa.text(supporting_funds_sql), candidate_name=candidate_name, d2_part=d2_part, expended_date=expended_date).first().amount
-
-    opposing_funds_sql = ''' 
-        SELECT 
-          COALESCE(SUM(amount), 0) AS amount
-        FROM condensed_expenditures
-        WHERE candidate_name = :candidate_name
-          AND d2_part = :d2_part
-          AND expended_date > :expended_date
-          AND opposing = 'true' 
-    '''
-    
-    opposing_funds = g.engine.execute(sa.text(opposing_funds_sql), candidate_name=candidate_name, d2_part=d2_part, expended_date=expended_date).first().amount
-
-
-    return supporting_funds, opposing_funds
-
-
-def get_candidate_funds_byname(candidate_firstname, candidate_lastname):
-    
-    
-    
-    candidate_name = candidate_firstname + " " + candidate_lastname
-    params= {'candidate_name': candidate_name}   
-    d2_part = '9B'
-    print(candidate_name) 
-    params= {'d2_part': d2_part}
-    
-    expended_date = datetime(2016, 3, 16, 0, 0)
-    params = {'expended_date': expended_date}
-
-    supporting_funds_sql = ''' 
-        SELECT 
-          COALESCE(SUM(amount), 0) AS amount
-        FROM expenditures
-        WHERE candidate_name = :candidate_name
-          AND d2_part = :d2_part
-          AND expended_date > :expended_date
-          AND supporting = 'true' 
-    '''
-    
-    supporting_funds = g.engine.execute(sa.text(supporting_funds_sql), candidate_name=candidate_name, d2_part=d2_part, expended_date=expended_date).first().amount
-
-    opposing_funds_sql = ''' 
-        SELECT 
-          COALESCE(SUM(amount), 0) AS amount
-        FROM expenditures
-        WHERE candidate_name = :candidate_name
-          AND d2_part = :d2_part
-          AND expended_date > :expended_date 
-          AND opposing = 'true'
-    '''
-    
-    opposing_funds = g.engine.execute(sa.text(opposing_funds_sql), candidate_name=candidate_name, d2_part=d2_part, expended_date=expended_date).first().amount
-
-
-    return supporting_funds, opposing_funds
-
-
-def get_committee_details(committee_id):
-
-    committee_id = committee_id.rsplit('-', 1)[-1]
-
-    try:
-        committee_id = int(committee_id)
-    except ValueError:
-        return abort(404)
-    committee = db_session.query(Committee).get(committee_id)
-    
-    if not committee:
-        return abort(404)
-    
-    latest_filing = ''' 
-        SELECT * FROM most_recent_filings
-        WHERE committee_id = :committee_id
-        ORDER BY received_datetime DESC
-        LIMIT 1
-    '''
-
-    latest_filing = g.engine.execute(sa.text(latest_filing), 
-                                   committee_id=committee_id).first()
-    
-    params = {'committee_id': committee_id}
-
-    if latest_filing.end_funds_available \
-        or latest_filing.end_funds_available == 0:
-
-        recent_receipts = ''' 
-            SELECT 
-              COALESCE(SUM(receipts.amount), 0) AS amount
-            FROM condensed_receipts AS receipts
-            JOIN filed_docs AS filed
-              ON receipts.filed_doc_id = filed.id
-            WHERE receipts.committee_id = :committee_id
-              AND receipts.received_date > :end_date
-        '''
-        controlled_amount = latest_filing.end_funds_available 
-        
-        params['end_date'] = latest_filing.reporting_period_end
-        end_date = latest_filing.reporting_period_end
-
-    else:
-
-        recent_receipts = ''' 
-            SELECT 
-              COALESCE(SUM(receipts.amount), 0) AS amount
-            FROM condensed_receipts
-            JOIN filed_docs AS filed
-              ON receipts.filed_doc_id = filed.id
-            WHERE receipts.committee_id = :committee_id
-        '''
-        
-        controlled_amount = 0
-
-    recent_total = g.engine.execute(sa.text(recent_receipts),**params).first().amount
-    controlled_amount += recent_total
-    
-       
-    params = {'committee_id': committee_id}
-    
-
-    quarterlies = ''' 
-        SELECT DISTINCT ON (f.doc_name, f.reporting_period_end)
-          r.end_funds_available,
-          r.total_investments,
-          r.total_receipts,
-          (r.debts_itemized * -1) as debts_itemized,
-          (r.debts_non_itemized * -1) as debts_non_itemized,
-          (r.total_expenditures * -1) as total_expenditures,
-          f.reporting_period_end
-        FROM d2_reports AS r
-        JOIN filed_docs AS f
-          ON r.filed_doc_id = f.id
-        WHERE r.committee_id = :committee_id
-          AND f.reporting_period_end IS NOT NULL
-          AND f.doc_name = 'Quarterly'
-        ORDER BY f.reporting_period_end ASC
-    '''
-
-    quarterlies = list(g.engine.execute(sa.text(quarterlies), 
-                                 committee_id=committee_id))
-
-    ending_funds = [[r.end_funds_available, 
-                     r.reporting_period_end.year,
-                     r.reporting_period_end.month,
-                     r.reporting_period_end.day] 
-                     for r in quarterlies]
-
-    investments = [[r.total_investments, 
-                    r.reporting_period_end.year,
-                    r.reporting_period_end.month,
-                    r.reporting_period_end.day] 
-                    for r in quarterlies]
-
-    debts = [[(r.debts_itemized + r.debts_non_itemized), 
-               r.reporting_period_end.year,
-               r.reporting_period_end.month,
-               r.reporting_period_end.day] 
-               for r in quarterlies]
-
-    expenditures = [[r.total_expenditures, 
-                     r.reporting_period_end.year,
-                     r.reporting_period_end.month,
-                     r.reporting_period_end.day] 
-                     for r in quarterlies]
-    
-    #accomodate for independent expenditures past last filing date
-    
-    total_expenditures = sum([r.total_expenditures for r in quarterlies])
-
-    return committee, recent_receipts, recent_total, latest_filing, controlled_amount, ending_funds, investments, debts, expenditures, total_expenditures
-
 
 @views.route('/committees/<committee_id>/')
 @cache.cached(timeout=CACHE_TIMEOUT, key_prefix=make_cache_key)
@@ -828,14 +584,17 @@ def committee(committee_id):
         LIMIT 1
     '''
 
-    latest_filing = g.engine.execute(sa.text(latest_filing), 
-                                   committee_id=committee_id).first()
+    latest_filing = dict(g.engine.execute(sa.text(latest_filing), 
+                                   committee_id=committee_id).first())
     
     params = {'committee_id': committee_id}
 
-    if (latest_filing.end_funds_available \
-        or latest_filing.end_funds_available == 0) \
-        and latest_filing.reporting_period_end:
+    if not latest_filing['reporting_period_end']:
+      latest_filing['reporting_period_end'] = datetime.now().date() - timedelta(days=90)
+
+
+    if latest_filing['end_funds_available'] \
+        or latest_filing['end_funds_available'] == 0:
 
         recent_receipts = ''' 
             SELECT 
@@ -846,9 +605,9 @@ def committee(committee_id):
             WHERE receipts.committee_id = :committee_id
               AND receipts.received_date > :end_date
         '''
-        controlled_amount = latest_filing.end_funds_available 
+        controlled_amount = latest_filing['end_funds_available'] 
         
-        params['end_date'] = latest_filing.reporting_period_end
+        params['end_date'] = latest_filing['reporting_period_end']
 
     else:
 
@@ -1039,7 +798,7 @@ def committee(committee_id):
     quarterlies = list(g.engine.execute(sa.text(quarterlies), 
                                  committee_id=committee_id))
 
-    expended_date = latest_filing.reporting_period_end
+    expended_date = latest_filing['reporting_period_end']
     
     recent_expenditures_sql = ''' 
         SELECT 

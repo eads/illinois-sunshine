@@ -920,15 +920,15 @@ class SunshineViews(object):
                 if committee_id:
                     committee, recent_receipts, recent_total, latest_filing, controlled_amount, ending_funds, investments, debts, expenditures, total_expenditures = self.get_committee_details(committee_id)
 
-                    funds_available = latest_filing.end_funds_available
+                    funds_available = latest_filing['end_funds_available']
                     contributions = recent_total
                     total_funds = controlled_amount
-                    investments = latest_filing.total_investments
-                    debts = latest_filing.total_debts
+                    investments = latest_filing['total_investments']
+                    debts = latest_filing]'total_debts']
                         
                 
                 total_money = supporting_funds + opposing_funds + controlled_amount 
-                contested_races.append({'district': district, 'branch': e['Senate/House'], 'last_name': last_name, 'first_name': first_name,'committee_name': e['Committee'],'incumbent': e['Incumbent'],'committee_id': committee_id,'party': e['Party'], 'funds_available': funds_available, 'contributions': contributions, 'total_funds': total_funds, 'investments': investments, 'debts': debts, 'supporting_funds': supporting_funds, 'opposing_funds': opposing_funds, 'candidate_id' : candidate_id, 'total_money': total_money, 'reporting_period_end' : latest_filing.reporting_period_end, 'alternate_names' : ';'.join(cand_names)})
+                contested_races.append({'district': district, 'branch': e['Senate/House'], 'last_name': last_name, 'first_name': first_name,'committee_name': e['Committee'],'incumbent': e['Incumbent'],'committee_id': committee_id,'party': e['Party'], 'funds_available': funds_available, 'contributions': contributions, 'total_funds': total_funds, 'investments': investments, 'debts': debts, 'supporting_funds': supporting_funds, 'opposing_funds': opposing_funds, 'candidate_id' : candidate_id, 'total_money': total_money, 'reporting_period_end' : latest_filing['reporting_period_end'], 'alternate_names' : ';'.join(cand_names)})
 
             exp = '''
                 CREATE TABLE contested_races(
@@ -1050,14 +1050,16 @@ class SunshineViews(object):
             )
         '''
 
-        latest_filing = self.executeTransaction(sa.text(latest_filing), 
-                                       committee_id=committee_id).fetchone()
+        latest_filing = dict(self.executeTransaction(sa.text(latest_filing), 
+                                       committee_id=committee_id).fetchone())
         
         params = {'committee_id': committee_id}
 
-        if (latest_filing.end_funds_available \
-            or latest_filing.end_funds_available == 0) \
-            and latest_filing.reporting_period_end:
+        if not latest_filing['reporting_period_end']:
+            latest_filing['reporting_period_end'] = datetime.now().date() - timedelta(days=90)
+
+        if latest_filing['end_funds_available'] \
+            or latest_filing['end_funds_available'] == 0:
 
             recent_receipts = '''( 
                 SELECT 
@@ -1069,10 +1071,10 @@ class SunshineViews(object):
                   AND receipts.received_date > :end_date
                 )
             '''
-            controlled_amount = latest_filing.end_funds_available 
+            controlled_amount = latest_filing['end_funds_available'] 
             
-            params['end_date'] = latest_filing.reporting_period_end
-            end_date = latest_filing.reporting_period_end
+            params['end_date'] = latest_filing['reporting_period_end']
+            end_date = latest_filing['reporting_period_end']
 
         else:
 
