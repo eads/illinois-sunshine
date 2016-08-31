@@ -1,7 +1,7 @@
 from sunshine.models import Committee, Candidate, Officer, Candidacy, \
     D2Report, FiledDoc, Receipt, Expenditure, Investment
 import os
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from hashlib import md5
 import sqlalchemy as sa
 import csv
