@@ -924,7 +924,7 @@ class SunshineViews(object):
                     contributions = recent_total
                     total_funds = controlled_amount
                     investments = latest_filing['total_investments']
-                    debts = latest_filing]'total_debts']
+                    debts = latest_filing['total_debts']
                         
                 
                 total_money = supporting_funds + opposing_funds + controlled_amount 
