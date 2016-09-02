@@ -642,7 +642,7 @@ class SunshineReceipts(SunshineTransformLoad):
         for rid in omit_receipt_ids:
 
             del_sql = '''
-                DELETE FROM receipts WHERE id = :rid
+                DELETE FROM receipts WHERE id = rid
             '''
             self.executeTransaction(del_sql, rid=rid)
 
