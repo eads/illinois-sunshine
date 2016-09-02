@@ -869,9 +869,9 @@ class SunshineViews(object):
             self.expendituresByCandidateIndex()
 
     def contestedRaces(self):
-    """
+        """
         Creates the contested races view table from csv files hard saved in sunsine folder
-    """    
+        """    
         try:
             comptroller_input_file = csv.DictReader(open(os.getcwd()+'/sunshine/comptroller_contested_race_2016.csv'))
             races_input_file = csv.DictReader(open(os.getcwd()+'/sunshine/contested_races_2016.csv'))
