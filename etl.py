@@ -646,7 +646,7 @@ class SunshineReceipts(SunshineTransformLoad):
             '''.format(rid)
             self.executeTransaction(del_sql)
 
-            return 'Successfully deleted omit rows from receipts table'
+        return 'Successfully deleted omit rows from receipts table'
 
 
 class SunshineExpenditures(SunshineTransformLoad):
