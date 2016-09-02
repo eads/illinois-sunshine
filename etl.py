@@ -642,9 +642,9 @@ class SunshineReceipts(SunshineTransformLoad):
         for rid in omit_receipt_ids:
 
             del_sql = '''
-                DELETE FROM receipts WHERE id = rid
-            '''
-            self.executeTransaction(del_sql, rid=rid)
+                DELETE FROM receipts WHERE id = {0}
+            '''.format(rid)
+            self.executeTransaction(del_sql)
 
             return 'Successfully deleted omit rows from receipts table'
 
