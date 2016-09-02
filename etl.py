@@ -630,7 +630,25 @@ class SunshineReceipts(SunshineTransformLoad):
     table_name = 'receipts'
     header = Receipt.__table__.columns.keys()
     filename = 'Receipts.txt'
-    
+
+    # add receipt ids to omit because SBOE doesn't remove wrong data from db
+    omit_receipt_ids = (4506842, 4513719)
+
+    def delete_id_rows_from_receipts(self, omit_receipt_ids):
+        """
+        Deletes certain rows from master receipts datatable 
+        since SBOE doesn't remove wrong data from their db
+        """
+        for rid in omit_receipt_ids:
+
+            del_sql = '''
+                DELETE FROM receipts WHERE id = :rid
+            '''
+            self.executeTransaction(del_sql, rid=rid)
+
+            return 'Successfully deleted omit rows from receipts table'
+
+
 class SunshineExpenditures(SunshineTransformLoad):
     table_name = 'expenditures'
     header = Expenditure.__table__.columns.keys()
@@ -851,7 +869,9 @@ class SunshineViews(object):
             self.expendituresByCandidateIndex()
 
     def contestedRaces(self):
-        
+    """
+        Creates the contested races view table from csv files hard saved in sunsine folder
+    """    
         try:
             comptroller_input_file = csv.DictReader(open(os.getcwd()+'/sunshine/comptroller_contested_race_2016.csv'))
             races_input_file = csv.DictReader(open(os.getcwd()+'/sunshine/contested_races_2016.csv'))
@@ -1727,6 +1747,9 @@ if __name__ == "__main__":
         receipts.load()
         receipts.addNameColumn()
         receipts.addDateColumn('received_date')
+        
+        # delete specific rows from receipts table since sboe doesn't remove wrong data from db
+        receipts.delete_id_rows_from_receipts(receipts.omit_receipt_ids)
         
         del receipts
 
