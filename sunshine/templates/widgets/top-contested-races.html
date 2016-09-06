@@ -4,6 +4,7 @@
     {{ header("Top Contested Races", None, request.path) }}
 {% endblock %}
 {% block content %}
+<base target='_blank' />
 
 <h3>
     <a href='{{ url_for('views.contested_races') }}' target='_blank'>Top Contested Races</a>
@@ -28,9 +29,9 @@
             {% else %}
                 {% set r_type = "comptroller" %}
             {% endif %} 
-            <tr class = 'clickable' style= "cursor: Pointer;" target='_blank' onclick="window.location.href = '{{ url_for('views.contested_race_detail', race_type=r_type, district=value.district) }}';">
+            <tr class = 'clickable' style= "cursor: Pointer;" onclick="window.parent.location.href = '{{ url_for('views.contested_race_detail', race_type=r_type, district=value.district) }}';">
                 <td class='text-left'>
-                    <a target='_blank' href= '{{ url_for('views.contested_race_detail', race_type=r_type, district=value.district) }}'>{{ value.district }}</a>
+                    <a href= '{{ url_for('views.contested_race_detail', race_type=r_type, district=value.district) }}' target='_blank'>{{ value.district }}</a>
                 </td>
                 <td class ='text-left'>{{ value.branch[0] }}</td>
                 <td class='text-left'>
