@@ -29,7 +29,7 @@
             {% else %}
                 {% set r_type = "comptroller" %}
             {% endif %} 
-            <tr class = 'clickable' style= "cursor: Pointer;" onclick="window.parent.location.href = '{{ url_for('views.contested_race_detail', race_type=r_type, district=value.district) }}';">
+            <tr class = 'clickable' style= "cursor: Pointer;" onclick="window.open('{{ url_for('views.contested_race_detail', race_type=r_type, district=value.district) }}'); setAttribute('target','_blank');">
                 <td class='text-left'>
                     <a href= '{{ url_for('views.contested_race_detail', race_type=r_type, district=value.district) }}' target='_blank'>{{ value.district }}</a>
                 </td>
