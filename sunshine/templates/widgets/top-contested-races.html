@@ -28,9 +28,9 @@
             {% else %}
                 {% set r_type = "comptroller" %}
             {% endif %} 
-            <tr class = 'clickable' style= "cursor: Pointer;" target='_base' onclick="window.location.href = '{{ url_for('views.contested_race_detail', race_type=r_type, district=value.district) }}';">
+            <tr class = 'clickable' style= "cursor: Pointer;" target='_blank' onclick="window.location.href = '{{ url_for('views.contested_race_detail', race_type=r_type, district=value.district) }}';">
                 <td class='text-left'>
-                    <a target='_base' href= '{{ url_for('views.contested_race_detail', race_type=r_type, district=value.district) }}'>{{ value.district }}</a>
+                    <a target='_blank' href= '{{ url_for('views.contested_race_detail', race_type=r_type, district=value.district) }}'>{{ value.district }}</a>
                 </td>
                 <td class ='text-left'>{{ value.branch[0] }}</td>
                 <td class='text-left'>
