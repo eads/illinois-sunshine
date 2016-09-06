@@ -15,8 +15,8 @@
         <tr>
             <th class = 'text-left'>D</th>
             <th class = 'text-left'>Branch</th>
-            <th class = 'text-left' colspan = {{ maxc }}>Candidates</th>
-            <th class = 'text-left'>Total Money in Race</th>
+            <th class = 'text-left'>Candidates</th>
+            <th class = 'text-left'>Money in Race</th>
         </tr>
     </thead>
     <tbody>
@@ -33,16 +33,12 @@
                     <a href= '{{ url_for('views.contested_race_detail', race_type=r_type, district=value.district) }}'>{{ value.district }}</a>
                 </td>
                 <td class ='text-left'>{{ value.branch[0] }}</td>
-                {% for c in value.candidates %}
-                    <td class='text-left'>
+                <td class='text-left'>
+                    {% for c in value.candidates %}
                         {% set nameList = c.name.split(" ") %}
-                        {{ nameList[-1] }} ({{ c.party }}) 
-                    </td>
-                {% endfor %}
-                {% set tabbies = maxc-value.candidates|length %}
-                {% for n in range(tabbies) %}
-                    <td>&nbsp;</td>
-                {% endfor %}
+                        {{ nameList[-1] }} ({{ c.party }}) {% if c != value.candidates[-1] %}vs. {% endif %} 
+                    {% endfor %}
+                </td>
                 <td class='text-left'><strong>{{ value.total_money|format_money }}</strong></td>
             </a></tr>
 
