@@ -75,10 +75,10 @@ def index():
         cands=[]
         for c in candidates:
             cand_name = c.first_name + " " + c.last_name
-            if (cands and c.incumbent == 'Y'):
-                cands.insert(0,{'candidate_id': c.candidate_id,'party': c.party, 'incumbent': c.incumbent,'name': cand_name})
-            else:
+            if (cands and c.incumbent == 'N'):
                 cands.append({'candidate_id': c.candidate_id,'party': c.party, 'incumbent': c.incumbent,'name': cand_name})
+            else:
+                cands.insert(0,{'candidate_id': c.candidate_id,'party': c.party, 'incumbent': c.incumbent,'name': cand_name})
             
         top_races[counter] = {'district': district, 'branch': branch, 'total_money': tr.money_sum, 'candidates': cands}
         counter = counter+1
@@ -390,10 +390,10 @@ def contested_races():
         last_name = last_names[0].strip()
 
         if district in contested_dict:
-            if e['Incumbent'] == 'Y':
-                contested_dict[district].insert(0,{'last': last_name, 'first': first_name,'incumbent': e['Incumbent'],'party': e['Party']})
-            else:
+            if e['Incumbent'] == 'N':
                 contested_dict[district].append({'last': last_name, 'first': first_name,'incumbent': e['Incumbent'],'party': e['Party']})
+            else:
+                contested_dict[district].insert(0,{'last': last_name, 'first': first_name,'incumbent': e['Incumbent'],'party': e['Party']})
         else:
             contested_dict[district] = []
             contested_dict[district].append({'last': last_name, 'first': first_name,'incumbent': e['Incumbent'],'party': e['Party']})
@@ -455,10 +455,10 @@ def contested_race_detail(race_type, district):
  
     contested_races = []
     for race in races:
-        if race.incumbent == 'Y':
-            contested_races.insert(0,{'last': race.last_name, 'first': race.first_name,'committee_name': race.committee_name,'incumbent': race.incumbent,'committee_id': race.committee_id,'party': race.party,'investments': race.investments, 'debts': race.debts, 'supporting_funds': race.supporting_funds, 'opposing_funds': race.opposing_funds, 'contributions' : race.contributions, 'total_funds' : race.total_funds, 'funds_available' : race.funds_available, 'total_money' : race.total_money, 'candidate_id' : race.candidate_id, 'reporting_period_end' : race.reporting_period_end})
-        else:
+        if race.incumbent == 'N':
             contested_races.append({'last': race.last_name, 'first': race.first_name,'committee_name': race.committee_name,'incumbent': race.incumbent,'committee_id': race.committee_id,'party': race.party,'investments': race.investments, 'debts': race.debts, 'supporting_funds': race.supporting_funds, 'opposing_funds': race.opposing_funds, 'contributions' : race.contributions, 'total_funds' : race.total_funds, 'funds_available' : race.funds_available, 'total_money' : race.total_money, 'candidate_id' : race.candidate_id, 'reporting_period_end' : race.reporting_period_end})
+        else:
+            contested_races.insert(0,{'last': race.last_name, 'first': race.first_name,'committee_name': race.committee_name,'incumbent': race.incumbent,'committee_id': race.committee_id,'party': race.party,'investments': race.investments, 'debts': race.debts, 'supporting_funds': race.supporting_funds, 'opposing_funds': race.opposing_funds, 'contributions' : race.contributions, 'total_funds' : race.total_funds, 'funds_available' : race.funds_available, 'total_money' : race.total_money, 'candidate_id' : race.candidate_id, 'reporting_period_end' : race.reporting_period_end})
 
             
 
@@ -755,7 +755,7 @@ def committee(committee_id):
     
     related_candidates = list(g.engine.execute(sa.text(related_candidates_sql), 
                                         committee_id=committee.id))
-
+    import pdb; pdb.set_trace()
     for c in related_candidates:
         if c.supporting:
             added = False
@@ -851,7 +851,7 @@ def committee(committee_id):
 
     total_donations = sum([r.total_receipts for r in quarterlies])
     total_expenditures = sum([r.total_expenditures for r in quarterlies]) + sum([r.amount for r in recent_expenditures])
-    
+    import pdb; pdb.set_trace()
     return render_template('committee-detail.html', 
                            committee=committee, 
                            supported_candidates=supported_candidates,
@@ -1128,10 +1128,10 @@ def widgets_top_contested_races():
         cands=[]
         for c in candidates:
             cand_name = c.first_name + " " + c.last_name
-            if (cands and c.incumbent == 'Y'):
-                cands.insert(0,{'candidate_id': c.candidate_id,'party': c.party, 'incumbent': c.incumbent,'name': cand_name})
-            else:
+            if (cands and c.incumbent == 'N'):
                 cands.append({'candidate_id': c.candidate_id,'party': c.party, 'incumbent': c.incumbent,'name': cand_name})
+            else:
+                cands.insert(0,{'candidate_id': c.candidate_id,'party': c.party, 'incumbent': c.incumbent,'name': cand_name})
             
         top_races[counter] = {'district': district, 'branch': branch, 'total_money': tr.money_sum, 'candidates': cands}
         counter = counter+1

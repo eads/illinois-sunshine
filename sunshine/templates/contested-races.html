@@ -55,7 +55,7 @@
                     </td>
                     {% for c in value %}
                         <td class='text-left'>
-                            {{ c.first }} {{ c.last }} ({{ c.party }}) {% if c.incumbent|string() == 'Y' %} *INCUMBENT {% endif %}
+                            {{ c.first }} {{ c.last }} ({{ c.party }}) {% if c.incumbent|string() == 'Y' %} *INCUMBENT {% elif (c.incumbent|string() != "N") %} *{{ c.incumbent|string() }} {% endif %}
 
                         </td>
                     {% endfor %}
@@ -70,7 +70,7 @@
                     </td>
                     {% for c in value %}
                         <td class='text-left'>
-                            {{ c.first }} {{ c.last }} ({{ c.party }}) {% if c.incumbent|string() == 'Y' %} *INCUMBENT {% endif %}
+                            {{ c.first }} {{ c.last }} ({{ c.party }}) {% if c.incumbent|string() == 'Y' %} *INCUMBENT {% elif (c.incumbent|string() != "N") %} *{{ c.incumbent|string() }} {% endif %}
 
                         </td>
                     {% endfor %}

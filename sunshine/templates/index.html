@@ -76,7 +76,7 @@ Every Thursday, we recap the week’s political contributions, top earners, and 
                 <td class ='text-left'>{{ value.branch }}</td>
                 {% for c in value.candidates %}
                     <td class='text-left'>
-                        {{ c.name }} ({{ c.party }}) {% if c.incumbent|string() == 'Y' %} *INCUMBENT {% endif %}
+                        {{ c.name }} ({{ c.party }}) {% if c.incumbent|string() == 'Y' %} *INCUMBENT {% elif (c.incumbent|string() != "N") %} *{{ c.incumbent|string() }} {% endif %}
 
                     </td>
                 {% endfor %}
