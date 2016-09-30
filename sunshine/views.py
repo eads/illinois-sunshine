@@ -755,7 +755,6 @@ def committee(committee_id):
     
     related_candidates = list(g.engine.execute(sa.text(related_candidates_sql), 
                                         committee_id=committee.id))
-    import pdb; pdb.set_trace()
     for c in related_candidates:
         if c.supporting:
             added = False
@@ -851,7 +850,6 @@ def committee(committee_id):
 
     total_donations = sum([r.total_receipts for r in quarterlies])
     total_expenditures = sum([r.total_expenditures for r in quarterlies]) + sum([r.amount for r in recent_expenditures])
-    import pdb; pdb.set_trace()
     return render_template('committee-detail.html', 
                            committee=committee, 
                            supported_candidates=supported_candidates,
