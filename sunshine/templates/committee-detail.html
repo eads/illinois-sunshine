@@ -59,7 +59,7 @@
 
         {% endif %}
 
-        {% if supported_candidates and committee.type != 'Super PAC' %}
+        {% if (supported_candidates) and (committee.type != "Super PAC") %}
             <h3>{{supported_candidates|length}} supported {{ "candidate" if supported_candidates|length == 1 else "candidates" }}</h3>
             <p>Expenditures by this commitee went to <strong>support</strong> the following candidates.</p>
             <table class="table">
@@ -81,7 +81,7 @@
 
         {% endif %}
 
-        {% if opposed_candidates and committee_type != 'Super PAC' %}
+        {% if (opposed_candidates) and (committee.type != "Super PAC") %}
             <h3>{{opposed_candidates|length}} opposed {{ "candidate" if opposed_candidates|length == 1 else "candidates" }}</h3>
             <p>Expenditures by this commitee went to <strong>oppose</strong> the following candidates.</p>
             <table class="table">
