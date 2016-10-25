@@ -1335,7 +1335,7 @@ class SunshineViews(object):
                  FROM most_recent_filings AS filings
                  LEFT JOIN receipts
                    ON receipts.committee_id = filings.committee_id
-                   AND receipts.received_date > GREATEST(filings.reporting_period_end, :end_date)
+                   AND receipts.received_date > COALESCE(filings.reporting_period_end, :end_date)
                     AND receipts.archived = FALSE
                  GROUP BY filings.committee_id
                  ORDER BY total DESC NULLS LAST
