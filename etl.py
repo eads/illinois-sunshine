@@ -1342,7 +1342,7 @@ class SunshineViews(object):
                )
             '''
             # set end date in case reporting period end empty
-            end_date = datetime.now - timedelta(days=90)
+            end_date = datetime.now() - timedelta(days=90)
             self.executeTransaction(sa.text(create), end_date=end_date)
 
             self.committeeMoneyIndex()
