@@ -505,14 +505,15 @@ def committees():
     if committee_type == "Candidate":
       sql = '''
           SELECT * FROM (
-            SELECT distinct ON (first_name, last_name)
+            SELECT distinct ON (committee_id)
             committee_money.*, candidates.*
             FROM committee_money 
             LEFT JOIN candidate_committees ON committee_money.committee_id = candidate_committees.committee_id
             LEFT JOIN candidates ON candidates.id = candidate_committees.candidate_id
             WHERE committee_type = :committee_type
-            ORDER BY first_name, last_name, committee_name
+            ORDER BY committee_id, committee_name
           ) AS committees
+
           ORDER BY committees.total DESC NULLS LAST
           LIMIT 50
           OFFSET :offset
@@ -520,7 +521,7 @@ def committees():
     else:
       sql = '''
         SELECT * FROM (
-          SELECT *
+          SELECT distinct ON (committee_id)
           FROM committee_money 
           WHERE committee_type = :committee_type
           ORDER BY committee_name
@@ -554,7 +555,6 @@ def committees():
     committees = g.engine.execute(sa.text(sql), 
                                 committee_type=committee_type,
                                 offset=offset)
-
     return render_template('committees.html', 
                            committees=committees, 
                            committee_type=committee_type,
@@ -573,10 +573,10 @@ def committee(committee_id):
     except ValueError:
         return abort(404)
     committee = db_session.query(Committee).get(committee_id)
-    
+
     if not committee:
         return abort(404)
-    
+
     latest_filing = ''' 
         SELECT * FROM most_recent_filings
         WHERE committee_id = :committee_id
@@ -586,7 +586,7 @@ def committee(committee_id):
 
     latest_filing = dict(g.engine.execute(sa.text(latest_filing), 
                                    committee_id=committee_id).first())
-    
+
     params = {'committee_id': committee_id}
 
     if not latest_filing['reporting_period_end']:
@@ -606,7 +606,7 @@ def committee(committee_id):
               AND receipts.received_date > :end_date
         '''
         controlled_amount = latest_filing['end_funds_available'] 
-        
+
         params['end_date'] = latest_filing['reporting_period_end']
 
     else:
@@ -619,13 +619,13 @@ def committee(committee_id):
               ON receipts.filed_doc_id = filed.id
             WHERE receipts.committee_id = :committee_id
         '''
-        
+
         controlled_amount = 0
 
     recent_total = g.engine.execute(sa.text(recent_receipts),**params).first().amount
     controlled_amount += recent_total
     candidate_ids = tuple(c.id for c in committee.candidates)
-    
+
     related_committees = ''' 
         SELECT 
           name,
