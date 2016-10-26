@@ -521,7 +521,7 @@ def committees():
     else:
       sql = '''
         SELECT * FROM (
-          SELECT distinct ON (committee_id)
+          SELECT *
           FROM committee_money 
           WHERE committee_type = :committee_type
           ORDER BY committee_name
