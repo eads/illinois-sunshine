@@ -1335,25 +1335,26 @@ class SunshineViews(object):
                  FROM most_recent_filings AS filings
                  LEFT JOIN receipts
                    ON receipts.committee_id = filings.committee_id
-                   AND receipts.received_date > filings.reporting_period_end
+                   AND receipts.received_date > LEAST(COALESCE(filings.reporting_period_end, :end_date))
                     AND receipts.archived = FALSE
                  GROUP BY filings.committee_id
                  ORDER BY total DESC NULLS LAST
                )
             '''
-
-            self.executeTransaction(create)
+            # set end date in case reporting period end empty
+            end_date = datetime.now - timedelta(days=90)
+            self.executeTransaction(sa.text(create), end_date=end_date)
 
             self.committeeMoneyIndex()
 
     def candidateMoney(self):
-        
+
         try:
-            
+
             self.executeTransaction('REFRESH MATERIALIZED VIEW CONCURRENTLY candidate_money')
-        
+
         except sa.exc.ProgrammingError:
-            
+
             create = '''
                 CREATE MATERIALIZED VIEW candidate_money AS (
                   SELECT
@@ -1377,7 +1378,7 @@ class SunshineViews(object):
                 )
             '''
             self.executeTransaction(create)
-            
+
             self.candidateMoneyIndex()
 
     def makeUniqueIndexes(self):
