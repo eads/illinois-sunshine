@@ -41,7 +41,7 @@
     </div>
 </div>
 <div class="alert alert-info" role="alert">
-    <a href="http://www.ilcampaign.org/illinois-sunshine/illinois-sunshine-weekly-update/" class="alert-link" target="_blank">
+    <a href="http://www.ilcampaign.org/news/illinois-sunshine-news-updates/" class="alert-link" target="_blank">
         Get the Illinois Sunshine Weekly update!
     </a> <br />
 Every Thursday, we recap the week’s political contributions, top earners, and highest grossing committees from across the state.
@@ -68,7 +68,7 @@ Every Thursday, we recap the week’s political contributions, top earners, and 
                 {% set r_type = "senate" %}
             {% else %}
                 {% set r_type = "comptroller" %}
-            {% endif %} 
+            {% endif %}
             <tr class = 'clickable' style= "cursor: Pointer;" onclick="window.location.href = '{{ url_for('views.contested_race_detail', race_type=r_type, district=value.district) }}';">
                 <td class='text-center'>
                     <a href= '{{ url_for('views.contested_race_detail', race_type=r_type, district=value.district) }}'>{{ value.district }}</a>
@@ -108,16 +108,16 @@ Every Thursday, we recap the week’s political contributions, top earners, and 
 <br /><br />
 
 <div class='text-center'>
-    <a href='http://www.ilcampaign.org/advertise-with-us/'><img src='/static/images/icpr-interested-in-advertising.png' class='img-responsive center-block'/></a>     
+    <a href='http://www.ilcampaign.org/advertise-with-us/'><img src='/static/images/icpr-interested-in-advertising.png' class='img-responsive center-block'/></a>
 </div>
 </div>
 <div class = 'col-sm-4'>
 <h2>
     <i class='fa fa-twitter fa-fw'></i>
-    <a class="header-link" href="https://twitter.com/ilsunshine" target='_blank'>Current Filings </a> 
+    <a class="header-link" href="https://twitter.com/ilsunshine" target='_blank'>Current Filings </a>
 </h2>
 <p>Check out up-to-the-minute campaign finance filings with tweets from <a href='https://twitter.com/ilsunshine' target='_blank'>@ilsunshine</a></p>
-<a class="twitter-timeline" data-chrome="noheader" data-height=500 href="https://twitter.com/ilsunshine">Tweets by ilsunshine</a><script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script> 
+<a class="twitter-timeline" data-chrome="noheader" data-height=500 href="https://twitter.com/ilsunshine">Tweets by ilsunshine</a><script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
 </div>
 
 

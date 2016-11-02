@@ -33,9 +33,10 @@
             <p>
                 <strong>Committee purpose:</strong>
                 {{ committee.purpose }}
-            </p><br />
+            </p>
         {% endif %}
 
+<!--
         {% if committee.candidates %}
             <h3>{{committee.candidates|length}} supported
                 {{ "candidate" if committee.candidates|length == 1 else "candidates" }}
@@ -58,8 +59,7 @@
             </table>
 
         {% endif %}
-
-        {% if (supported_candidates) and (committee.type != "Super PAC") %}
+        {% if (supported_candidates) %}
             <h3>{{supported_candidates|length}} supported {{ "candidate" if supported_candidates|length == 1 else "candidates" }}</h3>
             <p>Expenditures by this commitee went to <strong>support</strong> the following candidates.</p>
             <table class="table">
@@ -81,7 +81,7 @@
 
         {% endif %}
 
-        {% if (opposed_candidates) and (committee.type != "Super PAC") %}
+        {% if (opposed_candidates) %}
             <h3>{{opposed_candidates|length}} opposed {{ "candidate" if opposed_candidates|length == 1 else "candidates" }}</h3>
             <p>Expenditures by this commitee went to <strong>oppose</strong> the following candidates.</p>
             <table class="table">
@@ -102,10 +102,9 @@
             </table>
 
         {% endif %}
-
+-->
         {% if related_committees %}
             <h3>
-                <br />
                 Related committees
             </h3>
             <table class="table table-striped">
@@ -176,7 +175,7 @@
         {% endif %}
 	<br />
 	<div class="col-sm-8"></div>
-	<h1></h1> 
+	<h1></h1>
         <br />
         <h3 id="income-chart-title"><br />Net funds over time<small class='data-quality-note' data-content='{{data_quality_note}}'><i class='fa fa-fw fa-info-circle'></i></small></h3>
         <div id="income-chart"></div>
@@ -253,7 +252,7 @@
                         <td>{{committee.creation_date.strftime('%b %d, %Y')}}</td>
                     </tr>
                     {% endif %}
-<!--                    
+<!--
 		    <tr>
                         <td></td>
                         <td><a href='http://www.elections.il.gov/CampaignDisclosure/CommitteeDetail.aspx?id={{committee.id}}'>View on IL Board of Elections website</a></td>
@@ -264,7 +263,7 @@
 
         </div>
         <div class='text-center'>
-            <img src='/static/images/disclaimer.png' class='img-responsive center-block' alt='Disclaimer' title='Disclaimer'/>     
+            <img src='/static/images/disclaimer.png' class='img-responsive center-block' alt='Disclaimer' title='Disclaimer'/>
         </div>
     </div>
 </div>
