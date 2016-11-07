@@ -14,19 +14,19 @@
     <div class="col-sm-12">
         <div class="panel panel-default">
             <div class="panel-body">
-                <h4>Candidate Spending Power: <strong>{{ total_money | format_money }}</strong></h4>
+                <h4>Current Money in Race: <strong>{{ total_money | format_money }}</strong></h4>
             </div>
         </div>
 
     </div>
-</div>	
+</div>
 <div class="row">
     <div class="col-sm-12">
         {% for c in contested_races %}
             <div class="col-sm-6">
                 {%set candidate_slug = [c.first|string, c.last|string]|join('-') %}
-                    <h2>{% if c.candidate_id %}<a href='{{ url_for('views.candidate', candidate_id=c.candidate_id ) }}'>{{c.first}} {{c.last}}</a>{% else %} <u>{{ c.first }}  {{ c.last }}</u>{% endif %} ({{ c.party }}) <small><strong> {% if c.incumbent|string() == 'Y' %}  *INCUMBENT {% elif (c.incumbent|string() != "N") %} *{{ c.incumbent|string() }} {% endif %}</strong></small></h2> 
-                    {% if c.committee_id %} 
+                    <h2>{% if c.candidate_id %}<a href='{{ url_for('views.candidate', candidate_id=c.candidate_id ) }}'>{{c.first}} {{c.last}}</a>{% else %} <u>{{ c.first }}  {{ c.last }}</u>{% endif %} ({{ c.party }}) <small><strong> {% if c.incumbent|string() == 'Y' %}  *INCUMBENT {% elif (c.incumbent|string() != "N") %} *{{ c.incumbent|string() }} {% endif %}</strong></small></h2>
+                    {% if c.committee_id %}
                         <h3><a href='{{ url_for('views.committee', committee_id = c.committee_id) }}'>{{ c.committee_name }}</a></h3>
                         <table class="table table-striped table-bordered">
                             <thead>
@@ -47,7 +47,7 @@
                                         <td>Contributions since {{ c.reporting_period_end.strftime('%b %d, %Y')}}</td>
                                     {% else %}
                                         <td>Contribtions</td>
-                                    {% endif %}    
+                                    {% endif %}
                                     <td class='text-right'>{{ c.contributions|format_money }}</td>
                                 </tr>
                             </tbody>
@@ -90,7 +90,7 @@
                         </table>
                         <h3><i class='fa fa-fw fa-info-circle'></i> No candidate committee filed at this time.</h3>
                         <br /><br /></br />
-                    </div>    
+                    </div>
                 {% endif %}
 
             </div>
