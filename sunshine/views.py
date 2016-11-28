@@ -22,29 +22,29 @@ def index():
 
     # summary total text
     totals_sql = '''
-      SELECT 
-        SUM(total_amount) as total_amount, 
-        SUM(donation_count) as donation_count, 
-        AVG(average_donation) as average_donation 
+      SELECT
+        SUM(total_amount) as total_amount,
+        SUM(donation_count) as donation_count,
+        AVG(average_donation) as average_donation
       FROM receipts_by_month'''
 
     totals = list(g.engine.execute(sa.text(totals_sql)))
 
     # contested races chart
-    top_races_sql = '''       
-        SELECT 
-          district, 
-          branch, 
-          SUM(total_money) AS money_sum 
-        FROM contested_races 
-        GROUP BY district, branch 
-        ORDER BY SUM(total_money) DESC 
+    top_races_sql = '''
+        SELECT
+          district,
+          branch,
+          SUM(total_money) AS money_sum
+        FROM contested_races
+        GROUP BY district, branch
+        ORDER BY SUM(total_money) DESC
         LIMIT 10;
     '''
 
-    races = list(g.engine.execute(sa.text(top_races_sql))) 
+    races = list(g.engine.execute(sa.text(top_races_sql)))
     top_races = {}
-    counter = 0 
+    counter = 0
     maxc = 2
     for tr in races:
 
@@ -79,25 +79,25 @@ def index():
                 cands.append({'candidate_id': c.candidate_id,'party': c.party, 'incumbent': c.incumbent,'name': cand_name})
             else:
                 cands.insert(0,{'candidate_id': c.candidate_id,'party': c.party, 'incumbent': c.incumbent,'name': cand_name})
-            
+
         top_races[counter] = {'district': district, 'branch': branch, 'total_money': tr.money_sum, 'candidates': cands}
         counter = counter+1
-    
+
 
     # donations chart
-    donations_by_month_sql = ''' 
+    donations_by_month_sql = '''
       SELECT * FROM receipts_by_month WHERE month >= :start_date
     '''
 
     donations_by_month = [[d.total_amount,
                           d.month.year,
                           d.month.month,
-                          d.month.day] 
-                          for d in g.engine.execute(sa.text(donations_by_month_sql), 
+                          d.month.day]
+                          for d in g.engine.execute(sa.text(donations_by_month_sql),
                                                   start_date="1994-01-01")]
 
-    donations_by_year_sql = ''' 
-      SELECT 
+    donations_by_year_sql = '''
+      SELECT
         date_trunc('year', month) AS year,
         SUM(total_amount) AS total_amount,
         COUNT(donation_count) AS donation_count,
@@ -111,19 +111,19 @@ def index():
     donations_by_year = [[d.total_amount,
                           d.year.year,
                           d.year.month,
-                          d.year.day] 
-                          for d in g.engine.execute(sa.text(donations_by_year_sql), 
+                          d.year.day]
+                          for d in g.engine.execute(sa.text(donations_by_year_sql),
                                                   start_date="1994-01-01")]
 
     # top earners in the last week
-    top_earners = ''' 
-        SELECT 
+    top_earners = '''
+        SELECT
           sub.*,
           m.total,
           c.name,
           c.type
         FROM (
-          SELECT 
+          SELECT
             SUM(amount) AS amount,
             committee_id
           FROM condensed_receipts
@@ -142,11 +142,11 @@ def index():
     days_ago = datetime.now() - timedelta(days=30)
     top_earners = g.engine.execute(sa.text(top_earners),
                                  received_date=days_ago)
-    
+
     # committees with the most money
-    committee_sql = ''' 
+    committee_sql = '''
         SELECT * FROM (
-          SELECT * 
+          SELECT *
           FROM committee_money
           WHERE committee_active = TRUE
           ORDER BY committee_name
@@ -154,16 +154,16 @@ def index():
         ORDER BY committees.total DESC NULLS LAST
         LIMIT 10
     '''
-    
+
     top_ten = g.engine.execute(sa.text(committee_sql))
-    
+
     date = datetime.now().date()
-    
+
     days_donations_sql = '''
-      SELECT 
-        c.*, 
+      SELECT
+        c.*,
         cm.name as committee_name
-      FROM condensed_receipts AS c 
+      FROM condensed_receipts AS c
       JOIN committees AS cm ON c.committee_id = cm.id
       WHERE c.received_date >= :start_date
         AND c.received_date < :end_date
@@ -172,17 +172,17 @@ def index():
     '''
 
     days_donations = []
-    
+
     # Roll back day until we find something
     while len(days_donations) == 0:
-        days_donations = list(g.engine.execute(sa.text(days_donations_sql), 
+        days_donations = list(g.engine.execute(sa.text(days_donations_sql),
                                              start_date=(date - timedelta(days=7)),
                                              end_date=date))
         date = date - timedelta(days=1)
 
     return render_template('index.html',
                            top_races=top_races,
-                           maxc = maxc, 
+                           maxc = maxc,
                            top_earners=top_earners,
                            top_ten=top_ten,
                            totals=totals,
@@ -198,12 +198,12 @@ def donations():
 
     if request.args.get('date'):
         date = parse(request.args.get('date'))
-    
+
     days_donations_sql = '''
-      SELECT 
-        c.*, 
+      SELECT
+        c.*,
         cm.name as committee_name
-      FROM condensed_receipts AS c 
+      FROM condensed_receipts AS c
       JOIN committees AS cm ON c.committee_id = cm.id
       WHERE c.received_date >= :start_date
         AND c.received_date < :end_date
@@ -211,17 +211,17 @@ def donations():
     '''
 
     days_donations = []
-    
+
     # Roll back day until we find something
     while len(days_donations) == 0:
-        days_donations = list(g.engine.execute(sa.text(days_donations_sql), 
+        days_donations = list(g.engine.execute(sa.text(days_donations_sql),
                                              start_date=date,
                                              end_date=(date + timedelta(days=1))))
         if days_donations:
             break
 
         date = date - timedelta(days=1)
-    
+
     prev_day_date = date - timedelta(days=1)
     next_day_date = date + timedelta(days=1)
     is_current = (date == datetime.now().date())
@@ -229,7 +229,7 @@ def donations():
     days_total_count = len(days_donations)
     days_total_donations = sum([d.amount for d in days_donations])
 
-    return render_template('donations.html', 
+    return render_template('donations.html',
                            days_donations=days_donations,
                            days_total_count=days_total_count,
                            days_total_donations=days_total_donations,
@@ -259,8 +259,8 @@ def search():
     if not table_name:
         table_name = ['candidates', 'committees', 'officers', 'receipts', 'expenditures']
 
-    return render_template('search.html', 
-                           term=term, 
+    return render_template('search.html',
+                           term=term,
                            table_name=table_name,
                            search_date__le=search_date__le,
                            search_date__ge=search_date__ge)
@@ -268,21 +268,21 @@ def search():
 @views.route('/candidates/<candidate_id>/')
 @cache.cached(timeout=CACHE_TIMEOUT, key_prefix=make_cache_key)
 def candidate(candidate_id):
-    
+
     candidate_id = candidate_id.rsplit('-', 1)[-1]
-    
+
     try:
         candidate_id = int(candidate_id)
     except ValueError:
         return abort(404)
     candidate = db_session.query(Candidate).get(candidate_id)
-    
+
     if not candidate:
         return abort(404)
 
     supporting = [c for c in candidate.committees]
 
-    return render_template('candidate-detail.html', 
+    return render_template('candidate-detail.html',
                            candidate=candidate,
                            supporting=supporting)
 
@@ -292,19 +292,19 @@ def top_earners():
 
     days_ago = 30
     if request.args.get('days_ago'):
-      try: 
+      try:
         days_ago = int(request.args.get('days_ago'))
       except:
         pass
 
-    top_earners = ''' 
-        SELECT 
+    top_earners = '''
+        SELECT
           sub.*,
           m.total,
           c.name,
           c.type
         FROM (
-          SELECT 
+          SELECT
             SUM(amount) AS amount,
             committee_id
           FROM condensed_receipts'''
@@ -323,13 +323,13 @@ def top_earners():
         ORDER BY sub.amount DESC
         LIMIT 100
     '''
-    
+
     calc_days_ago = datetime.now() - timedelta(days=days_ago)
 
     top_earners = g.engine.execute(sa.text(top_earners),
                                  received_date=calc_days_ago.strftime('%Y-%m-%d'))
 
-    return render_template('top-earners.html', 
+    return render_template('top-earners.html',
                             top_earners=top_earners,
                             days_ago=days_ago,
                             calc_days_ago=calc_days_ago)
@@ -339,7 +339,7 @@ def top_earners():
 @views.route('/contested-races/')
 @cache.cached(timeout=CACHE_TIMEOUT, key_prefix=make_cache_key)
 def contested_races():
-    
+
     contested_races_type = "House of Representatives"
     contested_races_title= "Illinois House of Representatives Contested Races"
     type_arg = 'house_of_representatives'
@@ -352,19 +352,19 @@ def contested_races():
       elif type_arg == "comptroller":
         contested_races_type = "State Comptroller"
         contested_races_title = "Illinois State Comptroller Contested Race"
-  
+
     page = request.args.get('page', 1)
     offset = (int(page) * 50) - 50
-    
+
     if contested_races_type == "State Comptroller":
         input_file = csv.DictReader(open(os.getcwd()+'/sunshine/comptroller_contested_race_2016.csv'))
     else:
         input_file = csv.DictReader(open(os.getcwd()+'/sunshine/contested_races_2016.csv'))
-    
+
     entries = []
     for row in input_file:
         entries.append(row)
-    
+
     if contested_races_type == "State Comptroller":
         contested_races = entries
     else:
@@ -372,17 +372,17 @@ def contested_races():
             race_sig = "H"
         else:
             race_sig = "S"
-    
+
         contested_races = filter(lambda race: race['Senate/House'] == race_sig, entries)
-    
+
     contested_dict = {}
 
     for e in contested_races:
         if contested_races_type == "State Comptroller":
-            district = 0 
+            district = 0
         else:
             district = int(e['District'])
-         
+
         first_names = e['First'].split(';')
         last_names = e['Last'].split(';')
 
@@ -397,28 +397,28 @@ def contested_races():
         else:
             contested_dict[district] = []
             contested_dict[district].append({'last': last_name, 'first': first_name,'incumbent': e['Incumbent'],'party': e['Party']})
-    
-   
-     
+
+
+
     if not flask_session.get('%s_page_count' % type_arg):
 
         page_count = int(round(len(contested_dict), -2) / 50)
-        
+
         flask_session['%s_page_count' % type_arg] = page_count
-    
+
     else:
-        
+
         page_count = flask_session['%s_page_count' % type_arg]
 
 
-    return render_template('contested-races.html', 
-                           contested_dict=contested_dict, 
+    return render_template('contested-races.html',
+                           contested_dict=contested_dict,
                            contested_races_type=contested_races_type,
                            contested_races_title=contested_races_title,
                            page_count=page_count)
 
 
-    
+
 
 
 
@@ -439,9 +439,9 @@ def contested_race_detail(race_type, district):
         branch = 'S'
         contested_race_description = "Contested race information for District " + district + " in the Illinois Senate"
     else:
-        branch = 'C'   
+        branch = 'C'
         contested_race_description = "Contested race information for Illinois State Comptroller"
-    
+
 
     district = int(float(district))
     contested_races_sql = '''
@@ -450,9 +450,9 @@ def contested_race_detail(race_type, district):
         WHERE district = :district
           AND branch = :branch
     '''
-        
-    races = list(g.engine.execute(sa.text(contested_races_sql),district=district,branch=branch)) 
- 
+
+    races = list(g.engine.execute(sa.text(contested_races_sql),district=district,branch=branch))
+
     contested_races = []
     for race in races:
         if race.incumbent == 'N':
@@ -460,22 +460,22 @@ def contested_race_detail(race_type, district):
         else:
             contested_races.insert(0,{'last': race.last_name, 'first': race.first_name,'committee_name': race.committee_name,'incumbent': race.incumbent,'committee_id': race.committee_id,'party': race.party,'investments': race.investments, 'debts': race.debts, 'supporting_funds': race.supporting_funds, 'opposing_funds': race.opposing_funds, 'contributions' : race.contributions, 'total_funds' : race.total_funds, 'funds_available' : race.funds_available, 'total_money' : race.total_money, 'candidate_id' : race.candidate_id, 'reporting_period_end' : race.reporting_period_end})
 
-            
+
 
     total_money = 0
     for c in contested_races:
             total_money += c['total_money']
-        
+
 
     return render_template('contested-race-detail.html',
                             race_type=race_type,
-                            district=district, 
+                            district=district,
                             contested_race_title=contested_race_title,
                             contested_race_description=contested_race_description,
                             contested_races=contested_races,
                             total_money=total_money)
 
-    
+
 @views.route('/committees/')
 @cache.cached(timeout=CACHE_TIMEOUT, key_prefix=make_cache_key)
 def committees():
@@ -501,13 +501,13 @@ def committees():
 
     page = request.args.get('page', 1)
     offset = (int(page) * 50) - 50
-    
+
     if committee_type == "Candidate":
       sql = '''
           SELECT * FROM (
             SELECT distinct ON (committee_id)
             committee_money.*, candidates.*
-            FROM committee_money 
+            FROM committee_money
             LEFT JOIN candidate_committees ON committee_money.committee_id = candidate_committees.committee_id
             LEFT JOIN candidates ON candidates.id = candidate_committees.candidate_id
             WHERE committee_type = :committee_type
@@ -522,7 +522,7 @@ def committees():
       sql = '''
         SELECT * FROM (
           SELECT *
-          FROM committee_money 
+          FROM committee_money
           WHERE committee_type = :committee_type
           ORDER BY committee_name
         ) AS committees
@@ -530,7 +530,7 @@ def committees():
         LIMIT 50
         OFFSET :offset
     '''
-    
+
     if not flask_session.get('%s_page_count' % type_arg):
 
         result_count = '''
@@ -538,25 +538,25 @@ def committees():
             FROM committee_money
             WHERE committee_type = :committee_type
         '''
-        
-        result_count = g.engine.execute(sa.text(result_count), 
+
+        result_count = g.engine.execute(sa.text(result_count),
                                               committee_type=committee_type)\
                                               .first()\
                                               .count
-        
+
         page_count = int(round(result_count, -2) / 50)
-        
+
         flask_session['%s_page_count' % type_arg] = page_count
-    
+
     else:
-        
+
         page_count = flask_session['%s_page_count' % type_arg]
 
-    committees = g.engine.execute(sa.text(sql), 
+    committees = g.engine.execute(sa.text(sql),
                                 committee_type=committee_type,
                                 offset=offset)
-    return render_template('committees.html', 
-                           committees=committees, 
+    return render_template('committees.html',
+                           committees=committees,
                            committee_type=committee_type,
                            committee_title=committee_title,
                            page_count=page_count)
@@ -577,14 +577,14 @@ def committee(committee_id):
     if not committee:
         return abort(404)
 
-    latest_filing = ''' 
+    latest_filing = '''
         SELECT * FROM most_recent_filings
         WHERE committee_id = :committee_id
         ORDER BY received_datetime DESC
         LIMIT 1
     '''
 
-    latest_filing = dict(g.engine.execute(sa.text(latest_filing), 
+    latest_filing = dict(g.engine.execute(sa.text(latest_filing),
                                    committee_id=committee_id).first())
 
     params = {'committee_id': committee_id}
@@ -596,8 +596,8 @@ def committee(committee_id):
     if latest_filing['end_funds_available'] \
         or latest_filing['end_funds_available'] == 0:
 
-        recent_receipts = ''' 
-            SELECT 
+        recent_receipts = '''
+            SELECT
               COALESCE(SUM(receipts.amount), 0) AS amount
             FROM condensed_receipts AS receipts
             JOIN filed_docs AS filed
@@ -605,14 +605,14 @@ def committee(committee_id):
             WHERE receipts.committee_id = :committee_id
               AND receipts.received_date > :end_date
         '''
-        controlled_amount = latest_filing['end_funds_available'] 
+        controlled_amount = latest_filing['end_funds_available']
 
         params['end_date'] = latest_filing['reporting_period_end']
 
     else:
 
-        recent_receipts = ''' 
-            SELECT 
+        recent_receipts = '''
+            SELECT
               COALESCE(SUM(receipts.amount), 0) AS amount
             FROM condensed_receipts AS receipts
             JOIN filed_docs AS filed
@@ -626,8 +626,8 @@ def committee(committee_id):
     controlled_amount += recent_total
     candidate_ids = tuple(c.id for c in committee.candidates)
 
-    related_committees = ''' 
-        SELECT 
+    related_committees = '''
+        SELECT
           name,
           id,
           type,
@@ -680,21 +680,21 @@ def committee(committee_id):
           WHERE o.committee_id != o2.committee_id
             AND (o.committee_id = :committee_id OR o2.committee_id = :committee_id))
     '''
-    
+
     params = {'committee_id': committee_id}
-    
+
 
     if candidate_ids:
-        
-        unions = ''' 
+
+        unions = '''
               UNION
-              (SELECT 
-                cm.name, 
+              (SELECT
+                cm.name,
                 cm.id,
                 cm.type,
                 cm.active,
                 m.total AS money,
-                'Supported candidates in common' AS reason 
+                'Supported candidates in common' AS reason
               FROM committees AS cm
               LEFT JOIN candidate_committees AS cc
                 ON cm.id = cc.committee_id
@@ -724,36 +724,36 @@ def committee(committee_id):
                WHERE cd.id IN :candidate_ids
               )
         '''
-        
+
         related_committees += unions
 
         params['candidate_ids'] = candidate_ids
 
-    related_committees += ''' 
+    related_committees += '''
             ) AS s
             WHERE id != :committee_id
               AND active = TRUE
         '''
-    
+
     related_committees = list(g.engine.execute(sa.text(related_committees),**params))
-    
+
     supported_candidates = []
     opposed_candidates = []
 
-    related_candidates_sql = ''' 
-        SELECT 
-          candidate_name, 
+    related_candidates_sql = '''
+        SELECT
+          candidate_name,
           office,
-          opposing, 
-          supporting, 
-          supporting_amount, 
+          opposing,
+          supporting,
+          supporting_amount,
           opposing_amount
         FROM expenditures_by_candidate
         WHERE committee_id = :committee_id
         ORDER BY supporting_amount DESC, opposing_amount DESC
     '''
-    
-    related_candidates = list(g.engine.execute(sa.text(related_candidates_sql), 
+
+    related_candidates = list(g.engine.execute(sa.text(related_candidates_sql),
                                         committee_id=committee.id))
     for c in related_candidates:
         if c.supporting:
@@ -764,7 +764,7 @@ def committee(committee_id):
                     sc['office'] = sc['office'] + ", " + c.office
             if not added:
                 supported_candidates.append(dict(c.items()))
-      
+
         if c.opposing:
             added = False
             for sc in opposed_candidates:
@@ -776,7 +776,7 @@ def committee(committee_id):
 
     current_officers = [officer for officer in committee.officers if officer.current]
 
-    quarterlies = ''' 
+    quarterlies = '''
         SELECT DISTINCT ON (f.doc_name, f.reporting_period_end)
           r.end_funds_available,
           r.total_investments,
@@ -794,64 +794,64 @@ def committee(committee_id):
         ORDER BY f.reporting_period_end ASC
     '''
 
-    quarterlies = list(g.engine.execute(sa.text(quarterlies), 
+    quarterlies = list(g.engine.execute(sa.text(quarterlies),
                                  committee_id=committee_id))
 
     expended_date = latest_filing['reporting_period_end']
-    
-    recent_expenditures_sql = ''' 
-        SELECT 
-          (amount * -1) AS amount, 
+
+    recent_expenditures_sql = '''
+        SELECT
+          (amount * -1) AS amount,
           expended_date
         FROM condensed_expenditures
         WHERE expended_date > :expended_date
           AND committee_id = :committee_id
-        ORDER BY expended_date DESC 
+        ORDER BY expended_date DESC
     '''
-    
-    recent_expenditures = list(g.engine.execute(sa.text(recent_expenditures_sql), 
+
+    recent_expenditures = list(g.engine.execute(sa.text(recent_expenditures_sql),
                                         expended_date=expended_date,
                                         committee_id=committee_id))
 
-    ending_funds = [[r.end_funds_available, 
+    ending_funds = [[r.end_funds_available,
                      r.reporting_period_end.year,
                      r.reporting_period_end.month,
-                     r.reporting_period_end.day] 
+                     r.reporting_period_end.day]
                      for r in quarterlies]
 
-    investments = [[r.total_investments, 
+    investments = [[r.total_investments,
                     r.reporting_period_end.year,
                     r.reporting_period_end.month,
-                    r.reporting_period_end.day] 
+                    r.reporting_period_end.day]
                     for r in quarterlies]
 
-    debts = [[(r.debts_itemized + r.debts_non_itemized), 
+    debts = [[(r.debts_itemized + r.debts_non_itemized),
                r.reporting_period_end.year,
                r.reporting_period_end.month,
-               r.reporting_period_end.day] 
+               r.reporting_period_end.day]
                for r in quarterlies]
 
-    donations = [[r.total_receipts, 
+    donations = [[r.total_receipts,
                   r.reporting_period_end.year,
                   r.reporting_period_end.month,
-                  r.reporting_period_end.day] 
+                  r.reporting_period_end.day]
                   for r in quarterlies]
 
     expenditures = []
     for r in recent_expenditures:
         expenditures.append([r.amount, r.expended_date.year, r.expended_date.month, r.expended_date.day])
 
-   
+
     for r in quarterlies:
-        expenditures.append([r.total_expenditures, 
+        expenditures.append([r.total_expenditures,
                      r.reporting_period_end.year,
                      r.reporting_period_end.month,
-                     r.reporting_period_end.day]) 
+                     r.reporting_period_end.day])
 
     total_donations = sum([r.total_receipts for r in quarterlies])
     total_expenditures = sum([r.total_expenditures for r in quarterlies]) + sum([r.amount for r in recent_expenditures])
-    return render_template('committee-detail.html', 
-                           committee=committee, 
+    return render_template('committee-detail.html',
+                           committee=committee,
                            supported_candidates=supported_candidates,
                            opposed_candidates=opposed_candidates,
                            current_officers=current_officers,
@@ -871,31 +871,31 @@ def committee(committee_id):
 @views.route('/independent-expenditures/<candidate_id>-<stance>/')
 @cache.cached(timeout=CACHE_TIMEOUT, key_prefix=make_cache_key)
 def independent_expenditures(candidate_id, stance):
-   
-        
+
+
     candidate_id = candidate_id.rsplit('-', 1)[-1]
-    
+
     try:
         candidate_id = int(candidate_id)
     except ValueError:
         return abort(404)
-    
+
     candidate = db_session.query(Candidate).get(candidate_id)
-    
+
     if not candidate:
         return abort(404)
 
     cname = [candidate.first_name, candidate.last_name]
     candidate_name = " ".join(cname)
-    
+
     independent_expenditures_type = 'Supporting'
-    independent_expenditures_title = "Supporting Independent Expenditures" 
+    independent_expenditures_title = "Supporting Independent Expenditures"
     independent_expenditures_description = "Independent expenditures in support of " + candidate_name + " since March 16, 2016"
     type_arg = 'supporting'
 
     if stance == 'opposing':
         independent_expenditures_type = 'Opposing'
-        independent_expenditures_title = "Opposing Independent Expenditures" 
+        independent_expenditures_title = "Opposing Independent Expenditures"
         independent_expenditures_description = "Independent expenditures in opposition to " + candidate_name + " since March 16, 2016"
 
     all_names = []
@@ -920,15 +920,15 @@ def independent_expenditures(candidate_id, stance):
     expended_date = datetime(2016, 3, 16, 0, 0)
 
     independent_expenditures =[]
-    master_names = set(all_names) 
+    master_names = set(all_names)
     for candidate_name in master_names:
-        
+
         if independent_expenditures_type == "Supporting":
-            
-            ind_expenditures_sql = ''' 
-                SELECT 
-                  committee_id, 
-                  amount AS amount, 
+
+            ind_expenditures_sql = '''
+                SELECT
+                  committee_id,
+                  amount AS amount,
                   expended_date AS date
                 FROM condensed_expenditures
                 WHERE candidate_name = :candidate_name
@@ -938,19 +938,19 @@ def independent_expenditures(candidate_id, stance):
             '''
 
         else:
-            ind_expenditures_sql = ''' 
-                SELECT 
-                  committee_id, 
-                  amount AS amount, 
+            ind_expenditures_sql = '''
+                SELECT
+                  committee_id,
+                  amount AS amount,
                   expended_date AS date
-                FROM condensed_expenditures 
+                FROM condensed_expenditures
                 WHERE candidate_name = :candidate_name
                   AND d2_part = :d2_part
                   AND expended_date > :expended_date
                   AND opposing = 'true'
             '''
 
-        ind_expends = list(g.engine.execute(sa.text(ind_expenditures_sql),     
+        ind_expends = list(g.engine.execute(sa.text(ind_expenditures_sql),
                                             candidate_name=candidate_name,
                                             d2_part=d2_part,
                                             expended_date=expended_date))
@@ -958,8 +958,8 @@ def independent_expenditures(candidate_id, stance):
             ie_dict = dict(ie.items())
             ie_dict['committee_name'] = db_session.query(Committee).get(ie_dict['committee_id']).name
             independent_expenditures.append(ie_dict)
-         
-      
+
+
     newlist = sorted(independent_expenditures, key=lambda k: k['date'])
     candidate_name = " ".join(cname)
 
@@ -1005,19 +1005,19 @@ def expense(expense_id):
 def widget_top_earners():
     days_ago = 30
     if request.args.get('days_ago'):
-      try: 
+      try:
         days_ago = int(request.args.get('days_ago'))
       except:
         pass
 
-    top_earners = ''' 
-        SELECT 
+    top_earners = '''
+        SELECT
           sub.*,
           m.total,
           c.name,
           c.type
         FROM (
-          SELECT 
+          SELECT
             SUM(amount) AS amount,
             committee_id
           FROM condensed_receipts'''
@@ -1036,13 +1036,13 @@ def widget_top_earners():
         ORDER BY sub.amount DESC
         LIMIT 5
     '''
-    
+
     calc_days_ago = datetime.now() - timedelta(days=days_ago)
 
     top_earners = g.engine.execute(sa.text(top_earners),
                                  received_date=calc_days_ago.strftime('%Y-%m-%d'))
 
-    return render_template('widgets/top-earners.html', 
+    return render_template('widgets/top-earners.html',
                             top_earners=top_earners,
                             days_ago=days_ago,
                             calc_days_ago=calc_days_ago)
@@ -1052,13 +1052,13 @@ def widget_top_earners():
 @cache.cached(timeout=CACHE_TIMEOUT, key_prefix=make_cache_key)
 def widgets_top_donations():
 
-    date = datetime.now().date()
-    
+    start_date = datetime.now().date()
+    end_date = start_date
     days_donations_sql = '''
-      SELECT 
-        c.*, 
+      SELECT
+        c.*,
         cm.name as committee_name
-      FROM condensed_receipts AS c 
+      FROM condensed_receipts AS c
       JOIN committees AS cm ON c.committee_id = cm.id
       WHERE c.received_date >= :start_date
         AND c.received_date < :end_date
@@ -1067,35 +1067,36 @@ def widgets_top_donations():
     '''
 
     days_donations = []
-    
+
     # Roll back day until we find something
     while len(days_donations) == 0:
-        days_donations = list(g.engine.execute(sa.text(days_donations_sql), 
-                                             start_date=(date - timedelta(days=7)),
-                                             end_date=date))
+        start_date = start_date - timedelta(days=7)
+        days_donations = list(g.engine.execute(sa.text(days_donations_sql),
+                                             start_date=start_date,
+                                             end_date=end_date))
 
-    return render_template('widgets/top-donations.html', 
+    return render_template('widgets/top-donations.html',
                            days_donations=days_donations)
 
 
 @views.route('/widgets/top-contested-races/')
 @cache.cached(timeout=CACHE_TIMEOUT, key_prefix=make_cache_key)
 def widgets_top_contested_races():
-    
+
     top_races_sql = '''
-        SELECT 
-          district, 
-          branch, 
-          SUM(total_money) AS money_sum 
-        FROM contested_races 
-        GROUP BY district, branch 
-        ORDER BY SUM(total_money) DESC 
+        SELECT
+          district,
+          branch,
+          SUM(total_money) AS money_sum
+        FROM contested_races
+        GROUP BY district, branch
+        ORDER BY SUM(total_money) DESC
         LIMIT 10;
     '''
-        
-    races = list(g.engine.execute(sa.text(top_races_sql))) 
+
+    races = list(g.engine.execute(sa.text(top_races_sql)))
     top_races = {}
-    counter = 0 
+    counter = 0
     maxc = 2
     for tr in races:
 
@@ -1130,14 +1131,14 @@ def widgets_top_contested_races():
                 cands.append({'candidate_id': c.candidate_id,'party': c.party, 'incumbent': c.incumbent,'name': cand_name})
             else:
                 cands.insert(0,{'candidate_id': c.candidate_id,'party': c.party, 'incumbent': c.incumbent,'name': cand_name})
-            
+
         top_races[counter] = {'district': district, 'branch': branch, 'total_money': tr.money_sum, 'candidates': cands}
         counter = counter+1
-    
 
-    return render_template('widgets/top-contested-races.html', 
+
+    return render_template('widgets/top-contested-races.html',
                            top_races=top_races,maxc=maxc)
-                
+
 
 
 @views.route('/flush-cache/<secret>/')
