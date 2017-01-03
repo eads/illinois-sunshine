@@ -1622,10 +1622,10 @@ def downloadUnzip():
         date_prefix = zf.namelist()[0].split('/')[0]
         zf.extractall(path=download_path)
     
-    for member in os.listdir(os.path.join(download_path, date_prefix)):
-        move_from = os.path.join(download_path, date_prefix, member)
-        move_to = os.path.join(download_path, member)
-        os.rename(move_from, move_to)
+    #for member in os.listdir(os.path.join(download_path, date_prefix)):
+    #    move_from = os.path.join(download_path, date_prefix, member)
+    #    move_to = os.path.join(download_path, member)
+    #    os.rename(move_from, move_to)
 
 def alterSearchDictionary():
     from sunshine.app_config import DB_HOST, DB_PORT, DB_NAME, STOP_WORD_LIST
