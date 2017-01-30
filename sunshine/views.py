@@ -214,9 +214,13 @@ def donations():
 
     # Roll back day until we find something
     while len(days_donations) == 0:
+        #days_donations = list(g.engine.execute(sa.text(days_donations_sql),
+        #                                     start_date=date,
+        #                                     end_date=(date + timedelta(days=1))))
         days_donations = list(g.engine.execute(sa.text(days_donations_sql),
-                                             start_date=date,
-                                             end_date=(date + timedelta(days=1))))
+                                             start_date=(datetime.now().date() - timedelta(days=60)),
+                                             end_date=(datetime.now().date() + timedelta(days=1))))
+        import pdb; pdb.set_trace()
         if days_donations:
             break
 
@@ -334,6 +338,90 @@ def top_earners():
                             days_ago=days_ago,
                             calc_days_ago=calc_days_ago)
 
+
+@views.route('/muni-contested-races/')
+@cache.cached(timeout=CACHE_TIMEOUT, key_prefix=make_cache_key)
+def muni_contested_races():
+
+    contested_races_type = "Municipal"
+    contested_races_title = "Illinois Municipal Contested Races"
+    type_arg = 'municipal'
+
+    input_file = csv.DictReader(open(
+        os.getcwd() + '/sunshine/muni_contested_races.csv')
+    )
+    entries = []
+    for row in input_file:
+        entries.append(row)
+
+    contested_dict = {}
+
+    for e in entries:
+        district = e['District']
+
+        first_name = e['First']
+        last_name = e['Last']
+
+        if district in contested_dict:
+            if e['Incumbent'] == 'N':
+                contested_dict[district].append({'last': last_name, 'first': first_name,'incumbent': e['Incumbent'],'party': e['Party']})
+            else:
+                contested_dict[district].insert(0,{'last': last_name, 'first': first_name,'incumbent': e['Incumbent'],'party': e['Party']})
+        else:
+            contested_dict[district] = []
+            contested_dict[district].append({'last': last_name, 'first': first_name,'incumbent': e['Incumbent'],'party': e['Party']})
+
+    if not flask_session.get('%s_page_count' % type_arg):
+
+        page_count = int(round(len(contested_dict), -2) / 50)
+
+        flask_session['%s_page_count' % type_arg] = page_count
+
+    else:
+
+        page_count = flask_session['%s_page_count' % type_arg]
+
+    return render_template('muni_contested-races.html',
+                           contested_dict=contested_dict,
+                           contested_races_type=contested_races_type,
+                           contested_races_title=contested_races_title,
+                           page_count=page_count)
+
+
+@views.route('/muni-contested-race-detail/<district>/')
+@cache.cached(timeout=CACHE_TIMEOUT, key_prefix=make_cache_key)
+def muni_contested_race_detail(district):
+
+    contested_race_title = district + " - Contested Race "
+
+    contested_race_description = "Contested race information for the " + district
+
+    muni_contested_races_sql = '''
+        SELECT *
+        FROM muni_contested_races
+        WHERE district = :district
+    '''
+
+    races = list(g.engine.execute(sa.text(muni_contested_races_sql),district=district))
+
+    contested_races = []
+    for race in races:
+        if race.incumbent == 'N':
+            contested_races.append({'last': race.last_name, 'first': race.first_name,'committee_name': race.committee_name,'incumbent': race.incumbent,'committee_id': race.committee_id,'party': race.party,'investments': race.investments, 'debts': race.debts, 'supporting_funds': race.supporting_funds, 'opposing_funds': race.opposing_funds, 'contributions' : race.contributions, 'total_funds' : race.total_funds, 'funds_available' : race.funds_available, 'total_money' : race.total_money, 'reporting_period_end' : race.reporting_period_end})
+        else:
+            contested_races.insert(0,{'last': race.last_name, 'first': race.first_name,'committee_name': race.committee_name,'incumbent': race.incumbent,'committee_id': race.committee_id,'party': race.party,'investments': race.investments, 'debts': race.debts, 'supporting_funds': race.supporting_funds, 'opposing_funds': race.opposing_funds, 'contributions' : race.contributions, 'total_funds' : race.total_funds, 'funds_available' : race.funds_available, 'total_money' : race.total_money, 'reporting_period_end' : race.reporting_period_end})
+
+    total_money = 0
+    for c in contested_races:
+            total_money += c['total_money']
+
+
+    return render_template('muni_contested-race-detail.html',
+                            district=district,
+                            contested_race_title=contested_race_title,
+                            contested_race_description=contested_race_description,
+                            contested_races=contested_races,
+                            total_money=total_money)
 
 
 @views.route('/contested-races/')

@@ -21,7 +21,7 @@ try:
     from raven.conf import setup_logging
     from raven.handlers.logging import SentryHandler
     from sunshine.app_config import SENTRY_DSN
-    
+
     if SENTRY_DSN:
         handler = SentryHandler(SENTRY_DSN)
         setup_logging(handler)
@@ -32,13 +32,13 @@ except KeyError:
 
 class SunshineTransformLoad(object):
 
-    def __init__(self, 
+    def __init__(self,
                  connection,
                  metadata=None,
                  chunk_size=50000,
                  file_path='downloads'):
 
-        
+
         self.connection = connection
 
         self.chunk_size = chunk_size
@@ -46,9 +46,9 @@ class SunshineTransformLoad(object):
         if metadata:
             self.metadata = metadata
             self.initializeDB()
-        
-        self.file_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 
-                                      file_path, 
+
+        self.file_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                      file_path,
                                       self.filename)
 
     def executeTransaction(self, query, raise_exc=False, *args, **kwargs):
@@ -68,7 +68,7 @@ class SunshineTransformLoad(object):
                 raise e
 
     def executeOutsideTransaction(self, query):
-        
+
         self.connection.connection.set_isolation_level(0)
         curs = self.connection.connection.cursor()
 
@@ -79,19 +79,19 @@ class SunshineTransformLoad(object):
 
 
     def addNameColumn(self):
-        
-        sql_table = sa.Table(self.table_name, sa.MetaData(), 
+
+        sql_table = sa.Table(self.table_name, sa.MetaData(),
                              autoload=True, autoload_with=self.connection.engine)
 
         if not 'search_name' in sql_table.columns.keys():
 
-            add_name_col = ''' 
+            add_name_col = '''
                 ALTER TABLE {0} ADD COLUMN search_name tsvector
             '''.format(self.table_name)
 
             self.executeTransaction(add_name_col, raise_exc=True)
 
-            add_names = ''' 
+            add_names = '''
                 UPDATE {0} SET
                   search_name = to_tsvector('english', COALESCE(first_name, '') || ' ' ||
                                                        COALESCE(REPLACE(last_name, '&', ''), ''))
@@ -99,82 +99,82 @@ class SunshineTransformLoad(object):
 
             self.executeTransaction(add_names)
 
-            add_index = ''' 
+            add_index = '''
                 CREATE INDEX {0}_search_name_index ON {0}
                 USING gin(search_name)
             '''.format(self.table_name)
-            
+
             self.executeTransaction(add_index)
-            
-            trigger = ''' 
+
+            trigger = '''
                 CREATE TRIGGER {0}_search_update
                 BEFORE INSERT OR UPDATE ON {0}
                 FOR EACH ROW EXECUTE PROCEDURE
-                tsvector_update_trigger(search_name, 
+                tsvector_update_trigger(search_name,
                                         'pg_catalog.english',
                                         first_name,
                                         last_name)
             '''.format(self.table_name)
 
             self.executeTransaction(trigger)
-    
+
     def addDateColumn(self, date_col):
-        sql_table = sa.Table(self.table_name, sa.MetaData(), 
+        sql_table = sa.Table(self.table_name, sa.MetaData(),
                              autoload=True, autoload_with=self.connection.engine)
 
         if not 'search_date' in sql_table.columns.keys():
-            
-            add_date_col = ''' 
+
+            add_date_col = '''
                 ALTER TABLE {0} ADD COLUMN search_date TIMESTAMP
             '''.format(self.table_name)
 
             self.executeTransaction(add_date_col)
-            
-            add_index = ''' 
+
+            add_index = '''
                 CREATE INDEX {0}_search_date_index ON {0} (search_date)
             '''.format(self.table_name)
-            
+
             self.executeTransaction(add_index)
 
-        add_dates = ''' 
+        add_dates = '''
             UPDATE {0} SET
               search_date = subq.search_date
             FROM (
-                SELECT 
+                SELECT
                   {1}::timestamp AS search_date,
                   id
                 FROM {0}
             ) AS subq
-            WHERE {0}.id = subq.id 
+            WHERE {0}.id = subq.id
               AND {0}.search_date IS NULL
         '''.format(self.table_name, date_col)
 
         self.executeTransaction(add_dates)
 
-        
+
     def initializeDB(self):
-        enum = ''' 
+        enum = '''
             CREATE TYPE committee_position AS ENUM (
-              'support', 
+              'support',
               'oppose'
             )
         '''
-        
+
         self.executeTransaction(enum)
-        
+
         self.metadata.create_all(bind=self.connection.engine)
-        
+
 
     def makeRawTable(self):
         inferer = TypeInferer(self.file_path)
         inferer.infer()
-        
-        sql_table = sa.Table('raw_{0}'.format(self.table_name), 
+
+        sql_table = sa.Table('raw_{0}'.format(self.table_name),
                              sa.MetaData())
 
         for column_name, column_type in inferer.types.items():
             sql_table.append_column(sa.Column(column_name, column_type()))
-        
+
         dialect = sa.dialects.postgresql.dialect()
         create_table = str(sa.schema.CreateTable(sql_table)\
                            .compile(dialect=dialect)).strip(';')
@@ -187,12 +187,12 @@ class SunshineTransformLoad(object):
             reader = csv.reader(inp, delimiter='\t', quoting=csv.QUOTE_NONE)
             self.raw_header = next(reader)
             checker = RowChecker(reader)
-            
+
             with open('%s_raw.csv' % self.file_path, 'w') as outp:
                 writer = csv.writer(outp)
 
                 writer.writerow(self.raw_header)
-                
+
                 for row in checker.checked_rows():
                     writer.writerow(row)
 
@@ -200,14 +200,14 @@ class SunshineTransformLoad(object):
         import psycopg2
         from sunshine.app_config import DB_USER, DB_PW, DB_HOST, \
             DB_PORT, DB_NAME
-        
+
         DB_CONN_STR = 'host={0} dbname={1} user={2} port={3} password={4}'\
             .format(DB_HOST, DB_NAME, DB_USER, DB_PORT, DB_PW)
 
-        copy_st = ''' 
+        copy_st = '''
             COPY raw_{0} FROM STDIN WITH CSV HEADER DELIMITER ','
         '''.format(self.table_name)
-        
+
         with open('%s_raw.csv' % self.file_path, 'r') as f:
             next(f)
             with psycopg2.connect(DB_CONN_STR) as conn:
@@ -218,11 +218,11 @@ class SunshineTransformLoad(object):
                         logger.error(e, exc_info=True)
                         print(e)
                         conn.rollback()
-        
+
         os.remove('%s_raw.csv' % self.file_path)
-    
+
     def findNewRecords(self):
-        create_new_record_table = ''' 
+        create_new_record_table = '''
             CREATE TABLE new_{0} AS (
                 SELECT raw."ID"
                 FROM raw_{0} AS raw
@@ -234,15 +234,15 @@ class SunshineTransformLoad(object):
 
         self.executeTransaction('DROP TABLE IF EXISTS new_{0}'.format(self.table_name))
         self.executeTransaction(create_new_record_table)
-        
+
     def iterIncomingData(self):
-        incoming = ''' 
-            SELECT raw.* 
+        incoming = '''
+            SELECT raw.*
             FROM raw_{0} AS raw
             JOIN new_{0} AS new
               USING("ID")
         '''.format(self.table_name)
-        
+
         for record in self.connection.engine.execute(incoming):
             yield record
 
@@ -261,7 +261,7 @@ class SunshineTransformLoad(object):
 
     @property
     def insert(self):
-        return ''' 
+        return '''
             INSERT INTO {0} ({1}) VALUES ({2})
         '''.format(self.table_name,
                    ','.join(self.header),
@@ -274,7 +274,7 @@ class SunshineTransformLoad(object):
 
         self.findNewRecords()
         self.insertNewRecords()
-        
+
         if update_existing:
             self.updateExistingRecords()
 
@@ -282,8 +282,8 @@ class SunshineTransformLoad(object):
 
         fields = ','.join(['{0}=s."{1}"'.format(clean, raw) \
                 for clean, raw in zip(self.header, self.raw_header)])
-        
-        update = ''' 
+
+        update = '''
             UPDATE {table_name} SET
               {fields}
             FROM (
@@ -301,36 +301,36 @@ class SunshineTransformLoad(object):
         for row in self.transform():
             rows.append(row)
             if len(rows) % self.chunk_size is 0:
-                
+
                 self.executeTransaction(sa.text(self.insert), *rows)
-                
+
                 print('Inserted %s %s' % (i, self.table_name))
                 rows = []
-            
+
             i += 1
-        
+
         if rows:
             if len(rows) == 1:
                 self.executeTransaction(sa.text(self.insert), **rows[0])
             else:
                 self.executeTransaction(sa.text(self.insert), *rows)
-        
+
         logger.info('inserted %s %s' % (i, self.table_name))
-    
+
 class SunshineCommittees(SunshineTransformLoad):
-    
+
     table_name = 'committees'
     header = Committee.__table__.columns.keys()
     filename = 'Committees.txt'
-    
+
     def addNameColumn(self):
-        
-        sql_table = sa.Table(self.table_name, sa.MetaData(), 
+
+        sql_table = sa.Table(self.table_name, sa.MetaData(),
                              autoload=True, autoload_with=self.connection.engine)
 
         if not 'search_name' in sql_table.columns.keys():
-            
-            add_name_col = ''' 
+
+            add_name_col = '''
                 ALTER TABLE {0} ADD COLUMN search_name tsvector
             '''.format(self.table_name)
 
@@ -339,31 +339,31 @@ class SunshineCommittees(SunshineTransformLoad):
             except sa.exc.ProgrammingError:
                 return
 
-            add_names = ''' 
+            add_names = '''
                 UPDATE {0} SET
                   search_name = to_tsvector('english', REPLACE(name, '&', ''))
             '''.format(self.table_name)
 
             self.executeTransaction(add_names)
 
-            add_index = ''' 
+            add_index = '''
                 CREATE INDEX {0}_search_name_index ON {0}
                 USING gin(search_name)
             '''.format(self.table_name)
-            
+
             self.executeTransaction(add_index)
-            
-            trigger = ''' 
+
+            trigger = '''
                 CREATE TRIGGER {0}_search_update
                 BEFORE INSERT OR UPDATE ON {0}
                 FOR EACH ROW EXECUTE PROCEDURE
-                tsvector_update_trigger(search_name, 
+                tsvector_update_trigger(search_name,
                                         'pg_catalog.english',
                                         name)
             '''.format(self.table_name)
 
             self.executeTransaction(trigger)
-    
+
     def transform(self):
         for row in self.iterIncomingData():
             row = OrderedDict(zip(row.keys(), row.values()))
@@ -388,15 +388,15 @@ class SunshineCommittees(SunshineTransformLoad):
                     row['TypeOfCommittee'] = 'Super PAC'
 
             yield OrderedDict(zip(self.header, list(row.values())))
-    
+
 
 class SunshineCandidates(SunshineTransformLoad):
-    
+
     table_name = 'candidates'
     header = [f for f in Candidate.__table__.columns.keys() \
               if f not in ['date_added', 'last_update', 'ocd_id']]
     filename = 'Candidates.txt'
-    
+
 class SunshineOfficers(SunshineTransformLoad):
     table_name = 'officers'
     header = Officer.__table__.columns.keys()
@@ -405,7 +405,7 @@ class SunshineOfficers(SunshineTransformLoad):
 
     def transform(self):
         for row in self.iterIncomingData():
-            
+
             row_list = list(row.values())
 
             # Add empty committee_id
@@ -416,9 +416,9 @@ class SunshineOfficers(SunshineTransformLoad):
 
             # Add current flag
             row_list.append(self.current)
-            
+
             yield OrderedDict(zip(self.header, row_list))
-    
+
     def updateExistingRecords(self):
         ignore_fields = ['committee_id', 'resign_date', 'current']
 
@@ -426,8 +426,8 @@ class SunshineOfficers(SunshineTransformLoad):
 
         fields = ','.join(['{0}=s."{1}"'.format(clean, raw) \
                 for clean, raw in zip(header, self.raw_header)])
-        
-        update = ''' 
+
+        update = '''
             UPDATE {table_name} SET
               {fields}
             FROM (
@@ -445,28 +445,28 @@ class SunshinePrevOfficers(SunshineOfficers):
     header = Officer.__table__.columns.keys()
     filename = 'PrevOfficers.txt'
     current = False
-    
+
     def transform(self):
         for row in self.iterIncomingData():
-            
+
             row_list = list(row.values())
-            
+
             # Add empty phone
             row_list.insert(10, None)
 
             # Add current flag
             row_list.append(self.current)
-            
+
             yield OrderedDict(zip(self.header, row_list))
-    
+
     def updateExistingRecords(self):
 
         header = [f for f in self.header if f != 'phone']
 
         fields = ','.join(['{0}=s."{1}"'.format(clean, raw) \
                 for clean, raw in zip(header, self.raw_header)])
-        
-        update = ''' 
+
+        update = '''
             UPDATE {table_name} SET
               {fields}
             FROM (
@@ -483,7 +483,7 @@ class SunshineCandidacy(SunshineTransformLoad):
     table_name = 'candidacies'
     header = Candidacy.__table__.columns.keys()
     filename = 'CanElections.txt'
-    
+
     election_types = {
         'CE': 'Consolidated Election',
         'GP': 'General Primary',
@@ -506,11 +506,11 @@ class SunshineCandidacy(SunshineTransformLoad):
 
             # Get election type
             row['ElectionType'] = self.election_types.get(row['ElectionType'].strip())
-            
+
             # Get race type
             if row.get('IncChallOpen'):
                 row['IncChallOpen'] = self.race_types.get(row['IncChallOpen'].strip())
-            
+
             # Get outcome
             if row['WonLost'] == 'Won':
                 row['WonLost'] = 'won'
@@ -526,12 +526,12 @@ class SunshineCandidateCommittees(SunshineTransformLoad):
     table_name = 'candidate_committees'
     header = ['committee_id', 'candidate_id']
     filename = 'CmteCandidateLinks.txt'
-    
+
     def findNewRecords(self):
-        create_new_record_table = ''' 
+        create_new_record_table = '''
             CREATE TABLE new_{0} AS (
-                SELECT 
-                  raw."CommitteeID", 
+                SELECT
+                  raw."CommitteeID",
                   raw."CandidateID"
                 FROM raw_{0} AS raw
                 LEFT JOIN {0} AS dat
@@ -544,19 +544,19 @@ class SunshineCandidateCommittees(SunshineTransformLoad):
 
         self.executeTransaction('DROP TABLE IF EXISTS new_{0}'.format(self.table_name))
         self.executeTransaction(create_new_record_table)
-    
+
     def iterIncomingData(self):
-        incoming = ''' 
-            SELECT raw.* 
+        incoming = '''
+            SELECT raw.*
             FROM raw_{0} AS raw
             JOIN new_{0} AS new
               ON raw."CommitteeID" = new."CommitteeID"
               AND raw."CandidateID" = new."CandidateID"
         '''.format(self.table_name)
-        
+
         for record in self.connection.engine.execute(incoming):
             yield record
-    
+
     def transform(self):
         for row in self.iterIncomingData():
             row = [row['CommitteeID'], row['CandidateID']]
@@ -566,12 +566,12 @@ class SunshineOfficerCommittees(SunshineTransformLoad):
     table_name = 'officer_committees'
     header = ['committee_id', 'officer_id']
     filename = 'CmteOfficerLinks.txt'
-    
+
     def findNewRecords(self):
-        create_new_record_table = ''' 
+        create_new_record_table = '''
             CREATE TABLE new_{0} AS (
-                SELECT 
-                  raw."CommitteeID", 
+                SELECT
+                  raw."CommitteeID",
                   raw."OfficerID"
                 FROM raw_{0} AS raw
                 LEFT JOIN {0} AS dat
@@ -584,27 +584,27 @@ class SunshineOfficerCommittees(SunshineTransformLoad):
 
         self.executeTransaction('DROP TABLE IF EXISTS new_{0}'.format(self.table_name))
         self.executeTransaction(create_new_record_table, rase_exc=True)
-    
+
     def iterIncomingData(self):
-        incoming = ''' 
-            SELECT raw.* 
+        incoming = '''
+            SELECT raw.*
             FROM raw_{0} AS raw
             JOIN new_{0} AS new
               ON raw."CommitteeID" = new."CommitteeID"
               AND raw."OfficerID" = new."OfficerID"
         '''.format(self.table_name)
-        
+
         for record in self.connection.engine.execute(incoming):
             yield record
-    
+
     def transform(self):
         for row in self.iterIncomingData():
             row = [row['CommitteeID'], row['OfficerID']]
             yield OrderedDict(zip(self.header, row))
-    
+
     def updateExistingRecords(self):
 
-        update = ''' 
+        update = '''
             UPDATE officers SET
               committee_id=s."CommitteeID"
             FROM (
@@ -636,7 +636,7 @@ class SunshineReceipts(SunshineTransformLoad):
 
     def delete_id_rows_from_receipts(self, omit_receipt_ids):
         """
-        Deletes certain rows from master receipts datatable 
+        Deletes certain rows from master receipts datatable
         since SBOE doesn't remove wrong data from their db
         """
         for rid in omit_receipt_ids:
@@ -660,7 +660,7 @@ class SunshineInvestments(SunshineTransformLoad):
     filename = 'Investments.txt'
 
 class SunshineViews(object):
-    
+
     def __init__(self, connection):
         self.connection = connection
 
@@ -678,7 +678,7 @@ class SunshineViews(object):
             raise e
 
     def executeOutsideTransaction(self, query):
-        
+
         self.connection.connection.set_isolation_level(0)
         curs = self.connection.connection.cursor()
 
@@ -694,6 +694,7 @@ class SunshineViews(object):
         self.executeTransaction('DROP MATERIALIZED VIEW IF EXISTS most_recent_filings CASCADE')
         self.executeTransaction('DROP MATERIALIZED VIEW IF EXISTS expenditures_by_candidate')
         self.executeTransaction('DROP TABLE IF EXISTS contested_races')
+        self.executeTransaction('DROP TABLE IF EXISTS muni_contested_races')
 
     def makeAllViews(self):
         self.incumbentCandidates()
@@ -706,19 +707,20 @@ class SunshineViews(object):
         self.committeeMoney() # relies on mostRecentFilings
         self.candidateMoney() # relies on committeeMoney and mostRecentFilings
         self.contestedRaces() # relies on sunshine/contested_races_2016.csv and sunshine/comptroller_contested_race_2016.csv
- 
+        self.muniContestedRaces() # relies on sunshine/muni_contested_races.csv
+
     def condensedExpenditures(self):
-        
+
         try:
-            
+
             self.executeTransaction('REFRESH MATERIALIZED VIEW CONCURRENTLY condensed_expenditures')
-        
+
         except sa.exc.ProgrammingError:
 
-            rec = ''' 
+            rec = '''
                 CREATE MATERIALIZED VIEW condensed_expenditures AS (
                   (
-                    SELECT 
+                    SELECT
                       e.*
                     FROM expenditures AS e
                     JOIN most_recent_filings AS m
@@ -731,8 +733,8 @@ class SunshineViews(object):
                     FROM expenditures AS e
                     JOIN (
                       SELECT DISTINCT ON (
-                        reporting_period_begin, 
-                        reporting_period_end, 
+                        reporting_period_begin,
+                        reporting_period_end,
                         committee_id
                       )
                         id AS filed_doc_id
@@ -752,16 +754,16 @@ class SunshineViews(object):
             self.condensedExpendituresIndex()
 
     def condensedReceipts(self):
-        
+
         try:
             self.executeTransaction('REFRESH MATERIALIZED VIEW CONCURRENTLY condensed_receipts')
-        
+
         except sa.exc.ProgrammingError:
-            
-            rec = ''' 
+
+            rec = '''
                 CREATE MATERIALIZED VIEW condensed_receipts AS (
                   (
-                    SELECT 
+                    SELECT
                       r.*
                     FROM receipts AS r
                     LEFT JOIN most_recent_filings AS m
@@ -774,8 +776,8 @@ class SunshineViews(object):
                     FROM receipts AS r
                     JOIN (
                       SELECT DISTINCT ON (
-                        reporting_period_begin, 
-                        reporting_period_end, 
+                        reporting_period_begin,
+                        reporting_period_end,
                         committee_id
                       )
                         id AS filed_doc_id
@@ -799,10 +801,10 @@ class SunshineViews(object):
 
         try:
             self.executeTransaction('REFRESH MATERIALIZED VIEW CONCURRENTLY expenditures_by_candidate')
-        
+
         except sa.exc.ProgrammingError:
-            
-            exp = ''' 
+
+            exp = '''
                 CREATE MATERIALIZED VIEW expenditures_by_candidate AS (
                   SELECT
                     candidate_name,
@@ -865,13 +867,113 @@ class SunshineViews(object):
                 )
             '''
             self.executeTransaction(exp)
-            
+
             self.expendituresByCandidateIndex()
+
+    def muniContestedRaces(self):
+        """
+        Creates the muni contested races view table from csv files hard saved in sunsine folder
+        """
+        try:
+            races_input_file = csv.DictReader(open(os.getcwd()+'/sunshine/muni_contested_races.csv'))
+
+            entries = []
+            for row in races_input_file:
+                entries.append(row)
+
+            for row in comptroller_input_file:
+                entries.append(row)
+
+            contested_races = []
+            counter = 0
+            for e in entries:
+                supporting_funds = 0
+                opposing_funds = 0
+                controlled_amount = 0
+                funds_available  = 0
+                contributions = 0
+                total_funds = 0
+                investments = 0
+                debts = 0
+                total_money = 0
+                candidate_names = [] #list of all possible candidate name possibilities
+
+                candidate_id = None
+
+                try:
+                    committee_id = int(float(e['ID']))
+                except:
+                    committee_id = None
+
+                try:
+                    district = e['District']
+                except:
+                    district = None
+
+                first_name = e['First']
+                last_name = e['Last']
+
+                cand_name = first_name + " " + last_name
+
+                supp_funds, opp_funds = self.get_candidate_funds_byname(cand_name)
+                supporting_funds = supporting_funds + supp_funds
+                opposing_funds = opposing_funds + opp_funds
+
+                if committee_id:
+                    committee, recent_receipts, recent_total, latest_filing, controlled_amount, ending_funds, investments, debts, expenditures, total_expenditures = self.get_committee_details(committee_id)
+
+                    funds_available = latest_filing['end_funds_available']
+                    contributions = recent_total
+                    total_funds = controlled_amount
+                    investments = latest_filing['total_investments']
+                    debts = latest_filing['total_debts']
+
+
+                total_money = supporting_funds + opposing_funds + controlled_amount
+                contested_races.append({'district': district, 'branch': e['Senate/House'], 'last_name': last_name, 'first_name': first_name,'committee_name': e['Committee'],'incumbent': e['Incumbent'],'committee_id': committee_id,'party': e['Party'], 'funds_available': funds_available, 'contributions': contributions, 'total_funds': total_funds, 'investments': investments, 'debts': debts, 'supporting_funds': supporting_funds, 'opposing_funds': opposing_funds, 'candidate_id' : candidate_id, 'total_money': total_money, 'reporting_period_end' : latest_filing['reporting_period_end'], 'alternate_names' : ';'.join(cand_names)})
+
+            exp = '''
+                CREATE TABLE muni_contested_races(
+                    total_money DOUBLE PRECISION,
+                    branch TEXT,
+                    last_name TEXT,
+                    first_name TEXT,
+                    committee_name TEXT,
+                    incumbent TEXT,
+                    committee_id INTEGER,
+                    party TEXT,
+                    funds_available DOUBLE PRECISION,
+                    contributions DOUBLE PRECISION,
+                    total_funds DOUBLE PRECISION,
+                    investments DOUBLE PRECISION,
+                    debts DOUBLE PRECISION,
+                    supporting_funds DOUBLE PRECISION,
+                    opposing_funds DOUBLE PRECISION,
+                    reporting_period_end DATE,
+                    district TEXT,
+                    candidate_id INTEGER,
+                    alternate_names TEXT
+                )
+            '''
+
+            trans = self.connection.begin()
+            curs = self.connection.connection.cursor()
+            curs.execute(exp)
+            insert_statement = 'INSERT INTO muni_contested_races (%s) VALUES %s'
+            cols = ['last_name', 'committee_id', 'incumbent', 'district', 'first_name', 'total_funds', 'candidate_id', 'investments', 'committee_name', 'supporting_funds', 'opposing_funds', 'party', 'branch', 'contributions', 'debts', 'total_money', 'funds_available','reporting_period_end','alternate_names']
+            for cr in contested_races:
+
+                values = [cr[column] for column in cols]
+                curs.execute(insert_statement, (AsIs(','.join(cols)), tuple(values)))
+
+            trans.commit()
+        except sa.exc.ProgrammingError:
+            print('Problem in creating muni contested_races table')
 
     def contestedRaces(self):
         """
         Creates the contested races view table from csv files hard saved in sunsine folder
-        """    
+        """
         try:
             comptroller_input_file = csv.DictReader(open(os.getcwd()+'/sunshine/comptroller_contested_race_2016.csv'))
             races_input_file = csv.DictReader(open(os.getcwd()+'/sunshine/contested_races_2016.csv'))
@@ -879,7 +981,7 @@ class SunshineViews(object):
             entries = []
             for row in races_input_file:
                 entries.append(row)
-            
+
             for row in comptroller_input_file:
                 entries.append(row)
 
@@ -917,12 +1019,12 @@ class SunshineViews(object):
 
                 first_name = first_names[0].strip()
                 last_name = last_names[0].strip()
- 
+
                 if candidate_id:
                     first_name, last_name = self.get_candidate_name(candidate_id)
                     if first_name and last_name:
                         candidate_names.append(first_name + " " + last_name)
-                       
+
                 for fn in first_names:
                     for ln in last_names:
                         candidate_names.append(fn.strip() + " " + ln.strip())
@@ -936,7 +1038,7 @@ class SunshineViews(object):
                     supporting_funds = supporting_funds + supp_funds
                     opposing_funds = opposing_funds + opp_funds
 
- 
+
                 if committee_id:
                     committee, recent_receipts, recent_total, latest_filing, controlled_amount, ending_funds, investments, debts, expenditures, total_expenditures = self.get_committee_details(committee_id)
 
@@ -945,9 +1047,9 @@ class SunshineViews(object):
                     total_funds = controlled_amount
                     investments = latest_filing['total_investments']
                     debts = latest_filing['total_debts']
-                        
-                
-                total_money = supporting_funds + opposing_funds + controlled_amount 
+
+
+                total_money = supporting_funds + opposing_funds + controlled_amount
                 contested_races.append({'district': district, 'branch': e['Senate/House'], 'last_name': last_name, 'first_name': first_name,'committee_name': e['Committee'],'incumbent': e['Incumbent'],'committee_id': committee_id,'party': e['Party'], 'funds_available': funds_available, 'contributions': contributions, 'total_funds': total_funds, 'investments': investments, 'debts': debts, 'supporting_funds': supporting_funds, 'opposing_funds': opposing_funds, 'candidate_id' : candidate_id, 'total_money': total_money, 'reporting_period_end' : latest_filing['reporting_period_end'], 'alternate_names' : ';'.join(cand_names)})
 
             exp = '''
@@ -973,31 +1075,31 @@ class SunshineViews(object):
                     alternate_names TEXT
                 )
             '''
-            
-            trans = self.connection.begin()	
+
+            trans = self.connection.begin()
             curs = self.connection.connection.cursor()
-            curs.execute(exp)   
+            curs.execute(exp)
             insert_statement = 'INSERT INTO contested_races (%s) VALUES %s'
             cols = ['last_name', 'committee_id', 'incumbent', 'district', 'first_name', 'total_funds', 'candidate_id', 'investments', 'committee_name', 'supporting_funds', 'opposing_funds', 'party', 'branch', 'contributions', 'debts', 'total_money', 'funds_available','reporting_period_end','alternate_names']
             for cr in contested_races:
 
                 values = [cr[column] for column in cols]
                 curs.execute(insert_statement, (AsIs(','.join(cols)), tuple(values)))
-                
+
             trans.commit()
         except sa.exc.ProgrammingError:
             print('Problem in creating contested_races table')
 
     def get_candidate_name(self,candidate_id):
-    
+
         try:
             candidate_id = int(candidate_id)
         except ValueError:
-            return 
-  
+            return
+
         cand_sql = '''(
             SELECT *
-            FROM candidates 
+            FROM candidates
             WHERE id = :candidate_id
             )
         '''
@@ -1005,39 +1107,39 @@ class SunshineViews(object):
         #candidate = db_session.query(Candidate).get(candidate_id)
 
         if not candidate:
-            return 
+            return
         else:
             return candidate.first_name, candidate.last_name
-              
+
     def get_candidate_funds_byname(self,candidate_name):
-    
+
         d2_part = '9B'
         expended_date = datetime(2016, 3, 16, 0, 0)
 
-        supporting_funds_sql = '''( 
-            SELECT 
+        supporting_funds_sql = '''(
+            SELECT
               COALESCE(SUM(e.amount), 0) AS amount
             FROM condensed_expenditures AS e
             WHERE e.candidate_name = :candidate_name
               AND e.d2_part = :d2_part
               AND e.expended_date > :expended_date
               AND e.supporting = 'true'
-            ) 
+            )
         '''
-    
+
         supporting_funds = self.executeTransaction(sa.text(supporting_funds_sql), candidate_name=candidate_name,d2_part=d2_part,expended_date=expended_date).fetchone().amount
 
-        opposing_funds_sql = '''( 
-            SELECT 
+        opposing_funds_sql = '''(
+            SELECT
               COALESCE(SUM(e.amount), 0) AS amount
             FROM condensed_expenditures AS e
             WHERE e.candidate_name = :candidate_name
               AND e.d2_part = :d2_part
-              AND e.expended_date > :expended_date 
+              AND e.expended_date > :expended_date
               AND e.opposing = 'true'
             )
         '''
-    
+
         opposing_funds = self.executeTransaction(sa.text(opposing_funds_sql), candidate_name=candidate_name,d2_part=d2_part,expended_date=expended_date).fetchone().amount
 
 
@@ -1049,7 +1151,7 @@ class SunshineViews(object):
         try:
             committee_id = int(committee_id)
         except ValueError:
-            return 
+            return
 
         comm_sql = '''(
             SELECT *
@@ -1058,11 +1160,11 @@ class SunshineViews(object):
             )
         '''
         committee = self.executeTransaction(sa.text(comm_sql),committee_id=committee_id).fetchone()
-         
+
         if not committee:
-            return 
-        
-        latest_filing = '''( 
+            return
+
+        latest_filing = '''(
             SELECT * FROM most_recent_filings
             WHERE committee_id = :committee_id
             ORDER BY received_datetime DESC
@@ -1070,9 +1172,9 @@ class SunshineViews(object):
             )
         '''
 
-        latest_filing = dict(self.executeTransaction(sa.text(latest_filing), 
+        latest_filing = dict(self.executeTransaction(sa.text(latest_filing),
                                        committee_id=committee_id).fetchone())
-        
+
         params = {'committee_id': committee_id}
 
         if not latest_filing['reporting_period_end']:
@@ -1081,8 +1183,8 @@ class SunshineViews(object):
         if latest_filing['end_funds_available'] \
             or latest_filing['end_funds_available'] == 0:
 
-            recent_receipts = '''( 
-                SELECT 
+            recent_receipts = '''(
+                SELECT
                   COALESCE(SUM(receipts.amount), 0) AS amount
                 FROM condensed_receipts AS receipts
                 JOIN filed_docs AS filed
@@ -1091,15 +1193,15 @@ class SunshineViews(object):
                   AND receipts.received_date > :end_date
                 )
             '''
-            controlled_amount = latest_filing['end_funds_available'] 
-            
+            controlled_amount = latest_filing['end_funds_available']
+
             params['end_date'] = latest_filing['reporting_period_end']
             end_date = latest_filing['reporting_period_end']
 
         else:
 
-            recent_receipts = '''( 
-                SELECT 
+            recent_receipts = '''(
+                SELECT
                   COALESCE(SUM(receipts.amount), 0) AS amount
                 FROM condensed_receipts AS receipts
                 JOIN filed_docs AS filed
@@ -1107,14 +1209,14 @@ class SunshineViews(object):
                 WHERE receipts.committee_id = :committee_id
                 )
             '''
-            
+
             controlled_amount = 0
 
         recent_total = self.executeTransaction(sa.text(recent_receipts),**params).fetchone().amount
         controlled_amount += recent_total
-        
 
-        quarterlies = '''( 
+
+        quarterlies = '''(
             SELECT DISTINCT ON (f.doc_name, f.reporting_period_end)
               r.end_funds_available,
               r.total_investments,
@@ -1133,35 +1235,35 @@ class SunshineViews(object):
             )
         '''
 
-        quarterlies = self.executeTransaction(sa.text(quarterlies), 
+        quarterlies = self.executeTransaction(sa.text(quarterlies),
                                      committee_id=committee_id)
 
-        ending_funds = [[r.end_funds_available, 
+        ending_funds = [[r.end_funds_available,
                          r.reporting_period_end.year,
                          r.reporting_period_end.month,
-                         r.reporting_period_end.day] 
+                         r.reporting_period_end.day]
                          for r in quarterlies]
 
-        investments = [[r.total_investments, 
+        investments = [[r.total_investments,
                         r.reporting_period_end.year,
                         r.reporting_period_end.month,
-                        r.reporting_period_end.day] 
+                        r.reporting_period_end.day]
                         for r in quarterlies]
 
-        debts = [[(r.debts_itemized + r.debts_non_itemized), 
+        debts = [[(r.debts_itemized + r.debts_non_itemized),
                    r.reporting_period_end.year,
                    r.reporting_period_end.month,
-                   r.reporting_period_end.day] 
+                   r.reporting_period_end.day]
                    for r in quarterlies]
 
-        expenditures = [[r.total_expenditures, 
+        expenditures = [[r.total_expenditures,
                          r.reporting_period_end.year,
                          r.reporting_period_end.month,
-                         r.reporting_period_end.day] 
+                         r.reporting_period_end.day]
                          for r in quarterlies]
-        
+
         #accomodate for independent expenditures past last filing date
-        
+
         total_expenditures = sum([r.total_expenditures for r in quarterlies])
 
         return committee, recent_receipts, recent_total, latest_filing, controlled_amount, ending_funds, investments, debts, expenditures, total_expenditures
@@ -1170,14 +1272,14 @@ class SunshineViews(object):
     def receiptsAggregates(self):
 
         try:
-            
+
             self.executeTransaction('REFRESH MATERIALIZED VIEW CONCURRENTLY receipts_by_month')
-        
+
         except sa.exc.ProgrammingError:
 
-            weeks = ''' 
+            weeks = '''
                 CREATE MATERIALIZED VIEW receipts_by_month AS (
-                  SELECT 
+                  SELECT
                     date_trunc('month', received_date) AS month,
                     SUM(amount) AS total_amount,
                     COUNT(id) AS donation_count,
@@ -1188,7 +1290,7 @@ class SunshineViews(object):
                 )
             '''
             self.executeTransaction(weeks)
-            
+
             self.receiptsByWeekIndex()
 
     def committeeReceiptAggregates(self):
@@ -1198,9 +1300,9 @@ class SunshineViews(object):
 
         except sa.exc.ProgrammingError:
 
-            weeks = ''' 
+            weeks = '''
                 CREATE MATERIALIZED VIEW committee_receipts_by_week AS (
-                  SELECT 
+                  SELECT
                     committee_id,
                     date_trunc('week', received_date) AS week,
                     SUM(amount) AS total_amount,
@@ -1211,21 +1313,21 @@ class SunshineViews(object):
                            date_trunc('week', received_date)
                   ORDER BY week
                 )
-            
+
             '''
-            
+
             self.executeTransaction(weeks)
-            
+
             self.committeeReceiptsByWeekIndex()
 
     def incumbentCandidates(self):
 
         try:
-            
+
             self.executeTransaction('REFRESH MATERIALIZED VIEW CONCURRENTLY incumbent_candidates')
 
         except (sa.exc.ProgrammingError, psycopg2.ProgrammingError):
-            
+
             incumbents = '''
                 CREATE MATERIALIZED VIEW incumbent_candidates AS (
                   SELECT DISTINCT ON (cd.district, cd.office)
@@ -1241,85 +1343,85 @@ class SunshineViews(object):
                   ORDER BY cd.district, cd.office, cs.id DESC
                 )
             '''
-            
+
             last_year = datetime.now().year - 1
 
-            self.executeTransaction(sa.text(incumbents), 
+            self.executeTransaction(sa.text(incumbents),
                                     outcome='won',
                                     year=last_year)
-            
+
             self.incumbentCandidatesIndex()
 
     def mostRecentFilings(self):
 
         try:
-            
+
             self.executeTransaction('REFRESH MATERIALIZED VIEW CONCURRENTLY most_recent_filings')
-        
+
         except sa.exc.ProgrammingError:
 
             create = '''
                CREATE MATERIALIZED VIEW most_recent_filings AS (
-                 SELECT 
-                   COALESCE(d2.end_funds_available, 0) AS end_funds_available, 
+                 SELECT
+                   COALESCE(d2.end_funds_available, 0) AS end_funds_available,
                    COALESCE(d2.total_investments, 0) AS total_investments,
                    COALESCE(d2.total_debts, 0) AS total_debts,
                    COALESCE((d2.inkind_itemized + d2.inkind_non_itemized), 0) AS total_inkind,
-                   cm.name AS committee_name, 
+                   cm.name AS committee_name,
                    cm.id AS committee_id,
                    cm.type AS committee_type,
                    cm.active AS committee_active,
                    fd.id AS filed_doc_id,
-                   fd.doc_name, 
+                   fd.doc_name,
                    fd.reporting_period_end,
                    fd.reporting_period_begin,
                    fd.received_datetime
-                 FROM committees AS cm 
+                 FROM committees AS cm
                  LEFT JOIN (
-                   SELECT DISTINCT ON (committee_id) 
-                     f.* 
+                   SELECT DISTINCT ON (committee_id)
+                     f.*
                    FROM (
-                     SELECT DISTINCT ON (committee_id, reporting_period_end) 
-                       id, 
-                       committee_id, 
-                       doc_name, 
+                     SELECT DISTINCT ON (committee_id, reporting_period_end)
+                       id,
+                       committee_id,
+                       doc_name,
                        reporting_period_end,
                        reporting_period_begin,
                        received_datetime
-                     FROM filed_docs 
+                     FROM filed_docs
                      WHERE doc_name NOT IN (
-                       'A-1', 
-                       'Statement of Organization', 
+                       'A-1',
+                       'Statement of Organization',
                        'Letter/Correspondence',
                        'B-1',
                        'Nonparticipation'
-                     ) 
-                     ORDER BY committee_id, 
+                     )
+                     ORDER BY committee_id,
                               reporting_period_end DESC,
                               received_datetime DESC
                    ) AS f
-                   ORDER BY f.committee_id, 
+                   ORDER BY f.committee_id,
                             f.reporting_period_end DESC
-                 ) AS fd 
-                   ON fd.committee_id = cm.id 
-                 LEFT JOIN d2_reports AS d2 
-                   ON fd.id = d2.filed_doc_id 
+                 ) AS fd
+                   ON fd.committee_id = cm.id
+                 LEFT JOIN d2_reports AS d2
+                   ON fd.id = d2.filed_doc_id
                )
             '''
             self.executeTransaction(create)
-            
+
             self.mostRecentFilingsIndex()
 
     def committeeMoney(self):
-        
+
         try:
-            
+
             self.executeTransaction('REFRESH MATERIALIZED VIEW CONCURRENTLY committee_money')
-        
+
         except sa.exc.ProgrammingError:
             create = '''
                CREATE MATERIALIZED VIEW committee_money AS (
-                 SELECT 
+                 SELECT
                    MAX(filings.end_funds_available) AS end_funds_available,
                    MAX(filings.total_inkind) AS total_inkind,
                    MAX(filings.committee_name) AS committee_name,
@@ -1329,7 +1431,7 @@ class SunshineViews(object):
                    MAX(filings.doc_name) AS doc_name,
                    MAX(filings.reporting_period_end) AS reporting_period_end,
                    MAX(filings.reporting_period_begin) AS reporting_period_begin,
-                   (SUM(COALESCE(receipts.amount, 0)) + 
+                   (SUM(COALESCE(receipts.amount, 0)) +
                     MAX(COALESCE(filings.end_funds_available, 0))) AS total,
                    MAX(receipts.received_date) AS last_receipt_date
                  FROM most_recent_filings AS filings
@@ -1382,7 +1484,7 @@ class SunshineViews(object):
             self.candidateMoneyIndex()
 
     def makeUniqueIndexes(self):
-        ''' 
+        '''
         Need a unique index on materialized views so that can be refreshed concurrently
         '''
         self.condensedExpendituresIndex()
@@ -1398,99 +1500,99 @@ class SunshineViews(object):
         self.mostRecentFilingsIndex()
 
     def condensedExpendituresIndex(self):
-        index = ''' 
-            CREATE UNIQUE INDEX CONCURRENTLY condensed_expenditures_id_idx 
+        index = '''
+            CREATE UNIQUE INDEX CONCURRENTLY condensed_expenditures_id_idx
             ON condensed_expenditures(id)
         '''
 
         self.executeOutsideTransaction(index)
-    
+
     def condensedReceiptsIndex(self):
-        index = ''' 
-            CREATE UNIQUE INDEX CONCURRENTLY condensed_receipts_id_idx 
+        index = '''
+            CREATE UNIQUE INDEX CONCURRENTLY condensed_receipts_id_idx
             ON condensed_receipts(id)
         '''
 
         self.executeOutsideTransaction(index)
 
     def condensedExpendituresDateIndex(self):
-        index = ''' 
-            CREATE INDEX CONCURRENTLY condensed_expenditures_date_idx 
+        index = '''
+            CREATE INDEX CONCURRENTLY condensed_expenditures_date_idx
             ON condensed_expenditures(expended_date)
         '''
 
         self.executeOutsideTransaction(index)
-    
+
     def condensedReceiptsDateIndex(self):
-        index = ''' 
-            CREATE INDEX CONCURRENTLY condensed_receipts_date_idx 
+        index = '''
+            CREATE INDEX CONCURRENTLY condensed_receipts_date_idx
             ON condensed_receipts(date)
         '''
 
         self.executeOutsideTransaction(index)
-    
+
     def expendituresByCandidateIndex(self):
-        index = ''' 
-            CREATE UNIQUE INDEX CONCURRENTLY expenditures_by_candidate_idx 
+        index = '''
+            CREATE UNIQUE INDEX CONCURRENTLY expenditures_by_candidate_idx
             ON expenditures_by_candidate(candidate_name, office, committee_id, supporting)
         '''
 
         self.executeOutsideTransaction(index)
 
     def receiptsByWeekIndex(self):
-        index = ''' 
-            CREATE UNIQUE INDEX CONCURRENTLY receipts_by_month_idx 
+        index = '''
+            CREATE UNIQUE INDEX CONCURRENTLY receipts_by_month_idx
             ON receipts_by_month(month)
         '''
-        
+
         self.executeOutsideTransaction(index)
 
     def committeeReceiptsByWeekIndex(self):
-        index = ''' 
-            CREATE UNIQUE INDEX CONCURRENTLY committee_receipts_by_week_idx 
+        index = '''
+            CREATE UNIQUE INDEX CONCURRENTLY committee_receipts_by_week_idx
             ON committee_receipts_by_week(committee_id, week)
         '''
-        
+
         self.executeOutsideTransaction(index)
 
     def incumbentCandidatesIndex(self):
 
-        index = ''' 
-            CREATE UNIQUE INDEX CONCURRENTLY incumbent_candidates_idx 
+        index = '''
+            CREATE UNIQUE INDEX CONCURRENTLY incumbent_candidates_idx
             ON incumbent_candidates(id)
         '''
-        
+
         self.executeOutsideTransaction(index)
 
     def candidateMoneyIndex(self):
-        index = ''' 
+        index = '''
             CREATE UNIQUE INDEX CONCURRENTLY candidate_money_idx
             ON candidate_money(candidate_id, committee_id)
         '''
-        
+
         self.executeOutsideTransaction(index)
-    
+
     def committeeMoneyIndex(self):
-        index = ''' 
+        index = '''
             CREATE UNIQUE INDEX CONCURRENTLY committee_money_idx
             ON committee_money(committee_id)
         '''
-        
+
         self.executeOutsideTransaction(index)
-    
+
     def mostRecentFilingsIndex(self):
-        index = ''' 
+        index = '''
             CREATE UNIQUE INDEX CONCURRENTLY most_recent_filings_idx
             ON most_recent_filings(committee_id, reporting_period_end)
         '''
-        
+
         self.executeOutsideTransaction(index)
-    
+
 
 class SunshineIndexes(object):
     def __init__(self, connection):
         self.connection = connection
-    
+
     def executeTransaction(self, query):
         trans = self.connection.begin()
 
@@ -1501,7 +1603,7 @@ class SunshineIndexes(object):
             trans.rollback()
 
     def executeOutsideTransaction(self, query):
-        
+
         self.connection.connection.set_isolation_level(0)
         curs = self.connection.connection.cursor()
 
@@ -1522,93 +1624,93 @@ class SunshineIndexes(object):
         self.expendituresName()
 
     def receiptsDate(self):
-        ''' 
+        '''
         Make index on received_date for receipts
         '''
-        index = ''' 
+        index = '''
             CREATE INDEX CONCURRENTLY received_date_idx ON receipts (received_date)
         '''
-        
+
         self.executeOutsideTransaction(index)
-    
+
     def receiptsCommittee(self):
-        ''' 
+        '''
         Make index on committee_id for receipts
         '''
-        index = ''' 
+        index = '''
             CREATE INDEX CONCURRENTLY receipts_committee_idx ON receipts (committee_id)
         '''
-        
+
         self.executeOutsideTransaction(index)
-    
+
     def receiptsFiledDocs(self):
-        index = ''' 
+        index = '''
             CREATE INDEX CONCURRENTLY receipts_filed_docs_idx ON receipts (filed_doc_id)
         '''
-        
+
         self.executeOutsideTransaction(index)
-    
+
     def candidaciesCandidate(self):
-        index = ''' 
-            CREATE INDEX CONCURRENTLY candidacies_candidate_id_index 
+        index = '''
+            CREATE INDEX CONCURRENTLY candidacies_candidate_id_index
               ON candidacies (candidate_id)
         '''
 
         self.executeOutsideTransaction(index)
-    
+
     def candidateCommittees(self):
-        index = ''' 
-            CREATE INDEX CONCURRENTLY cand_comm_candidate_id_index 
+        index = '''
+            CREATE INDEX CONCURRENTLY cand_comm_candidate_id_index
               ON candidate_committees (candidate_id)
         '''
 
         self.executeOutsideTransaction(index)
-        
-        index = ''' 
-            CREATE INDEX CONCURRENTLY cand_comm_committee_id_index 
+
+        index = '''
+            CREATE INDEX CONCURRENTLY cand_comm_committee_id_index
               ON candidate_committees (committee_id)
         '''
 
         self.executeOutsideTransaction(index)
 
     def filedDocsCommittee(self):
-        index = ''' 
+        index = '''
             CREATE INDEX CONCURRENTLY filed_docs_committee_idx ON filed_docs (committee_id)
         '''
-        
+
         self.executeOutsideTransaction(index)
 
     def officersCommittee(self):
-        index = ''' 
-            CREATE INDEX CONCURRENTLY officers_committee_id_index 
+        index = '''
+            CREATE INDEX CONCURRENTLY officers_committee_id_index
               ON officers (committee_id)
         '''
 
         self.executeOutsideTransaction(index)
 
     def receiptsName(self):
-         index = ''' 
+         index = '''
              CREATE INDEX CONCURRENTLY condensed_receipts_search_index ON condensed_receipts
              USING gin(search_name)
          '''
-         
+
          self.executeOutsideTransaction(index)
-    
+
     def expendituresName(self):
-         index = ''' 
+         index = '''
              CREATE INDEX CONCURRENTLY condensed_expenditures_search_index ON condensed_expenditures
              USING gin(search_name)
          '''
-         
+
          self.executeOutsideTransaction(index)
 
-           
+
 def downloadUnzip():
     import urllib
     import zipfile
-    
+
     latest_filename = 'IL_Campaign_Disclosure_latest.zip'
-    download_path = os.path.abspath(os.path.join(os.path.dirname(__file__), 
+    download_path = os.path.abspath(os.path.join(os.path.dirname(__file__),
                                                      'downloads'))
 
     download_location = os.path.join(download_path, latest_filename)
@@ -1617,11 +1719,11 @@ def downloadUnzip():
 
     filename, _ = urllib.request.urlretrieve(download_url,
                                              filename=download_location)
-    
+
     with zipfile.ZipFile(filename, 'r') as zf:
         date_prefix = zf.namelist()[0].split('/')[0]
         zf.extractall(path=download_path)
-    
+
     #for member in os.listdir(os.path.join(download_path, date_prefix)):
     #    move_from = os.path.join(download_path, date_prefix, member)
     #    move_to = os.path.join(download_path, member)
@@ -1629,21 +1731,21 @@ def downloadUnzip():
 
 def alterSearchDictionary():
     from sunshine.app_config import DB_HOST, DB_PORT, DB_NAME, STOP_WORD_LIST
-    
-    alter = ''' 
+
+    alter = '''
         ALTER TEXT SEARCH DICTIONARY english_stem (StopWords = '{0}');
     '''.format(STOP_WORD_LIST)
-    
+
     DB_USER = 'postgres'
     DB_PW = ''
 
     DB_CONN='postgresql+psycopg2://{0}:{1}@{2}:{3}/{4}'\
             .format(DB_USER, DB_PW, DB_HOST, DB_PORT, DB_NAME)
-    
-    engine = sa.create_engine(DB_CONN, 
-                              convert_unicode=True, 
+
+    engine = sa.create_engine(DB_CONN,
+                              convert_unicode=True,
                               server_side_cursors=True)
-        
+
     with engine.begin() as conn:
         conn.execute(alter)
 
@@ -1662,7 +1764,7 @@ if __name__ == "__main__":
 
     parser.add_argument('--recreate_views', action='store_true',
                    help='Recreate database views')
-    
+
     parser.add_argument('--chunk_size', help='Adjust the size of each insert when loading data',
                    type=int)
 
@@ -1672,16 +1774,16 @@ if __name__ == "__main__":
 
     if args.download:
         logger.info("download start %s ..." % datetime.now().isoformat())
-        
+
         downloadUnzip()
 
         logger.info("download finish %s ..." % datetime.now().isoformat())
     else:
         print("skipping download")
-    
+
     if args.load_data:
         print("loading data start %s ..." % datetime.now().isoformat())
-        
+
         if STOP_WORD_LIST != 'english':
             alterSearchDictionary()
 
@@ -1690,13 +1792,13 @@ if __name__ == "__main__":
         if args.chunk_size:
             chunk_size = args.chunk_size
 
-        committees = SunshineCommittees(connection, 
-                                        Base.metadata, 
+        committees = SunshineCommittees(connection,
+                                        Base.metadata,
                                         chunk_size=chunk_size)
         committees.load()
         committees.addNameColumn()
         committees.addDateColumn('NULL')
-        
+
         del committees
         del Base.metadata
 
@@ -1704,70 +1806,70 @@ if __name__ == "__main__":
         candidates.load(update_existing=True)
         candidates.addNameColumn()
         candidates.addDateColumn('NULL')
-        
+
         del candidates
 
         officers = SunshineOfficers(connection, chunk_size=chunk_size)
         officers.load(update_existing=True)
         officers.addNameColumn()
         officers.addDateColumn('NULL')
-        
+
         del officers
 
         prev_off = SunshinePrevOfficers(connection, chunk_size=chunk_size)
         prev_off.load(update_existing=True)
-        
+
         del prev_off
 
         candidacy = SunshineCandidacy(connection, chunk_size=chunk_size)
         candidacy.load()
-        
+
         del candidacy
 
         can_cmte_xwalk = SunshineCandidateCommittees(connection, chunk_size=chunk_size)
         can_cmte_xwalk.load()
-        
+
         del can_cmte_xwalk
 
         off_cmte_xwalk = SunshineOfficerCommittees(connection, chunk_size=chunk_size)
         off_cmte_xwalk.load(update_existing=True)
-        
+
         del off_cmte_xwalk
 
         filed_docs = SunshineFiledDocs(connection, chunk_size=chunk_size)
         filed_docs.load()
-        
+
         del filed_docs
 
         d2_reports = SunshineD2Reports(connection, chunk_size=chunk_size)
         d2_reports.load()
-        
+
         del d2_reports
 
         receipts = SunshineReceipts(connection, chunk_size=chunk_size)
         receipts.load()
         receipts.addNameColumn()
         receipts.addDateColumn('received_date')
-        
+
         # delete specific rows from receipts table since sboe doesn't remove wrong data from db
         receipts.delete_id_rows_from_receipts(receipts.omit_receipt_ids)
-        
+
         del receipts
 
         expenditures = SunshineExpenditures(connection, chunk_size=chunk_size)
         expenditures.load()
         expenditures.addNameColumn()
         expenditures.addDateColumn('expended_date')
-        
+
         del expenditures
 
         investments = SunshineInvestments(connection, chunk_size=chunk_size)
         investments.load()
         investments.addNameColumn()
         investments.addDateColumn('purchase_date')
-        
+
         del investments
-        
+
         print("loading data end %s ..." % datetime.now().isoformat())
 
     else:
@@ -1782,7 +1884,7 @@ if __name__ == "__main__":
     logger.info("creating views %s..." % datetime.now().isoformat())
     views.makeAllViews()
     views.makeUniqueIndexes()
-    
+
     logger.info("creating indexes %s ..." % datetime.now().isoformat())
     indexes = SunshineIndexes(connection)
     indexes.makeAllIndexes()
