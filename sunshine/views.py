@@ -381,7 +381,7 @@ def muni_contested_races():
 
         page_count = flask_session['%s_page_count' % type_arg]
 
-    return render_template('muni_contested-races.html',
+    return render_template('muni-contested-races.html',
                            contested_dict=contested_dict,
                            contested_races_type=contested_races_type,
                            contested_races_title=contested_races_title,
@@ -416,7 +416,7 @@ def muni_contested_race_detail(district):
             total_money += c['total_money']
 
 
-    return render_template('muni_contested-race-detail.html',
+    return render_template('muni-contested-race-detail.html',
                             district=district,
                             contested_race_title=contested_race_title,
                             contested_race_description=contested_race_description,
