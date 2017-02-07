@@ -371,7 +371,7 @@ def muni_contested_races():
         if district in total_money:
             total_money[district] = total_money[district] + race.total_money
         else:
-            total_money[district] = 0
+            total_money[district] = race.total_money
 
     if not flask_session.get('%s_page_count' % type_arg):
 
