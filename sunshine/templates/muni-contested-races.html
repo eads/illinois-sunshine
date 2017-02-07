@@ -26,23 +26,28 @@
                 <tr>
                     <th class = 'text-center'>Municipality</th>
                     <th class = 'text-left' style='border-left:0.1px solid #999999' colspan = {{ cand_span }}>Candidates</th>
+                    <th class = 'text-center'>$ in Race</th>
                 </tr>
             </thead>
             <tbody>
                 {% for key,value in contested_dict | dictsort %}
                 <tr class = 'clickable' style= "cursor: Pointer;" onclick="window.location.href = '{{ url_for('views.muni_contested_race_detail', district=key) }}';">
-                    <td class='text-center'>
+                    <td class='text-center' width="10%">
                         <a href= '{{ url_for('views.muni_contested_race_detail', district=key) }}'>{{ key }}</a>
                     </td>
                     {% for c in value %}
-                        <td class='text-left' style='border-left:0.1px solid #999999'>
+                        <td class='text-left' style='border-left:0.1px solid #999999' width="10%">
                             <strong>{{ c.first }} {{ c.last }}</strong> {% if c.party %} ({{ c.party }}) {% endif %} {% if c.incumbent|string() == 'Y' %} *INCUMBENT {% elif (c.incumbent|string() != "N") %} *{{ c.incumbent|string() }} {% endif %}
 
                         </td>
                     {% endfor %}
                     {% for i in range(8 - value|length) %}
-                        <td style='border-left:0.1px solid #999999'>&nbsp;</td>
+                        <td style='border-left:0.1px solid #999999' width="10%">&nbsp;</td>
                     {% endfor %}
+                    <td class='text-center' style='border-left:0.1px solid #999999'>
+                        {{ total_money[key]|format_money }}
+                    </td>
+
                 </a></tr>
 
             {% endfor %}

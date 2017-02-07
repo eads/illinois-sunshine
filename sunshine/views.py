@@ -342,33 +342,36 @@ def top_earners():
 @cache.cached(timeout=CACHE_TIMEOUT, key_prefix=make_cache_key)
 def muni_contested_races():
 
+    muni_contested_races_sql = '''
+        SELECT *
+        FROM muni_contested_races
+    '''
+
+    races = list(g.engine.execute(sa.text(muni_contested_races_sql)))
+
     contested_races_type = "Municipal"
     contested_races_title = "Illinois Municipal Contested Races"
     type_arg = 'municipal'
 
-    input_file = csv.DictReader(open(
-        os.getcwd() + '/sunshine/muni_contested_races.csv')
-    )
-    entries = []
-    for row in input_file:
-        entries.append(row)
-
     contested_dict = {}
-
-    for e in entries:
-        district = e['District']
-
-        first_name = e['First']
-        last_name = e['Last']
+    total_money = {}
+    for race in races:
+        district = race.district
 
         if district in contested_dict:
-            if e['Incumbent'] == 'N':
-                contested_dict[district].append({'last': last_name, 'first': first_name,'incumbent': e['Incumbent'],'party': e['Party']})
+            if race.incumbent == 'N':
+              contested_dict[district].append({'last': race.last_name, 'first': race.first_name,'incumbent': race.incumbent,'party': race.party})
             else:
-                contested_dict[district].insert(0,{'last': last_name, 'first': first_name,'incumbent': e['Incumbent'],'party': e['Party']})
+              contested_dict[district].insert(0,{'last': race.last_name, 'first': race.first_name,'incumbent': race.incumbent,'party': race.party})
+
         else:
             contested_dict[district] = []
-            contested_dict[district].append({'last': last_name, 'first': first_name,'incumbent': e['Incumbent'],'party': e['Party']})
+            contested_dict[district].append({'last': race.last_name, 'first': race.first_name,'incumbent': race.incumbent,'party': race.party})
+
+        if district in total_money:
+            total_money[district] = total_money[district] + race.total_money
+        else:
+            total_money[district] = 0
 
     if not flask_session.get('%s_page_count' % type_arg):
 
@@ -379,9 +382,9 @@ def muni_contested_races():
     else:
 
         page_count = flask_session['%s_page_count' % type_arg]
-
     return render_template('muni-contested-races.html',
                            contested_dict=contested_dict,
+                           total_money=total_money,
                            contested_races_type=contested_races_type,
                            contested_races_title=contested_races_title,
                            page_count=page_count)
