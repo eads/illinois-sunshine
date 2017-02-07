@@ -220,7 +220,6 @@ def donations():
         days_donations = list(g.engine.execute(sa.text(days_donations_sql),
                                              start_date=(datetime.now().date() - timedelta(days=60)),
                                              end_date=(datetime.now().date() + timedelta(days=1))))
-        import pdb; pdb.set_trace()
         if days_donations:
             break
 
