@@ -25,7 +25,7 @@
             <thead>
                 <tr>
                     <th class = 'text-center'>Municipality</th>
-                    <th class = 'text-left' colspan = {{ cand_span }}>Candidates</th>
+                    <th class = 'text-left' style='border-left:0.1px solid #999999' colspan = {{ cand_span }}>Candidates</th>
                 </tr>
             </thead>
             <tbody>
@@ -35,13 +35,13 @@
                         <a href= '{{ url_for('views.muni_contested_race_detail', district=key) }}'>{{ key }}</a>
                     </td>
                     {% for c in value %}
-                        <td class='text-left'>
+                        <td class='text-left' style='border-left:0.1px solid #999999'>
                             <strong>{{ c.first }} {{ c.last }}</strong> {% if c.party %} ({{ c.party }}) {% endif %} {% if c.incumbent|string() == 'Y' %} *INCUMBENT {% elif (c.incumbent|string() != "N") %} *{{ c.incumbent|string() }} {% endif %}
 
                         </td>
                     {% endfor %}
                     {% for i in range(8 - value|length) %}
-                        <td>&nbsp;</td>
+                        <td style='border-left:0.1px solid #999999'>&nbsp;</td>
                     {% endfor %}
                 </a></tr>
 
