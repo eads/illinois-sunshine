@@ -196,8 +196,7 @@ def index():
 @cache.cached(timeout=CACHE_TIMEOUT, key_prefix=make_cache_key)
 def donations():
 
-    date = datetime.now().date() - timedelta(days=1)
-
+    date = (datetime.utcnow()-timedelta(hours=6)).date() - timedelta(days=1)
     if request.args.get('date'):
         date = parse(request.args.get('date'))
 
