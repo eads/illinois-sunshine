@@ -207,8 +207,7 @@ def donations():
         cm.name as committee_name
       FROM condensed_receipts AS c
       JOIN committees AS cm ON c.committee_id = cm.id
-      WHERE c.received_date >= :start_date
-        AND c.received_date < :end_date
+      WHERE c.received_date = :start_date
       ORDER BY c.received_date DESC
     '''
 
@@ -220,8 +219,7 @@ def donations():
         #                                     start_date=date,
         #                                     end_date=(date + timedelta(days=1))))
         days_donations = list(g.engine.execute(sa.text(days_donations_sql),
-                                             start_date=(datetime.now().date() - timedelta(days=60)),
-                                             end_date=(datetime.now().date() + timedelta(days=1))))
+                                             start_date=date))
         if days_donations:
             break
 
