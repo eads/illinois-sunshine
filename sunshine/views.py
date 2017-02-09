@@ -13,6 +13,8 @@ from operator import attrgetter
 from dateutil.parser import parse
 import csv
 import os
+import operator
+import collections
 
 views = Blueprint('views', __name__)
 
@@ -372,6 +374,15 @@ def muni_contested_races():
             total_money[district] = total_money[district] + race.total_money
         else:
             total_money[district] = race.total_money
+
+    sorted_x = sorted(total_money.items(), key=lambda x: x[1], reverse=True)
+
+    total_money = collections.OrderedDict(sorted_x)
+    sorted_contested = []
+    for district in total_money.keys():
+        sorted_contested.append((district, contested_dict[district]))
+
+    contested_dict = collections.OrderedDict(sorted_contested)
 
     if not flask_session.get('%s_page_count' % type_arg):
 
