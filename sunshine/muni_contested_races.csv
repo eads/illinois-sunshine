@@ -1,41 +1,70 @@
-Region,District,Senate/House,Incumbent,Type,Party,First,Last,Candidate ID,Street Address,City,Zip,Date Filed,ID,Committee
-,City of Aurora,Mayor,N,,Non-Partisan,Linda,LaVia,,8 E Galena,Aurora,60506,11/17/16,16362,Friends of Linda Chapa LaVia
-,City of Aurora,Mayor,N,,Non-Partisan,Rick,Guzman,,1432 Greenlake Drive,Aurora,60502,11/18/16,32081,Guzman for Aurora
-,City of Aurora,Mayor,N,,Non-Partisan,Richard,Irvin,,605 N Broadway ,Aurora,60505,11/17/16,17670,Irvin for Aurora
-,City of Aurora,Mayor,N,,,Michael,Saville,,1030 N Commonwealth Ave,Aurora,60506,11/7/16,5321,Citizens for Saville
-,City of Aurora,Mayor,N,,,Daniel,Hoffman,,Na,Aurora,,,,
-,City of Aurora,Mayor,N,,,Jeffery,Houghtaling,,Na,Aurora,,,,
-,City of Aurora,Mayor,N,,Independent,Eva,Rodgers,,529 N Park Ave,Aurora,60506,,8831,Comm To Elect Eva Rodgers For Mayor
-,City of Aurora,Mayor,N,,R,David,Howard,,315 S Western Ave,Aurora,60506,,25854,Citizens for David James Howard
-,City of Evanston,Mayor,N,,Independent,Jeff,Smith,,Na,Evanston,,12/19/16,,Jeff Smith for Evanston
-,City of Evanston,Mayor,N,,Non-Partisan,Brian,Miller,,1527 Madison St,Evanston,60201,,25523,Friends of Brian Miller
-,City of Evanston,Mayor,N,,Non-Partisan,Gary,Gaspard,,415 Howard St,Evanston,60201,,,
-,City of Evanston,Mayor,N,,Non-Partisan,Steve,Hagerty,,1618 Orrington Avenue,Evanston,60201,,32207,Citizens for Steve Hagerty
-,City of Evanston,Mayor,N,,Non-Partisan,Mark,Tendam,,2448 Lincolnwood Dr,Evanston,60201,,,
-,City of Evanston,Mayor,Y,,Non-Partisan,Brant,Walker,,1304 State St,Alton,62002,,21751,Citizens for Brant Walker
-,City of Alton,Mayor,N,,D,Joshua,Young,,,Alton,,,,
-,City of Alton,Mayor,N,,Non-Partisan,Scott,Dixon,,1308 Henry St,Alton,62002,,,Citizens for Scott Dixon
-,City of Alton,Mayor,N,,,Dan,Rauschkolb,,,Alton,,,,
-,City of Des Plaines,Mayor,Y,,Independent,Matt,Bogusz,,897 W Grant,Des Plaines,60016,,21498,Citizens for Matt Bogusz
-,City of Des Plaines,Mayor,N,,Independent,Malcolm,Chester,,17157 E Touhy Ave,Des Plaines,60018,,29575,Citizens for Malcolm Chester
-,Village of Wheeling,Mayor,Y,,Independent,Dean,Argiris,,122 Berkshire Dr,Wheeling,60090,,16747,Citizens for Dean S Argiris
-,Village of Wheeling,Mayor,N,,Independent,Michael,Kurgan,,133 Berkshire Dr,Wheeling,60090,,20490,Friends of Mike Kurgan
-,Village of Wheeling,Mayor,N,,Independent,Pat,Horcher,,161 Mockingbird Ln,Wheeling,60090,,24976,Friends of Pat Horcher
-,Village of Barrington,Mayor,Y,,Non-Partisan,Karen,Darch,,317 North Ave,Barrington,60010,,32069,"Comm to Elect Darch, Miller, Raseman & Roberts"
-,Village of Barrington,Mayor,N,,,Mike,Kozel,,1189 S NW Hwy,Barrington,60010,12/12/16,25278,Mike Kozel Campaign Fund
-,City of Rolling Meadows,Mayor,N,,D,Mike,Cannon,,5717 Jessica Court,Rolling Meadows,60008,,32466,Committee to Elect Michael Cannon
-,City of Rolling Meadows,Mayor,N,,Independent,Len,Prejna,,,Rolling Meadows,60008,,,
-,City of Urbana,Mayor,N,,,Dave,Whitney,,,Rolling Meadows,,,,
-,City of Urbana,Mayor,Y,,D,Laurel,Prussing,,2106 Grange Dr,Urbana,61801,,18546,Prussing for Mayor
-,City of Urbana,Mayor,N,,D,Diane,Marlin,",",PO Box 1022,Urbana,61803,,32170,Citizens for Marlin
-,City of Urbana,Mayor,N,,D,Evelyn B.,Underwood,,1309 W Tremont St,Urbana,61801,,24236,Committee to Elect Evelyn B Underwood
-,City of Urbana,Mayor,N,,R,Rex,Bradfield,,2101 1/2 Pond St,Urbana,61801,,19792,Committee to Elect Rex Bradfield
-,Village of Bensenville,Mayor,N,,Non-Partisan,Frank,DeSimone,,1006 Twin Oaks St,Bensenville,60106,,26149,Residents Voice Party
-,Village of Bensenville,Mayor,N,,Non-Partisan,Henry,Wesseler,,342 S Briar Ln,Bensenville,60106,,21533,Change 4 Bensenville
-,Village of Lisle,Mayor,Y,,Independent,Joe/Joseph,Broda,,6469 Coach House Rd,Lisle,60532,,15719,Citizens to Elect Joe Broda
-,Village of Lisle,Mayor,N,,,Christopher,Pecak,,4511 Schwartz Ave,Lisle,60532,,32478,Prosperity For Lisle
-,Village of Roselle,Mayor,N,,Independent,Wayne,Domke,,630 Oak Street,Roselle,60172,,32368,Friends of Wayne Domke
-,Village of Roselle,Mayor,N,,Non-Partisan,Andy,Maglio,,800 Lake St.,Roselle,60172,,32203,Friends of Andy Maglio
-,City of Waukegan,Mayor,Y,,D,Wayne,Motley,,P.O. Box 259,Waukegan,60079,,15611,Committee to Elect Wayne Motley
-,City of Waukegan,Mayor,N,,D,Sam,Cunningham,,1101 Chestnut St.,Waukegan,60085,,14289,Cunningham Campaign Committee
-,City of Waukegan,Mayor,N,,Independent,Lisa,May,,402 Glendenning Pl,Waukegan,60087,,23330,Citizens for Lisa May
+Region,District,Senate/House,Incumbent,Party,First,Last,Candidate ID,Street Address,City,Zip,Date Filed,ID,Committee,,,State Board URL,Primary? And Date,City Elections Website
+,City of Aurora,Mayor,N,D,Linda,LaVia,,8 E Galena,Aurora,60506,11/17/16,31776,Linda for Aurora,,,,February 28th (link: http://www.auroravotes.org/Media/Default/PDF/Mayoral%20Aldermanic%20Candidates.PDF),Link to primary info: http://auroravotes.org/election-calendar
+,City of Aurora,Mayor,N,Non-Partisan,Rick,Guzman,,1432 Greenlake Drive,Aurora,60502,11/18/16,32081,Guzman for Aurora,,,https://www.elections.il.gov/CampaignDisclosure/CandidateDetail.aspx?ID=zwe84%2b4hUC%2bKkeanaODMlg%3d%3d,February 28th (link: http://www.auroravotes.org/Media/Default/PDF/Mayoral%20Aldermanic%20Candidates.PDF) ,
+,City of Aurora,Mayor,N,Non-Partisan,Richard,Irvin,,605 N Broadway ,Aurora,60505,11/17/16,17670,Irvin for Aurora,,,https://www.elections.il.gov/CampaignDisclosure/CandidateDetail.aspx?ID=ds0EDta69yzUHmt0fL5FYg%3d%3d,February 28th (link: http://www.auroravotes.org/Media/Default/PDF/Mayoral%20Aldermanic%20Candidates.PDF) ,
+,City of Aurora,Mayor,N,,Michael,Saville,,1030 N Commonwealth Ave,Aurora,60506,11/7/16,5321,Citizens for Saville,,,https://www.elections.il.gov/CampaignDisclosure/CandidateDetail.aspx?ID=MIECvCMOgjbEL5fRoLc9gw%3d%3d,February 28th (link: http://www.auroravotes.org/Media/Default/PDF/Mayoral%20Aldermanic%20Candidates.PDF) ,
+,City of Aurora,Mayor,N,Write in,Daniel,Hoffman,,Na,Aurora,,,,,,,,February 28th (link: http://www.auroravotes.org/Media/Default/PDF/Mayoral%20Aldermanic%20Candidates.PDF) ,Write-in: spoke to Aurora Election Comission 630-897-4030
+,City of Aurora,Mayor,N,Write in,Jeffery,Houghtaling,,Na,Aurora,,,,,,,,February 28th (link: http://www.auroravotes.org/Media/Default/PDF/Mayoral%20Aldermanic%20Candidates.PDF) ,Write-in: spoke to Aurora Election Comission 630-897-4030
+,City of Aurora,Mayor,N,Write in as Independent,Eva,Rodgers,,529 N Park Ave,Aurora,60506,,8831,Comm To Elect Eva Rodgers For Mayor,,,https://www.elections.il.gov/CampaignDisclosure/CandidateDetail.aspx?ID=4q6iNCzdjMK6pwbuOivrEw%3d%3d,February 28th (link: http://www.auroravotes.org/Media/Default/PDF/Mayoral%20Aldermanic%20Candidates.PDF) ,Write-in: spoke to Aurora Election Comission 630-897-4030
+,City of Aurora,Mayor,N,Write in as Republican,David,Howard,,315 S Western Ave,Aurora,60506,,25854,Citizens for David James Howard,,,https://www.elections.il.gov/CampaignDisclosure/CandidateDetail.aspx?ID=7ax8ecsvJDQbvDq5nsE0pA%3d%3d,February 28th (link: http://www.auroravotes.org/Media/Default/PDF/Mayoral%20Aldermanic%20Candidates.PDF) ,Write-in: spoke to Aurora Election Comission 630-897-4030
+,City of Evanston,Mayor,N,Independent,Jeff,Smith,,Na,Evanston,,12/19/16,,Jeff Smith for Evanston,,,https://www.elections.il.gov/CampaignDisclosure/CandidateDetail.aspx?ID=Wss6ZbWQh3UpxUYuENYUbA%3d%3d,"February 13th-27th, 2017",http://www.cityofevanston.org/government/city-clerk/voter-information/
+,City of Evanston,Mayor,N,Non-Partisan,Brian,Miller,,1527 Madison St,Evanston,60201,,25523,Friends of Brian Miller,,,https://www.elections.il.gov/CampaignDisclosure/CandidateDetail.aspx?ID=JWhy%2fIwijYOeUaZIpenVAA%3d%3d,"February 13th-27th, 2017",http://www.cityofevanston.org/government/city-clerk/voter-information/
+,City of Evanston,Mayor,N,Non-Partisan,Gary,Gaspard,,415 Howard St,Evanston,60201,,,,,,https://www.elections.il.gov/CampaignDisclosure/CandidateDetail.aspx?ID=%2bFenAStenlDyCiSlJBRZQA%3d%3d,"February 13th-27th, 2017",http://www.cityofevanston.org/government/city-clerk/voter-information/
+,City of Evanston,Mayor,N,Non-Partisan,Steve,Hagerty,,1618 Orrington Avenue,Evanston,60201,,32207,Citizens for Steve Hagerty,,,https://www.elections.il.gov/CampaignDisclosure/CandidateDetail.aspx?ID=ZJrjGNQy3Uo%2fbyCFktoKGA%3d%3d,"February 13th-27th, 2017",http://www.cityofevanston.org/government/city-clerk/voter-information/
+,City of Evanston,Mayor,N,Non-Partisan,Mark,Tendam,,2448 Lincolnwood Dr,Evanston,60201,,,,,,https://www.elections.il.gov/CampaignDisclosure/CandidateDetail.aspx?ID=Wss6ZbWQh3VzYCA4GUrQ3g%3d%3d,"February 13th-27th, 2017",http://www.cityofevanston.org/government/city-clerk/voter-information/
+,City of Alton,Mayor,Y,Non-Partisan,Brant,Walker,,1304 State St,Alton,62002,,21751,Citizens for Brant Walker,,,https://www.elections.il.gov/CampaignDisclosure/CandidateDetail.aspx?ID=wIcsvvS2Lxy418UFDD3UKw%3d%3d,"February 13th-27th, 2017  Waiting for a call back to see if he is write-in or filed after December",http://www.cityofevanston.org/government/city-clerk/voter-information/
+,City of Alton,Mayor,N,Write in as Democrat,Joshua,Young,,,Alton,,,,,,,,No Primary - Spoke to city clerk 618-463-3500,
+,City of Alton,Mayor,N,Non-Partisan,Scott,Dixon,,1308 Henry St,Alton,62002,,,Citizens for Scott Dixon,,,https://www.elections.il.gov/CampaignDisclosure/CandidateDetail.aspx?ID=zbt23raMXfUx7CZQnBVvQA%3d%3d,No Primary - Spoke to city clerk 618-463-3500,
+,City of Alton,Mayor,N,Non-Partisan,Dan,Rauschkolb,,,Alton,,,,,,,,No Primary - Spoke to city clerk 618-463-3500,
+,City of Des Plaines,Mayor,Y,Non-Partisan,Matt,Bogusz,,897 W Grant,Des Plaines,60016,,21498,Citizens for Matt Bogusz,,,https://www.elections.il.gov/CampaignDisclosure/CandidateDetail.aspx?ID=CETN7nIfn8BOdK5k3KLJwA%3d%3d,No Primary- Spoke to city clerk 847-391-5300,
+,City of Des Plaines,Mayor,N,Non-Partisan,Malcolm,Chester,,17157 E Touhy Ave,Des Plaines,60018,,29575,Citizens for Malcolm Chester,committee filed on 8/4,,https://www.elections.il.gov/CampaignDisclosure/CandidateDetail.aspx?ID=pCCq0OKF2UTNJOge52FX9g%3d%3d,No Primary- Spoke to city clerk 847-391-5300,
+,Village of Wheeling,Village President,Y,Independent,Dean,Argiris,,122 Berkshire Dr,Wheeling,60090,,16747,Citizens for Dean S Argiris,,,https://www.elections.il.gov/CampaignDisclosure/CandidateDetail.aspx?ID=I97qW1wxMrSdVdqEnbrQXw%3d%3d,No Primay- Spoke to city clerk 847-499-9231,
+,Village of Wheeling,Village President ,N,Independent,Michael,Kurgan,,133 Berkshire Dr,Wheeling,60090,,20490,Friends of Mike Kurgan,,,https://www.elections.il.gov/CampaignDisclosure/CandidateDetail.aspx?ID=AkcP2mnSxa2TE8p3x%2fPrCw%3d%3d,No Primay- Spoke to city clerk 847-499-9231,
+,Village of Wheeling,Village President,N,Independent,Pat,Horcher,,161 Mockingbird Ln,Wheeling,60090,,24976,Friends of Pat Horcher,,,https://www.elections.il.gov/CampaignDisclosure/CandidateDetail.aspx?ID=lEyoBtHg%2fvb7pbUB2D%2bYLA%3d%3d,No Primay- Spoke to city clerk 847-499-9231,
+,Village of Barrington,Village President,Y,Non-Partisan,Karen,Darch,,317 North Ave,Barrington,60010,,32069,"Comm to Elect Darch, Miller, Raseman & Roberts",,,https://www.elections.il.gov/CampaignDisclosure/CandidateDetail.aspx?ID=0lQn9Lt%2fMCMwbEXkjOFD2g%3d%3d,No Primary- Spoke to city clerk 847-304-3400,
+,Village of Barrington,Village President,N,Non-Partisan,Mike,Kozel,,1189 S NW Hwy,Barrington,60010,12/12/16,25278,Mike Kozel Campaign Fund,,,https://www.elections.il.gov/CampaignDisclosure/CandidateDetail.aspx?ID=0fgYZ9%2faNSEmeqqa1CUVBA%3d%3d,No Primary- Spoke to city clerk 847-304-3400,
+,City of Rolling Meadows,Mayor,N,Independent ,Mike,Cannon,,5717 Jessica Court,Rolling Meadows,60008,,32466,Committee to Elect Michael Cannon,,,https://www.elections.il.gov/CampaignDisclosure/CandidateDetail.aspx?ID=LwG010xW5%2fFWwFc%2b%2bpDH0A%3d%3d,No Primary- Spoke to city clerk 847-394-8500,
+,City of Rolling Meadows,Mayor,N,Independent,Len,Prejna,,,Rolling Meadows,60008,,,,,,,No Primary- Spoke to city clerk 847-394-8500,
+,City of Rolling Meadows,Mayor,N,Independent,Dave,Whitney,,,Rolling Meadows,,,,,committee filed on paper 9/6,,,No Primary- Spoke to city clerk 847-394-8500,
+,City of Urbana,Mayor,Y,D,Laurel,Prussing,,2106 Grange Dr,Urbana,61801,,18546,Prussing for Mayor,,,https://www.elections.il.gov/CampaignDisclosure/CandidateDetail.aspx?ID=danz0iUs9u6KqURhC4vrAg%3d%3d,February 28th - Spoke to city clerk 217-384-2362,
+,City of Urbana,Mayor,N,D,Diane,Marlin,",",PO Box 1022,Urbana,61803,,32170,Citizens for Marlin,,,https://www.elections.il.gov/CampaignDisclosure/CandidateDetail.aspx?ID=2Uekj%2f5qByg4D6vdRwwr1g%3d%3d,February 28th - Spoke to city clerk 217-384-2362,
+,City of Urbana,Mayor,N,D,Evelyn B.,Underwood,,1309 W Tremont St,Urbana,61801,,24236,Committee to Elect Evelyn B Underwood,,,https://www.elections.il.gov/CampaignDisclosure/CandidateDetail.aspx?ID=vlSMDmDO4alHFfZ3Khgu9g%3d%3d,February 28th - Spoke to city clerk 217-384-2362,
+,City of Urbana,Mayor,N,R,Rex,Bradfield,,2101 1/2 Pond St,Urbana,61801,,19792,Committee to Elect Rex Bradfield,,,https://www.elections.il.gov/CampaignDisclosure/CandidateDetail.aspx?ID=E442Zqka8q6TC32XDl%2f1fQ%3d%3d,February 28th - Spoke to city clerk 217-384-2362,
+,Village of Bensenville,Village President,N,Non-Partisan,Frank,DeSimone,,1006 Twin Oaks St,Bensenville,60106,,26149,Residents Voice Party,,,https://www.elections.il.gov/CampaignDisclosure/CandidateDetail.aspx?ID=zRidHtoQTJQHUO4udn0nbg%3d%3d,No Primary- Spoke to city clerk 630-766-8200,
+,Village of Bensenville,Village President,N,Non-Partisan,Henry,Wesseler,,342 S Briar Ln,Bensenville,60106,,21533,Change 4 Bensenville,,,https://www.elections.il.gov/CampaignDisclosure/CandidateDetail.aspx?ID=RwRmtJldJIsHbD18wkbzWQ%3d%3d,No Primary- Spoke to city clerk 630-766-8200,
+,Village of Lisle,Mayor,Y,Independent,Joe/Joseph,Broda,,6469 Coach House Rd,Lisle,60532,,15719,Citizens to Elect Joe Broda,,,https://www.elections.il.gov/CampaignDisclosure/CandidateDetail.aspx?ID=zE0h8NlpKfjgFhuJuMCIRg%3d%3d,No Primary- Spoke with city clerk 630-271-4220,
+,Village of Lisle,Mayor,N,Prosperty for Lyle- new party,Christopher,Pecak,,4511 Schwartz Ave,Lisle,60532,,32478,Prosperity For Lisle,,,https://www.elections.il.gov/CampaignDisclosure/CandidateDetail.aspx?ID=RwRmtJldJIsiO4l37Wqevg%3d%3d,No Primary- Spoke with city clerk 630-271-4220,
+,Village of Roselle,Mayor,N,Independent,Wayne,Domke,,630 Oak Street,Roselle,60172,,32368,Friends of Wayne Domke,,,https://www.elections.il.gov/CampaignDisclosure/CandidateDetail.aspx?ID=UIkjRpL8HRBce2QMj72ZAg%3d%3d,No Primary- Spoke to city clerk 630-980-2000,
+,Village of Roselle,Mayor,N,Independent,Andy,Maglio,,800 Lake St.,Roselle,60172,,32203,Friends of Andy Maglio,,,https://www.elections.il.gov/CampaignDisclosure/CandidateDetail.aspx?ID=tnGFgxXwh%2f0q83HGLojcLw%3d%3d,No Primary- Spoke to city clerk 630-980-2000,
+,City of Waukegan,Mayor,Y,D,Wayne,Motley,,P.O. Box 259,Waukegan,60079,,15611,Committee to Elect Wayne Motley,,,https://www.elections.il.gov/CampaignDisclosure/CandidateDetail.aspx?ID=XNZHBxBL6eHsPHRXfsxyPA%3d%3d,February 28th- Spoke with city clerk 847-599-2513,
+,City of Waukegan,Mayor,N,D,Sam,Cunningham,,1101 Chestnut St.,Waukegan,60085,,14289,Cunningham Campaign Committee,,,https://www.elections.il.gov/CampaignDisclosure/CandidateDetail.aspx?ID=sEjWcps0tHGYUYJu2Q8ZNA%3d%3d,February 28th- Spoke with city clerk 847-599-2513,
+,City of Waukegan,Mayor,N,Independent,Lisa,May,,402 Glendenning Pl,Waukegan,60087,,23330,Citizens for Lisa May,,,https://www.elections.il.gov/CampaignDisclosure/CandidateDetail.aspx?ID=Fuf3MXz2zwk2vAF%2fb%2bgWWw%3d%3d,February 28th- Spoke with city clerk 847-599-2513,
+,City of Park Ridge,Mayor,Y,Non-Partisan,Martin,Maloney,,1433 S. Ashland,Park Ridge,60068,,32386,Committee to Elect Marty Maloney,,,http://www.elections.il.gov/CampaignDisclosure/CandidateDetail.aspx?ID=b6ugj7A3boJk3Cu4nTwmJg%3d%3d,No Primary- Spoke with city clerk 847-318-5200,
+,City of Park Ridge,Mayor,N,Non-Partisan,Lukas,Fuksa,,108 N Grace Ave,Park Ridge,60068,,32384,Friends of Lukas Fuksa,,,http://www.elections.il.gov/CampaignDisclosure/CandidateDetail.aspx?ID=b6ugj7A3boKJabZyATqjJA%3d%3d,No Primary- Spoke with city clerk 847-318-5200,
+,Village of Mount Prospect,Village Mayor,Y,Non-Partisan,Arlene,Juracek,,303 S Lancaster Ave,Mount Prosepect,60056,,13980,Arlene for Trustee Campaign Committee,,,http://www.elections.il.gov/CampaignDisclosure/CandidateDetail.aspx?ID=8NPoV1qC6WxKynlY7batOQ%3d%3d,No Primary- Spoke with city clerk 847-392-6000,
+,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,
+,Mayoral Contested Races,,,,,,,,,,,,,,,,,
+,https://illinoissunshine.org/muni-contested-races/,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,
+,Cook County Candidate Search,,,,,,,,,,,,,,,,,
+,http://www.cookcountyclerk.com/elections/deo/Pages/default.aspx?qtype=1&taxcode=03-1130-000&jtype=MUNIS,,,,,,,,,,,,,,,,,

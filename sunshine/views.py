@@ -359,13 +359,13 @@ def muni_contested_races():
 
         if district in contested_dict:
             if race.incumbent == 'N':
-              contested_dict[district].append({'last': race.last_name, 'first': race.first_name,'incumbent': race.incumbent,'party': race.party})
+              contested_dict[district].append({'last': race.last_name, 'first': race.first_name,'incumbent': race.incumbent,'party': race.party, 'branch': race.branch})
             else:
-              contested_dict[district].insert(0,{'last': race.last_name, 'first': race.first_name,'incumbent': race.incumbent,'party': race.party})
+              contested_dict[district].insert(0,{'last': race.last_name, 'first': race.first_name,'incumbent': race.incumbent,'party': race.party, 'branch': race.branch})
 
         else:
             contested_dict[district] = []
-            contested_dict[district].append({'last': race.last_name, 'first': race.first_name,'incumbent': race.incumbent,'party': race.party})
+            contested_dict[district].append({'last': race.last_name, 'first': race.first_name,'incumbent': race.incumbent,'party': race.party, 'branch': race.branch})
 
         if district in total_money:
             total_money[district] = total_money[district] + race.total_money
