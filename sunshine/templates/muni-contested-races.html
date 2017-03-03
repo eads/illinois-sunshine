@@ -20,7 +20,7 @@
  </div>
 <div class="row">
     <div class="col-sm-12">
-        {% set cand_span = "8" %}
+        {% set cand_span = "4" %}
         <table class = "table table-striped table-hover">
             <thead>
                 <tr>
@@ -48,7 +48,7 @@
 
                         </td>
                     {% endfor %}
-                    {% for i in range(8 - value|length) %}
+                    {% for i in range(4 - value|length) %}
                         <td style='border-left:0.1px solid #999999' width="10%">&nbsp;</td>
                     {% endfor %}
                 </a></tr>
