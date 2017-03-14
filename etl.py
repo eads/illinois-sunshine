@@ -1,18 +1,14 @@
 from sunshine.models import Committee, Candidate, Officer, Candidacy, \
     D2Report, FiledDoc, Receipt, Expenditure, Investment
 import os
-from datetime import date, datetime, timedelta
-from hashlib import md5
+from datetime import datetime, timedelta
 import sqlalchemy as sa
 import csv
 from csvkit.cleanup import RowChecker
-from csvkit.sql import make_table, make_create_table_statement
-from csvkit.table import Table
 from collections import OrderedDict
 from typeinferer import TypeInferer
 import psycopg2
 from psycopg2.extensions import AsIs
-from sunshine.database import db_session
 
 import logging
 logger = logging.getLogger(__name__)
@@ -30,6 +26,7 @@ except ImportError:
 except KeyError:
     pass
 
+
 class SunshineTransformLoad(object):
 
     def __init__(self,
@@ -37,7 +34,6 @@ class SunshineTransformLoad(object):
                  metadata=None,
                  chunk_size=50000,
                  file_path='downloads'):
-
 
         self.connection = connection
 
@@ -47,9 +43,10 @@ class SunshineTransformLoad(object):
             self.metadata = metadata
             self.initializeDB()
 
-        self.file_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                                      file_path,
-                                      self.filename)
+        self.file_path = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)),
+            file_path,
+            self.filename)
 
     def executeTransaction(self, query, raise_exc=False, *args, **kwargs):
         trans = self.connection.begin()
@@ -77,13 +74,16 @@ class SunshineTransformLoad(object):
         except psycopg2.ProgrammingError:
             pass
 
-
     def addNameColumn(self):
 
-        sql_table = sa.Table(self.table_name, sa.MetaData(),
-                             autoload=True, autoload_with=self.connection.engine)
+        sql_table = sa.Table(
+            self.table_name,
+            sa.MetaData(),
+            autoload=True,
+            autoload_with=self.connection.engine
+        )
 
-        if not 'search_name' in sql_table.columns.keys():
+        if 'search_name' not in sql_table.columns.keys():
 
             add_name_col = '''
                 ALTER TABLE {0} ADD COLUMN search_name tsvector
@@ -119,10 +119,14 @@ class SunshineTransformLoad(object):
             self.executeTransaction(trigger)
 
     def addDateColumn(self, date_col):
-        sql_table = sa.Table(self.table_name, sa.MetaData(),
-                             autoload=True, autoload_with=self.connection.engine)
+        sql_table = sa.Table(
+            self.table_name,
+            sa.MetaData(),
+            autoload=True,
+            autoload_with=self.connection.engine
+        )
 
-        if not 'search_date' in sql_table.columns.keys():
+        if 'search_date' not in sql_table.columns.keys():
 
             add_date_col = '''
                 ALTER TABLE {0} ADD COLUMN search_date TIMESTAMP
@@ -151,7 +155,6 @@ class SunshineTransformLoad(object):
 
         self.executeTransaction(add_dates)
 
-
     def initializeDB(self):
         enum = '''
             CREATE TYPE committee_position AS ENUM (
@@ -164,7 +167,6 @@ class SunshineTransformLoad(object):
 
         self.metadata.create_all(bind=self.connection.engine)
 
-
     def makeRawTable(self):
         inferer = TypeInferer(self.file_path)
         inferer.infer()
@@ -176,10 +178,13 @@ class SunshineTransformLoad(object):
             sql_table.append_column(sa.Column(column_name, column_type()))
 
         dialect = sa.dialects.postgresql.dialect()
-        create_table = str(sa.schema.CreateTable(sql_table)\
-                           .compile(dialect=dialect)).strip(';')
+        create_table = str(
+            sa.schema.CreateTable(sql_table).compile(dialect=dialect)
+        ).strip(';')
 
-        self.executeTransaction('DROP TABLE IF EXISTS raw_{0}'.format(self.table_name))
+        self.executeTransaction('DROP TABLE IF EXISTS raw_{0}'.format(
+            self.table_name
+        ))
         self.executeTransaction(create_table)
 
     def writeRawToDisk(self):
@@ -232,7 +237,9 @@ class SunshineTransformLoad(object):
             )
         '''.format(self.table_name)
 
-        self.executeTransaction('DROP TABLE IF EXISTS new_{0}'.format(self.table_name))
+        self.executeTransaction('DROP TABLE IF EXISTS new_{0}'.format(
+            self.table_name
+        ))
         self.executeTransaction(create_new_record_table)
 
     def iterIncomingData(self):
@@ -280,8 +287,10 @@ class SunshineTransformLoad(object):
 
     def updateExistingRecords(self):
 
-        fields = ','.join(['{0}=s."{1}"'.format(clean, raw) \
-                for clean, raw in zip(self.header, self.raw_header)])
+        fields = ','.join([
+            '{0}=s."{1}"'.format(clean, raw)
+            for clean, raw in zip(self.header, self.raw_header)
+        ])
 
         update = '''
             UPDATE {table_name} SET
@@ -317,6 +326,7 @@ class SunshineTransformLoad(object):
 
         logger.info('inserted %s %s' % (i, self.table_name))
 
+
 class SunshineCommittees(SunshineTransformLoad):
 
     table_name = 'committees'
@@ -325,10 +335,14 @@ class SunshineCommittees(SunshineTransformLoad):
 
     def addNameColumn(self):
 
-        sql_table = sa.Table(self.table_name, sa.MetaData(),
-                             autoload=True, autoload_with=self.connection.engine)
+        sql_table = sa.Table(
+            self.table_name,
+            sa.MetaData(),
+            autoload=True,
+            autoload_with=self.connection.engine
+        )
 
-        if not 'search_name' in sql_table.columns.keys():
+        if 'search_name' not in sql_table.columns.keys():
 
             add_name_col = '''
                 ALTER TABLE {0} ADD COLUMN search_name tsvector
@@ -393,9 +407,12 @@ class SunshineCommittees(SunshineTransformLoad):
 class SunshineCandidates(SunshineTransformLoad):
 
     table_name = 'candidates'
-    header = [f for f in Candidate.__table__.columns.keys() \
-              if f not in ['date_added', 'last_update', 'ocd_id']]
+    header = [
+        f for f in Candidate.__table__.columns.keys()
+        if f not in ['date_added', 'last_update', 'ocd_id']
+    ]
     filename = 'Candidates.txt'
+
 
 class SunshineOfficers(SunshineTransformLoad):
     table_name = 'officers'
@@ -424,8 +441,10 @@ class SunshineOfficers(SunshineTransformLoad):
 
         header = [f for f in self.header if f not in ignore_fields]
 
-        fields = ','.join(['{0}=s."{1}"'.format(clean, raw) \
-                for clean, raw in zip(header, self.raw_header)])
+        fields = ','.join([
+            '{0}=s."{1}"'.format(clean, raw)
+            for clean, raw in zip(header, self.raw_header)
+        ])
 
         update = '''
             UPDATE {table_name} SET
@@ -463,8 +482,10 @@ class SunshinePrevOfficers(SunshineOfficers):
 
         header = [f for f in self.header if f != 'phone']
 
-        fields = ','.join(['{0}=s."{1}"'.format(clean, raw) \
-                for clean, raw in zip(header, self.raw_header)])
+        fields = ','.join([
+            '{0}=s."{1}"'.format(clean, raw)
+            for clean, raw in zip(header, self.raw_header)
+        ])
 
         update = '''
             UPDATE {table_name} SET
@@ -478,6 +499,7 @@ class SunshinePrevOfficers(SunshineOfficers):
                    fields=fields)
 
         self.executeTransaction(update)
+
 
 class SunshineCandidacy(SunshineTransformLoad):
     table_name = 'candidacies'
@@ -505,11 +527,13 @@ class SunshineCandidacy(SunshineTransformLoad):
             row = OrderedDict(zip(row.keys(), row.values()))
 
             # Get election type
-            row['ElectionType'] = self.election_types.get(row['ElectionType'].strip())
+            row['ElectionType'] = \
+                self.election_types.get(row['ElectionType'].strip())
 
             # Get race type
             if row.get('IncChallOpen'):
-                row['IncChallOpen'] = self.race_types.get(row['IncChallOpen'].strip())
+                row['IncChallOpen'] = \
+                    self.race_types.get(row['IncChallOpen'].strip())
 
             # Get outcome
             if row['WonLost'] == 'Won':
@@ -542,7 +566,9 @@ class SunshineCandidateCommittees(SunshineTransformLoad):
             )
         '''.format(self.table_name)
 
-        self.executeTransaction('DROP TABLE IF EXISTS new_{0}'.format(self.table_name))
+        self.executeTransaction('DROP TABLE IF EXISTS new_{0}'.format(
+            self.table_name
+        ))
         self.executeTransaction(create_new_record_table)
 
     def iterIncomingData(self):
@@ -561,6 +587,7 @@ class SunshineCandidateCommittees(SunshineTransformLoad):
         for row in self.iterIncomingData():
             row = [row['CommitteeID'], row['CandidateID']]
             yield OrderedDict(zip(self.header, row))
+
 
 class SunshineOfficerCommittees(SunshineTransformLoad):
     table_name = 'officer_committees'
@@ -582,7 +609,9 @@ class SunshineOfficerCommittees(SunshineTransformLoad):
             )
         '''.format(self.table_name)
 
-        self.executeTransaction('DROP TABLE IF EXISTS new_{0}'.format(self.table_name))
+        self.executeTransaction('DROP TABLE IF EXISTS new_{0}'.format(
+            self.table_name
+        ))
         self.executeTransaction(create_new_record_table, rase_exc=True)
 
     def iterIncomingData(self):
@@ -621,10 +650,12 @@ class SunshineD2Reports(SunshineTransformLoad):
     header = D2Report.__table__.columns.keys()
     filename = 'D2Totals.txt'
 
+
 class SunshineFiledDocs(SunshineTransformLoad):
     table_name = 'filed_docs'
     header = FiledDoc.__table__.columns.keys()
     filename = 'FiledDocs.txt'
+
 
 class SunshineReceipts(SunshineTransformLoad):
     table_name = 'receipts'
@@ -654,10 +685,12 @@ class SunshineExpenditures(SunshineTransformLoad):
     header = Expenditure.__table__.columns.keys()
     filename = 'Expenditures.txt'
 
+
 class SunshineInvestments(SunshineTransformLoad):
     table_name = 'investments'
     header = Investment.__table__.columns.keys()
     filename = 'Investments.txt'
+
 
 class SunshineViews(object):
 
@@ -672,7 +705,7 @@ class SunshineViews(object):
             trans.commit()
             return rows
         except (sa.exc.ProgrammingError, psycopg2.ProgrammingError) as e:
-            # TODO: this line seems to break when creating views for the first time.
+            #TODO: this line seems to break when creating views for the first time.
             # logger.error(e, exc_info=True)
             trans.rollback()
             raise e
@@ -688,11 +721,21 @@ class SunshineViews(object):
             pass
 
     def dropViews(self):
-        self.executeTransaction('DROP MATERIALIZED VIEW IF EXISTS receipts_by_month')
-        self.executeTransaction('DROP MATERIALIZED VIEW IF EXISTS committee_receipts_by_week')
-        self.executeTransaction('DROP MATERIALIZED VIEW IF EXISTS incumbent_candidates')
-        self.executeTransaction('DROP MATERIALIZED VIEW IF EXISTS most_recent_filings CASCADE')
-        self.executeTransaction('DROP MATERIALIZED VIEW IF EXISTS expenditures_by_candidate')
+        self.executeTransaction(
+            'DROP MATERIALIZED VIEW IF EXISTS receipts_by_month'
+        )
+        self.executeTransaction(
+            'DROP MATERIALIZED VIEW IF EXISTS committee_receipts_by_week'
+        )
+        self.executeTransaction(
+            'DROP MATERIALIZED VIEW IF EXISTS incumbent_candidates'
+        )
+        self.executeTransaction(
+            'DROP MATERIALIZED VIEW IF EXISTS most_recent_filings CASCADE'
+        )
+        self.executeTransaction(
+            'DROP MATERIALIZED VIEW IF EXISTS expenditures_by_candidate'
+        )
         self.executeTransaction('DROP TABLE IF EXISTS contested_races')
         self.executeTransaction('DROP TABLE IF EXISTS muni_contested_races')
 
@@ -701,19 +744,21 @@ class SunshineViews(object):
         self.mostRecentFilings()
         self.condensedReceipts()
         self.condensedExpenditures()
-        self.expendituresByCandidate() # relies on condensed_expenditures
-        self.receiptsAggregates() # relies on condensedReceipts
-        self.committeeReceiptAggregates() # relies on condensedReceipts
-        self.committeeMoney() # relies on mostRecentFilings
-        self.candidateMoney() # relies on committeeMoney and mostRecentFilings
-        self.contestedRaces() # relies on sunshine/contested_races_2016.csv and sunshine/comptroller_contested_race_2016.csv
-        self.muniContestedRaces() # relies on sunshine/muni_contested_races.csv
+        self.expendituresByCandidate()  # relies on condensed_expenditures
+        self.receiptsAggregates()  # relies on condensedReceipts
+        self.committeeReceiptAggregates()  # relies on condensedReceipts
+        self.committeeMoney()  # relies on mostRecentFilings
+        self.candidateMoney()  # relies on committeeMoney and mostRecentFilings
+        self.contestedRaces()  # relies on sunshine/contested_races_2016.csv and sunshine/comptroller_contested_race_2016.csv
+        self.muniContestedRaces()  # relies on sunshine/muni_contested_races.csv
 
     def condensedExpenditures(self):
 
         try:
 
-            self.executeTransaction('REFRESH MATERIALIZED VIEW CONCURRENTLY condensed_expenditures')
+            self.executeTransaction(
+                'REFRESH MATERIALIZED VIEW CONCURRENTLY condensed_expenditures'
+            )
 
         except sa.exc.ProgrammingError:
 
@@ -756,7 +801,9 @@ class SunshineViews(object):
     def condensedReceipts(self):
 
         try:
-            self.executeTransaction('REFRESH MATERIALIZED VIEW CONCURRENTLY condensed_receipts')
+            self.executeTransaction(
+                'REFRESH MATERIALIZED VIEW CONCURRENTLY condensed_receipts'
+            )
 
         except sa.exc.ProgrammingError:
 
@@ -800,7 +847,9 @@ class SunshineViews(object):
     def expendituresByCandidate(self):
 
         try:
-            self.executeTransaction('REFRESH MATERIALIZED VIEW CONCURRENTLY expenditures_by_candidate')
+            self.executeTransaction(
+                'REFRESH MATERIALIZED VIEW CONCURRENTLY expenditures_by_candidate'
+            )
 
         except sa.exc.ProgrammingError:
 
@@ -872,31 +921,30 @@ class SunshineViews(object):
 
     def muniContestedRaces(self):
         """
-        Creates the muni contested races view table from csv files hard saved in sunsine folder
+        Creates the muni contested races view table from csv files hard
+        saved in sunsine folder
         """
         try:
-            races_input_file = csv.DictReader(open(os.getcwd()+'/sunshine/muni_contested_races.csv'))
+            races_input_file = csv.DictReader(open(
+                os.getcwd() + '/sunshine/muni_contested_races.csv'
+            ))
 
             entries = []
             for row in races_input_file:
                 entries.append(row)
 
-            for row in comptroller_input_file:
-                entries.append(row)
-
             contested_races = []
-            counter = 0
             for e in entries:
                 supporting_funds = 0
                 opposing_funds = 0
                 controlled_amount = 0
-                funds_available  = 0
+                funds_available = 0
                 contributions = 0
                 total_funds = 0
                 investments = 0
                 debts = 0
                 total_money = 0
-                candidate_names = [] #list of all possible candidate name possibilities
+                candidate_names = []  # list of all possible candidate name possibilities
 
                 candidate_id = None
 
@@ -915,7 +963,8 @@ class SunshineViews(object):
 
                 cand_name = first_name + " " + last_name
 
-                supp_funds, opp_funds = self.get_candidate_funds_byname(cand_name)
+                supp_funds, opp_funds = \
+                    self.get_candidate_funds_byname(cand_name)
                 supporting_funds = supporting_funds + supp_funds
                 opposing_funds = opposing_funds + opp_funds
 
@@ -929,8 +978,28 @@ class SunshineViews(object):
                     debts = latest_filing['total_debts']
 
 
-                total_money = supporting_funds + opposing_funds + controlled_amount
-                contested_races.append({'district': district, 'branch': e['Senate/House'], 'last_name': last_name, 'first_name': first_name,'committee_name': e['Committee'],'incumbent': e['Incumbent'],'committee_id': committee_id,'party': e['Party'], 'funds_available': funds_available, 'contributions': contributions, 'total_funds': total_funds, 'investments': investments, 'debts': debts, 'supporting_funds': supporting_funds, 'opposing_funds': opposing_funds, 'candidate_id' : candidate_id, 'total_money': total_money, 'reporting_period_end' : latest_filing['reporting_period_end'], 'alternate_names' : ';'.join(cand_names)})
+                total_money = \
+                    supporting_funds + opposing_funds + controlled_amount
+                contested_races.append({
+                    'district': district,
+                    'branch': e['Senate/House'],
+                    'last_name': last_name,
+                    'first_name': first_name,
+                    'committee_name': e['Committee'],
+                    'incumbent': e['Incumbent'],
+                    'committee_id': committee_id,
+                    'party': e['Party'],
+                    'funds_available': funds_available,
+                    'contributions': contributions,
+                    'total_funds': total_funds,
+                    'investments': investments,
+                    'debts': debts,
+                    'supporting_funds': supporting_funds,
+                    'opposing_funds': opposing_funds,
+                    'candidate_id': candidate_id,
+                    'total_money': total_money,
+                    'reporting_period_end': latest_filing['reporting_period_end']
+                })
 
             exp = '''
                 CREATE TABLE muni_contested_races(
@@ -951,20 +1020,41 @@ class SunshineViews(object):
                     opposing_funds DOUBLE PRECISION,
                     reporting_period_end DATE,
                     district TEXT,
-                    candidate_id INTEGER,
-                    alternate_names TEXT
+                    candidate_id INTEGER
                 )
             '''
 
             trans = self.connection.begin()
             curs = self.connection.connection.cursor()
             curs.execute(exp)
-            insert_statement = 'INSERT INTO muni_contested_races (%s) VALUES %s'
-            cols = ['last_name', 'committee_id', 'incumbent', 'district', 'first_name', 'total_funds', 'candidate_id', 'investments', 'committee_name', 'supporting_funds', 'opposing_funds', 'party', 'branch', 'contributions', 'debts', 'total_money', 'funds_available','reporting_period_end','alternate_names']
+            insert_statement = \
+                'INSERT INTO muni_contested_races (%s) VALUES %s'
+            cols = [
+                'last_name',
+                'committee_id',
+                'incumbent',
+                'district',
+                'first_name',
+                'total_funds',
+                'candidate_id',
+                'investments',
+                'committee_name',
+                'supporting_funds',
+                'opposing_funds',
+                'party',
+                'branch',
+                'contributions',
+                'debts',
+                'total_money',
+                'funds_available',
+                'reporting_period_end'
+            ]
             for cr in contested_races:
 
                 values = [cr[column] for column in cols]
-                curs.execute(insert_statement, (AsIs(','.join(cols)), tuple(values)))
+                curs.execute(
+                    insert_statement, (AsIs(','.join(cols)), tuple(values))
+                )
 
             trans.commit()
         except sa.exc.ProgrammingError:
@@ -972,11 +1062,16 @@ class SunshineViews(object):
 
     def contestedRaces(self):
         """
-        Creates the contested races view table from csv files hard saved in sunsine folder
+        Creates the contested races view table from csv files
+        hard saved in sunsine folder
         """
         try:
-            comptroller_input_file = csv.DictReader(open(os.getcwd()+'/sunshine/comptroller_contested_race_2016.csv'))
-            races_input_file = csv.DictReader(open(os.getcwd()+'/sunshine/contested_races_2016.csv'))
+            comptroller_input_file = csv.DictReader(open(
+                os.getcwd() + '/sunshine/comptroller_contested_race_2016.csv'
+            ))
+            races_input_file = csv.DictReader(open(
+                os.getcwd() + '/sunshine/contested_races_2016.csv'
+            ))
 
             entries = []
             for row in races_input_file:
@@ -986,18 +1081,17 @@ class SunshineViews(object):
                 entries.append(row)
 
             contested_races = []
-            counter = 0
             for e in entries:
                 supporting_funds = 0
                 opposing_funds = 0
                 controlled_amount = 0
-                funds_available  = 0
+                funds_available = 0
                 contributions = 0
                 total_funds = 0
                 investments = 0
                 debts = 0
                 total_money = 0
-                candidate_names = [] #list of all possible candidate name possibilities
+                candidate_names = []  # list of all possible candidate name possibilities
 
                 try:
                     candidate_id = int(float(e['Candidate ID']))
@@ -1021,7 +1115,8 @@ class SunshineViews(object):
                 last_name = last_names[0].strip()
 
                 if candidate_id:
-                    first_name, last_name = self.get_candidate_name(candidate_id)
+                    first_name, last_name = \
+                        self.get_candidate_name(candidate_id)
                     if first_name and last_name:
                         candidate_names.append(first_name + " " + last_name)
 
@@ -1048,9 +1143,29 @@ class SunshineViews(object):
                     investments = latest_filing['total_investments']
                     debts = latest_filing['total_debts']
 
-
-                total_money = supporting_funds + opposing_funds + controlled_amount
-                contested_races.append({'district': district, 'branch': e['Senate/House'], 'last_name': last_name, 'first_name': first_name,'committee_name': e['Committee'],'incumbent': e['Incumbent'],'committee_id': committee_id,'party': e['Party'], 'funds_available': funds_available, 'contributions': contributions, 'total_funds': total_funds, 'investments': investments, 'debts': debts, 'supporting_funds': supporting_funds, 'opposing_funds': opposing_funds, 'candidate_id' : candidate_id, 'total_money': total_money, 'reporting_period_end' : latest_filing['reporting_period_end'], 'alternate_names' : ';'.join(cand_names)})
+                total_money = \
+                    supporting_funds + opposing_funds + controlled_amount
+                contested_races.append({
+                    'district': district,
+                    'branch': e['Senate/House'],
+                    'last_name': last_name,
+                    'first_name': first_name,
+                    'committee_name': e['Committee'],
+                    'incumbent': e['Incumbent'],
+                    'committee_id': committee_id,
+                    'party': e['Party'],
+                    'funds_available': funds_available,
+                    'contributions': contributions,
+                    'total_funds': total_funds,
+                    'investments': investments,
+                    'debts': debts,
+                    'supporting_funds': supporting_funds,
+                    'opposing_funds': opposing_funds,
+                    'candidate_id': candidate_id,
+                    'total_money': total_money,
+                    'reporting_period_end': latest_filing['reporting_period_end'],
+                    'alternate_names': ';'.join(cand_names)
+                })
 
             exp = '''
                 CREATE TABLE contested_races(
@@ -1080,17 +1195,39 @@ class SunshineViews(object):
             curs = self.connection.connection.cursor()
             curs.execute(exp)
             insert_statement = 'INSERT INTO contested_races (%s) VALUES %s'
-            cols = ['last_name', 'committee_id', 'incumbent', 'district', 'first_name', 'total_funds', 'candidate_id', 'investments', 'committee_name', 'supporting_funds', 'opposing_funds', 'party', 'branch', 'contributions', 'debts', 'total_money', 'funds_available','reporting_period_end','alternate_names']
+            cols = [
+                'last_name',
+                'committee_id',
+                'incumbent',
+                'district',
+                'first_name',
+                'total_funds',
+                'candidate_id',
+                'investments',
+                'committee_name',
+                'supporting_funds',
+                'opposing_funds',
+                'party',
+                'branch',
+                'contributions',
+                'debts',
+                'total_money',
+                'funds_available',
+                'reporting_period_end',
+                'alternate_names'
+            ]
             for cr in contested_races:
 
                 values = [cr[column] for column in cols]
-                curs.execute(insert_statement, (AsIs(','.join(cols)), tuple(values)))
+                curs.execute(
+                    insert_statement, (AsIs(','.join(cols)), tuple(values))
+                )
 
             trans.commit()
         except sa.exc.ProgrammingError:
             print('Problem in creating contested_races table')
 
-    def get_candidate_name(self,candidate_id):
+    def get_candidate_name(self, candidate_id):
 
         try:
             candidate_id = int(candidate_id)
@@ -1103,15 +1240,17 @@ class SunshineViews(object):
             WHERE id = :candidate_id
             )
         '''
-        candidate = self.executeTransaction(sa.text(cand_sql),candidate_id=candidate_id).fetchone()
-        #candidate = db_session.query(Candidate).get(candidate_id)
+        candidate = self.executeTransaction(
+            sa.text(cand_sql),
+            candidate_id=candidate_id
+        ).fetchone()
 
         if not candidate:
             return
         else:
             return candidate.first_name, candidate.last_name
 
-    def get_candidate_funds_byname(self,candidate_name):
+    def get_candidate_funds_byname(self, candidate_name):
 
         d2_part = '9B'
         expended_date = datetime(2016, 3, 16, 0, 0)
@@ -1127,7 +1266,12 @@ class SunshineViews(object):
             )
         '''
 
-        supporting_funds = self.executeTransaction(sa.text(supporting_funds_sql), candidate_name=candidate_name,d2_part=d2_part,expended_date=expended_date).fetchone().amount
+        supporting_funds = self.executeTransaction(
+            sa.text(supporting_funds_sql),
+            candidate_name=candidate_name,
+            d2_part=d2_part,
+            expended_date=expended_date
+        ).fetchone().amount
 
         opposing_funds_sql = '''(
             SELECT
@@ -1140,13 +1284,16 @@ class SunshineViews(object):
             )
         '''
 
-        opposing_funds = self.executeTransaction(sa.text(opposing_funds_sql), candidate_name=candidate_name,d2_part=d2_part,expended_date=expended_date).fetchone().amount
-
+        opposing_funds = self.executeTransaction(
+            sa.text(opposing_funds_sql),
+            candidate_name=candidate_name,
+            d2_part=d2_part,
+            expended_date=expended_date
+        ).fetchone().amount
 
         return supporting_funds, opposing_funds
 
-
-    def get_committee_details(self,committee_id):
+    def get_committee_details(self, committee_id):
 
         try:
             committee_id = int(committee_id)
@@ -1159,7 +1306,10 @@ class SunshineViews(object):
             WHERE id = :committee_id
             )
         '''
-        committee = self.executeTransaction(sa.text(comm_sql),committee_id=committee_id).fetchone()
+        committee = self.executeTransaction(
+            sa.text(comm_sql),
+            committee_id=committee_id
+        ).fetchone()
 
         if not committee:
             return
@@ -1172,16 +1322,21 @@ class SunshineViews(object):
             )
         '''
 
-        latest_filing = dict(self.executeTransaction(sa.text(latest_filing),
-                                       committee_id=committee_id).fetchone())
+        latest_filing = dict(self.executeTransaction(
+            sa.text(latest_filing),
+            committee_id=committee_id
+        ).fetchone())
 
         params = {'committee_id': committee_id}
 
         if not latest_filing['reporting_period_end']:
-            latest_filing['reporting_period_end'] = datetime.now().date() - timedelta(days=90)
+            latest_filing['reporting_period_end'] = \
+                datetime.now().date() - timedelta(days=90)
 
-        if latest_filing['end_funds_available'] \
-            or latest_filing['end_funds_available'] == 0:
+        if (
+            latest_filing['end_funds_available'] or
+            latest_filing['end_funds_available'] == 0
+        ):
 
             recent_receipts = '''(
                 SELECT
@@ -1212,9 +1367,11 @@ class SunshineViews(object):
 
             controlled_amount = 0
 
-        recent_total = self.executeTransaction(sa.text(recent_receipts),**params).fetchone().amount
+        recent_total = self.executeTransaction(
+            sa.text(recent_receipts),
+            **params
+        ).fetchone().amount
         controlled_amount += recent_total
-
 
         quarterlies = '''(
             SELECT DISTINCT ON (f.doc_name, f.reporting_period_end)
@@ -1235,45 +1392,60 @@ class SunshineViews(object):
             )
         '''
 
-        quarterlies = self.executeTransaction(sa.text(quarterlies),
-                                     committee_id=committee_id)
+        quarterlies = self.executeTransaction(
+            sa.text(quarterlies),
+            committee_id=committee_id
+        )
 
-        ending_funds = [[r.end_funds_available,
-                         r.reporting_period_end.year,
-                         r.reporting_period_end.month,
-                         r.reporting_period_end.day]
-                         for r in quarterlies]
+        ending_funds = [
+            [
+                r.end_funds_available,
+                r.reporting_period_end.year,
+                r.reporting_period_end.month,
+                r.reporting_period_end.day
+            ] for r in quarterlies
+        ]
 
-        investments = [[r.total_investments,
-                        r.reporting_period_end.year,
-                        r.reporting_period_end.month,
-                        r.reporting_period_end.day]
-                        for r in quarterlies]
+        investments = [
+            [
+                r.total_investments,
+                r.reporting_period_end.year,
+                r.reporting_period_end.month,
+                r.reporting_period_end.day
+            ] for r in quarterlies
+        ]
 
-        debts = [[(r.debts_itemized + r.debts_non_itemized),
-                   r.reporting_period_end.year,
-                   r.reporting_period_end.month,
-                   r.reporting_period_end.day]
-                   for r in quarterlies]
+        debts = [
+            [
+                (r.debts_itemized + r.debts_non_itemized),
+                r.reporting_period_end.year,
+                r.reporting_period_end.month,
+                r.reporting_period_end.day
+            ] for r in quarterlies
+        ]
 
-        expenditures = [[r.total_expenditures,
-                         r.reporting_period_end.year,
-                         r.reporting_period_end.month,
-                         r.reporting_period_end.day]
-                         for r in quarterlies]
+        expenditures = [
+            [
+                r.total_expenditures,
+                r.reporting_period_end.year,
+                r.reporting_period_end.month,
+                r.reporting_period_end.day
+            ] for r in quarterlies
+        ]
 
-        #accomodate for independent expenditures past last filing date
+        # accomodate for independent expenditures past last filing date
 
         total_expenditures = sum([r.total_expenditures for r in quarterlies])
 
         return committee, recent_receipts, recent_total, latest_filing, controlled_amount, ending_funds, investments, debts, expenditures, total_expenditures
 
-
     def receiptsAggregates(self):
 
         try:
 
-            self.executeTransaction('REFRESH MATERIALIZED VIEW CONCURRENTLY receipts_by_month')
+            self.executeTransaction(
+                'REFRESH MATERIALIZED VIEW CONCURRENTLY receipts_by_month'
+            )
 
         except sa.exc.ProgrammingError:
 
@@ -1296,7 +1468,9 @@ class SunshineViews(object):
     def committeeReceiptAggregates(self):
 
         try:
-            self.executeTransaction('REFRESH MATERIALIZED VIEW CONCURRENTLY committee_receipts_by_week')
+            self.executeTransaction(
+                'REFRESH MATERIALIZED VIEW CONCURRENTLY committee_receipts_by_week'
+            )
 
         except sa.exc.ProgrammingError:
 
@@ -1324,7 +1498,9 @@ class SunshineViews(object):
 
         try:
 
-            self.executeTransaction('REFRESH MATERIALIZED VIEW CONCURRENTLY incumbent_candidates')
+            self.executeTransaction(
+                'REFRESH MATERIALIZED VIEW CONCURRENTLY incumbent_candidates'
+            )
 
         except (sa.exc.ProgrammingError, psycopg2.ProgrammingError):
 
@@ -1356,7 +1532,9 @@ class SunshineViews(object):
 
         try:
 
-            self.executeTransaction('REFRESH MATERIALIZED VIEW CONCURRENTLY most_recent_filings')
+            self.executeTransaction(
+                'REFRESH MATERIALIZED VIEW CONCURRENTLY most_recent_filings'
+            )
 
         except sa.exc.ProgrammingError:
 
@@ -1416,7 +1594,9 @@ class SunshineViews(object):
 
         try:
 
-            self.executeTransaction('REFRESH MATERIALIZED VIEW CONCURRENTLY committee_money')
+            self.executeTransaction(
+                'REFRESH MATERIALIZED VIEW CONCURRENTLY committee_money'
+            )
 
         except sa.exc.ProgrammingError:
             create = '''
@@ -1453,7 +1633,9 @@ class SunshineViews(object):
 
         try:
 
-            self.executeTransaction('REFRESH MATERIALIZED VIEW CONCURRENTLY candidate_money')
+            self.executeTransaction(
+                'REFRESH MATERIALIZED VIEW CONCURRENTLY candidate_money'
+            )
 
         except sa.exc.ProgrammingError:
 
@@ -1485,7 +1667,8 @@ class SunshineViews(object):
 
     def makeUniqueIndexes(self):
         '''
-        Need a unique index on materialized views so that can be refreshed concurrently
+        Need a unique index on materialized views so that
+        can be refreshed concurrently
         '''
         self.condensedExpendituresIndex()
         self.condensedReceiptsIndex()
@@ -1599,7 +1782,7 @@ class SunshineIndexes(object):
         try:
             self.connection.execute(query)
             trans.commit()
-        except sa.exc.ProgrammingError as e:
+        except sa.exc.ProgrammingError:
             trans.rollback()
 
     def executeOutsideTransaction(self, query):
@@ -1689,20 +1872,20 @@ class SunshineIndexes(object):
         self.executeOutsideTransaction(index)
 
     def receiptsName(self):
-         index = '''
+        index = '''
              CREATE INDEX CONCURRENTLY condensed_receipts_search_index ON condensed_receipts
              USING gin(search_name)
-         '''
+        '''
 
-         self.executeOutsideTransaction(index)
+        self.executeOutsideTransaction(index)
 
     def expendituresName(self):
-         index = '''
+        index = '''
              CREATE INDEX CONCURRENTLY condensed_expenditures_search_index ON condensed_expenditures
              USING gin(search_name)
-         '''
+        '''
 
-         self.executeOutsideTransaction(index)
+        self.executeOutsideTransaction(index)
 
 
 def downloadUnzip():
@@ -1710,8 +1893,9 @@ def downloadUnzip():
     import zipfile
 
     latest_filename = 'IL_Campaign_Disclosure_latest.zip'
-    download_path = os.path.abspath(os.path.join(os.path.dirname(__file__),
-                                                     'downloads'))
+    download_path = os.path.abspath(
+        os.path.join(os.path.dirname(__file__), 'downloads')
+    )
 
     download_location = os.path.join(download_path, latest_filename)
 
@@ -1721,13 +1905,14 @@ def downloadUnzip():
                                              filename=download_location)
 
     with zipfile.ZipFile(filename, 'r') as zf:
-        date_prefix = zf.namelist()[0].split('/')[0]
+        # date_prefix = zf.namelist()[0].split('/')[0]
         zf.extractall(path=download_path)
 
-    #for member in os.listdir(os.path.join(download_path, date_prefix)):
+    # for member in os.listdir(os.path.join(download_path, date_prefix)):
     #    move_from = os.path.join(download_path, date_prefix, member)
     #    move_to = os.path.join(download_path, member)
     #    os.rename(move_from, move_to)
+
 
 def alterSearchDictionary():
     from sunshine.app_config import DB_HOST, DB_PORT, DB_NAME, STOP_WORD_LIST
@@ -1739,8 +1924,9 @@ def alterSearchDictionary():
     DB_USER = 'postgres'
     DB_PW = ''
 
-    DB_CONN='postgresql+psycopg2://{0}:{1}@{2}:{3}/{4}'\
-            .format(DB_USER, DB_PW, DB_HOST, DB_PORT, DB_NAME)
+    DB_CONN = 'postgresql+psycopg2://{0}:{1}@{2}:{3}/{4}'.format(
+        DB_USER, DB_PW, DB_HOST, DB_PORT, DB_NAME
+    )
 
     engine = sa.create_engine(DB_CONN,
                               convert_unicode=True,
@@ -1749,24 +1935,36 @@ def alterSearchDictionary():
     with engine.begin() as conn:
         conn.execute(alter)
 
+
 if __name__ == "__main__":
-    import sys
     import argparse
     from sunshine.app_config import STOP_WORD_LIST
     from sunshine.database import engine, Base
 
     parser = argparse.ArgumentParser(description='Download and import campaign disclosure data from the IL State Board of Elections.')
-    parser.add_argument('--download', action='store_true',
-                   help='Downloading fresh data')
+    parser.add_argument(
+        '--download',
+        action='store_true',
+        help='Downloading fresh data'
+    )
 
-    parser.add_argument('--load_data', action='store_true',
-                   help='Load data into database')
+    parser.add_argument(
+        '--load_data',
+        action='store_true',
+        help='Load data into database'
+    )
 
-    parser.add_argument('--recreate_views', action='store_true',
-                   help='Recreate database views')
+    parser.add_argument(
+        '--recreate_views',
+        action='store_true',
+        help='Recreate database views'
+    )
 
-    parser.add_argument('--chunk_size', help='Adjust the size of each insert when loading data',
-                   type=int)
+    parser.add_argument(
+        '--chunk_size',
+        help='Adjust the size of each insert when loading data',
+        type=int
+    )
 
     args = parser.parse_args()
 
@@ -1826,12 +2024,14 @@ if __name__ == "__main__":
 
         del candidacy
 
-        can_cmte_xwalk = SunshineCandidateCommittees(connection, chunk_size=chunk_size)
+        can_cmte_xwalk = \
+            SunshineCandidateCommittees(connection, chunk_size=chunk_size)
         can_cmte_xwalk.load()
 
         del can_cmte_xwalk
 
-        off_cmte_xwalk = SunshineOfficerCommittees(connection, chunk_size=chunk_size)
+        off_cmte_xwalk = \
+            SunshineOfficerCommittees(connection, chunk_size=chunk_size)
         off_cmte_xwalk.load(update_existing=True)
 
         del off_cmte_xwalk
@@ -1851,7 +2051,8 @@ if __name__ == "__main__":
         receipts.addNameColumn()
         receipts.addDateColumn('received_date')
 
-        # delete specific rows from receipts table since sboe doesn't remove wrong data from db
+        # delete specific rows from receipts table since
+        # sboe doesn't remove wrong data from db
         receipts.delete_id_rows_from_receipts(receipts.omit_receipt_ids)
 
         del receipts

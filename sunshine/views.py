@@ -1,22 +1,18 @@
-from flask import Blueprint, render_template, abort, request, make_response, redirect, \
+from flask import Blueprint, render_template, abort, request, redirect, \
     session as flask_session, g
 from sunshine.database import db_session
-from sunshine.models import Candidate, Committee, Receipt, FiledDoc, Expenditure, D2Report
+from sunshine.models import Candidate, Committee, Receipt, Expenditure
 from sunshine.cache import cache, make_cache_key, CACHE_TIMEOUT
 from sunshine.app_config import FLUSH_KEY
 import sqlalchemy as sa
-import json
-import time
 from datetime import datetime, timedelta
-from itertools import groupby
-from operator import attrgetter
 from dateutil.parser import parse
 import csv
 import os
-import operator
 import collections
 
 views = Blueprint('views', __name__)
+
 
 @views.route('/')
 @cache.cached(timeout=CACHE_TIMEOUT, key_prefix=make_cache_key)
@@ -63,7 +59,9 @@ def index():
                 c.branch = :branch
         '''
 
-        candidates = list(g.engine.execute(sa.text(candidates_sql),district=district,branch=branch))
+        candidates = list(g.engine.execute(
+            sa.text(candidates_sql), district=district, branch=branch)
+        )
         if (branch == 'H'):
             branch = 'House'
         elif (branch == 'S'):
@@ -74,29 +72,48 @@ def index():
 
         if len(candidates) > maxc:
             maxc = len(candidates)
-        cands=[]
+        cands = []
         for c in candidates:
             cand_name = c.first_name + " " + c.last_name
             if (cands and c.incumbent == 'N'):
-                cands.append({'candidate_id': c.candidate_id,'party': c.party, 'incumbent': c.incumbent,'name': cand_name})
+                cands.append({
+                    'candidate_id': c.candidate_id,
+                    'party': c.party,
+                    'incumbent': c.incumbent,
+                    'name': cand_name
+                })
             else:
-                cands.insert(0,{'candidate_id': c.candidate_id,'party': c.party, 'incumbent': c.incumbent,'name': cand_name})
+                cands.insert(0, {
+                    'candidate_id': c.candidate_id,
+                    'party': c.party,
+                    'incumbent': c.incumbent,
+                    'name': cand_name
+                })
 
-        top_races[counter] = {'district': district, 'branch': branch, 'total_money': tr.money_sum, 'candidates': cands}
-        counter = counter+1
-
+        top_races[counter] = {
+            'district': district,
+            'branch': branch,
+            'total_money': tr.money_sum,
+            'candidates': cands
+        }
+        counter = counter + 1
 
     # donations chart
     donations_by_month_sql = '''
       SELECT * FROM receipts_by_month WHERE month >= :start_date
     '''
 
-    donations_by_month = [[d.total_amount,
-                          d.month.year,
-                          d.month.month,
-                          d.month.day]
-                          for d in g.engine.execute(sa.text(donations_by_month_sql),
-                                                  start_date="1994-01-01")]
+    donations_by_month = [
+        [
+            d.total_amount,
+            d.month.year,
+            d.month.month,
+            d.month.day
+        ] for d in g.engine.execute(
+            sa.text(donations_by_month_sql),
+            start_date="1994-01-01"
+        )
+    ]
 
     donations_by_year_sql = '''
       SELECT
@@ -110,12 +127,17 @@ def index():
       ORDER BY year
     '''
 
-    donations_by_year = [[d.total_amount,
-                          d.year.year,
-                          d.year.month,
-                          d.year.day]
-                          for d in g.engine.execute(sa.text(donations_by_year_sql),
-                                                  start_date="1994-01-01")]
+    donations_by_year = [
+        [
+            d.total_amount,
+            d.year.year,
+            d.year.month,
+            d.year.day
+        ] for d in g.engine.execute(
+            sa.text(donations_by_year_sql),
+            start_date="1994-01-01"
+        )
+    ]
 
     # top earners in the last week
     top_earners = '''
@@ -142,8 +164,10 @@ def index():
     '''
 
     days_ago = datetime.now() - timedelta(days=30)
-    top_earners = g.engine.execute(sa.text(top_earners),
-                                 received_date=days_ago)
+    top_earners = g.engine.execute(
+        sa.text(top_earners),
+        received_date=days_ago
+    )
 
     # committees with the most money
     committee_sql = '''
@@ -177,14 +201,16 @@ def index():
 
     # Roll back day until we find something
     while len(days_donations) == 0:
-        days_donations = list(g.engine.execute(sa.text(days_donations_sql),
-                                             start_date=(date - timedelta(days=7)),
-                                             end_date=date))
+        days_donations = list(g.engine.execute(
+            sa.text(days_donations_sql),
+            start_date=(date - timedelta(days=7)),
+            end_date=date
+        ))
         date = date - timedelta(days=1)
 
     return render_template('index.html',
                            top_races=top_races,
-                           maxc = maxc,
+                           maxc=maxc,
                            top_earners=top_earners,
                            top_ten=top_ten,
                            totals=totals,
@@ -192,11 +218,12 @@ def index():
                            donations_by_year=donations_by_year,
                            days_donations=days_donations)
 
+
 @views.route('/donations/')
 @cache.cached(timeout=CACHE_TIMEOUT, key_prefix=make_cache_key)
 def donations():
 
-    date = (datetime.utcnow()-timedelta(hours=6)).date() - timedelta(days=1)
+    date = (datetime.utcnow() - timedelta(hours=6)).date() - timedelta(days=1)
     if request.args.get('date'):
         date = parse(request.args.get('date'))
 
@@ -214,11 +241,10 @@ def donations():
 
     # Roll back day until we find something
     while len(days_donations) == 0:
-        #days_donations = list(g.engine.execute(sa.text(days_donations_sql),
-        #                                     start_date=date,
-        #                                     end_date=(date + timedelta(days=1))))
-        days_donations = list(g.engine.execute(sa.text(days_donations_sql),
-                                             start_date=date))
+        days_donations = list(g.engine.execute(
+            sa.text(days_donations_sql),
+            start_date=date
+        ))
         if days_donations:
             break
 
@@ -240,17 +266,21 @@ def donations():
                            next_day_date=next_day_date,
                            is_current=is_current)
 
+
 @views.route('/about/')
 def about():
     return render_template('about.html')
+
 
 @views.route('/api-documentation/')
 def api_documentation():
     return render_template('api-documentation.html')
 
+
 @views.route('/error/')
 def error():
     return render_template('error.html')
+
 
 @views.route('/search/')
 def search():
@@ -259,13 +289,20 @@ def search():
     search_date__le = request.args.get('search_date__le')
     search_date__ge = request.args.get('search_date__ge')
     if not table_name:
-        table_name = ['candidates', 'committees', 'officers', 'receipts', 'expenditures']
+        table_name = [
+            'candidates',
+            'committees',
+            'officers',
+            'receipts',
+            'expenditures'
+        ]
 
     return render_template('search.html',
                            term=term,
                            table_name=table_name,
                            search_date__le=search_date__le,
                            search_date__ge=search_date__ge)
+
 
 @views.route('/candidates/<candidate_id>/')
 @cache.cached(timeout=CACHE_TIMEOUT, key_prefix=make_cache_key)
@@ -288,16 +325,17 @@ def candidate(candidate_id):
                            candidate=candidate,
                            supporting=supporting)
 
+
 @views.route('/top-earners/')
 @cache.cached(timeout=CACHE_TIMEOUT, key_prefix=make_cache_key)
 def top_earners():
 
     days_ago = 30
     if request.args.get('days_ago'):
-      try:
-        days_ago = int(request.args.get('days_ago'))
-      except:
-        pass
+        try:
+            days_ago = int(request.args.get('days_ago'))
+        except:
+            pass
 
     top_earners = '''
         SELECT
@@ -312,7 +350,7 @@ def top_earners():
           FROM condensed_receipts'''
 
     if days_ago > 0:
-      top_earners += " WHERE received_date >= :received_date"
+        top_earners += " WHERE received_date >= :received_date"
 
     top_earners += '''
           GROUP BY committee_id
@@ -328,13 +366,17 @@ def top_earners():
 
     calc_days_ago = datetime.now() - timedelta(days=days_ago)
 
-    top_earners = g.engine.execute(sa.text(top_earners),
-                                 received_date=calc_days_ago.strftime('%Y-%m-%d'))
+    top_earners = g.engine.execute(
+        sa.text(top_earners),
+        received_date=calc_days_ago.strftime('%Y-%m-%d')
+    )
 
-    return render_template('top-earners.html',
-                            top_earners=top_earners,
-                            days_ago=days_ago,
-                            calc_days_ago=calc_days_ago)
+    return render_template(
+        'top-earners.html',
+        top_earners=top_earners,
+        days_ago=days_ago,
+        calc_days_ago=calc_days_ago
+    )
 
 
 @views.route('/muni-contested-races/')
@@ -359,13 +401,31 @@ def muni_contested_races():
 
         if district in contested_dict:
             if race.incumbent == 'N':
-              contested_dict[district].append({'last': race.last_name, 'first': race.first_name,'incumbent': race.incumbent,'party': race.party, 'branch': race.branch})
+                contested_dict[district].append({
+                    'last': race.last_name,
+                    'first': race.first_name,
+                    'incumbent': race.incumbent,
+                    'party': race.party,
+                    'branch': race.branch
+                })
             else:
-              contested_dict[district].insert(0,{'last': race.last_name, 'first': race.first_name,'incumbent': race.incumbent,'party': race.party, 'branch': race.branch})
+                contested_dict[district].insert(0, {
+                    'last': race.last_name,
+                    'first': race.first_name,
+                    'incumbent': race.incumbent,
+                    'party': race.party,
+                    'branch': race.branch
+                })
 
         else:
             contested_dict[district] = []
-            contested_dict[district].append({'last': race.last_name, 'first': race.first_name,'incumbent': race.incumbent,'party': race.party, 'branch': race.branch})
+            contested_dict[district].append({
+                'last': race.last_name,
+                'first': race.first_name,
+                'incumbent': race.incumbent,
+                'party': race.party,
+                'branch': race.branch
+            })
 
         if district in total_money:
             total_money[district] = total_money[district] + race.total_money
@@ -404,7 +464,8 @@ def muni_contested_race_detail(district):
 
     contested_race_title = district + " - Contested Race "
 
-    contested_race_description = "Contested race information for the " + district
+    contested_race_description = \
+        "Contested race information for the " + district
 
     muni_contested_races_sql = '''
         SELECT *
@@ -412,26 +473,62 @@ def muni_contested_race_detail(district):
         WHERE district = :district
     '''
 
-    races = list(g.engine.execute(sa.text(muni_contested_races_sql),district=district))
+    races = list(g.engine.execute(
+        sa.text(muni_contested_races_sql),
+        district=district
+    ))
 
     contested_races = []
     for race in races:
         if race.incumbent == 'N':
-            contested_races.append({'last': race.last_name, 'first': race.first_name,'committee_name': race.committee_name,'incumbent': race.incumbent,'committee_id': race.committee_id,'party': race.party,'investments': race.investments, 'debts': race.debts, 'supporting_funds': race.supporting_funds, 'opposing_funds': race.opposing_funds, 'contributions' : race.contributions, 'total_funds' : race.total_funds, 'funds_available' : race.funds_available, 'total_money' : race.total_money, 'reporting_period_end' : race.reporting_period_end})
+            contested_races.append({
+                'last': race.last_name,
+                'first': race.first_name,
+                'committee_name': race.committee_name,
+                'incumbent': race.incumbent,
+                'committee_id': race.committee_id,
+                'party': race.party,
+                'investments': race.investments,
+                'debts': race.debts,
+                'supporting_funds': race.supporting_funds,
+                'opposing_funds': race.opposing_funds,
+                'contributions': race.contributions,
+                'total_funds': race.total_funds,
+                'funds_available': race.funds_available,
+                'total_money': race.total_money,
+                'reporting_period_end': race.reporting_period_end
+            })
         else:
-            contested_races.insert(0,{'last': race.last_name, 'first': race.first_name,'committee_name': race.committee_name,'incumbent': race.incumbent,'committee_id': race.committee_id,'party': race.party,'investments': race.investments, 'debts': race.debts, 'supporting_funds': race.supporting_funds, 'opposing_funds': race.opposing_funds, 'contributions' : race.contributions, 'total_funds' : race.total_funds, 'funds_available' : race.funds_available, 'total_money' : race.total_money, 'reporting_period_end' : race.reporting_period_end})
+            contested_races.insert(0, {
+                'last': race.last_name,
+                'first': race.first_name,
+                'committee_name': race.committee_name,
+                'incumbent': race.incumbent,
+                'committee_id': race.committee_id,
+                'party': race.party,
+                'investments': race.investments,
+                'debts': race.debts,
+                'supporting_funds': race.supporting_funds,
+                'opposing_funds': race.opposing_funds,
+                'contributions': race.contributions,
+                'total_funds': race.total_funds,
+                'funds_available': race.funds_available,
+                'total_money': race.total_money,
+                'reporting_period_end': race.reporting_period_end
+            })
 
     total_money = 0
     for c in contested_races:
             total_money += c['total_money']
 
-
-    return render_template('muni-contested-race-detail.html',
-                            district=district,
-                            contested_race_title=contested_race_title,
-                            contested_race_description=contested_race_description,
-                            contested_races=contested_races,
-                            total_money=total_money)
+    return render_template(
+        'muni-contested-race-detail.html',
+        district=district,
+        contested_race_title=contested_race_title,
+        contested_race_description=contested_race_description,
+        contested_races=contested_races,
+        total_money=total_money
+    )
 
 
 @views.route('/contested-races/')
@@ -439,25 +536,27 @@ def muni_contested_race_detail(district):
 def contested_races():
 
     contested_races_type = "House of Representatives"
-    contested_races_title= "Illinois House of Representatives Contested Races"
+    contested_races_title = \
+        "Illinois House of Representatives Contested Races"
     type_arg = 'house_of_representatives'
 
     if request.args.get('type'):
-      type_arg = request.args.get('type', 'house_of_representatives')
-      if type_arg == "senate":
-        contested_races_type = "Senate"
-        contested_races_title = "Illinois Senate Contested Races"
-      elif type_arg == "comptroller":
-        contested_races_type = "State Comptroller"
-        contested_races_title = "Illinois State Comptroller Contested Race"
-
-    page = request.args.get('page', 1)
-    offset = (int(page) * 50) - 50
+        type_arg = request.args.get('type', 'house_of_representatives')
+        if type_arg == "senate":
+            contested_races_type = "Senate"
+            contested_races_title = "Illinois Senate Contested Races"
+        elif type_arg == "comptroller":
+            contested_races_type = "State Comptroller"
+            contested_races_title = "Illinois State Comptroller Contested Race"
 
     if contested_races_type == "State Comptroller":
-        input_file = csv.DictReader(open(os.getcwd()+'/sunshine/comptroller_contested_race_2016.csv'))
+        input_file = csv.DictReader(open(
+            os.getcwd() + '/sunshine/comptroller_contested_race_2016.csv'
+        ))
     else:
-        input_file = csv.DictReader(open(os.getcwd()+'/sunshine/contested_races_2016.csv'))
+        input_file = csv.DictReader(open(
+            os.getcwd() + '/sunshine/contested_races_2016.csv'
+        ))
 
     entries = []
     for row in input_file:
@@ -471,7 +570,10 @@ def contested_races():
         else:
             race_sig = "S"
 
-        contested_races = filter(lambda race: race['Senate/House'] == race_sig, entries)
+        contested_races = filter(
+            lambda race: race['Senate/House'] == race_sig,
+            entries
+        )
 
     contested_dict = {}
 
