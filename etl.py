@@ -1252,6 +1252,7 @@ class SunshineViews(object):
     def get_candidate_funds_byname(self, candidate_name):
 
         d2_part = '9B'
+        expended_date = datetime(2016, 1, 1, 0, 0)
 
         supporting_funds_sql = '''(
             SELECT
@@ -1259,6 +1260,7 @@ class SunshineViews(object):
             FROM condensed_expenditures AS e
             WHERE e.candidate_name = :candidate_name
               AND e.d2_part = :d2_part
+              AND e.expended_date > :expended_date
               AND e.supporting = 'true'
             )
         '''
@@ -1267,6 +1269,7 @@ class SunshineViews(object):
             sa.text(supporting_funds_sql),
             candidate_name=candidate_name,
             d2_part=d2_part,
+            expended_date=expended_date
         ).fetchone().amount
 
         opposing_funds_sql = '''(
@@ -1275,6 +1278,7 @@ class SunshineViews(object):
             FROM condensed_expenditures AS e
             WHERE e.candidate_name = :candidate_name
               AND e.d2_part = :d2_part
+              AND e.expended_date > :expended_date
               AND e.opposing = 'true'
             )
         '''
@@ -1283,6 +1287,7 @@ class SunshineViews(object):
             sa.text(opposing_funds_sql),
             candidate_name=candidate_name,
             d2_part=d2_part,
+            expended_date=expended_date
         ).fetchone().amount
 
         return supporting_funds, opposing_funds
