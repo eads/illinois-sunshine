@@ -944,7 +944,6 @@ class SunshineViews(object):
                 investments = 0
                 debts = 0
                 total_money = 0
-                candidate_names = []  # list of all possible candidate name possibilities
 
                 candidate_id = None
 

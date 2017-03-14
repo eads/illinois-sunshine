@@ -516,7 +516,6 @@ def muni_contested_race_detail(district):
                 'total_money': race.total_money,
                 'reporting_period_end': race.reporting_period_end
             })
-
     total_money = 0
     for c in contested_races:
             total_money += c['total_money']

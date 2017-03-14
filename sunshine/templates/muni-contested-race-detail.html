@@ -72,9 +72,9 @@
                             </div>
                         </div>
 
-                        <h2><small>Total Independent Expenditures Supporting: {% if c.supporting_funds and c.candidate_id %}<a href="{{ url_for('views.independent_expenditures', candidate_id=c.candidate_id, stance="supporting" )}}">
-                            <strong>{{ c.supporting_funds|format_money }}</strong></a>{% else %}<strong>$0</strong>{% endif %}<br />Total Independent Expenditures Opposing: {% if c.opposing_funds and c.candidate_id %}<a href="{{ url_for('views.independent_expenditures', candidate_id=c.candidate_id,stance="opposing" )}}">
-                            <strong>{{ c.opposing_funds|format_money }}</strong></a>{% else %}<strong>$0</strong>{% endif %}</small></h2>
+                        <h2><small>Total Independent Expenditures Supporting: {% if c.supporting_funds %}
+                            <strong>{{ c.supporting_funds|format_money }}</strong>{% else %}<strong>$0</strong>{% endif %}<br />Total Independent Expenditures Opposing: {% if c.opposing_funds and c.candidate_id %}
+                            <strong>{{ c.opposing_funds|format_money }}</strong>{% else %}<strong>$0</strong>{% endif %}</small></h2>
                         <br />
                 {% else %}
                     <h3> <br/></h3>
