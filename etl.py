@@ -163,7 +163,10 @@ class SunshineTransformLoad(object):
             )
         '''
 
-        self.executeTransaction(enum)
+        try:
+            self.executeTransaction(enum)
+        except:
+            pass
 
         self.metadata.create_all(bind=self.connection.engine)
 
@@ -749,7 +752,7 @@ class SunshineViews(object):
         self.committeeReceiptAggregates()  # relies on condensedReceipts
         self.committeeMoney()  # relies on mostRecentFilings
         self.candidateMoney()  # relies on committeeMoney and mostRecentFilings
-        self.contestedRaces()  # relies on sunshine/contested_races_2016.csv and sunshine/comptroller_contested_race_2016.csv
+        self.contestedRaces()  # relies on sunshine/contested_races.csv and sunshine/comptroller_contested_race.csv
         self.muniContestedRaces()  # relies on sunshine/muni_contested_races.csv
 
     def condensedExpenditures(self):
@@ -970,11 +973,11 @@ class SunshineViews(object):
                 if committee_id:
                     committee, recent_receipts, recent_total, latest_filing, controlled_amount, ending_funds, investments, debts, expenditures, total_expenditures = self.get_committee_details(committee_id)
 
-                    funds_available = latest_filing['end_funds_available']
+                    funds_available = latest_filing['end_funds_available'] if latest_filing else 0
                     contributions = recent_total
                     total_funds = controlled_amount
-                    investments = latest_filing['total_investments']
-                    debts = latest_filing['total_debts']
+                    investments = latest_filing['total_investments'] if latest_filing else 0
+                    debts = latest_filing['total_debts'] if latest_filing else 0
 
 
                 total_money = \
@@ -997,7 +1000,7 @@ class SunshineViews(object):
                     'opposing_funds': opposing_funds,
                     'candidate_id': candidate_id,
                     'total_money': total_money,
-                    'reporting_period_end': latest_filing['reporting_period_end']
+                    'reporting_period_end': latest_filing['reporting_period_end'] if latest_filing else None
                 })
 
             exp = '''
@@ -1066,10 +1069,10 @@ class SunshineViews(object):
         """
         try:
             comptroller_input_file = csv.DictReader(open(
-                os.getcwd() + '/sunshine/comptroller_contested_race_2016.csv'
+                os.getcwd() + '/sunshine/comptroller_contested_race.csv'
             ))
             races_input_file = csv.DictReader(open(
-                os.getcwd() + '/sunshine/contested_races_2016.csv'
+                os.getcwd() + '/sunshine/contested_races.csv'
             ))
 
             entries = []
@@ -1136,11 +1139,11 @@ class SunshineViews(object):
                 if committee_id:
                     committee, recent_receipts, recent_total, latest_filing, controlled_amount, ending_funds, investments, debts, expenditures, total_expenditures = self.get_committee_details(committee_id)
 
-                    funds_available = latest_filing['end_funds_available']
+                    funds_available = latest_filing['end_funds_available'] if latest_filing else 0
                     contributions = recent_total
                     total_funds = controlled_amount
-                    investments = latest_filing['total_investments']
-                    debts = latest_filing['total_debts']
+                    investments = latest_filing['total_investments'] if latest_filing else 0
+                    debts = latest_filing['total_debts'] if latest_filing else 0
 
                 total_money = \
                     supporting_funds + opposing_funds + controlled_amount
@@ -1162,7 +1165,7 @@ class SunshineViews(object):
                     'opposing_funds': opposing_funds,
                     'candidate_id': candidate_id,
                     'total_money': total_money,
-                    'reporting_period_end': latest_filing['reporting_period_end'],
+                    'reporting_period_end': latest_filing['reporting_period_end'] if latest_filing else None,
                     'alternate_names': ';'.join(cand_names)
                 })
 
@@ -1245,7 +1248,7 @@ class SunshineViews(object):
         ).fetchone()
 
         if not candidate:
-            return
+            return None, None
         else:
             return candidate.first_name, candidate.last_name
 
@@ -1293,11 +1296,12 @@ class SunshineViews(object):
         return supporting_funds, opposing_funds
 
     def get_committee_details(self, committee_id):
+        default_return = [None, None, 0, None, 0, 0, None, None, None, 0]
 
         try:
             committee_id = int(committee_id)
         except ValueError:
-            return
+            return default_return
 
         comm_sql = '''(
             SELECT *
@@ -1311,7 +1315,7 @@ class SunshineViews(object):
         ).fetchone()
 
         if not committee:
-            return
+            return default_return
 
         latest_filing = '''(
             SELECT * FROM most_recent_filings
@@ -1907,11 +1911,14 @@ def downloadUnzip():
         # date_prefix = zf.namelist()[0].split('/')[0]
         zf.extractall(path=download_path)
 
-    # for member in os.listdir(os.path.join(download_path, date_prefix)):
-    #    move_from = os.path.join(download_path, date_prefix, member)
-    #    move_to = os.path.join(download_path, member)
-    #    os.rename(move_from, move_to)
-
+    for dir_member in os.listdir(os.path.join(download_path)):
+        dir_path = os.path.join(download_path, dir_member)
+        if (not os.path.isdir(dir_path)):
+            continue
+        for member in os.listdir(dir_path):
+            move_from = os.path.join(dir_path, member)
+            move_to = os.path.join(download_path, member)
+            os.rename(move_from, move_to)
 
 def alterSearchDictionary():
     from sunshine.app_config import DB_HOST, DB_PORT, DB_NAME, STOP_WORD_LIST
@@ -1970,11 +1977,13 @@ if __name__ == "__main__":
     connection = engine.connect()
 
     if args.download:
+        print("download start %s ..." % datetime.now().isoformat())
         logger.info("download start %s ..." % datetime.now().isoformat())
 
         downloadUnzip()
 
         logger.info("download finish %s ..." % datetime.now().isoformat())
+        print("download finish %s ..." % datetime.now().isoformat())
     else:
         print("skipping download")
 

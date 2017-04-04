@@ -19,11 +19,11 @@
           <li role="presentation" {% if contested_races_type == "State Comptroller"%}class="active"{% else %}class="inactive"{% endif %}><a href="{{ url_for('views.contested_races') }}?type=comptroller">  State Comptroller  </a></li>
 
         </ul>
-	
+
         <h2>{{contested_races_title}}</h3>
 
         <p>{{ contested_races_type | contested_races_description }}</p>
-    </div>        
+    </div>
     <div class="col-sm-4">
         <img src='/static/images/illinois_state_seal.png' class='img-responsive center-block'/>
     </div>
@@ -62,7 +62,7 @@
                 </a></tr>
 
             {% endfor %}
- {%else %}
+            {%else %}
             {% for key,value in contested_dict | dictsort %}
                 <tr class = 'clickable' style= "cursor: Pointer;" onclick="window.location.href = '{{ url_for('views.contested_race_detail', race_type=r_type, district=key) }}';">
                     <td class='text-center'>
@@ -85,10 +85,10 @@
                 </a></tr>
 
             {% endfor %}
-        {%endif%}
+            {%endif%}
             </tbody>
-        </table> 
+        </table>
     </div>
-</div>	
+</div>
 
 {% endblock %}
