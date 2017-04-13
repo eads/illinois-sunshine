@@ -2013,10 +2013,10 @@ if __name__ == "__main__":
 
         del officers
 
-        prev_off = SunshinePrevOfficers(connection, chunk_size=chunk_size)
-        prev_off.load(update_existing=True)
+        #prev_off = SunshinePrevOfficers(connection, chunk_size=chunk_size)
+        #prev_off.load(update_existing=True)
 
-        del prev_off
+        #del prev_off
 
         candidacy = SunshineCandidacy(connection, chunk_size=chunk_size)
         candidacy.load()
