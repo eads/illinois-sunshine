@@ -537,7 +537,8 @@ def contested_races():
     contested_races_type = "House of Representatives"
     contested_races_title = \
         "Illinois House of Representatives Contested Races"
-    type_arg = 'house_of_representatives' if not request.args.get('type') else request.args.get('type', 'house_of_representatives')
+    # TODO: Update the default argument here when the other pages are enabled again.
+    type_arg = 'gubernatorial' if not request.args.get('type') else request.args.get('type', 'gubernatorial')
 
     is_house = (type_arg == "house_of_representatives")
     is_senate = (type_arg == "senate")
