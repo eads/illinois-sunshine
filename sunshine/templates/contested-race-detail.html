@@ -10,7 +10,7 @@
     <div class="col-sm-12">
         <div class="panel panel-default">
             <div class="panel-body">
-                <h4>Current Money in Race: <strong>{{ total_money | format_money }}</strong></h4>
+                <h4>Total Funds Raised and Spent in Race: <strong>{{ total_money | format_money }}</strong></h4>
             </div>
         </div>
 
@@ -29,30 +29,23 @@
                                 <th>Committee Funds</th>
                                 <th class='text-right'>Amount</th>
                             </thead>
+                            {% for tdd_row in c.table_display_data %}
+                            {% if not loop.last %}
                             <tbody>
                                 <tr>
-                                    {% if c.reporting_period_end %}
-                                        <td>Funds available on {{ c.reporting_period_end.strftime('%b %d, %Y') }} quarterly report</td>
-                                    {% else %}
-                                        <td> Funds available </td>
-                                    {% endif %}
-                                    <td class='text-right'>{{ c.funds_available|format_money }}</td>
-                                </tr>
-                                <tr>
-                                    {% if c.reporting_period_end %}
-                                        <td>Contributions since {{ c.reporting_period_end.strftime('%b %d, %Y')}}</td>
-                                    {% else %}
-                                        <td>Contribtions</td>
-                                    {% endif %}
-                                    <td class='text-right'>{{ c.contributions|format_money }}</td>
+                                    <td>{{ tdd_row[0] }}</td>
+                                    <td class="text-right">{{ tdd_row[1]|format_money }}</td>
                                 </tr>
                             </tbody>
+                            {% else %}
                             <tfoot>
                                 <tr>
-                                    <td><strong>Total funds</strong></td>
-                                    <td class='text-right'><strong>{{ c.total_funds|format_money }}</strong></td>
+                                    <td><strong>{{ tdd_row[0] }}</strong></td>
+                                    <td class="text-right"><strong>{{ tdd_row[1]|format_money }}</strong></td>
                                 </tr>
                             </tfoot>
+                            {% endif %}
+                            {% endfor %}
                         </table>
                         <br />
                         <div class="row">
@@ -72,9 +65,31 @@
                             </div>
                         </div>
 
-                        <h2><small>Total Independent Expenditures Supporting: {% if c.supporting_funds and c.candidate_id %}<a href="{{ url_for('views.independent_expenditures', candidate_id=c.candidate_id, stance="supporting" )}}">
-                            <strong>{{ c.supporting_funds|format_money }}</strong></a>{% else %}<strong>$0</strong>{% endif %}<br />Total Independent Expenditures Opposing: {% if c.opposing_funds and c.candidate_id %}<a href="{{ url_for('views.independent_expenditures', candidate_id=c.candidate_id,stance="opposing" )}}">
-                            <strong>{{ c.opposing_funds|format_money }}</strong></a>{% else %}<strong>$0</strong>{% endif %}</small></h2>
+                        <h2>
+                            <small>
+                                Total Independent Expenditures Supporting:
+                                {% if c.supporting_funds and c.candidate_id %}
+                                <a href="{{ url_for('views.independent_expenditures', candidate_id=c.candidate_id, stance="supporting" )}}">
+                                    <strong>{{ c.supporting_funds|format_money }}</strong>
+                                </a>
+                                {% else %}
+                                <strong>$0</strong>
+                                {% endif %}
+                                <br />
+                                Total Independent Expenditures Opposing:
+                                {% if c.opposing_funds and c.candidate_id %}
+                                <a href="{{ url_for('views.independent_expenditures', candidate_id=c.candidate_id,stance="opposing" )}}">
+                                    <strong>{{ c.opposing_funds|format_money }}</strong>
+                                </a>
+                                {% else %}
+                                <strong>$0</strong>
+                                {% endif %}
+                                <br />
+                                {% if c.primary_funds_raised != None %}
+                                Funds Raised in Primary: <strong>{{ c.primary_funds_raised|format_money }}</strong>
+                                {% endif %}
+                            </small>
+                        </h2>
                         <br />
                 {% else %}
                     <h3> <br/></h3>

@@ -163,7 +163,10 @@ class SunshineTransformLoad(object):
             )
         '''
 
-        self.executeTransaction(enum)
+        try:
+            self.executeTransaction(enum)
+        except:
+            pass
 
         self.metadata.create_all(bind=self.connection.engine)
 
@@ -1300,6 +1303,7 @@ class SunshineViews(object):
         return supporting_funds, opposing_funds
 
     def get_committee_details(self, committee_id):
+        default_return = [None, None, 0, None, 0, 0, None, None, None, 0]
 
         default_return = [None, None, 0, None, 0, 0, 0, 0, 0, 0]
 
@@ -1915,6 +1919,7 @@ def downloadUnzip():
     with zipfile.ZipFile(filename, 'r') as zf:
         # date_prefix = zf.namelist()[0].split('/')[0]
         zf.extractall(path=download_path)
+        
     for dir_member in os.listdir(os.path.join(download_path)):
         dir_path = os.path.join(download_path, dir_member)
         if (not os.path.isdir(dir_path)):
@@ -1923,8 +1928,7 @@ def downloadUnzip():
             move_from = os.path.join(dir_path, member)
             move_to = os.path.join(download_path, member)
             os.rename(move_from, move_to)
-
-
+            
 def alterSearchDictionary():
     from sunshine.app_config import DB_HOST, DB_PORT, DB_NAME, STOP_WORD_LIST
 
@@ -1982,11 +1986,13 @@ if __name__ == "__main__":
     connection = engine.connect()
 
     if args.download:
+        print("download start %s ..." % datetime.now().isoformat())
         logger.info("download start %s ..." % datetime.now().isoformat())
 
         downloadUnzip()
 
         logger.info("download finish %s ..." % datetime.now().isoformat())
+        print("download finish %s ..." % datetime.now().isoformat())
     else:
         print("skipping download")
 
@@ -2025,10 +2031,10 @@ if __name__ == "__main__":
 
         del officers
 
-        prev_off = SunshinePrevOfficers(connection, chunk_size=chunk_size)
-        prev_off.load(update_existing=True)
+        #prev_off = SunshinePrevOfficers(connection, chunk_size=chunk_size)
+        #prev_off.load(update_existing=True)
 
-        del prev_off
+        #del prev_off
 
         candidacy = SunshineCandidacy(connection, chunk_size=chunk_size)
         candidacy.load()

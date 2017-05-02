@@ -4,6 +4,7 @@ from sunshine.database import db_session
 from sunshine.models import Candidate, Committee, Receipt, Expenditure
 from sunshine.cache import cache, make_cache_key, CACHE_TIMEOUT
 from sunshine.app_config import FLUSH_KEY
+from sunshine import lib as sslib
 import sqlalchemy as sa
 from datetime import datetime, timedelta
 from dateutil.parser import parse
@@ -625,6 +626,11 @@ def contested_races():
 @views.route('/contested-race-detail/<race_type>-<district>/')
 @cache.cached(timeout=CACHE_TIMEOUT, key_prefix=make_cache_key)
 def contested_race_detail(race_type, district):
+    pre_primary_start = "2017-01-01"
+    primary_start = "2018-01-01"
+    primary_end = "2018-03-20"
+    primary_quarterly_end = "2018-03-31"
+    post_primary_start = (parse(primary_end) + timedelta(days=1)).strftime("%Y-%m-%d")
 
     contested_race_type = ""
     contested_race_title = ""
@@ -665,10 +671,16 @@ def contested_race_detail(race_type, district):
 
     races = list(g.engine.execute(sa.text(contested_races_sql),district=district,branch=branch))
 
+    total_money = 0.0
     contested_races = []
     for race in races:
+        committee_funds_data = sslib.getCommitteeFundsData(race.committee_id, pre_primary_start, primary_start, post_primary_start)
+        primary_funds_raised = sslib.getFundsRaisedTotal(race.committee_id, pre_primary_start, primary_start, primary_end)
+        total_money += (committee_funds_data[-1][1] if committee_funds_data else 0.0)
+        total_money += race.supporting_funds + race.opposing_funds
+
         if race.incumbent == 'N':
-            contested_races.append({'last': race.last_name, 'first': race.first_name,'committee_name': race.committee_name,'incumbent': race.incumbent,'committee_id': race.committee_id,'party': race.party,'investments': race.investments, 'debts': race.debts, 'supporting_funds': race.supporting_funds, 'opposing_funds': race.opposing_funds, 'contributions' : race.contributions, 'total_funds' : race.total_funds, 'funds_available' : race.funds_available, 'total_money' : race.total_money, 'candidate_id' : race.candidate_id, 'reporting_period_end' : race.reporting_period_end})
+            contested_races.append({'table_display_data': committee_funds_data, 'primary_funds_raised': primary_funds_raised, 'last': race.last_name, 'first': race.first_name,'committee_name': race.committee_name,'incumbent': race.incumbent,'committee_id': race.committee_id,'party': race.party,'investments': race.investments, 'debts': race.debts, 'supporting_funds': race.supporting_funds, 'opposing_funds': race.opposing_funds, 'contributions' : race.contributions, 'total_funds' : race.total_funds, 'funds_available' : race.funds_available, 'total_money' : race.total_money, 'candidate_id' : race.candidate_id, 'reporting_period_end' : race.reporting_period_end})
         else:
             contested_races.insert(0,{'last': race.last_name, 'first': race.first_name,'committee_name': race.committee_name,'incumbent': race.incumbent,'committee_id': race.committee_id,'party': race.party,'investments': race.investments, 'debts': race.debts, 'supporting_funds': race.supporting_funds, 'opposing_funds': race.opposing_funds, 'contributions' : race.contributions, 'total_funds' : race.total_funds, 'funds_available' : race.funds_available, 'total_money' : race.total_money, 'candidate_id' : race.candidate_id, 'reporting_period_end' : race.reporting_period_end})
 
