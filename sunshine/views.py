@@ -538,47 +538,44 @@ def contested_races():
     contested_races_type = "House of Representatives"
     contested_races_title = \
         "Illinois House of Representatives Contested Races"
-    type_arg = 'house_of_representatives'
+    # TODO: Update the default argument here when the other pages are enabled again.
+    type_arg = 'gubernatorial' if not request.args.get('type') else request.args.get('type', 'gubernatorial')
 
-    if request.args.get('type'):
-        type_arg = request.args.get('type', 'house_of_representatives')
-        if type_arg == "senate":
-            contested_races_type = "Senate"
-            contested_races_title = "Illinois Senate Contested Races"
-        elif type_arg == "comptroller":
-            contested_races_type = "State Comptroller"
-            contested_races_title = "Illinois State Comptroller Contested Race"
+    is_house = (type_arg == "house_of_representatives")
+    is_senate = (type_arg == "senate")
+    is_comptroller = (type_arg == "comptroller")
+    is_gubernatorial = (type_arg == "gubernatorial")
+    input_filename = "contested_races.csv"
 
-    if contested_races_type == "State Comptroller":
-        input_file = csv.DictReader(open(
-            os.getcwd() + '/sunshine/comptroller_contested_race.csv'
-        ))
-    else:
-        input_file = csv.DictReader(open(
-            os.getcwd() + '/sunshine/contested_races.csv'
-        ))
+    if is_senate:
+        contested_races_type = "Senate"
+        contested_races_title = "Illinois Senate Contested Races"
+    elif is_comptroller:
+        contested_races_type = "State Comptroller"
+        contested_races_title = "Illinois State Comptroller Contested Race"
+        input_filename = "comptroller_contested_race.csv"
+    elif is_gubernatorial:
+        contested_races_type = "Gubernatorial"
+        contested_races_title = "Illinois State Gubernatorial Contested Race"
+        input_filename = "gubernatorial_contested_races.csv"
 
-    entries = []
-    for row in input_file:
-        entries.append(row)
+    contested_races = list(csv.DictReader(open(
+        os.getcwd() + '/sunshine/' + input_filename
+    )))
 
-    if contested_races_type == "State Comptroller":
-        contested_races = entries
-    else:
-        if contested_races_type == "House of Representatives":
-            race_sig = "H"
-        else:
-            race_sig = "S"
+    if is_house or is_senate:
+        race_sig = "H" if is_house else "S"
 
         contested_races = filter(
             lambda race: race['Senate/House'] == race_sig,
-            entries
+            contested_races
         )
 
     contested_dict = {}
+    cand_span = 0
 
     for e in contested_races:
-        if contested_races_type == "State Comptroller":
+        if is_comptroller or is_gubernatorial:
             district = 0
         else:
             district = int(e['District'])
@@ -589,16 +586,19 @@ def contested_races():
         first_name = first_names[0].strip()
         last_name = last_names[0].strip()
 
+        candidate_data = {'last': last_name, 'first': first_name,'incumbent': e['Incumbent'],'party': e['Party']}
+
         if district in contested_dict:
             if e['Incumbent'] == 'N':
-                contested_dict[district].append({'last': last_name, 'first': first_name,'incumbent': e['Incumbent'],'party': e['Party']})
+                contested_dict[district].append(candidate_data)
             else:
-                contested_dict[district].insert(0,{'last': last_name, 'first': first_name,'incumbent': e['Incumbent'],'party': e['Party']})
+                contested_dict[district].insert(0, candidate_data)
         else:
             contested_dict[district] = []
-            contested_dict[district].append({'last': last_name, 'first': first_name,'incumbent': e['Incumbent'],'party': e['Party']})
+            contested_dict[district].append(candidate_data)
 
-
+        district_candidates = len(contested_dict[district])
+        cand_span = cand_span if cand_span >= district_candidates else district_candidates
 
     if not flask_session.get('%s_page_count' % type_arg):
 
@@ -612,6 +612,7 @@ def contested_races():
 
 
     return render_template('contested-races.html',
+                           cand_span=cand_span,
                            contested_dict=contested_dict,
                            contested_races_type=contested_races_type,
                            contested_races_title=contested_races_title,
@@ -631,21 +632,36 @@ def contested_race_detail(race_type, district):
     primary_quarterly_end = "2018-03-31"
     post_primary_start = (parse(primary_end) + timedelta(days=1)).strftime("%Y-%m-%d")
 
-    contested_race_title = "District " + district + " - Contested Race "
+    contested_race_type = ""
+    contested_race_title = ""
+    branch = ""
+    contested_race_description = ""
+    template = 'contested-race-detail.html'
 
-    if race_type == "house":
+    if race_type == 'comptroller':
+        contested_race_type = "State Comptroller"
+        contested_race_title = "State Comptroller - Contested Race"
+        branch = 'C'
+        contested_race_description = "Contested race information for Illinois State Comptroller"
+    elif race_type == "gubernatorial":
+        contested_race_type = "State Gubernatorial"
+        contested_race_title = "State Gubernatorial - Contested Race"
+        branch = 'G'
+        contested_race_description = "Contested race information for Illinois State Gubernatorial"
+        template = "muni-contested-race-detail.html"
+    elif race_type == "house":
+        contested_race_type = "House of Representatives"
+        contested_race_title = "District " + district + " - Contested Race "
         branch = 'H'
         contested_race_description = "Contested race information for District " + district + " in the Illinois House of Representatives"
     elif race_type == "senate":
+        contested_race_type = "Senate"
+        contested_race_title = "District " + district + " - Contested Race "
         branch = 'S'
         contested_race_description = "Contested race information for District " + district + " in the Illinois Senate"
-    else:
-        branch = 'C'
-        contested_race_description = "Contested race information for Illinois State Comptroller"
-        contested_race_title = "State Comptroller - Contested Race"
-
 
     district = int(float(district))
+
     contested_races_sql = '''
         SELECT *
         FROM contested_races
@@ -666,11 +682,16 @@ def contested_race_detail(race_type, district):
         if race.incumbent == 'N':
             contested_races.append({'table_display_data': committee_funds_data, 'primary_funds_raised': primary_funds_raised, 'last': race.last_name, 'first': race.first_name,'committee_name': race.committee_name,'incumbent': race.incumbent,'committee_id': race.committee_id,'party': race.party,'investments': race.investments, 'debts': race.debts, 'supporting_funds': race.supporting_funds, 'opposing_funds': race.opposing_funds, 'contributions' : race.contributions, 'total_funds' : race.total_funds, 'funds_available' : race.funds_available, 'total_money' : race.total_money, 'candidate_id' : race.candidate_id, 'reporting_period_end' : race.reporting_period_end})
         else:
-            contested_races.insert(0,{'table_display_data': committee_funds_data, 'primary_funds_raised': primary_funds_raised, 'last': race.last_name, 'first': race.first_name,'committee_name': race.committee_name,'incumbent': race.incumbent,'committee_id': race.committee_id,'party': race.party,'investments': race.investments, 'debts': race.debts, 'supporting_funds': race.supporting_funds, 'opposing_funds': race.opposing_funds, 'contributions' : race.contributions, 'total_funds' : race.total_funds, 'funds_available' : race.funds_available, 'total_money' : race.total_money, 'candidate_id' : race.candidate_id, 'reporting_period_end' : race.reporting_period_end})
+            contested_races.insert(0,{'last': race.last_name, 'first': race.first_name,'committee_name': race.committee_name,'incumbent': race.incumbent,'committee_id': race.committee_id,'party': race.party,'investments': race.investments, 'debts': race.debts, 'supporting_funds': race.supporting_funds, 'opposing_funds': race.opposing_funds, 'contributions' : race.contributions, 'total_funds' : race.total_funds, 'funds_available' : race.funds_available, 'total_money' : race.total_money, 'candidate_id' : race.candidate_id, 'reporting_period_end' : race.reporting_period_end})
 
-    return render_template('contested-race-detail.html',
+    total_money = 0
+    for c in contested_races:
+            total_money += c['total_money']
+
+    return render_template(template,
                             race_type=race_type,
                             district=district,
+                            contested_race_type=contested_race_type,
                             contested_race_title=contested_race_title,
                             contested_race_description=contested_race_description,
                             contested_races=contested_races,
