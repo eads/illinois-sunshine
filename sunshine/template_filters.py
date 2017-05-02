@@ -56,6 +56,8 @@ def contested_races_description(s):
     description = "Contested 2016 General Election Races for the Illinois Senate in all districts. Click on a row to see detailed information."
   elif s == "State Comptroller":
     description = "Contested 2016 Race for Illinois State Comptroller. Click on a row to see detailed information."
+  elif s == "Gubernatorial":
+    description = "Contested 2018 Race for Illinois State Gubernatorial. Click on a row to see detailed information."
   else:
     description = ""
 

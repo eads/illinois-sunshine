@@ -17,25 +17,25 @@
           <li role="presentation" {% if contested_races_type == "House of Representatives"%}class="active"{% else %}class="inactive"{% endif %}><a href="{{ url_for('views.contested_races') }}?type=house_of_representatives">House of Representatives  </a></li>
           <li role="presentation" {% if contested_races_type == "Senate"%}class="active"{% else %}class="inactive"{% endif %}><a href="{{ url_for('views.contested_races') }}?type=senate">  Senate  </a></li>
           <li role="presentation" {% if contested_races_type == "State Comptroller"%}class="active"{% else %}class="inactive"{% endif %}><a href="{{ url_for('views.contested_races') }}?type=comptroller">  State Comptroller  </a></li>
-
+          <li role="presentation" {% if contested_races_type == "Gubernatorial"%}class="active"{% else %}class="inactive"{% endif %}><a href="{{ url_for('views.contested_races') }}?type=gubernatorial">  Gubernatorial  </a></li>
         </ul>
-	
+
         <h2>{{contested_races_title}}</h3>
 
         <p>{{ contested_races_type | contested_races_description }}</p>
-    </div>        
+    </div>
     <div class="col-sm-4">
         <img src='/static/images/illinois_state_seal.png' class='img-responsive center-block'/>
     </div>
  </div>
 <div class="row">
     <div class="col-sm-12">
-        {% set cand_span = "2" %}
         {% if contested_races_type == "House of Representatives" %}
             {% set r_type = "house" %}
-            {% set cand_span = "4" %}
         {% elif contested_races_type == "Senate" %}
             {% set r_type = "senate" %}
+        {% elif contested_races_type == "Gubernatorial" %}
+            {% set r_type = "gubernatorial" %}
         {% else %}
             {% set r_type = "comptroller" %}
         {% endif %}
@@ -43,52 +43,32 @@
             <thead>
                 <tr>
                     <th class = 'text-center'>District</th>
-                    <th class = 'text-left' colspan = {{ cand_span }}>Candidates</th>
+                    <th class = 'text-left' colspan ="{{ cand_span }}">Candidates</th>
                 </tr>
             </thead>
             <tbody>
-            {% if r_type == "comptroller" %}
             {% for key,value in contested_dict | dictsort %}
                 <tr class = 'clickable' style= "cursor: Pointer;" onclick="window.location.href = '{{ url_for('views.contested_race_detail', race_type=r_type, district=key) }}';">
                     <td class='text-center'>
-                        <a href= '{{ url_for('views.contested_race_detail', race_type=r_type, district=key) }}'>N/A</a>
+                        <a href= '{{ url_for('views.contested_race_detail', race_type=r_type, district=key) }}'>{{ key or "N/A" }}</a>
                     </td>
+
                     {% for c in value %}
                         <td class='text-left'>
                             {{ c.first }} {{ c.last }} ({{ c.party }}) {% if c.incumbent|string() == 'Y' %} *INCUMBENT {% elif (c.incumbent|string() != "N") %} *{{ c.incumbent|string() }} {% endif %}
-
                         </td>
                     {% endfor %}
-                </a></tr>
 
-            {% endfor %}
- {%else %}
-            {% for key,value in contested_dict | dictsort %}
-                <tr class = 'clickable' style= "cursor: Pointer;" onclick="window.location.href = '{{ url_for('views.contested_race_detail', race_type=r_type, district=key) }}';">
-                    <td class='text-center'>
-                        <a href= '{{ url_for('views.contested_race_detail', race_type=r_type, district=key) }}'>{{ key }}</a>
-                    </td>
-                    {% for c in value %}
-                        <td class='text-left'>
-                            {{ c.first }} {{ c.last }} ({{ c.party }}) {% if c.incumbent|string() == 'Y' %} *INCUMBENT {% elif (c.incumbent|string() != "N") %} *{{ c.incumbent|string() }} {% endif %}
+                    {% set remaining_cols = cand_span - (value|length) %}
 
-                        </td>
-                    {% endfor %}
-                    {% if r_type == "house" %}
-                        {% if value|length == 2 %}
-                            <td>&nbsp;</td>
-                            <td>&nbsp;</td>
-                        {% elif value|length == 3 %}
-                            <td>&nbsp;</td>
-                        {% endif %}
+                    {% if remaining_cols > 0 %}
+                        <td colspan="{{ remaining_cols }}">&nbsp;</td>
                     {% endif %}
-                </a></tr>
-
+                </tr>
             {% endfor %}
-        {%endif%}
             </tbody>
-        </table> 
+        </table>
     </div>
-</div>	
+</div>
 
 {% endblock %}
