@@ -556,7 +556,7 @@ def contested_races():
         input_filename = "comptroller_contested_race.csv"
     elif is_gubernatorial:
         contested_races_type = "Gubernatorial"
-        contested_races_title = "Illinois State Gubernatorial Contested Race"
+        contested_races_title = "Race for Illinois Governor"
         input_filename = "gubernatorial_contested_races.csv"
 
     contested_races = list(csv.DictReader(open(

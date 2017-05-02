@@ -11,20 +11,23 @@
    </div>
 <div class="row">
     <div class="col-sm-8">
-        <h1><i class='fa fa-times-circle fa-fw'></i>Contested State Races <small>Updated Daily</small></h1>
-        <br />
-        <ul class="nav nav-pills">
+        <h1 style="margin-bottom:30px;"><i class='fa fa-times-circle fa-fw'></i>Contested State Races <small>Updated Daily</small></h1>
             <!--
+            <br />
+        <ul class="nav nav-pills">
           <li role="presentation" {% if contested_races_type == "House of Representatives"%}class="active"{% else %}class="inactive"{% endif %}><a href="{{ url_for('views.contested_races') }}?type=house_of_representatives">House of Representatives  </a></li>
           <li role="presentation" {% if contested_races_type == "Senate"%}class="active"{% else %}class="inactive"{% endif %}><a href="{{ url_for('views.contested_races') }}?type=senate">  Senate  </a></li>
           <li role="presentation" {% if contested_races_type == "State Comptroller"%}class="active"{% else %}class="inactive"{% endif %}><a href="{{ url_for('views.contested_races') }}?type=comptroller">  State Comptroller  </a></li>
-            -->
           <li role="presentation" {% if contested_races_type == "Gubernatorial"%}class="active"{% else %}class="inactive"{% endif %}><a href="{{ url_for('views.contested_races') }}?type=gubernatorial">  Gubernatorial  </a></li>
         </ul>
+          -->
 
-        <h2>{{contested_races_title}}</h3>
+        <h2 style="color:#222; font-size:32px;">{{contested_races_title}}</h3>
 
-        <p>{{ contested_races_type | contested_races_description }}</p>
+        <p>
+            {{ contested_races_type | contested_races_description }}<br />
+            Click on a row to see detailed information.
+        </p>
     </div>
     <div class="col-sm-4">
         <img src='/static/images/illinois_state_seal.png' class='img-responsive center-block'/>
