@@ -87,6 +87,20 @@ def getCommitteeFundsData(committee_id, pre_primary_start, primary_start, post_p
         # Default the last quarterly date to the day before the pre-primary starts.
         last_quarterly_date = parse(pre_primary_start) - timedelta(days=1)
 
+        pre_pre_primary_quarterly = db_session.query(D2Report)\
+                                            .join(FiledDoc, D2Report.filed_doc_id==FiledDoc.id)\
+                                            .filter(D2Report.committee_id==committee_id)\
+                                            .filter(FiledDoc.doc_name=="Quarterly")\
+                                            .filter(FiledDoc.reporting_period_end <= last_quarterly_date)\
+                                            .order_by(FiledDoc.reporting_period_end.desc())\
+                                            .first()
+
+        # Add the funds available from the last quarterly report from before the pre-primary start date.
+        pre_pre_primary_end_date = "{dt:%b} {dt.day}, {dt.year}".format(dt = last_quarterly_date)
+        pre_pre_primary_funds = 0 if not pre_pre_primary_quarterly else pre_pre_primary_quarterly.end_funds_available
+        table_display_data.append(["Funds Available on " + pre_pre_primary_end_date + " Quarterly Report", pre_pre_primary_funds])
+        total_funds_raised += pre_pre_primary_funds
+
         # Add rows for each pre-primary quarterly report.
         for rpt in pre_primary_quarterlies:
             rpt_label = "Funds Raised {dtstart:%b} {dtstart.day}, {dtstart.year} to {dtend:%b} {dtend.day}, {dtend.year}".format(

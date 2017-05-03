@@ -683,10 +683,6 @@ def contested_race_detail(race_type, district):
         else:
             contested_races.insert(0,{'table_display_data': committee_funds_data, 'primary_funds_raised': primary_funds_raised, 'last': race.last_name, 'first': race.first_name,'committee_name': race.committee_name,'incumbent': race.incumbent,'committee_id': race.committee_id,'party': race.party,'investments': race.investments, 'debts': race.debts, 'supporting_funds': race.supporting_funds, 'opposing_funds': race.opposing_funds, 'contributions' : race.contributions, 'total_funds' : race.total_funds, 'funds_available' : race.funds_available, 'total_money' : race.total_money, 'candidate_id' : race.candidate_id, 'reporting_period_end' : race.reporting_period_end})
 
-    total_money = 0
-    for c in contested_races:
-            total_money += c['total_money']
-
     return render_template(template,
                             race_type=race_type,
                             district=district,
