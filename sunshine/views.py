@@ -631,6 +631,7 @@ def contested_race_detail(race_type, district):
     primary_end = "2018-03-20"
     primary_quarterly_end = "2018-03-31"
     post_primary_start = (parse(primary_end) + timedelta(days=1)).strftime("%Y-%m-%d")
+    is_after_primary = parse(primary_end).date() < datetime.today().date()
 
     contested_race_type = ""
     contested_race_title = ""
@@ -674,7 +675,7 @@ def contested_race_detail(race_type, district):
     contested_races = []
     for race in races:
         committee_funds_data = sslib.getCommitteeFundsData(race.committee_id, pre_primary_start, primary_start, post_primary_start)
-        primary_funds_raised = sslib.getFundsRaisedTotal(race.committee_id, pre_primary_start, primary_start, primary_end)
+        primary_funds_raised = sslib.getFundsRaisedTotal(race.committee_id, pre_primary_start, primary_start, primary_end) if is_after_primary else None
         total_money += (committee_funds_data[-1][1] if committee_funds_data else 0.0)
         total_money += race.supporting_funds + race.opposing_funds
 
