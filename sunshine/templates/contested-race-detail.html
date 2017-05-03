@@ -17,96 +17,98 @@
     </div>
 </div>
 <div class="row">
-    <div class="col-sm-12">
-        {% for c in contested_races %}
-            <div class="col-sm-6">
-                {%set candidate_slug = [c.first|string, c.last|string]|join('-') %}
-                    <h2>{% if c.candidate_id %}<a href='{{ url_for('views.candidate', candidate_id=c.candidate_id ) }}'>{{c.first}} {{c.last}}</a>{% else %} <u>{{ c.first }}  {{ c.last }}</u>{% endif %} ({{ c.party }}) <small><strong> {% if c.incumbent|string() == 'Y' %}  *INCUMBENT {% elif (c.incumbent|string() != "N") %} *{{ c.incumbent|string() }} {% endif %}</strong></small></h2>
-                    {% if c.committee_id %}
-                        <h3><a href='{{ url_for('views.committee', committee_id = c.committee_id) }}'>{{ c.committee_name }}</a></h3>
-                        <table class="table table-striped table-bordered">
-                            <thead>
-                                <th>Committee Funds</th>
-                                <th class='text-right'>Amount</th>
-                            </thead>
-                            {% for tdd_row in c.table_display_data %}
-                            {% if not loop.last %}
-                            <tbody>
-                                <tr>
-                                    <td>{{ tdd_row[0] }}</td>
-                                    <td class="text-right">{{ tdd_row[1]|format_money }}</td>
-                                </tr>
-                            </tbody>
-                            {% else %}
-                            <tfoot>
-                                <tr>
-                                    <td><strong>{{ tdd_row[0] }}</strong></td>
-                                    <td class="text-right"><strong>{{ tdd_row[1]|format_money }}</strong></td>
-                                </tr>
-                            </tfoot>
-                            {% endif %}
-                            {% endfor %}
-                        </table>
-                        <br />
-                        <div class="row">
-                            <div class="col-sm-9">
-                                <table class = "table table-striped table-bordered">
-                                    <tbody>
-                                        <tr>
-                                            <td>Investments</td>
-                                            <td class='text-right'>{{ c.investments|format_money }}</td>
-                                        </tr>
-                                        <tr>
-                                            <td>Debts and obligations</td>
-                                            <td class='text-right'>{{ c.debts|format_money }}</td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
+    {% for c in contested_races %}
+        <div class="col-sm-6">
+            {%set candidate_slug = [c.first|string, c.last|string]|join('-') %}
+                <h2>{% if c.candidate_id %}<a href='{{ url_for('views.candidate', candidate_id=c.candidate_id ) }}'>{{c.first}} {{c.last}}</a>{% else %} <u>{{ c.first }}  {{ c.last }}</u>{% endif %} ({{ c.party }}) <small><strong> {% if c.incumbent|string() == 'Y' %}  *INCUMBENT {% elif (c.incumbent|string() != "N") %} *{{ c.incumbent|string() }} {% endif %}</strong></small></h2>
+                {% if c.committee_id %}
+                    <h3><a href='{{ url_for('views.committee', committee_id = c.committee_id) }}'>{{ c.committee_name }}</a></h3>
+                    <table class="table table-striped table-bordered">
+                        <thead>
+                            <th>Committee Funds</th>
+                            <th class='text-right'>Amount</th>
+                        </thead>
+                        {% for tdd_row in c.table_display_data %}
+                        {% if not loop.last %}
+                        <tbody>
+                            <tr>
+                                <td>{{ tdd_row[0] }}</td>
+                                <td class="text-right">{{ tdd_row[1]|format_money }}</td>
+                            </tr>
+                        </tbody>
+                        {% else %}
+                        <tfoot>
+                            <tr>
+                                <td><strong>{{ tdd_row[0] }}</strong></td>
+                                <td class="text-right"><strong>{{ tdd_row[1]|format_money }}</strong></td>
+                            </tr>
+                        </tfoot>
+                        {% endif %}
+                        {% endfor %}
+                    </table>
+                    <br />
+                    <div class="row">
+                        <div class="col-sm-9">
+                            <table class = "table table-striped table-bordered">
+                                <tbody>
+                                    <tr>
+                                        <td>Investments</td>
+                                        <td class='text-right'>{{ c.investments|format_money }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Debts and obligations</td>
+                                        <td class='text-right'>{{ c.debts|format_money }}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
                         </div>
-
-                        <h2>
-                            <small>
-                                Total Independent Expenditures Supporting:
-                                {% if c.supporting_funds and c.candidate_id %}
-                                <a href="{{ url_for('views.independent_expenditures', candidate_id=c.candidate_id, stance="supporting" )}}">
-                                    <strong>{{ c.supporting_funds|format_money }}</strong>
-                                </a>
-                                {% else %}
-                                <strong>$0</strong>
-                                {% endif %}
-                                <br />
-                                Total Independent Expenditures Opposing:
-                                {% if c.opposing_funds and c.candidate_id %}
-                                <a href="{{ url_for('views.independent_expenditures', candidate_id=c.candidate_id,stance="opposing" )}}">
-                                    <strong>{{ c.opposing_funds|format_money }}</strong>
-                                </a>
-                                {% else %}
-                                <strong>$0</strong>
-                                {% endif %}
-                                <br />
-                                {% if c.primary_funds_raised != None %}
-                                Funds Raised in Primary: <strong>{{ c.primary_funds_raised|format_money }}</strong>
-                                {% endif %}
-                            </small>
-                        </h2>
-                        <br />
-                {% else %}
-                    <h3> <br/></h3>
-                    <div class="well well-lg">
-                        <table class="table">
-                            <thead>
-                                <th>Committee N/A</th>
-                            </thead>
-                        </table>
-                        <h3><i class='fa fa-fw fa-info-circle'></i> No candidate committee filed at this time.</h3>
-                        <br /><br /></br />
                     </div>
-                {% endif %}
 
-            </div>
-        {% endfor %}
-    </div>
+                    <h2>
+                        <small>
+                            Total Independent Expenditures Supporting:
+                            {% if c.supporting_funds and c.candidate_id %}
+                            <a href="{{ url_for('views.independent_expenditures', candidate_id=c.candidate_id, stance="supporting" )}}">
+                                <strong>{{ c.supporting_funds|format_money }}</strong>
+                            </a>
+                            {% else %}
+                            <strong>$0</strong>
+                            {% endif %}
+                            <br />
+                            Total Independent Expenditures Opposing:
+                            {% if c.opposing_funds and c.candidate_id %}
+                            <a href="{{ url_for('views.independent_expenditures', candidate_id=c.candidate_id,stance="opposing" )}}">
+                                <strong>{{ c.opposing_funds|format_money }}</strong>
+                            </a>
+                            {% else %}
+                            <strong>$0</strong>
+                            {% endif %}
+                            <br />
+                            {% if c.primary_funds_raised != None %}
+                            Funds Raised in Primary: <strong>{{ c.primary_funds_raised|format_money }}</strong>
+                            {% endif %}
+                        </small>
+                    </h2>
+                    <br />
+            {% else %}
+                <h3> <br/></h3>
+                <div class="well well-lg">
+                    <table class="table">
+                        <thead>
+                            <th>Committee N/A</th>
+                        </thead>
+                    </table>
+                    <h3><i class='fa fa-fw fa-info-circle'></i> No candidate committee filed at this time.</h3>
+                    <br /><br /></br />
+                </div>
+            {% endif %}
+
+        </div>
+
+        {% if loop.index0 % 2 %}
+        </div><div class="row">
+        {% endif %}
+    {% endfor %}
 </div>
 
 
