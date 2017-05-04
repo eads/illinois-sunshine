@@ -5,6 +5,17 @@
 {% endblock %}
 {% block content %}
 
+{% if is_single %}
+<style>
+    table.table-striped.table-hover tr.nohighlight td {
+        background-color: #f9f9f9 !important;
+    }
+    table.table-striped.table-hover td {
+        border-top: 0 !important;
+    }
+</style>
+{% endif %}
+
 <div class="row">
     <div class="col-sm-8">
     </div>
@@ -25,8 +36,8 @@
         <h2 style="color:#222; font-size:32px;">{{contested_races_title}}</h3>
 
         <p>
-            {{ contested_races_type | contested_races_description }}<br />
-            Click on a row to see detailed information.
+            {{ contested_races_type | contested_races_description }}
+            {% if not is_single %}<br />Click on a row to see detailed information.{% endif %}
         </p>
     </div>
     <div class="col-sm-4">
@@ -52,6 +63,14 @@
                 </tr>
             </thead>
             <tbody>
+            {% if is_single %}
+                <tr class="nohighlight">
+                    <td></td>
+                    <td colspan="{{ cand_span }}" style="text-align:left;font-style:italic;padding-bottom:0;">
+                        Click anywhere on this row to view detailed information on all candidates.
+                    </td>
+                </tr>
+            {% endif %}
             {% for key,value in contested_dict | dictsort %}
                 <tr class = 'clickable' style= "cursor: Pointer;" onclick="window.location.href = '{{ url_for('views.contested_race_detail', race_type=r_type, district=key) }}';">
                     <td class='text-center'>

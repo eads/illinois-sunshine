@@ -1262,7 +1262,7 @@ class SunshineViews(object):
     def get_candidate_funds_byname(self, candidate_name):
 
         d2_part = '9B'
-        expended_date = datetime(2016, 1, 1, 0, 0)
+        expended_date = datetime(2017, 1, 1, 0, 0)
 
         supporting_funds_sql = '''(
             SELECT
@@ -1919,7 +1919,7 @@ def downloadUnzip():
     with zipfile.ZipFile(filename, 'r') as zf:
         # date_prefix = zf.namelist()[0].split('/')[0]
         zf.extractall(path=download_path)
-        
+
     for dir_member in os.listdir(os.path.join(download_path)):
         dir_path = os.path.join(download_path, dir_member)
         if (not os.path.isdir(dir_path)):
@@ -1928,7 +1928,7 @@ def downloadUnzip():
             move_from = os.path.join(dir_path, member)
             move_to = os.path.join(download_path, member)
             os.rename(move_from, move_to)
-            
+
 def alterSearchDictionary():
     from sunshine.app_config import DB_HOST, DB_PORT, DB_NAME, STOP_WORD_LIST
 
