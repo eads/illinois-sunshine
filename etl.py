@@ -2010,7 +2010,7 @@ if __name__ == "__main__":
         committees = SunshineCommittees(connection,
                                         Base.metadata,
                                         chunk_size=chunk_size)
-        committees.load()
+        committees.load(update_existing=True)
         committees.addNameColumn()
         committees.addDateColumn('NULL')
 

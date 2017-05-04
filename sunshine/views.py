@@ -668,6 +668,7 @@ def contested_race_detail(race_type, district):
         FROM contested_races
         WHERE district = :district
           AND branch = :branch
+        ORDER BY last_name, first_name
     '''
 
     races = list(g.engine.execute(sa.text(contested_races_sql),district=district,branch=branch))
