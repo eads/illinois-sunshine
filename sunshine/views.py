@@ -612,11 +612,12 @@ def contested_races():
 
 
     return render_template('contested-races.html',
-                           cand_span=cand_span,
-                           contested_dict=contested_dict,
-                           contested_races_type=contested_races_type,
-                           contested_races_title=contested_races_title,
-                           page_count=page_count)
+                            is_single=(len(contested_dict) == 1),
+                            cand_span=cand_span,
+                            contested_dict=contested_dict,
+                            contested_races_type=contested_races_type,
+                            contested_races_title=contested_races_title,
+                            page_count=page_count)
 
 
 
