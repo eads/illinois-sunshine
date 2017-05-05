@@ -4,6 +4,10 @@
     {{ header(contested_races_title, contested_races_type | contested_races_description, request.path) }}
 {% endblock %}
 {% block content %}
+<style>
+    body { color: #000; }
+    h2 small { color: #000; }
+</style>
 
 <h1><i class='fa fa-flag-checkered'></i> {% if district %}District {{ district }} - {% endif %}Contested Race<small>{% if contested_race_type %} <strong>{{ contested_race_type }}</strong>{% endif %}, updated daily</small></h1>
 <div class="row">

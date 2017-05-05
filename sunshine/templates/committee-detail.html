@@ -230,6 +230,7 @@
 
             <table class='table'
                 <tbody>
+                    {% if committee.active %}
                     <tr>
                         <td>Address</td>
                         <td>
@@ -246,6 +247,7 @@
                             {{ committee.zipcode }}
                         </td>
                     </tr>
+                    {% endif %}
                     {% if committee.creation_date %}
                     <tr>
                         <td>Founded</td>
