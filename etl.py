@@ -28,6 +28,8 @@ except KeyError:
 
 
 class SunshineTransformLoad(object):
+    update_ignore_fields = []
+    update_conversions = {}
 
     def __init__(self,
                  connection,
@@ -289,9 +291,8 @@ class SunshineTransformLoad(object):
             self.updateExistingRecords()
 
     def updateExistingRecords(self):
-
         fields = ','.join([
-            '{0}=s."{1}"'.format(clean, raw)
+            ('{0}=' + self.update_conversions.get(raw, 's."{1}"')).format(clean, raw)
             for clean, raw in zip(self.header, self.raw_header)
         ])
 
@@ -335,6 +336,12 @@ class SunshineCommittees(SunshineTransformLoad):
     table_name = 'committees'
     header = Committee.__table__.columns.keys()
     filename = 'Committees.txt'
+    update_ignore_fields = ['search_name', 'search_date']
+    update_conversions = {
+        "Status": "CASE WHEN s.\"Status\" = 'A' THEN True ELSE False END",
+        "CanSuppOpp": "(CASE s.\"CanSuppOpp\" WHEN 'O' THEN 'oppose' WHEN 'S' THEN 'support' ELSE null END)::committee_position",
+        "PolicySuppOpp": "(CASE s.\"PolicySuppOpp\" WHEN 'O' THEN 'oppose' WHEN 'S' THEN 'support' ELSE null END)::committee_position"
+    }
 
     def addNameColumn(self):
 
@@ -1950,38 +1957,9 @@ def alterSearchDictionary():
     with engine.begin() as conn:
         conn.execute(alter)
 
-
-if __name__ == "__main__":
-    import argparse
+def main(args):
     from sunshine.app_config import STOP_WORD_LIST
     from sunshine.database import engine, Base
-
-    parser = argparse.ArgumentParser(description='Download and import campaign disclosure data from the IL State Board of Elections.')
-    parser.add_argument(
-        '--download',
-        action='store_true',
-        help='Downloading fresh data'
-    )
-
-    parser.add_argument(
-        '--load_data',
-        action='store_true',
-        help='Load data into database'
-    )
-
-    parser.add_argument(
-        '--recreate_views',
-        action='store_true',
-        help='Recreate database views'
-    )
-
-    parser.add_argument(
-        '--chunk_size',
-        help='Adjust the size of each insert when loading data',
-        type=int
-    )
-
-    args = parser.parse_args()
 
     connection = engine.connect()
 
@@ -2108,3 +2086,33 @@ if __name__ == "__main__":
     indexes.makeAllIndexes()
 
     connection.close()
+
+if __name__ == "__main__":
+    import argparse
+
+    parser = argparse.ArgumentParser(description='Download and import campaign disclosure data from the IL State Board of Elections.')
+    parser.add_argument(
+        '--download',
+        action='store_true',
+        help='Downloading fresh data'
+    )
+
+    parser.add_argument(
+        '--load_data',
+        action='store_true',
+        help='Load data into database'
+    )
+
+    parser.add_argument(
+        '--recreate_views',
+        action='store_true',
+        help='Recreate database views'
+    )
+
+    parser.add_argument(
+        '--chunk_size',
+        help='Adjust the size of each insert when loading data',
+        type=int
+    )
+
+    main(parser.parse_args())
