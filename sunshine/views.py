@@ -75,7 +75,7 @@ def index():
             maxc = len(candidates)
         cands = []
         for c in candidates:
-            cand_name = c.first_name + " " + c.last_name
+            cand_name = (c.first_name + " " if c.first_name else "") + (c.last_name if c.last_name else "")
             if (cands and c.incumbent == 'N'):
                 cands.append({
                     'candidate_id': c.candidate_id,
