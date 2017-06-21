@@ -19,8 +19,8 @@ def getCommitteeFundsData(committee_id, pre_primary_start, primary_start, post_p
 
     pre_primary_quarterlies = db_session.query(D2Report)\
                                         .join(FiledDoc, D2Report.filed_doc_id==FiledDoc.id)\
-                                        .filter(D2Report.archived == False)
-                                        .filter(FiledDoc.archived == False)
+                                        .filter(D2Report.archived == False)\
+                                        .filter(FiledDoc.archived == False)\
                                         .filter(D2Report.committee_id==committee_id)\
                                         .filter(FiledDoc.doc_name=="Quarterly")\
                                         .filter(FiledDoc.reporting_period_begin >= pre_primary_start)\
@@ -31,8 +31,8 @@ def getCommitteeFundsData(committee_id, pre_primary_start, primary_start, post_p
 
     primary_quarterlies = db_session.query(D2Report)\
                                     .join(FiledDoc, D2Report.filed_doc_id==FiledDoc.id)\
-                                    .filter(D2Report.archived == False)
-                                    .filter(FiledDoc.archived == False)
+                                    .filter(D2Report.archived == False)\
+                                    .filter(FiledDoc.archived == False)\
                                     .filter(D2Report.committee_id==committee_id)\
                                     .filter(FiledDoc.doc_name=="Quarterly")\
                                     .filter(FiledDoc.reporting_period_begin >= primary_start)\
@@ -93,8 +93,8 @@ def getCommitteeFundsData(committee_id, pre_primary_start, primary_start, post_p
 
         pre_pre_primary_quarterly = db_session.query(D2Report)\
                                             .join(FiledDoc, D2Report.filed_doc_id==FiledDoc.id)\
-                                            .filter(D2Report.archived == False)
-                                            .filter(FiledDoc.archived == False)
+                                            .filter(D2Report.archived == False)\
+                                            .filter(FiledDoc.archived == False)\
                                             .filter(D2Report.committee_id==committee_id)\
                                             .filter(FiledDoc.doc_name=="Quarterly")\
                                             .filter(FiledDoc.reporting_period_end <= last_quarterly_date)\
