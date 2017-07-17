@@ -9,6 +9,71 @@ from sqlalchemy.sql import func
 from datetime import datetime, timedelta
 from dateutil.parser import parse
 import collections
+import csv
+import os
+
+#============================================================================
+def getContestedRacesData(type_arg):
+    is_house = (type_arg == "house_of_representatives")
+    is_senate = (type_arg == "senate")
+    is_comptroller = (type_arg == "comptroller")
+    is_gubernatorial = (type_arg == "gubernatorial")
+    input_filename = "contested_races.csv"
+
+    if is_senate:
+        contested_races_type = "Senate"
+        contested_races_title = "Illinois Senate Contested Races"
+    elif is_comptroller:
+        contested_races_type = "State Comptroller"
+        contested_races_title = "Illinois State Comptroller Contested Race"
+        input_filename = "comptroller_contested_race.csv"
+    elif is_gubernatorial:
+        contested_races_type = "Gubernatorial"
+        contested_races_title = "Race for Illinois Governor"
+        input_filename = "gubernatorial_contested_races.csv"
+
+    contested_races = list(csv.DictReader(open(
+        os.getcwd() + '/sunshine/' + input_filename
+    )))
+
+    if is_house or is_senate:
+        race_sig = "H" if is_house else "S"
+
+        contested_races = filter(
+            lambda race: race['Senate/House'] == race_sig,
+            contested_races
+        )
+
+    contested_dict = {}
+    cand_span = 0
+
+    for e in contested_races:
+        if is_comptroller or is_gubernatorial:
+            district = 0
+        else:
+            district = int(e['District'])
+
+        first_names = e['First'].split(';')
+        last_names = e['Last'].split(';')
+
+        first_name = first_names[0].strip()
+        last_name = last_names[0].strip()
+
+        candidate_data = {'last': last_name, 'first': first_name,'incumbent': e['Incumbent'],'party': e['Party']}
+
+        if district in contested_dict:
+            if e['Incumbent'] == 'N':
+                contested_dict[district].append(candidate_data)
+            else:
+                contested_dict[district].insert(0, candidate_data)
+        else:
+            contested_dict[district] = []
+            contested_dict[district].append(candidate_data)
+
+        district_candidates = len(contested_dict[district])
+        cand_span = cand_span if cand_span >= district_candidates else district_candidates
+
+    return [contested_races_type, contested_races_title, cand_span, contested_dict]
 
 #============================================================================
 def getCommitteeFundsData(committee_id, pre_primary_start, primary_start, post_primary_start):
