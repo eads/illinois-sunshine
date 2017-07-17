@@ -1,0 +1,278 @@
+{% extends 'base.html' %}
+://www.youtube.com/agrant@127.0.0.1
+{% from 'macros.html' import header %}
+{% block header_social %}
+    {{ header(None, None, request.path) }}
+{% endblock %}
+{% block content %}
+
+<div class='visible-xs-inline visible-sm-inline'>
+    <p class='text-center'>
+        <a href='http://www.ilcampaign.org/donate/' target='_blank'><img src='/static/images/icpr-logo-horizontal-donate.png' style='height:130px; padding-bottom: 5px;' class='img-responsive center-block' /></a>
+    </p>
+</div>
+
+<div class='row'>
+    <div class='col-sm-10'>
+        <div class='jumbotron'>
+            <p style="font-size:27px;color:#171771;">Keep an eye on money in Illinois politics</p>
+
+            <form action='/search' method='GET'>
+                <div class="input-group input-group-lg">
+                    <input type="text" class="form-control" placeholder="Search for names of candidates, committees and donors in Illinois" name="term">
+                    <input type='hidden' name='table_name' value='candidates' />
+                    <input type='hidden' name='table_name' value='committees' />
+                    <input type='hidden' name='table_name' value='officers' />
+                    <input type='hidden' name='table_name' value='receipts' />
+                    <input type='hidden' name='table_name' value='expenditures' />
+                    <span class="input-group-btn">
+                        <button class="btn btn-default" type="submit"><i class='fa fa-search'></i> Search</button>
+                    </span>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div class='col-sm-2 visible-lg-inline visible-md-inline'>
+        <p class='text-center'><small>Brought to you by</small></p>
+        <a href='http://ilcampaign.org'><img src='/static/images/icpr-logo.png' style='height:130px; padding-bottom: 5px;' class='img-responsive center-block' /></a>
+        <p class='text-center'><a class='btn btn-primary btn-sm' href='http://www.ilcampaign.org/donate/' target='_blank'>
+          Please donate!
+        </a></p>
+    </div>
+</div>
+<div class="alert alert-info" role="alert">
+    <a href="http://www.ilcampaign.org/news/illinois-sunshine-news-updates/" class="alert-link" target="_blank">
+        Get the Illinois Sunshine Weekly update!
+    </a> <br />
+Every Thursday, we recap the week’s political contributions, top earners, and highest grossing committees from across the state.
+</div>
+<br />
+<!-- TODO: Remove this!
+<div class = 'col-sm-8'>
+    <h2>
+        <i class='fa fa-dollar fa-fw'></i>
+        <a class="header-link" href='{{ url_for('views.donations') }}'>Tracking Political Donations</a> <small>by month and year</small>
+    </h2>
+
+    <p>The chart below shows political donations since 1994. <i class='fa fa-fw fa-hand-pointer-o'></i> Hover over a month to see total donations and transfers during that time period. To see total donations and transfers by year, decrease the size of your browser window until you see dark green bars.</p>
+
+    <div class='hidden-sm hidden-xs' id='donation-chart'></div>
+    <br />
+
+    <div class='visible-sm-block visible-xs-block' id='donation-chart-year'></div>
+    <br /><br />
+
+    <div class='text-center'>
+        <a href='http://www.ilcampaign.org/advertise-with-us/'><img src='/static/images/icpr-interested-in-advertising.png' class='img-responsive center-block'/></a>
+    </div>
+</div>
+-->
+<div class="col-sm-8">
+    <table class = "table table-striped table-hover">
+        <thead>
+            <tr>
+                <th class = 'text-center'>District</th>
+                <th class = 'text-left' colspan ="{{ cand_span }}">Candidates</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% if is_single %}
+            <tr class="nohighlight">
+                <td colspan="{{ cand_span + 1 }}" style="text-align:left;font-style:italic;padding-bottom:0;">
+                    Click anywhere on this row to view detailed information on all candidates.
+                </td>
+            </tr>
+        {% endif %}
+        {% for key,value in contested_dict | dictsort %}
+            <tr class = 'clickable' style= "cursor: Pointer;" onclick="window.location.href='{{ url_for('views.contested_race_detail', race_type='gubernatorial', district=key) }}';">
+                <td class='text-center'>
+                    <a href="{{ url_for('views.contested_race_detail', race_type='gubernatorial', district=key) }}">{{ key or "N/A" }}</a>
+                </td>
+
+                {% for c in value %}
+                    <td class='text-left'>
+                        {{ c.first }} {{ c.last }} ({{ c.party }}) {% if c.incumbent|string() == 'Y' %} *INCUMBENT {% elif (c.incumbent|string() != "N") %} *{{ c.incumbent|string() }} {% endif %}
+                    </td>
+                {% endfor %}
+
+                {% set remaining_cols = cand_span - (value|length) %}
+
+                {% if remaining_cols > 0 %}
+                    <td colspan="{{ remaining_cols }}">&nbsp;</td>
+                {% endif %}
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+<div class = 'col-sm-4'>
+    <h2>
+        <a class="header-link" href="https://twitter.com/ilsunshine" target='_blank'>Check out up-to-the-minute campaign finance filings with tweets from @ilsunshine</a>
+    </h2>
+    <a class="twitter-timeline" data-chrome="noheader" data-height=500 href="https://twitter.com/ilsunshine">Tweets by ilsunshine</a><script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+</div>
+
+
+<h3>
+    <a class="header-link" href='{{ url_for('views.donations') }}' target='_blank'>Recent Political Donations</a>
+</h3>
+
+<p>Top donations to Illinois political committees in the last 7 days, updated daily.</p>
+<table class="table table-striped" id='donations-table'>
+    <thead>
+        <tr>
+            <th>Donor</th>
+            <th class='text-right'>Amount</th>
+            <th>Recipient</th>
+            <th class='hidden-sm hidden-xs'>Date</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for donation in days_donations %}
+            {% set committee_slug = [donation.committee_name|slugify, donation.committee_id|string]|join('-') %}
+            <tr>
+                <td>
+                    <a href='/search/?term={% if donation.first_name %}{{ donation.first_name }}{% endif %} {{ donation.last_name }}&table_name=candidates&table_name=committees&table_name=officers&table_name=receipts'>{% if donation.first_name %}{{ donation.first_name }}{% endif %} {{ donation.last_name }}</a>
+                </td>
+                <td class='nowrap text-right visible-sm-block visible-xs-block'>
+                    <a href="{{ url_for('views.contribution', receipt_id=donation.id )}}">
+                        <strong>{{ donation.amount|format_money_short }}</strong>
+                    </a>
+                </td>
+                <td class='nowrap text-right hidden-sm hidden-xs'>
+                    <a href="{{ url_for('views.contribution', receipt_id=donation.id )}}">
+                        {{ donation.d2_part|donation_verb }} <strong>{{ donation.amount|format_money }}</strong>
+                    </a> to
+                </td>
+                <td>
+                    <a href="{{ url_for('views.committee', committee_id=committee_slug )}}">{{ donation.committee_name }}</a>
+                </td>
+                <td class='nowrap hidden-sm hidden-xs'>
+                    on {{ donation.received_date.strftime('%b %d, %Y') }}
+                </td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<p><a class='btn btn-primary' href='{{ url_for('views.donations') }}'><i class='fa fa-dollar fa-fw'></i> Browse all donations &raquo;</a></p>
+<br /><br />
+
+<h2>
+    <i class='fa fa-plus-circle fa-fw'></i>
+    <a class="header-link" href='{{ url_for('views.top_earners') }}'>Top Earners</a> <small>last 30 days, updated daily</small>
+</h2>
+
+<p>Political committees operate by receiving donations, transfers and loans from people, organizations, and other committees. Here's who's raised the most money in the last month</p>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Rank</th>
+            <th>Committee</th>
+            <th class='hidden-sm hidden-xs'>Type</th>
+            <th class='text-right'>New funds</th>
+            <th class='text-right hidden-sm hidden-xs'>Current funds</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for earner in top_earners %}
+            <tr>
+                <td>{{ loop.index }}</td>
+                {% set committee_slug = [earner.name|slugify, earner.committee_id|string]|join('-') %}
+                <td><a href="{{ url_for('views.committee', committee_id=committee_slug ) }}">{{ earner.name }}</a></td>
+                <td class='hidden-sm hidden-xs'>{{ earner.type }}</td>
+                <td class='money-add text-right'>
+                    {% if earner.amount %}
+                        +{{earner.amount|format_money}}
+                    {% else %}
+                        $0
+                    {% endif %}
+                </td>
+                <td class='text-right hidden-sm hidden-xs'>{{ earner.total|format_money }}</td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<p>
+    <a class='btn btn-primary' href='{{ url_for('views.top_earners') }}'><i class='fa fa-plus-circle fa-fw'></i> More top earners &raquo;</a>
+</p>
+<br /><br />
+
+<h2><i class='fa fa-group fa-fw'></i> <a class="header-link" href='{{ url_for('views.committees') }}'>Top Political Committees</a> <small>highest current funds, updated daily</small></h2>
+<p>Political committees must report their current funds, along with donations and expenditures <a href='/about/#how-is-campaign-finance-disclosed'>every quarter</a>. Here's the committees that have the most investments and cash on hand.</p>
+<table class="table table-hover">
+    <thead>
+        <tr>
+            <th>Rank</th>
+            <th>Committee</th>
+            <th class='hidden-sm hidden-xs'>Type</th>
+            <th class='text-right'>Current funds</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for record in top_ten %}
+            <tr>
+                <td>{{ loop.index }}</td>
+                {% set committee_slug = [record.committee_name|slugify, record.committee_id|string]|join('-') %}
+                <td><a href="{{ url_for('views.committee', committee_id=committee_slug ) }}">{{ record.committee_name }}</a></td>
+                <td class='hidden-sm hidden-xs'>{{ record.committee_type }}</td>
+                <td class='text-right'>{{ record.total|format_money }}</td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<p><a class='btn btn-primary' href='{{ url_for('views.committees') }}'><i class='fa fa-group fa-fw'></i> All committees &raquo;</a></p>
+
+<div class = 'col-sm-12'>
+    <h2>
+        <i class='fa fa-dollar fa-fw'></i>
+        <a class="header-link" href='{{ url_for('views.donations') }}'>Tracking Political Donations</a> <small>by month and year</small>
+    </h2>
+
+    <p>The chart below shows political donations since 1994. <i class='fa fa-fw fa-hand-pointer-o'></i> Hover over a month to see total donations and transfers during that time period. To see total donations and transfers by year, decrease the size of your browser window until you see dark green bars.</p>
+
+    <div class='hidden-sm hidden-xs' id='donation-chart'></div>
+    <br />
+
+    <div class='visible-sm-block visible-xs-block' id='donation-chart-year'></div>
+</div>
+<br /><br />
+
+<h2><i class='fa fa-info-circle fa-fw'></i> <a class="header-link" href='{{ url_for('views.about') }}'>About</a></h2>
+
+<p><strong>Illinois Sunshine</strong> is a tool by the <a href='http://www.ilcampaign.org/' title='Illinois Campaign for Political Reform'>Illinois Campaign for Political Reform</a> for browsing political contributions in the state of Illinois.</p>
+
+<p>The data comes from the <a href='http://www.elections.il.gov/'>Illinois State Board of Elections</a>, which has been collecting this data electronically since 1994. We built Illinois Sunshine to give journalists, activists and citizens better access to and documentation for this data.</p>
+
+<p><a class='btn btn-primary' href='{{ url_for('views.about') }}'><i class='fa fa-info-circle fa-fw'></i> Read more &raquo;</a></p>
+
+{% endblock %}
+
+{% block extra_javascript %}
+    <script src="https://code.highcharts.com/highcharts.js"></script>
+    <script src="/static/js/moment.min.js"></script>
+    <script src="/static/js/chart_helper.js"></script>
+    <script>
+
+        //money by month chart
+        var money = {{ donations_by_month|tojson|safe }};
+        var money_f = [];
+        for (i = 0; i < money.length; i++) {
+            money_f.push([Date.UTC(money[i][1],money[i][2]-1,money[i][3]), money[i][0]]);
+        }
+
+        ChartHelper.donations('donation-chart', 'Campaign donations', '', 'Donations', money_f, 'month');
+
+        // money by year chart
+        var money_y = {{ donations_by_year|tojson|safe }};
+        var money_y_f = [];
+        for (i = 0; i < money_y.length; i++) {
+            money_y_f.push([Date.UTC(money_y[i][1],money_y[i][2]-1,money_y[i][3]), money_y[i][0]]);
+        }
+
+        ChartHelper.donations('donation-chart-year', 'Campaign donations', '', 'Donations', money_y_f, 'year');
+    </script>
+
+{% endblock %}

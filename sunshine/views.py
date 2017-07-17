@@ -29,6 +29,7 @@ def index():
 
     totals = list(g.engine.execute(sa.text(totals_sql)))
 
+    # ==== TODO: Remove this! ====
     # contested races chart
     top_races_sql = '''
         SELECT
@@ -98,6 +99,7 @@ def index():
             'candidates': cands
         }
         counter = counter + 1
+    # ================================
 
     # donations chart
     donations_by_month_sql = '''
@@ -219,6 +221,146 @@ def index():
                            donations_by_year=donations_by_year,
                            days_donations=days_donations)
 
+
+@views.route('/tests/index/')
+@cache.cached(timeout=CACHE_TIMEOUT, key_prefix=make_cache_key)
+def tests_index():
+
+    # summary total text
+    totals_sql = '''
+      SELECT
+        SUM(total_amount) as total_amount,
+        SUM(donation_count) as donation_count,
+        AVG(average_donation) as average_donation
+      FROM receipts_by_month'''
+
+    totals = list(g.engine.execute(sa.text(totals_sql)))
+
+    # Contested Races Chart
+    cr_type, cr_title, cand_span, contested_dict = sslib.getContestedRacesData("gubernatorial")
+
+    # donations chart
+    donations_by_month_sql = '''
+      SELECT * FROM receipts_by_month WHERE month >= :start_date
+    '''
+
+    donations_by_month = [
+        [
+            d.total_amount,
+            d.month.year,
+            d.month.month,
+            d.month.day
+        ] for d in g.engine.execute(
+            sa.text(donations_by_month_sql),
+            start_date="1994-01-01"
+        )
+    ]
+
+    donations_by_year_sql = '''
+      SELECT
+        date_trunc('year', month) AS year,
+        SUM(total_amount) AS total_amount,
+        COUNT(donation_count) AS donation_count,
+        AVG(average_donation) AS average_donation
+      FROM receipts_by_month
+      WHERE month >= :start_date
+      GROUP BY date_trunc('year', month)
+      ORDER BY year
+    '''
+
+    donations_by_year = [
+        [
+            d.total_amount,
+            d.year.year,
+            d.year.month,
+            d.year.day
+        ] for d in g.engine.execute(
+            sa.text(donations_by_year_sql),
+            start_date="1994-01-01"
+        )
+    ]
+
+    # top earners in the last week
+    top_earners = '''
+        SELECT
+          sub.*,
+          m.total,
+          c.name,
+          c.type
+        FROM (
+          SELECT
+            SUM(amount) AS amount,
+            committee_id
+          FROM condensed_receipts
+          WHERE received_date > :received_date
+          GROUP BY committee_id
+          ORDER BY amount DESC
+        ) AS sub
+        JOIN committees AS c
+          ON sub.committee_id = c.id
+        JOIN committee_money as m
+          ON c.id = m.committee_id
+        ORDER BY sub.amount DESC
+        LIMIT 10
+    '''
+
+    days_ago = datetime.now() - timedelta(days=30)
+    top_earners = g.engine.execute(
+        sa.text(top_earners),
+        received_date=days_ago
+    )
+
+    # committees with the most money
+    committee_sql = '''
+        SELECT * FROM (
+          SELECT *
+          FROM committee_money
+          WHERE committee_active = TRUE
+          ORDER BY committee_name
+        ) AS committees
+        ORDER BY committees.total DESC NULLS LAST
+        LIMIT 10
+    '''
+
+    top_ten = g.engine.execute(sa.text(committee_sql))
+
+    date = datetime.now().date()
+
+    days_donations_sql = '''
+      SELECT
+        c.*,
+        cm.name as committee_name
+      FROM condensed_receipts AS c
+      JOIN committees AS cm ON c.committee_id = cm.id
+      WHERE c.received_date >= :start_date
+        AND c.received_date < :end_date
+      ORDER BY c.amount DESC
+      LIMIT 10
+    '''
+
+    days_donations = []
+
+    # Roll back day until we find something
+    while len(days_donations) == 0:
+        days_donations = list(g.engine.execute(
+            sa.text(days_donations_sql),
+            start_date=(date - timedelta(days=7)),
+            end_date=date
+        ))
+        date = date - timedelta(days=1)
+
+    return render_template('tests/index.html',
+                           #top_races=top_races,
+                           #maxc=maxc,
+                           top_earners=top_earners,
+                           top_ten=top_ten,
+                           totals=totals,
+                           donations_by_month=donations_by_month,
+                           donations_by_year=donations_by_year,
+                           days_donations=days_donations,
+                           is_single=(len(contested_dict) == 1),
+                           cand_span=cand_span,
+                           contested_dict=contested_dict)
 
 @views.route('/donations/')
 @cache.cached(timeout=CACHE_TIMEOUT, key_prefix=make_cache_key)
@@ -536,92 +678,25 @@ def muni_contested_race_detail(district):
 def contested_races():
 
     contested_races_type = "House of Representatives"
-    contested_races_title = \
-        "Illinois House of Representatives Contested Races"
+    contested_races_title = "Illinois House of Representatives Contested Races"
     # TODO: Update the default argument here when the other pages are enabled again.
     type_arg = 'gubernatorial' if not request.args.get('type') else request.args.get('type', 'gubernatorial')
 
-    is_house = (type_arg == "house_of_representatives")
-    is_senate = (type_arg == "senate")
-    is_comptroller = (type_arg == "comptroller")
-    is_gubernatorial = (type_arg == "gubernatorial")
-    input_filename = "contested_races.csv"
-
-    if is_senate:
-        contested_races_type = "Senate"
-        contested_races_title = "Illinois Senate Contested Races"
-    elif is_comptroller:
-        contested_races_type = "State Comptroller"
-        contested_races_title = "Illinois State Comptroller Contested Race"
-        input_filename = "comptroller_contested_race.csv"
-    elif is_gubernatorial:
-        contested_races_type = "Gubernatorial"
-        contested_races_title = "Race for Illinois Governor"
-        input_filename = "gubernatorial_contested_races.csv"
-
-    contested_races = list(csv.DictReader(open(
-        os.getcwd() + '/sunshine/' + input_filename
-    )))
-
-    if is_house or is_senate:
-        race_sig = "H" if is_house else "S"
-
-        contested_races = filter(
-            lambda race: race['Senate/House'] == race_sig,
-            contested_races
-        )
-
-    contested_dict = {}
-    cand_span = 0
-
-    for e in contested_races:
-        if is_comptroller or is_gubernatorial:
-            district = 0
-        else:
-            district = int(e['District'])
-
-        first_names = e['First'].split(';')
-        last_names = e['Last'].split(';')
-
-        first_name = first_names[0].strip()
-        last_name = last_names[0].strip()
-
-        candidate_data = {'last': last_name, 'first': first_name,'incumbent': e['Incumbent'],'party': e['Party']}
-
-        if district in contested_dict:
-            if e['Incumbent'] == 'N':
-                contested_dict[district].append(candidate_data)
-            else:
-                contested_dict[district].insert(0, candidate_data)
-        else:
-            contested_dict[district] = []
-            contested_dict[district].append(candidate_data)
-
-        district_candidates = len(contested_dict[district])
-        cand_span = cand_span if cand_span >= district_candidates else district_candidates
+    cr_type, cr_title, cand_span, contested_dict = sslib.getContestedRacesData(type_arg)
 
     if not flask_session.get('%s_page_count' % type_arg):
-
         page_count = int(round(len(contested_dict), -2) / 50)
-
         flask_session['%s_page_count' % type_arg] = page_count
-
     else:
-
         page_count = flask_session['%s_page_count' % type_arg]
-
 
     return render_template('contested-races.html',
                             is_single=(len(contested_dict) == 1),
                             cand_span=cand_span,
                             contested_dict=contested_dict,
-                            contested_races_type=contested_races_type,
-                            contested_races_title=contested_races_title,
+                            contested_races_type=cr_type,
+                            contested_races_title=cr_title,
                             page_count=page_count)
-
-
-
-
 
 
 @views.route('/contested-race-detail/<race_type>-<district>/')
