@@ -13,12 +13,55 @@ import csv
 import os
 
 #============================================================================
+def getPrimaryDetails(branch):
+    primary_details = {}
+
+    if (branch == "G"):
+        primary_details["pre_primary_start"] = "2017-01-01"
+        primary_details["primary_start"] = "2018-01-01"
+        primary_details["primary_end"] = "2018-03-20"
+        primary_details["primary_quarterly_end"] = "2018-03-31"
+
+    if not primary_details:
+        return {}
+
+    if "primary_end" in primary_details:
+        primary_details["post_primary_start"] = (parse(primary_details["primary_end"]) + timedelta(days=1)).strftime("%Y-%m-%d")
+        primary_details["is_after_primary"] = parse(primary_details["primary_end"]).date() < datetime.today().date()
+
+    return primary_details
+
+#============================================================================
+def getContestedRacesCsvData(type_arg):
+    is_comptroller = (type_arg == "comptroller")
+    is_gubernatorial = (type_arg == "gubernatorial")
+    input_filename = "contested_races.csv"
+
+    if is_comptroller:
+        input_filename = "comptroller_contested_race.csv"
+    elif is_gubernatorial:
+        input_filename = "gubernatorial_contested_races.csv"
+
+    return list(csv.DictReader(open(
+        os.getcwd() + '/sunshine/' + input_filename
+    )))
+
+#============================================================================
+def getCandidateDataFromCsvRow(row):
+    first_names = row['First'].split(';')
+    last_names = row['Last'].split(';')
+
+    first_name = first_names[0].strip()
+    last_name = last_names[0].strip()
+
+    return {'last': last_name, 'first': first_name,'incumbent': row['Incumbent'],'party': row['Party']}
+
+#============================================================================
 def getContestedRacesData(type_arg):
     is_house = (type_arg == "house_of_representatives")
     is_senate = (type_arg == "senate")
     is_comptroller = (type_arg == "comptroller")
     is_gubernatorial = (type_arg == "gubernatorial")
-    input_filename = "contested_races.csv"
 
     if is_senate:
         contested_races_type = "Senate"
@@ -26,15 +69,11 @@ def getContestedRacesData(type_arg):
     elif is_comptroller:
         contested_races_type = "State Comptroller"
         contested_races_title = "Illinois State Comptroller Contested Race"
-        input_filename = "comptroller_contested_race.csv"
     elif is_gubernatorial:
         contested_races_type = "Gubernatorial"
         contested_races_title = "Race for Illinois Governor"
-        input_filename = "gubernatorial_contested_races.csv"
 
-    contested_races = list(csv.DictReader(open(
-        os.getcwd() + '/sunshine/' + input_filename
-    )))
+    contested_races = getContestedRacesCsvData(type_arg)
 
     if is_house or is_senate:
         race_sig = "H" if is_house else "S"
@@ -74,6 +113,47 @@ def getContestedRacesData(type_arg):
         cand_span = cand_span if cand_span >= district_candidates else district_candidates
 
     return [contested_races_type, contested_races_title, cand_span, contested_dict]
+
+#============================================================================
+def getAllCandidateFunds(district, branch):
+    output = []
+
+    primary_details = getPrimaryDetails(branch)
+    pre_primary_start = primary_details["pre_primary_start"]
+    primary_start = primary_details["primary_start"]
+    primary_end = primary_details["primary_end"]
+    primary_quarterly_end = primary_details["primary_quarterly_end"]
+    post_primary_start = primary_details["post_primary_start"]
+    is_after_primary = primary_details["is_after_primary"]
+
+    contested_races_sql = '''
+        SELECT cr.*, c.name as committee_committee_name
+        FROM contested_races cr
+        LEFT JOIN committees c ON (c.id = cr.committee_id)
+        WHERE cr.district = :district
+          AND cr.branch = :branch
+    '''
+
+    races = list(g.engine.execute(sa.text(contested_races_sql),district=district,branch=branch))
+
+    for race in races:
+        committee_funds_data = getCommitteeFundsData(race.committee_id, pre_primary_start, primary_start, post_primary_start)
+        total_funds = (committee_funds_data[-1][1] if committee_funds_data else 0.0)
+
+        display = (race.first_name or "") + " " + (race.last_name or "") + " (" + (race.party or "") + ")"
+        if not race.incumbent:
+            pass
+        elif (race.incumbent == "Y"):
+            display += " *Incumbent"
+        elif (race.incumbent != "N"):
+            display += " " + race.incumbent
+
+        output.append([display, total_funds])
+
+    if not output:
+        return []
+
+    return sorted(output, key=lambda x: -x[1])
 
 #============================================================================
 def getCommitteeFundsData(committee_id, pre_primary_start, primary_start, post_primary_start):
