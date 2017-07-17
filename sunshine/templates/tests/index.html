@@ -41,9 +41,9 @@
     </div>
 </div>
 <div class="col-sm-8">
-    <h3>
+    <h2>
         <a class="header-link" href='{{ url_for('views.contested_race_detail', race_type='gubernatorial', district=0) }}' target='_blank'>Race for Illinois Governor</a>
-    </h3>
+    </h2>
     <p>Funds raised and spent in the 2018 Race for Illinois Governor.</p>
     <table class = "table table-striped table-hover">
         <thead>
@@ -55,7 +55,7 @@
         <tbody>
         {% for row in contested_race_data %}
             <tr class = 'clickable' style= "cursor: Pointer;" onclick="window.location.href='{{ url_for('views.contested_race_detail', race_type='gubernatorial', district=0) }}';">
-                <td class='text-left' style="white-space:nowrap;">
+                <td class='text-left' style="white-space:nowrap;color:#000;">
                     {{ row[0] }}
                 </td>
                 <td class="text-right" style="white-space:nowrap;">
