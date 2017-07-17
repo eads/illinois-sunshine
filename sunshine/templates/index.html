@@ -15,7 +15,7 @@
 <div class='row'>
     <div class='col-sm-10'>
         <div class='jumbotron'>
-            <p>Keep an eye on money in Illinois politics</p>
+            <p style="font-size:27px;color:#171771;">Keep an eye on money in Illinois politics</p>
 
             <form action='/search' method='GET'>
                 <div class="input-group input-group-lg">
@@ -40,39 +40,49 @@
         </a></p>
     </div>
 </div>
+<div class="col-sm-8">
+    <h2>
+        <a class="header-link" href='{{ url_for('views.contested_race_detail', race_type='gubernatorial', district=0) }}' target='_blank'>Race for Illinois Governor</a>
+    </h2>
+    <p>Funds raised and spent in the 2018 Race for Illinois Governor.</p>
+    <table class = "table table-striped table-hover">
+        <thead>
+            <tr>
+                <th style="max-width:250px;" class = 'text-center'>Candidate</th>
+                <th style="max-width:200px;" class = 'text-center'>Total Funds Raised</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for row in contested_race_data %}
+            <tr class = 'clickable' style= "cursor: Pointer;" onclick="window.location.href='{{ url_for('views.contested_race_detail', race_type='gubernatorial', district=0) }}';">
+                <td class='text-left' style="white-space:nowrap;color:#000;">
+                    {{ row[0] }}
+                </td>
+                <td class="text-right" style="white-space:nowrap;">
+                    {{ row[1]|format_money }}
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+<div class = 'col-sm-4'>
+    <h2>
+        <a class="header-link" href="https://twitter.com/ilsunshine" target='_blank'>Check out up-to-the-minute campaign finance filings with tweets from @ilsunshine</a>
+    </h2>
+    <a class="twitter-timeline" data-chrome="noheader" data-height=310 href="https://twitter.com/ilsunshine">Tweets by ilsunshine</a><script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+</div>
+<div class="clear" style="clear:both;"></div>
+<br />
+<br />
 <div class="alert alert-info" role="alert">
     <a href="http://www.ilcampaign.org/news/illinois-sunshine-news-updates/" class="alert-link" target="_blank">
         Get the Illinois Sunshine Weekly update!
     </a> <br />
 Every Thursday, we recap the week’s political contributions, top earners, and highest grossing committees from across the state.
-</div><br />
-<div class = 'col-sm-8'>
-<h2>
-    <i class='fa fa-dollar fa-fw'></i>
-    <a class="header-link" href='{{ url_for('views.donations') }}'>Tracking Political Donations</a> <small>by month and year</small>
-</h2>
-
-<p>The chart below shows political donations since 1994. <i class='fa fa-fw fa-hand-pointer-o'></i> Hover over a month to see total donations and transfers during that time period. To see total donations and transfers by year, decrease the size of your browser window until you see dark green bars.</p>
-
-<div class='hidden-sm hidden-xs' id='donation-chart'></div>
+</div>
 <br />
-
-<div class='visible-sm-block visible-xs-block' id='donation-chart-year'></div>
-<br /><br />
-
-<div class='text-center'>
-    <a href='http://www.ilcampaign.org/advertise-with-us/'><img src='/static/images/icpr-interested-in-advertising.png' class='img-responsive center-block'/></a>
-</div>
-</div>
-<div class = 'col-sm-4'>
-<h2>
-    <i class='fa fa-twitter fa-fw'></i>
-    <a class="header-link" href="https://twitter.com/ilsunshine" target='_blank'>Current Filings </a>
-</h2>
-<p>Check out up-to-the-minute campaign finance filings with tweets from <a href='https://twitter.com/ilsunshine' target='_blank'>@ilsunshine</a></p>
-<a class="twitter-timeline" data-chrome="noheader" data-height=500 href="https://twitter.com/ilsunshine">Tweets by ilsunshine</a><script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
-</div>
-
+<br />
 
 <h3>
     <a class="header-link" href='{{ url_for('views.donations') }}' target='_blank'>Recent Political Donations</a>
@@ -185,6 +195,19 @@ Every Thursday, we recap the week’s political contributions, top earners, and 
 </table>
 
 <p><a class='btn btn-primary' href='{{ url_for('views.committees') }}'><i class='fa fa-group fa-fw'></i> All committees &raquo;</a></p>
+
+<br /><br />
+<h2>
+    <i class='fa fa-dollar fa-fw'></i>
+    <a class="header-link" href='{{ url_for('views.donations') }}'>Tracking Political Donations</a> <small>by month and year</small>
+</h2>
+
+<p>The chart below shows political donations since 1994. <i class='fa fa-fw fa-hand-pointer-o'></i> Hover over a month to see total donations and transfers during that time period. To see total donations and transfers by year, decrease the size of your browser window until you see dark green bars.</p>
+
+<div class='hidden-sm hidden-xs' id='donation-chart'></div>
+<br />
+
+<div class='visible-sm-block visible-xs-block' id='donation-chart-year'></div>
 <br /><br />
 
 <h2><i class='fa fa-info-circle fa-fw'></i> <a class="header-link" href='{{ url_for('views.about') }}'>About</a></h2>
