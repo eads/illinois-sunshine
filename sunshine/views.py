@@ -237,7 +237,7 @@ def tests_index():
     totals = list(g.engine.execute(sa.text(totals_sql)))
 
     # Contested Races Chart
-    cr_type, cr_title, cand_span, contested_dict = sslib.getContestedRacesData("gubernatorial")
+    contested_race_data = sslib.getAllCandidateFunds(0, "G")
 
     # donations chart
     donations_by_month_sql = '''
@@ -358,9 +358,7 @@ def tests_index():
                            donations_by_month=donations_by_month,
                            donations_by_year=donations_by_year,
                            days_donations=days_donations,
-                           is_single=(len(contested_dict) == 1),
-                           cand_span=cand_span,
-                           contested_dict=contested_dict)
+                           contested_race_data=contested_race_data)
 
 @views.route('/donations/')
 @cache.cached(timeout=CACHE_TIMEOUT, key_prefix=make_cache_key)
@@ -702,13 +700,6 @@ def contested_races():
 @views.route('/contested-race-detail/<race_type>-<district>/')
 @cache.cached(timeout=CACHE_TIMEOUT, key_prefix=make_cache_key)
 def contested_race_detail(race_type, district):
-    pre_primary_start = "2017-01-01"
-    primary_start = "2018-01-01"
-    primary_end = "2018-03-20"
-    primary_quarterly_end = "2018-03-31"
-    post_primary_start = (parse(primary_end) + timedelta(days=1)).strftime("%Y-%m-%d")
-    is_after_primary = parse(primary_end).date() < datetime.today().date()
-
     contested_race_type = ""
     contested_race_title = ""
     branch = ""
@@ -735,6 +726,14 @@ def contested_race_detail(race_type, district):
         contested_race_title = "District " + district + " - Contested Race "
         branch = 'S'
         contested_race_description = "Contested race information for District " + district + " in the Illinois Senate"
+
+    primary_details = sslib.getPrimaryDetails(branch)
+    pre_primary_start = primary_details["pre_primary_start"]
+    primary_start = primary_details["primary_start"]
+    primary_end = primary_details["primary_end"]
+    primary_quarterly_end = primary_details["primary_quarterly_end"]
+    post_primary_start = primary_details["post_primary_start"]
+    is_after_primary = primary_details["is_after_primary"]
 
     district = int(float(district))
 

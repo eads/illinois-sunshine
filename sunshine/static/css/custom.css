@@ -15,6 +15,8 @@ table, label,.control-label,.help-block,.checkbox,.radio { font-size: 14px; }
   animation: fa-spin 12s infinite linear;
 }
 
+.clear { clear: both; }
+
 #filter-results label { padding-right: 15px;}
 
 #search-results { min-height: 300px; }
@@ -34,8 +36,8 @@ table, label,.control-label,.help-block,.checkbox,.radio { font-size: 14px; }
   background-color: #ffe47f;
 }
 
-.clickable:hover { 
-   background-color: #ffe47f !important; 
+.clickable:hover {
+   background-color: #ffe47f !important;
 }
 
 .panel-body {background:#ffe47f;}
@@ -110,7 +112,7 @@ table, label,.control-label,.help-block,.checkbox,.radio { font-size: 14px; }
 .nav-pills > li.inactive > a:focus {
   background-color: #eaeaea;
   border-color: #eaeaea;
-  color: #000; 
+  color: #000;
 }
 
 .form-control::-moz-placeholder {
@@ -140,7 +142,7 @@ a.header-link:active {text-decoration: none; color: #171771 !important;}
 a.header-link{color: #171771 !important;}
 a.header-link:focus {text-decoration: none; color: #171771 !important;}
 
-a, a:active, a:hover, a:focus { color: #48d; } 
+a, a:active, a:hover, a:focus { color: #48d; }
 /* Custom page footer */
 .footer {
   padding: 20px 0 20px 0;
