@@ -141,7 +141,7 @@ def index():
         ))
         date = date - timedelta(days=1)
 
-    return render_template('tests/index.html',
+    return render_template('index.html',
                            #top_races=top_races,
                            #maxc=maxc,
                            top_earners=top_earners,
