@@ -305,3 +305,34 @@ a, a:active, a:hover, a:focus { color: #48d; }
 .advertisement .img-responsive {
     margin: 0 auto;
 }
+
+.sidebar_newsletter {
+    left: 0;
+    position: fixed;
+    width: 250px;
+    margin-top:200px;
+    overflow: hidden;
+    height: 25vh;
+    max-height: 25vh;
+    opacity: 0.9;
+    transition: all 0.3s ease-in-out;
+    z-index: 10000000000;
+}
+
+.fa-times {
+    right: 10px;
+    top: 10px;
+    opacity: 0.7;
+    cursor: pointer;
+    position: absolute;
+    color: black;
+    transition: all 0.3s ease-in-out;
+}
+
+.fa-times:hover {
+    opacity: 1;
+}
+
+.hide_menu {
+    margin-left: -250px;
+}
