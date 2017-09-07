@@ -45,9 +45,14 @@ def expense_name(s):
         '6B': 'Transfer out',
         '7B': 'Loan made',
         '8B': 'Expenditure',
-        '9B': 'Independent Expenditure',
+        '9B': 'Independent Expenditure'
     }
     return verbs.get(s, 'spent')
+
+def expense_popover(s):
+    if (s != "Independent Expenditure"):
+        return s
+    return '<span class="ss-popover" data-content="Independent expenditures are ad buys made supporting or opposing candidates, without any collaboration or coronation with the candidate. These ad buys are often made by Super PACs or Party Committees.">Independent Expenditure</span>'
 
 def contested_races_description(s):
   if s == "House of Representatives":

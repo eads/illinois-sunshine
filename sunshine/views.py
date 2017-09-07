@@ -975,15 +975,18 @@ def independent_expenditures(candidate_id, stance):
     cname = [candidate.first_name, candidate.last_name]
     candidate_name = " ".join(cname)
 
+    ie_popover_span = "<span class='ss-popover' data-content='Independent expenditures are ad buys made supporting or opposing candidates, without any collaboration or coronation with the candidate. These ad buys are often made by Super PACs or Party Committees.'>Independent expenditures</span>"
+    ie_popunder_span = "<span class='ss-popunder' data-content='Independent expenditures are ad buys made supporting or opposing candidates, without any collaboration or coronation with the candidate. These ad buys are often made by Super PACs or Party Committees.'>Independent Expenditures</span>"
+
     independent_expenditures_type = 'Supporting'
-    independent_expenditures_title = "Supporting Independent Expenditures"
-    independent_expenditures_description = "Independent expenditures in support of " + candidate_name + " since March 16, 2016"
+    independent_expenditures_title = "Supporting " + ie_popunder_span
+    independent_expenditures_description = ie_popover_span + " in support of " + candidate_name + " since March 16, 2016"
     type_arg = 'supporting'
 
     if stance == 'opposing':
         independent_expenditures_type = 'Opposing'
-        independent_expenditures_title = "Opposing Independent Expenditures"
-        independent_expenditures_description = "Independent expenditures in opposition to " + candidate_name + " since March 16, 2016"
+        independent_expenditures_title = "Opposing " + ie_popunder_span
+        independent_expenditures_description = ie_popover_span + " in opposition to " + candidate_name + " since March 16, 2016"
 
     all_names = []
     all_names.append(candidate_name)

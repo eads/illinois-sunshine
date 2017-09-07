@@ -11,15 +11,12 @@
     {% set stance_slug = "opposing" %}
 
 {% endif %}
-<h1><i class='fa fa-money'></i> Independent Expenditures <small><strong> {{ independent_expenditures_type }}</strong> </small></h1>
+<h1><i class='fa fa-money'></i> <span class="ss-popunder" data-content="Independent expenditures are ad buys made supporting or opposing candidates, without any collaboration or coronation with the candidate. These ad buys are often made by Super PACs or Party Committees.">Independent Expenditures</span> <small><strong> {{ independent_expenditures_type }}</strong> </small></h1>
 <h2>{% if candidate_id %}<a href='{{ url_for('views.candidate', candidate_id=candidate_id)}}'>{{ candidate_name }}</a>{% else %} {{ candidate_name }} {% endif %}</h2>
 <div class="row">
     <div class="col-sm-12">
-
-        <h3>{{independent_expenditures_title}}</h3>
-
-        <p>{{ independent_expenditures_description }}</p>
-
+        <h3>{{ independent_expenditures_title|safe }}</h3>
+        <p>{{ independent_expenditures_description|safe }}</p>
         <table class="table table-striped">
             <thead>
                 <tr>

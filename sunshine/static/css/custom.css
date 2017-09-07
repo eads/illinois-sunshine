@@ -338,3 +338,12 @@ a, a:active, a:hover, a:focus { color: #48d; }
 .hide_menu {
     margin-left: -100vw;
 }
+
+.ss-popover {
+    text-decoration: none;
+    border-bottom: 1px dotted #666;
+}
+
+.ss-popunder {
+    text-decoration: none;
+}
