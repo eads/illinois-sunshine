@@ -1135,6 +1135,18 @@ def widget_top_earners():
                             calc_days_ago=calc_days_ago)
 
 
+@views.route('/widgets/gov-contested-race')
+@cache.cached(timeout=CACHE_TIMEOUT, key_prefix=make_cache_key)
+def widgets_gov_contested_race():
+
+    hideHeaders = request.args.get('hideHeaders')
+
+    contested_race_data = sslib.getAllCandidateFunds(0, "G")
+
+    return render_template('widgets/gov-contested-race.html',
+                           contested_race_data=contested_race_data, hideHeaders=hideHeaders)
+
+
 @views.route('/widgets/top-donations/')
 @cache.cached(timeout=CACHE_TIMEOUT, key_prefix=make_cache_key)
 def widgets_top_donations():
