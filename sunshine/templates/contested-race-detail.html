@@ -50,6 +50,11 @@
                         {% endif %}
                         {% endfor %}
                     </table>
+                    <div class="row">
+                        <div class="col-sm-9">
+                            <h3 style="font-size:18px; margin:0;"><a href='{{ url_for('views.committee', committee_id = c.committee_id) }}'>Click here for current funds on hand</a></h3>
+                        </div>
+                    </div>
                     <br />
                     <div class="row">
                         <div class="col-sm-9">
