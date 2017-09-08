@@ -171,6 +171,8 @@ def getCommitteeFundsData(committee_id, pre_primary_start, primary_start, post_p
                                         .filter(FiledDoc.reporting_period_begin >= pre_primary_start)\
                                         .filter(FiledDoc.reporting_period_end <= primary_start)\
                                         .order_by(FiledDoc.reporting_period_begin)\
+                                        .order_by(FiledDoc.reporting_period_end)\
+                                        .order_by(FiledDoc.received_datetime.desc())\
                                         .all()
 
 
@@ -183,12 +185,16 @@ def getCommitteeFundsData(committee_id, pre_primary_start, primary_start, post_p
                                     .filter(FiledDoc.reporting_period_begin >= primary_start)\
                                     .filter(FiledDoc.reporting_period_end <= current_date)\
                                     .order_by(FiledDoc.reporting_period_begin)\
+                                    .order_by(FiledDoc.reporting_period_end)\
+                                    .order_by(FiledDoc.received_datetime.desc())\
                                     .all()
 
     if current_date >= post_primary_start:
         if primary_quarterlies:
             # Add rows for each primary quarterly report.
             for i, rpt in enumerate(primary_quarterlies):
+
+                # Add logic here to remove duplicate data
                 rpt_label = "Funds Raised {dtstart:%b} {dtstart.day}, {dtstart.year} to {dtend:%b} {dtend.day}, {dtend.year}".format(
                     dtstart = rpt.filed_doc.reporting_period_begin,
                     dtend = rpt.filed_doc.reporting_period_end
@@ -243,7 +249,9 @@ def getCommitteeFundsData(committee_id, pre_primary_start, primary_start, post_p
                                             .filter(D2Report.committee_id==committee_id)\
                                             .filter(FiledDoc.doc_name=="Quarterly")\
                                             .filter(FiledDoc.reporting_period_end <= last_quarterly_date)\
-                                            .order_by(FiledDoc.reporting_period_end.desc())\
+                                            .order_by(FiledDoc.reporting_period_begin)\
+                                            .order_by(FiledDoc.reporting_period_end)\
+                                            .order_by(FiledDoc.received_datetime.desc())\
                                             .first()
 
         # Add the funds available from the last quarterly report from before the pre-primary start date.
@@ -252,15 +260,32 @@ def getCommitteeFundsData(committee_id, pre_primary_start, primary_start, post_p
         table_display_data.append(["Funds Available on " + pre_pre_primary_end_date + " Quarterly Report", pre_pre_primary_funds])
         total_funds_raised += pre_pre_primary_funds
 
+        # Date used to eliminate duplicates
+        temp_dtstart = ""
+
         # Add rows for each pre-primary quarterly report.
         for rpt in pre_primary_quarterlies:
             rpt_label = "Funds Raised {dtstart:%b} {dtstart.day}, {dtstart.year} to {dtend:%b} {dtend.day}, {dtend.year}".format(
                 dtstart = rpt.filed_doc.reporting_period_begin,
                 dtend = rpt.filed_doc.reporting_period_end
             )
-            table_display_data.append([rpt_label, rpt.total_receipts])
-            last_quarterly_date = rpt.filed_doc.reporting_period_end
-            total_funds_raised += rpt.total_receipts
+
+            # initial pass for a duplicate record
+            if temp_dtstart == "":
+                temp_dtstart = rpt.filed_doc.reporting_period_begin
+
+                table_display_data.append([rpt_label, rpt.total_receipts])
+                last_quarterly_date = rpt.filed_doc.reporting_period_end
+                total_funds_raised += rpt.total_receipts
+
+            # If the reporting period being date equals the temporary start date, skip the record 
+            elif temp_dtstart != rpt.filed_doc.reporting_period_begin:
+                temp_dtstart = rpt.filed_doc.reporting_period_begin
+
+                table_display_data.append([rpt_label, rpt.total_receipts])
+                last_quarterly_date = rpt.filed_doc.reporting_period_end
+                total_funds_raised += rpt.total_receipts
+
 
         # Add funds raised since last quaterly report.
         total_receipts = getReceiptsTotal(committee_id, "A-1", last_quarterly_date, current_date)
