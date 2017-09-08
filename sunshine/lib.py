@@ -161,6 +161,8 @@ def getCommitteeFundsData(committee_id, pre_primary_start, primary_start, post_p
     table_display_data = []
     total_funds_raised = 0.0
     primary_funds_raised = None
+    # Date used to eliminate duplicates
+    temp_dtstart = ""
 
     pre_primary_quarterlies = db_session.query(D2Report)\
                                         .join(FiledDoc, D2Report.filed_doc_id==FiledDoc.id)\
@@ -194,7 +196,12 @@ def getCommitteeFundsData(committee_id, pre_primary_start, primary_start, post_p
             # Add rows for each primary quarterly report.
             for i, rpt in enumerate(primary_quarterlies):
 
-                # Add logic here to remove duplicate data
+                # If the reporting period being date equals the temporary start date, skip the record
+                if temp_dtstart == rpt.filed_doc.reporting_period_begin:
+                    continue
+
+                temp_dtstart = rpt.filed_doc.reporting_period_begin
+
                 rpt_label = "Funds Raised {dtstart:%b} {dtstart.day}, {dtstart.year} to {dtend:%b} {dtend.day}, {dtend.year}".format(
                     dtstart = rpt.filed_doc.reporting_period_begin,
                     dtend = rpt.filed_doc.reporting_period_end
@@ -260,9 +267,6 @@ def getCommitteeFundsData(committee_id, pre_primary_start, primary_start, post_p
         table_display_data.append(["Funds Available on " + pre_pre_primary_end_date + " Quarterly Report", pre_pre_primary_funds])
         total_funds_raised += pre_pre_primary_funds
 
-        # Date used to eliminate duplicates
-        temp_dtstart = ""
-
         # Add rows for each pre-primary quarterly report.
         for rpt in pre_primary_quarterlies:
             rpt_label = "Funds Raised {dtstart:%b} {dtstart.day}, {dtstart.year} to {dtend:%b} {dtend.day}, {dtend.year}".format(
@@ -270,16 +274,8 @@ def getCommitteeFundsData(committee_id, pre_primary_start, primary_start, post_p
                 dtend = rpt.filed_doc.reporting_period_end
             )
 
-            # initial pass for a duplicate record
-            if temp_dtstart == "":
-                temp_dtstart = rpt.filed_doc.reporting_period_begin
-
-                table_display_data.append([rpt_label, rpt.total_receipts])
-                last_quarterly_date = rpt.filed_doc.reporting_period_end
-                total_funds_raised += rpt.total_receipts
-
-            # If the reporting period being date equals the temporary start date, skip the record 
-            elif temp_dtstart != rpt.filed_doc.reporting_period_begin:
+            # If the reporting period being date equals the temporary start date, skip the record
+            if temp_dtstart != rpt.filed_doc.reporting_period_begin:
                 temp_dtstart = rpt.filed_doc.reporting_period_begin
 
                 table_display_data.append([rpt_label, rpt.total_receipts])
