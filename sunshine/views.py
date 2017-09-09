@@ -116,6 +116,35 @@ def index():
 
     top_ten = g.engine.execute(sa.text(committee_sql))
 
+    # decomcratic committee funds
+    democratic_sql = '''
+        SELECT * FROM (
+          SELECT *
+          FROM committee_money
+          WHERE committee_active = TRUE
+          AND committee_id IN (6239, 23189, 21318, 665, 124)
+          ORDER BY committee_name
+        ) AS committees
+        ORDER BY committees.total DESC NULLS LAST
+    '''
+
+    democratic_committees = g.engine.execute(sa.text(democratic_sql))
+
+    # republican committee funds
+    republican_sql = '''
+        SELECT * FROM (
+          SELECT *
+          FROM committee_money
+          WHERE committee_active = TRUE
+          AND committee_id IN (292, 17218, 17589, 7516, 7537, 25185)
+          ORDER BY committee_name
+        ) AS committees
+        ORDER BY committees.total DESC NULLS LAST
+    '''
+
+    republican_committees = g.engine.execute(sa.text(republican_sql))
+
+
     date = datetime.now().date()
 
     days_donations_sql = '''
@@ -146,6 +175,8 @@ def index():
                            #maxc=maxc,
                            top_earners=top_earners,
                            top_ten=top_ten,
+                           democratic_committees=democratic_committees,
+                           republican_committees=republican_committees,
                            totals=totals,
                            donations_by_month=donations_by_month,
                            donations_by_year=donations_by_year,

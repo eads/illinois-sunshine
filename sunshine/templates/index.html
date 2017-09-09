@@ -55,8 +55,56 @@ Click here to receive in-depth updates on Illinois campaign finance.
 </div>
 
 <!-- Add table for "Political Funds in Illinois" here -->
-<div>
+<h3 style="color: black;">
+    Party Funds in Illinois
+</h3>
 
+<p>Funds available for top Democratic and Republican political parties in Illinois, updated daily.</p>
+
+<div class="col-sm-6" style="padding: 0;">
+    <table class="table table-striped" id='democratic-committee-funds-table'>
+        <thead>
+            <tr>
+                <th colspan="2" class="text-center" style="background-color: #99afff;">Democratic State Party Committees</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for committee in democratic_committees %}
+                {% set committee_slug = [committee.committee_name|slugify, committee.committee_id|string]|join('-') %}
+                <tr>
+                    <td>
+                        <a href="{{ url_for('views.committee', committee_id=committee_slug )}}">{{ committee.committee_name }},  {{ committee.committee_id }}</a>
+                    </td>
+                    <td class='text-right'>
+                            {{ committee.total|format_money  }}
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="col-sm-6" style="padding: 0;">
+    <table class="table table-striped" id='republican-committee-funds-table'>
+        <thead>
+            <tr>
+                <th colspan='2' class="text-center" style="background-color: #ff9999;">Republican State Party Committees</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for committee in republican_committees %}
+                {% set committee_slug = [committee.committee_name|slugify, committee.committee_id|string]|join('-') %}
+                <tr>
+                    <td>
+                        <a href="{{ url_for('views.committee', committee_id=committee_slug )}}">{{ committee.committee_name }},  {{ committee.committee_id }}</a>
+                    </td>
+                    <td class='text-right'>
+                            {{ committee.total|format_money }}
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 </div>
 
 <div class="clear" style="clear:both;"></div>
