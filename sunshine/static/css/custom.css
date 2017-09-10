@@ -313,11 +313,10 @@ a, a:active, a:hover, a:focus { color: #48d; }
     bottom: 0;
     margin-bottom: 0;
     overflow: hidden;
-    height: 10vh;
-    max-height: 10vh;
     opacity: 0.9;
     transition: all 0.3s ease-in-out;
     z-index: 10000000000;
+    padding: 5px 10px;
 }
 
 .fa-times {
