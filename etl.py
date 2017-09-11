@@ -732,35 +732,36 @@ class SunshineViews(object):
             pass
 
     def dropViews(self):
-        print("Dropping receipts_by_month...");
+        print("Dropping receipts_by_month...")
         self.executeTransaction(
             'DROP MATERIALIZED VIEW IF EXISTS receipts_by_month'
         )
 
-        print("Dropping committee_receipts_by_week...");
+        print("Dropping committee_receipts_by_week...")
         self.executeTransaction(
             'DROP MATERIALIZED VIEW IF EXISTS committee_receipts_by_week'
         )
 
-        print("Dropping incumbent_candidates...");
+        print("Dropping incumbent_candidates...")
         self.executeTransaction(
             'DROP MATERIALIZED VIEW IF EXISTS incumbent_candidates'
         )
 
-        print("Dropping most_recent_filings...");
+        print("Dropping most_recent_filings...")
         self.executeTransaction(
             'DROP MATERIALIZED VIEW IF EXISTS most_recent_filings CASCADE'
         )
+        self.executeTransaction('DROP INDEX IF EXISTS most_recent_filings_idx CASCADE')
 
-        print("Dropping expenditures_by_candidate...");
+        print("Dropping expenditures_by_candidate...")
         self.executeTransaction(
             'DROP MATERIALIZED VIEW IF EXISTS expenditures_by_candidate'
         )
 
-        print("Dropping contested_races...");
+        print("Dropping contested_races...")
         self.executeTransaction('DROP TABLE IF EXISTS contested_races')
 
-        print("Dropping muni_contested_races...");
+        print("Dropping muni_contested_races...")
         self.executeTransaction('DROP TABLE IF EXISTS muni_contested_races')
 
     def makeAllViews(self):
@@ -782,10 +783,13 @@ class SunshineViews(object):
         self.committeeMoney()  # relies on mostRecentFilings
         print("Creating view - candidate_money")
         self.candidateMoney()  # relies on committeeMoney and mostRecentFilings
+        print("Creating table - users_table")
+        self.usersTable()
         print("Creating table - contested_races")
         self.contestedRaces()  # relies on sunshine/contested_races.csv, sunshine/gubernatorial_contested_races.csv, and sunshine/comptroller_contested_race.csv
         print("Creating table - muni_contested_races")
         self.muniContestedRaces()  # relies on sunshine/muni_contested_races.csv
+
 
     def condensedExpenditures(self):
 
@@ -1255,7 +1259,7 @@ class SunshineViews(object):
         try:
             trans = self.connection.begin()
             curs = self.connection.connection.cursor()
-            
+
             insert_statement = 'INSERT INTO contested_races (%s) VALUES %s'
             cols = [
                 'last_name',
@@ -1292,6 +1296,33 @@ class SunshineViews(object):
             print('Problem inserting contested_races data: ')
             print(traceback.print_exc())
             trans.rollback()
+
+    def usersTable(self):
+        
+        try:
+            trans = self.connection.begin()
+            curs = self.connection.connection.cursor()
+
+            exp = '''
+                CREATE TABLE IF NOT EXISTS users_table (
+                    id INTEGER,
+                    username TEXT,
+                    email TEXT,
+                    password TEXT,
+                    is_active BOOLEAN,
+                    is_admin BOOLEAN,
+                    created_date DATE,
+                    updated_date DATE
+                )
+            '''
+
+            curs.execute(exp)
+            trans.commit()
+        except (sa.exc.ProgrammingError, psycopg2.ProgrammingError) as e:
+            trans.rollback()
+            print('Problem in creating users_table table: ')
+            print(traceback.print_exc())
+            logger.error(e, exc_info=True)
 
     def get_candidate_name(self, candidate_id):
 
