@@ -116,7 +116,7 @@ def index():
 
     top_ten = g.engine.execute(sa.text(committee_sql))
 
-    # decomcratic committee funds
+    # democratic committee funds
     democratic_sql = '''
         SELECT * FROM (
           SELECT *

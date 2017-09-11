@@ -10,7 +10,7 @@
     <i class="fa fa-times"></i>
     <a href="https://ilcampaign.wufoo.com/forms/mznomyv130ae9w/" class="alert-link" target="_blank">
         Get the Illinois Sunshine Weekly update!<br />
-        Click here to receive in-depth updates on Illinois campaign finance.
+        <span style="font-weight:normal;">Click here to receive in-depth updates on Illinois campaign finance.</span>
     </a>
 </div>
 
@@ -62,7 +62,7 @@
 <p>Funds available for top Democratic and Republican political parties in Illinois, updated daily.</p>
 
 <div class="col-sm-6" style="padding: 0;">
-    <table class="table table-striped" id='democratic-committee-funds-table'>
+    <table class="table table-striped dem uneven" id='democratic-committee-funds-table'>
         <thead>
             <tr>
                 <th colspan="2" class="text-center" style="background-color: #99afff;">Democratic State Party Committees</th>
@@ -71,13 +71,9 @@
         <tbody>
             {% for committee in democratic_committees %}
                 {% set committee_slug = [committee.committee_name|slugify, committee.committee_id|string]|join('-') %}
-                <tr>
-                    <td>
-                        <a href="{{ url_for('views.committee', committee_id=committee_slug )}}">{{ committee.committee_name }},  {{ committee.committee_id }}</a>
-                    </td>
-                    <td class='text-right'>
-                            {{ committee.total|format_money  }}
-                    </td>
+                <tr class="clickable" style="cursor:pointer;" onclick="window.open('{{ url_for('views.committee', committee_id=committee_slug) }}'); setAttribute('target', '_blank');">
+                    <td>{{ committee.committee_name }}</td>
+                    <td class='text-right'>{{ committee.total|format_money  }}</td>
                 </tr>
             {% endfor %}
         </tbody>
@@ -85,7 +81,7 @@
 </div>
 
 <div class="col-sm-6" style="padding: 0;">
-    <table class="table table-striped" id='republican-committee-funds-table'>
+    <table class="table table-striped rep" id='republican-committee-funds-table'>
         <thead>
             <tr>
                 <th colspan='2' class="text-center" style="background-color: #ff9999;">Republican State Party Committees</th>
@@ -94,13 +90,9 @@
         <tbody>
             {% for committee in republican_committees %}
                 {% set committee_slug = [committee.committee_name|slugify, committee.committee_id|string]|join('-') %}
-                <tr>
-                    <td>
-                        <a href="{{ url_for('views.committee', committee_id=committee_slug )}}">{{ committee.committee_name }},  {{ committee.committee_id }}</a>
-                    </td>
-                    <td class='text-right'>
-                            {{ committee.total|format_money }}
-                    </td>
+                <tr class="clickable" style="cursor:pointer;" onclick="window.open('{{ url_for('views.committee', committee_id=committee_slug) }}'); setAttribute('target', '_blank');">
+                    <td>{{ committee.committee_name }}</td>
+                    <td class='text-right'>{{ committee.total|format_money }}</td>
                 </tr>
             {% endfor %}
         </tbody>
