@@ -785,6 +785,8 @@ class SunshineViews(object):
         self.candidateMoney()  # relies on committeeMoney and mostRecentFilings
         print("Creating table - users_table")
         self.usersTable()
+        print("Creating table - news_table")
+        self.newsTable()
         print("Creating table - contested_races")
         self.contestedRaces()  # relies on sunshine/contested_races.csv, sunshine/gubernatorial_contested_races.csv, and sunshine/comptroller_contested_race.csv
         print("Creating table - muni_contested_races")
@@ -1298,21 +1300,21 @@ class SunshineViews(object):
             trans.rollback()
 
     def usersTable(self):
-        
+
         try:
             trans = self.connection.begin()
             curs = self.connection.connection.cursor()
 
             exp = '''
                 CREATE TABLE IF NOT EXISTS users_table (
-                    id INTEGER,
-                    username TEXT,
+                    id SERIAL NOT NULL PRIMARY KEY,
+                    username VARCHAR(255) UNIQUE NOT NULL,
                     email TEXT,
-                    password TEXT,
+                    password TEXT NOT NULL,
                     is_active BOOLEAN,
                     is_admin BOOLEAN,
-                    created_date DATE,
-                    updated_date DATE
+                    created_date TIMESTAMP,
+                    updated_date TIMESTAMP
                 )
             '''
 
@@ -1321,6 +1323,30 @@ class SunshineViews(object):
         except (sa.exc.ProgrammingError, psycopg2.ProgrammingError) as e:
             trans.rollback()
             print('Problem in creating users_table table: ')
+            print(traceback.print_exc())
+            logger.error(e, exc_info=True)
+
+    def newsTable(self):
+
+        try:
+            trans = self.connection.begin()
+            curs = self.connection.connection.cursor()
+
+            exp = '''
+                CREATE TABLE IF NOT EXISTS news_table (
+                    id SERIAL NOT NULL PRIMARY KEY,
+                    key VARCHAR(50) UNIQUE NOT NULL,
+                    content TEXT,
+                    created_date TIMESTAMP,
+                    updated_date TIMESTAMP
+                )
+            '''
+
+            curs.execute(exp)
+            trans.commit()
+        except (sa.exc.ProgrammingError, psycopg2.ProgrammingError) as e:
+            trans.rollback()
+            print('Problem in creating news_table table: ')
             print(traceback.print_exc())
             logger.error(e, exc_info=True)
 
