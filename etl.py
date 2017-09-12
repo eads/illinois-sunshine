@@ -1309,8 +1309,8 @@ class SunshineViews(object):
                 CREATE TABLE IF NOT EXISTS users_table (
                     id SERIAL NOT NULL PRIMARY KEY,
                     username VARCHAR(255) UNIQUE NOT NULL,
-                    email TEXT,
-                    password TEXT NOT NULL,
+                    email VARCHAR(255),
+                    password VARCHAR(100) NOT NULL,
                     is_active BOOLEAN,
                     is_admin BOOLEAN,
                     created_date TIMESTAMP,
