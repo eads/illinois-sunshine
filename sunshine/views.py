@@ -1296,7 +1296,18 @@ def sunshine_the_rest(the_rest):
 
 @views.route('/admin/login/', methods=['GET', 'POST'])
 def admin_login():
-    return render_template('admin/login.html')
+    if request.method == 'GET':
+        return render_template('admin/login.html')
+
+    else:
+        # Add logic that will check to see if the user exists
+        # and verify hashed password is correct, if true direct to dashboard
+        return redirect('/admin/dashboard/')
+
+
+@views.route('/admin/dashboard/')
+def admin_dashboard():
+    return render_template('admin/dashboard.html')
 
 
 @views.route('/admin/logout/')
