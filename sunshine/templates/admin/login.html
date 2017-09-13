@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+://www.youtube.com/agrant@127.0.0.1
+{% from 'macros.html' import header %}
+{% block header_social %}
+    {{ header(None, None, request.path) }}
+{% endblock %}
+{% block content %}
+
+<div class="text-center">
+    <h3>Admin Login</h3>
+    <form>
+        Username<br>
+        <input type="text" name="username"><br>
+        Password<br>
+        <input type="password" name="password"><br><br>
+        <input style="width: 75px;" type="submit" value="Submit">
+        <input style="width: 75px;" type="reset">
+    </form>
+</div>
+
+
+{% endblock %}

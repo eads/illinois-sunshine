@@ -1,4 +1,5 @@
 from flask import Flask, render_template, g
+from flask_login import LoginManager
 from sunshine.views import views
 from sunshine.api import api
 import locale
@@ -8,6 +9,7 @@ from sunshine.app_config import TIME_ZONE
 from sunshine.cache import cache
 from datetime import datetime
 from sunshine import template_filters as tf
+from sunshine.models import User
 
 
 sentry = None
@@ -21,6 +23,7 @@ except ImportError:
 except KeyError:
     pass
 
+
 def create_app():
     app = Flask(__name__)
     config = '{0}.app_config'.format(__name__)
@@ -29,8 +32,21 @@ def create_app():
     app.register_blueprint(api, url_prefix='/api')
     cache.init_app(app)
 
+    login_manager = LoginManager()
+    login_manager.init_app(app)
+
     if sentry:
         sentry.init_app(app)
+
+    @login_manager.user_loader
+    def load_user(user_id):
+        return User.get(user_id)
+
+    @login_manager.request_loader
+    def load_user_request(request):
+        # get username and password field and pass it to a function in the
+        # User model and return a validation
+        return False
 
     @app.errorhandler(404)
     def page_not_found(e):

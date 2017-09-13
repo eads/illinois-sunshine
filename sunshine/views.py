@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, abort, request, redirect, \
     session as flask_session, g
+from flask_login import login_required, login_user, logout_user, current_user
 from sunshine.database import db_session
 from sunshine.models import Candidate, Committee, Receipt, Expenditure
 from sunshine.cache import cache, make_cache_key, CACHE_TIMEOUT
@@ -1291,3 +1292,14 @@ def developers():
 @views.route('/sunshine/<path:the_rest>/')
 def sunshine_the_rest(the_rest):
     return redirect("/", code=301)
+
+
+@views.route('/admin/login/', methods=['GET', 'POST'])
+def admin_login():
+    return render_template('admin/login.html')
+
+
+@views.route('/admin/logout/')
+def admin_logout():
+    logout_user()
+    return redirect('/admin/login/')
