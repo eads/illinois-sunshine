@@ -1312,14 +1312,21 @@ def admin_login():
     if user is None:
         return render_template('admin/login.html', invalid=invalid)
 
-    # login_user(user) causes 500 server error, need to fix
     login_user(user, request.form.get("rememberMe"))
     return redirect('/admin/dashboard/')
+
 
 @views.route('/admin/dashboard/')
 @login_required
 def admin_dashboard():
     return render_template('admin/dashboard.html')
+
+
+@views.route('/admin/news/')
+@login_required
+def admin_news():
+    return render_template('admin/news.html')
+
 
 @views.route('/admin/logout/')
 def admin_logout():
