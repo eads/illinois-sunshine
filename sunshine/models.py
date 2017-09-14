@@ -1,3 +1,4 @@
+from flask import current_app
 from .database import Base, db_session as session
 import sqlalchemy as sa
 from sqlalchemy.orm import synonym
@@ -396,33 +397,32 @@ class User(Base):
     created_date = sa.Column(sa.Date)
     updated_date = sa.Column(sa.Date)
 
-    @property
     def is_authenticated(self):
         return True
 
-    @property
     def is_active(self):
         return True
 
-    @property
     def is_anonymous(self):
         return False
 
     def get_id(self):
-        return unicode(self.id)
+        return str(self.id)
 
     @classmethod
     def get(cls, id):
-        return session.query(cls).get(id)
+        return session.query(cls).get(int(id))
 
     @classmethod
     def validate(cls, username, password):
         user = session.query(cls).filter(username == username).first()
 
+        if user is None:
+            return None
+
         # For testing only, change logic to check hashed passwords
         if user.password == password:
             return user
-
         else:
             return None
 

@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, abort, request, redirect, \
-    session as flask_session, g
+    session as flask_session, g, current_app
 from flask_login import login_required, login_user, logout_user, \
     current_user
 from sunshine.database import db_session
@@ -1295,34 +1295,31 @@ def developers():
 def sunshine_the_rest(the_rest):
     return redirect("/", code=301)
 
-
 @views.route('/admin/login/', methods=['GET', 'POST'])
 def admin_login():
     invalid = "Incorrect username or password"
-    if request.method == 'POST':
-        # Add logic that will check to see if the user exists
-        # and verify hashed password is correct, if true direct to dashboard
-        username = request.form.get("username")
-        password = request.form.get("password")
 
-        user = User.validate(username, password)
-
-        if user is None:
-            return render_template('admin/login.html', invalid=invalid)
-        else:
-            # login_user(user) causes 500 server error, need to fix
-            login_user(user, remember=request.form.get("rememberMe"))
-            return redirect('/admin/dashboard/')
-
-    else:
+    if request.method != 'POST':
         return render_template('admin/login.html')
 
+    # Add logic that will check to see if the user exists
+    # and verify hashed password is correct, if true direct to dashboard
+    username = request.form.get("username")
+    password = request.form.get("password")
+
+    user = User.validate(username, password)
+
+    if user is None:
+        return render_template('admin/login.html', invalid=invalid)
+
+    # login_user(user) causes 500 server error, need to fix
+    login_user(user, request.form.get("rememberMe"))
+    return redirect('/admin/dashboard/')
 
 @views.route('/admin/dashboard/')
 @login_required
 def admin_dashboard():
     return render_template('admin/dashboard.html')
-
 
 @views.route('/admin/logout/')
 def admin_logout():
