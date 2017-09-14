@@ -4,6 +4,7 @@ import sqlalchemy as sa
 from sqlalchemy.orm import synonym
 from sqlalchemy.dialects.postgresql import ENUM, DOUBLE_PRECISION
 import sys
+import bcrypt
 
 
 class Candidate(Base):
@@ -415,15 +416,19 @@ class User(Base):
 
     @classmethod
     def validate(cls, username, password):
-        user = session.query(cls).filter(username == username).first()
+        try:
+            user = session.query(cls).filter(User.username == username).first()
 
-        if user is None:
-            return None
+            if user is None:
+                return None
 
-        # For testing only, change logic to check hashed passwords
-        if user.password == password:
-            return user
-        else:
+            if bcrypt.hashpw(password, user.password) == user.password:
+                return user
+            else:
+                return None
+
+        except Exception as e:
+            current_app.logger.error(e)
             return None
 
     def __repr__(self):
