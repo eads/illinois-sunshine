@@ -1,8 +1,8 @@
-{% extends 'base.html' %}
+{% extends 'admin/base.html' %}
 ://www.youtube.com/agrant@127.0.0.1
 {% from 'macros.html' import header %}
 {% block header_social %}
-    {{ header(None, None, request.path) }}
+    {{ header("Admin Login", "", request.path) }}
 {% endblock %}
 {% block content %}
 
