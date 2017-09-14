@@ -10,6 +10,7 @@ from sunshine.cache import cache
 from datetime import datetime
 from sunshine import template_filters as tf
 from sunshine.models import User
+from .database import Base, db_session as session
 
 
 sentry = None
@@ -32,21 +33,26 @@ def create_app():
     app.register_blueprint(api, url_prefix='/api')
     cache.init_app(app)
 
+    # Required or else @login_required, login_user(user) and logout_user()
+    app.secret_key = 'abrakadabra'
+
     login_manager = LoginManager()
     login_manager.init_app(app)
+    login_manager.login_view = '/admin/login/'
 
     if sentry:
         sentry.init_app(app)
 
     @login_manager.user_loader
     def load_user(user_id):
-        return User.query.get(user_id)
+        user_id = int(user_id)
+        return session.query(User).filter(id == user_id).first()
 
-    @login_manager.request_loader
-    def load_user_request(request):
-        # get username and password field and pass it to a function in the
-        # User model and return a validation
-        return False
+    # @login_manager.request_loader
+    # def load_user_request(request):
+    #     # get username and password field and pass it to a function in the
+    #     # User model and return a validation
+    #     return False
 
     @app.errorhandler(404)
     def page_not_found(e):

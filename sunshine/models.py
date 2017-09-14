@@ -2,6 +2,7 @@ from .database import Base, db_session as session
 import sqlalchemy as sa
 from sqlalchemy.orm import synonym
 from sqlalchemy.dialects.postgresql import ENUM, DOUBLE_PRECISION
+import sys
 
 
 class Candidate(Base):
@@ -388,27 +389,27 @@ class User(Base):
     __tablename__ = 'users_table'
     id = sa.Column(sa.Integer, primary_key=True)
     username = sa.Column(sa.String)
-    email = sa.Column(sa.Text)
-    password = sa.Column(sa.Text)
+    email = sa.Column(sa.String)
+    password = sa.Column(sa.String)
     is_active = sa.Column(sa.Boolean)
     is_admin = sa.Column(sa.Boolean)
-    created_date = sa.Column(sa.DateTime)
-    updated_date = sa.Column(sa.DateTime)
+    created_date = sa.Column(sa.Date)
+    updated_date = sa.Column(sa.Date)
 
+    @property
     def is_authenticated(self):
         return True
 
+    @property
     def is_active(self):
         return True
 
+    @property
     def is_anonymous(self):
         return False
 
     def get_id(self):
-        try:
-            return unicode(self.id)  # python 2
-        except NameError:
-            return str(self.id)  # python 3
+        return unicode(self.id)
 
     @classmethod
     def get(cls, id):
@@ -416,8 +417,14 @@ class User(Base):
 
     @classmethod
     def validate(cls, username, password):
-        user = session.query(cls).get(username).first()
+        user = session.query(cls).filter(username == username).first()
 
-    # Add funtion to return the hash password
+        # For testing only, change logic to check hashed passwords
+        if user.password == password:
+            return user
+
+        else:
+            return None
+
     def __repr__(self):
         return '<User %r>' % self.id

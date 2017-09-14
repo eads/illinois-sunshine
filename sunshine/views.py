@@ -1,8 +1,10 @@
 from flask import Blueprint, render_template, abort, request, redirect, \
     session as flask_session, g
-from flask_login import login_required, login_user, logout_user, current_user
+from flask_login import login_required, login_user, logout_user, \
+    current_user
 from sunshine.database import db_session
-from sunshine.models import Candidate, Committee, Receipt, Expenditure
+from sunshine.models import Candidate, Committee, Receipt, Expenditure, \
+    User
 from sunshine.cache import cache, make_cache_key, CACHE_TIMEOUT
 from sunshine.app_config import FLUSH_KEY
 from sunshine import lib as sslib
@@ -145,7 +147,6 @@ def index():
 
     republican_committees = g.engine.execute(sa.text(republican_sql))
 
-
     date = datetime.now().date()
 
     days_donations_sql = '''
@@ -172,8 +173,8 @@ def index():
         date = date - timedelta(days=1)
 
     return render_template('index.html',
-                           #top_races=top_races,
-                           #maxc=maxc,
+                           # top_races=top_races,
+                           # maxc=maxc,
                            top_earners=top_earners,
                            top_ten=top_ten,
                            democratic_committees=democratic_committees,
@@ -183,6 +184,7 @@ def index():
                            donations_by_year=donations_by_year,
                            days_donations=days_donations,
                            contested_race_data=contested_race_data)
+
 
 @views.route('/donations/')
 @cache.cached(timeout=CACHE_TIMEOUT, key_prefix=make_cache_key)
@@ -1296,16 +1298,28 @@ def sunshine_the_rest(the_rest):
 
 @views.route('/admin/login/', methods=['GET', 'POST'])
 def admin_login():
-    if request.method == 'GET':
-        return render_template('admin/login.html')
-
-    else:
+    invalid = "Incorrect username or password"
+    if request.method == 'POST':
         # Add logic that will check to see if the user exists
         # and verify hashed password is correct, if true direct to dashboard
-        return redirect('/admin/dashboard/')
+        username = request.form.get("username")
+        password = request.form.get("password")
+
+        user = User.validate(username, password)
+
+        if user is None:
+            return render_template('admin/login.html', invalid=invalid)
+        else:
+            # login_user(user) causes 500 server error, need to fix
+            login_user(user, remember=request.form.get("rememberMe"))
+            return redirect('/admin/dashboard/')
+
+    else:
+        return render_template('admin/login.html')
 
 
 @views.route('/admin/dashboard/')
+@login_required
 def admin_dashboard():
     return render_template('admin/dashboard.html')
 

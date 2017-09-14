@@ -11,17 +11,22 @@
         <h1 class="fa fa-gear fa-2x" style="margin-bottom: 50px;">Admin Login</h1>
         <form method="POST" action="/admin/login/">
             <div class="form-group">
-                <input type="text" class="form-control" id="username" placeholder="Username" style="color: black;">
+                <input type="text" class="form-control" id="username" name="username" placeholder="Username" style="color: black;">
             </div>
             <div class="form-group">
-                <input type="password" class="form-control" id="pwd" placeholder="Password" style="color: black;">
+                <input type="password" class="form-control" id="password" name="password" placeholder="Password" style="color: black;">
             </div>
             <div class="checkbox">
-                <label><input type="checkbox"> Remember me</label>
+                <label><input type="checkbox" name="rememberMe"> Remember me</label>
             </div>
             <button type="submit" class="btn btn-default" style="width: 100%;">Login</button>
         </form>
+        <div class="text-center">
+            <p style="color: red; padding: 10px;">{{ invalid }}</p>
+        </div>
+
     </div>
+
 </div>
 
 {% endblock %}
