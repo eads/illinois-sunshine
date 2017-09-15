@@ -1,7 +1,7 @@
 from sunshine import create_app
 import logging
 
-#logging.basicConfig(filename="error.log", level=logging.INFO)
+logging.basicConfig(filename="error.log", level=logging.INFO)
 app = create_app()
 
 if __name__ == "__main__":
