@@ -5,9 +5,21 @@
     {{ header("News", "", request.path) }}
 {% endblock %}
 {% block content %}
-
-<div class="container" style="height: 65vh;">
-    <p> Temp News Dashboard Page </p>
+<div>
+    <div class="container">
+        <textarea name="editor1"></textarea>
+    </div>
+    <div class="container">
+        <textarea name="editor2"></textarea>
+    </div>
+    <div class="container">
+        <textarea name="editor3"></textarea>
+    </div>
+    <script>
+        CKEDITOR.replace( 'editor1' );
+        CKEDITOR.replace( 'editor2' );
+        CKEDITOR.replace( 'editor3' );
+    </script>
 </div>
 
 {% endblock %}
