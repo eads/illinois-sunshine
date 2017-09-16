@@ -21,7 +21,8 @@
       <script src="static/js/html5shiv.js"></script>
       <script src="static/js/respond.min.js"></script>
     <![endif]-->
-    <script src="https://cdn.ckeditor.com/4.7.3/standard/ckeditor.js"></script>
+
+    <!-- CKEditor for news management -->
   </head>
 
   <body>
@@ -122,6 +123,8 @@
 
     <script src="{{ url_for('static', filename='js/moment.min.js') }}"></script>
     <script src="{{ url_for('static', filename='js/common.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/ckeditor/ckeditor.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/ckeditor/adapters/jquery.js') }}"></script>
     {% block extra_javascript %}{% endblock %}
 
   </body>

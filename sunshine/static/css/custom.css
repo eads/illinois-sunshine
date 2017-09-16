@@ -370,3 +370,7 @@ table.table-striped.rep > tbody > tr:nth-of-type(2n+1) {
 table.uneven tr:last-of-type td {
     border-bottom: 1px solid #ddd;
 }
+
+.ckeditor-div {
+    padding: 10px;
+}

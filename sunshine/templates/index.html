@@ -48,8 +48,17 @@
     </div>
 </div>
 
-<div class="col-sm-12" style="height: 500px; padding: 0; margin: 0;">
+<div class="col-sm-8" style="height: 500px; padding: 0; margin: 0;">
     <iframe style="border-style: none; width: 100%; height: 100%;" scrolling="no" src="{{ url_for('views.widgets_gov_contested_race', hideHeaders=True) }}"></iframe>
+</div>
+
+<!-- News Content Div -->
+<div class="col-sm-4">
+    <h3>News Content</h3>
+    <p>News content for Sunshine Illinois, updated daily</p>
+    <div id="news-1" style="width: 100%; height: 150px;"></div>
+    <div id="news-2" style="width: 100%; height: 150px;"></div>
+    <div id="news-3" style="width: 100%; height: 150px;"></div>
 </div>
 
 <!-- Add table for "Political Funds in Illinois" here -->
@@ -57,7 +66,7 @@
     Party Funds in Illinois
 </h3>
 
-<p>Funds available for top Democratic and Republican political parties in Illinois, updated daily.</p>
+<p>Funds available for top Democratic and Republican political parties in Illinois, updated daily</p>
 
 <div class="col-sm-6" style="padding: 0;">
     <table class="table table-striped dem uneven" id='democratic-committee-funds-table'>
@@ -105,7 +114,7 @@
     <a class="header-link" href='{{ url_for('views.donations') }}' target='_blank'>Recent Political Donations</a>
 </h3>
 
-<p>Top donations to Illinois political committees in the last 7 days, updated daily.</p>
+<p>Top donations to Illinois political committees in the last 7 days, updated daily</p>
 <table class="table table-striped" id='donations-table'>
     <thead>
         <tr>
@@ -151,7 +160,7 @@
     <a class="header-link" href='{{ url_for('views.top_earners') }}'>Top Earners</a> <small>last 30 days, updated daily</small>
 </h2>
 
-<p>Political committees operate by receiving donations, transfers and loans from people, organizations, and other committees. Here's who's raised the most money in the last month</p>
+<p>Political committees operate by receiving donations, transfers and loans from people, organizations, and other committees. Here's who's raised the most money in the last month.</p>
 <table class="table table-striped">
     <thead>
         <tr>

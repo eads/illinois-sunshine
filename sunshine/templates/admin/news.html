@@ -6,20 +6,78 @@
 {% endblock %}
 {% block content %}
 <div>
-    <div class="container">
-        <textarea name="editor1"></textarea>
+    <div class="ckeditor-div">
+
+        <div class="col-sm-8">
+            <h3 class="text-left" style="width: 100%;">
+                News Editor 1
+                <button type="button" class="btn btn-default" id="btn1" style="width: 75px;">Preview</button>
+                <button type="button" class="btn btn-default" id="save-editor1" style="width: 75px;">Save</button>
+            <h3>
+            <textarea id="editor1"></textarea>
+        </div>
+        <div class="col-sm-4">
+            <h3 class="text-left">News Editor 1 Preview <h3>
+            <div id="editor1-preview"></div>
+        </div>
     </div>
-    <div class="container">
-        <textarea name="editor2"></textarea>
+    <div class="ckeditor-div">
+
+        <div class="col-sm-8">
+            <h3 class="text-left" style="width: 100%;">
+                News Editor 2
+                <button type="button" class="btn btn-default" id="btn2" style="width: 75px;">Preview</button>
+                <button type="button" class="btn btn-default" id="save-editor2" style="width: 75px;">Save</button>
+            <h3>
+            <textarea id="editor2"></textarea>
+        </div>
+        <div class="col-sm-4">
+            <h3 class="text-left">News Editor 2 Preview <h3>
+            <div id="editor2-preview"></div>
+        </div>
     </div>
-    <div class="container">
-        <textarea name="editor3"></textarea>
+    <div class="ckeditor-div">
+
+        <div class="col-sm-8">
+            <h3 class="text-left" style="width: 100%;">
+                News Editor 3
+                <button type="button" class="btn btn-default" id="btn3" style="width: 75px;">Preview</button>
+                <button type="button" class="btn btn-default" id="save-editor3" style="width: 75px;">Save</button>
+            <h3>
+            <textarea id="editor3"></textarea>
+        </div>
+        <div class="col-sm-4">
+            <h3 class="text-left">News Editor 3 Preview <h3>
+            <div id="editor3-preview"></div>
+        </div>
     </div>
-    <script>
-        CKEDITOR.replace( 'editor1' );
-        CKEDITOR.replace( 'editor2' );
-        CKEDITOR.replace( 'editor3' );
-    </script>
+
 </div>
 
+{% endblock %}
+
+{% block extra_javascript %}
+<script>
+    $( document ).ready(function() {
+        CKEDITOR.config.removeButtons = 'Save,Print,Preview';
+        $( '#editor1' ).ckeditor();
+        $( '#editor2' ).ckeditor();
+        $( '#editor3' ).ckeditor();
+
+        $("#btn1").click(function() {
+            var data = $('#editor1').val();
+            $("#editor1-preview").html(data);
+        });
+
+        $("#btn2").click(function() {
+            var data = $('#editor2').val();
+            $("#editor2-preview").html(data);
+        });
+
+        $("#btn3").click(function() {
+            var data = $('#editor3').val();
+            $("#editor3-preview").html(data);
+        });
+    });
+</script>
 {% endblock %}
