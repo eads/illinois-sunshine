@@ -72,8 +72,8 @@
                             </div>
                         </div>
 
-                        <h2><small>Total <span class="popover" data-content="Independent expenditures are ad buys made supporting or opposing candidates, without any collaboration or coronation with the candidate. These ad buys are often made by Super PACs or Party Committees.">Independent Expenditures</span> Supporting: {% if c.supporting_funds %}
-                            <strong>{{ c.supporting_funds|format_money }}</strong>{% else %}<strong>$0</strong>{% endif %}<br />Total <span class="popover" data-content="Independent expenditures are ad buys made supporting or opposing candidates, without any collaboration or coronation with the candidate. These ad buys are often made by Super PACs or Party Committees.">Independent Expenditures</span> Opposing: {% if c.opposing_funds and c.candidate_id %}
+                        <h2><small>Total <span class="popover" data-content="Independent expenditures are ad buys made supporting or opposing candidates, without any collaboration or coordination with the candidate. These ad buys are often made by Super PACs or Party Committees.">Independent Expenditures</span> Supporting: {% if c.supporting_funds %}
+                            <strong>{{ c.supporting_funds|format_money }}</strong>{% else %}<strong>$0</strong>{% endif %}<br />Total <span class="popover" data-content="Independent expenditures are ad buys made supporting or opposing candidates, without any collaboration or coordination with the candidate. These ad buys are often made by Super PACs or Party Committees.">Independent Expenditures</span> Opposing: {% if c.opposing_funds and c.candidate_id %}
                             <strong>{{ c.opposing_funds|format_money }}</strong>{% else %}<strong>$0</strong>{% endif %}</small></h2>
                         <br />
                 {% else %}

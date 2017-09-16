@@ -75,7 +75,7 @@
 
                     <h2>
                         <small>
-                            Total <span class="ss-popover" data-content="Independent expenditures are ad buys made supporting or opposing candidates, without any collaboration or coronation with the candidate. These ad buys are often made by Super PACs or Party Committees.">Independent Expenditures</span> Supporting:
+                            Total <span class="ss-popover" data-content="Independent expenditures are ad buys made supporting or opposing candidates, without any collaboration or coordination with the candidate. These ad buys are often made by Super PACs or Party Committees.">Independent Expenditures</span> Supporting:
                             {% if c.supporting_funds and c.candidate_id %}
                             <a href="{{ url_for('views.independent_expenditures', candidate_id=c.candidate_id, stance="supporting" )}}">
                                 <strong>{{ c.supporting_funds|format_money }}</strong>
@@ -84,7 +84,7 @@
                             <strong>$0</strong>
                             {% endif %}
                             <br />
-                            Total <span class="ss-popover" data-content="Independent expenditures are ad buys made supporting or opposing candidates, without any collaboration or coronation with the candidate. These ad buys are often made by Super PACs or Party Committees.">Independent Expenditures</span> Opposing:
+                            Total <span class="ss-popover" data-content="Independent expenditures are ad buys made supporting or opposing candidates, without any collaboration or coordination with the candidate. These ad buys are often made by Super PACs or Party Committees.">Independent Expenditures</span> Opposing:
                             {% if c.opposing_funds and c.candidate_id %}
                             <a href="{{ url_for('views.independent_expenditures', candidate_id=c.candidate_id,stance="opposing" )}}">
                                 <strong>{{ c.opposing_funds|format_money }}</strong>

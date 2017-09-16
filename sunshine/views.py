@@ -1009,8 +1009,8 @@ def independent_expenditures(candidate_id, stance):
     cname = [candidate.first_name, candidate.last_name]
     candidate_name = " ".join(cname)
 
-    ie_popover_span = "<span class='ss-popover' data-content='Independent expenditures are ad buys made supporting or opposing candidates, without any collaboration or coronation with the candidate. These ad buys are often made by Super PACs or Party Committees.'>Independent expenditures</span>"
-    ie_popunder_span = "<span class='ss-popunder' data-content='Independent expenditures are ad buys made supporting or opposing candidates, without any collaboration or coronation with the candidate. These ad buys are often made by Super PACs or Party Committees.'>Independent Expenditures</span>"
+    ie_popover_span = "<span class='ss-popover' data-content='Independent expenditures are ad buys made supporting or opposing candidates, without any collaboration or coordination with the candidate. These ad buys are often made by Super PACs or Party Committees.'>Independent expenditures</span>"
+    ie_popunder_span = "<span class='ss-popunder' data-content='Independent expenditures are ad buys made supporting or opposing candidates, without any collaboration or coordination with the candidate. These ad buys are often made by Super PACs or Party Committees.'>Independent Expenditures</span>"
 
     independent_expenditures_type = 'Supporting'
     independent_expenditures_title = "Supporting " + ie_popunder_span

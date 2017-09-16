@@ -52,7 +52,7 @@ def expense_name(s):
 def expense_popover(s):
     if (s != "Independent Expenditure"):
         return s
-    return '<span class="ss-popover" data-content="Independent expenditures are ad buys made supporting or opposing candidates, without any collaboration or coronation with the candidate. These ad buys are often made by Super PACs or Party Committees.">Independent Expenditure</span>'
+    return '<span class="ss-popover" data-content="Independent expenditures are ad buys made supporting or opposing candidates, without any collaboration or coordination with the candidate. These ad buys are often made by Super PACs or Party Committees.">Independent Expenditure</span>'
 
 def contested_races_description(s):
   if s == "House of Representatives":
