@@ -1,93 +1,70 @@
 {% extends 'admin/base.html' %}
 ://www.youtube.com/agrant@127.0.0.1
 {% from 'macros.html' import header %}
+
 {% block header_social %}
     {{ header("News", "", request.path) }}
 {% endblock %}
+
 {% block content %}
 <div>
     <p class="text-center"> {{ code }} </p>
-    <div class="ckeditor-div">
+    <form method="POST" action="/admin/news/">
+        <div style="position:fixed; left:0px; bottom:0px; background-color:transparent; height:40px; width:100vw; z-index:400;">
+            <div class="container" style="margin:0 auto; position:relative;">
+                <button type="submit" class="btn btn-default" style="width:75px; position:absolute; left:-60px;">Save</button>
+            </div>
+        </div>
+        <div class="ckeditor-div">
 
-        <div class="col-sm-8">
-            <form method="POST" action="/admin/news/">
-                <input type="hidden" name="editor-number" value="1">
-                <h3 class="text-left" style="width: 100%;">
-                    News Editor 1
-                    <button type="button" class="btn btn-default" id="btn1" style="width: 75px;">Preview</button>
-                    <button type="submit" class="btn btn-default" id="save-editor1" style="width: 75px;">Save</button>
-                <h3>
-                <textarea id="editor1" name="editor1"></textarea>
-            </form>
+            <div class="col-sm-8">
+                <h3 class="text-left" style="width:100%;">News Editor 1</h3>
+                <textarea id="editor1" name="editor1" class="ckeditor-textbox"></textarea>
+            </div>
+            <div class="col-sm-4">
+                <h3 class="text-left">Preview</h3>
+                <div id="editor1-preview" style="width: 100; height: 150px;"></div>
+            </div>
         </div>
-        <div class="col-sm-4">
-            <h3 class="text-left">News Editor 1 Preview <h3>
-            <div id="editor1-preview" style="width: 100; height: 150px;"></div>
-        </div>
-    </div>
-    <div class="ckeditor-div">
+        <div class="ckeditor-div">
 
-        <div class="col-sm-8">
-            <form method="POST" action="/admin/news/">
-                <input type="hidden" name="editor-number" value="2">
-                <h3 class="text-left" style="width: 100%;">
-                    News Editor 2
-                    <button type="button" class="btn btn-default" id="btn2" style="width: 75px;">Preview</button>
-                    <button type="submit" class="btn btn-default" id="save-editor2" style="width: 75px;">Save</button>
-                <h3>
-                <textarea id="editor2" name="editor2"></textarea>
-            </form>
+            <div class="col-sm-8">
+                <h3 class="text-left" style="width: 100%;">News Editor 2</h3>
+                <textarea id="editor2" name="editor2" class="ckeditor-textbox"></textarea>
+            </div>
+            <div class="col-sm-4">
+                <h3 class="text-left">Preview</h3>
+                <div id="editor2-preview" style="width: 100; height: 150px;"></div>
+            </div>
         </div>
-        <div class="col-sm-4">
-            <h3 class="text-left">News Editor 2 Preview <h3>
-            <div id="editor2-preview" style="width: 100; height: 150px;"></div>
-        </div>
-    </div>
-    <div class="ckeditor-div">
+        <div class="ckeditor-div">
 
-        <div class="col-sm-8">
-            <form method="POST" action="/admin/news/">
-                <input type="hidden" name="editor-number" value="3">
-                <h3 class="text-left" style="width: 100%;">
-                    News Editor 3
-                    <button type="button" class="btn btn-default" id="btn3" style="width: 75px;">Preview</button>
-                    <button type="submit" class="btn btn-default" id="save-editor3" style="width: 75px;">Save</button>
-                <h3>
-                <textarea id="editor3" name="editor3"></textarea>
-            </form>
+            <div class="col-sm-8">
+                <h3 class="text-left" style="width: 100%;">News Editor 3</h3>
+                <textarea id="editor3" name="editor3" class="ckeditor-textbox"></textarea>
+            </div>
+            <div class="col-sm-4">
+                <h3 class="text-left">Preview</h3>
+                <div id="editor3-preview" style="width: 100; height: 150px;"></div>
+            </div>
         </div>
-        <div class="col-sm-4">
-            <h3 class="text-left">News Editor 3 Preview <h3>
-            <div id="editor3-preview" style="width: 100; height: 150px;"></div>
-        </div>
-    </div>
-
+    </form>
 </div>
 
 {% endblock %}
 
 {% block extra_javascript %}
 <script>
-    $( document ).ready(function() {
+    $(document).ready(function() {
         CKEDITOR.config.removeButtons = 'Save,Print,Preview';
-        $( '#editor1' ).ckeditor();
-        $( '#editor2' ).ckeditor();
-        $( '#editor3' ).ckeditor();
+        $(".ckeditor-textbox").ckeditor();
 
-        $("#btn1").click(function() {
-            var data = $('#editor1').val();
-            $("#editor1-preview").html(data);
-        });
-
-        $("#btn2").click(function() {
-            var data = $('#editor2').val();
-            $("#editor2-preview").html(data);
-        });
-
-        $("#btn3").click(function() {
-            var data = $('#editor3').val();
-            $("#editor3-preview").html(data);
-        });
+        for (var i in CKEDITOR.instances) {
+            CKEDITOR.instances[i].on('change', function(e) {
+                var data = e.editor.getData();
+                $("#" + e.editor.name + "-preview").html(data);
+            });
+        }
     });
 </script>
 {% endblock %}

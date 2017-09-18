@@ -1330,45 +1330,44 @@ def admin_dashboard():
 @views.route('/admin/news/', methods=['GET', 'POST'])
 @login_required
 def admin_news():
+    news_content = { '1': '', '2': '', '3': '' }
+
     if request.method != 'POST':
-        return render_template('admin/news.html')
+        exist_sql = "select * from news_table"
+        news_records = list(g.engine.execute(sa.text(exist_sql), **sql_params))
 
-    if request.form.get("editor-number") == "1":
-        key = '1'
-        content = request.form.get("editor1")
+        for (record in news_records):
+            news_content[record["key"]] = record["content"]
+            
+        return render_template('admin/news.html', news_content=news_content)
 
-    elif request.form.get("editor-number") == "2":
-        key = '2'
-        content = request.form.get("editor2")
+    for key in news_content:
+        news_content[key] = request.form.get("editor" + key)
 
-    else:
-        key = '3'
-        content = request.form.get("editor3")
+        try:
+            sql_params = {
+                'key': key,
+                'content': news_content[key]
+            }
 
-    try:
-        sql_params = {
-            'key': key,
-            'content': content
-        }
+            exist_sql = """select * from news_table where key = :key"""
+            exists = len(list(g.engine.execute(sa.text(exist_sql), **sql_params))) > 0
 
-        exist_sql = """select * from news_table where key = :key"""
-        news_content = list(g.engine.execute(sa.text(exist_sql), **sql_params))
+            if not exists:
+                sql = """INSERT INTO news_table (key, content, created_date, updated_date) VALUES (:key, :content, now(), now())"""
+                g.engine.execute(sa.sql.text(sql), **sql_params)
+            else:
+                sql = """UPDATE news_table SET content = :content, updated_date = now() WHERE key = :key"""
+                g.engine.execute(sa.sql.text(sql), **sql_params)
 
-        if len(news_content) == 0:
-            sql = """INSERT INTO news_table (key, content, created_date, updated_date) VALUES (:key, :content, now(), now())"""
-            g.engine.execute(sa.sql.text(sql), **sql_params)
+            cache.clear()
 
-        else:
-            sql = """UPDATE news_table SET content = :content, updated_date = now() WHERE key = :key"""
-            g.engine.execute(sa.sql.text(sql), **sql_params)
+        except sa.exc.ProgrammingError as e:
+            current_app.logger.error("Unexpected error encountered: " + str(e))
 
-    except sa.exc.ProgrammingError as e:
-        print("Unexpected error encountered: ")
-        print(e)
+    update_message = 'Saved successfully.'
 
-    update_message = 'News Editor ' + key + ' successfully saved.'
-
-    return render_template('admin/news.html', code=update_message)
+    return render_template('admin/news.html', code=update_message, news_content=news_content)
 
 
 @views.route('/admin/logout/')

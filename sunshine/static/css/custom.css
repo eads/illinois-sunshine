@@ -374,3 +374,13 @@ table.uneven tr:last-of-type td {
 .ckeditor-div {
     padding: 10px;
 }
+
+.ckeditor-div,
+.ckeditor-div * {
+    z-index: 500;
+}
+
+.ckeditor-div > div {
+    padding: 10px;
+    margin-bottom: 50px;
+}
