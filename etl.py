@@ -1106,6 +1106,8 @@ class SunshineViews(object):
         hard saved in sunsine folder
         """
 
+        contested_races = []
+
         try:
             print('Generating contested race data...')
             gubernatorial_input_file = csv.DictReader(open(
@@ -1129,7 +1131,6 @@ class SunshineViews(object):
                 row["Senate/House"] = "G"
                 entries.append(row)
 
-            contested_races = []
             for e in entries:
                 supporting_funds = 0
                 opposing_funds = 0
@@ -1931,6 +1932,7 @@ class SunshineIndexes(object):
         self.officersCommittee()
         self.filedDocsCommittee()
         self.receiptsName()
+        self.receiptsDateAmount()
         self.expendituresName()
 
     def receiptsDate(self):
@@ -2002,6 +2004,14 @@ class SunshineIndexes(object):
         index = '''
              CREATE INDEX CONCURRENTLY condensed_receipts_search_index ON condensed_receipts
              USING gin(search_name)
+        '''
+
+        self.executeOutsideTransaction(index)
+
+    def receiptsDateAmount(self):
+        index = '''
+             CREATE INDEX CONCURRENTLY condensed_receipts_date_amounts_index ON condensed_receipts
+             USING gin(received_date, amount)
         '''
 
         self.executeOutsideTransaction(index)
