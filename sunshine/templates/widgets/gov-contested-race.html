@@ -5,11 +5,15 @@
 {% endblock %}
 {% block content %}
 <base target='_blank' />
-<h3>
-    <img src="/static/images/illinois_state_seal.png" class="fa fa-fw" />
-    <a class="header-link" href='{{ url_for('views.contested_race_detail', race_type='gubernatorial', district=0) }}' target='_blank'>Race for Illinois Governor</a>
-</h3>
-<p>Funds raised in 2018 Race for Illinois Governor, as of {{ current_date.strftime('%b %d, %Y')  }}</p>
+<img src="/static/images/illinois_state_seal.png" class="header-image" />
+<div style="display:inline-block;">
+    <h3>
+        <a class="header-link" href='{{ url_for('views.contested_race_detail', race_type='gubernatorial', district=0) }}' target='_blank'>Race for Illinois Governor</a>
+    </h3>
+    <p>Funds raised in 2018 Race for Illinois Governor, as of {{ current_date.strftime('%b %d, %Y')  }}</p>
+</div>
+<div style="clear:both;"></div>
+
 <table class = "table table-striped table-hover">
     <thead>
         <tr>
@@ -21,14 +25,13 @@
     <tbody>
     {% for row in contested_race_data %}
         <tr class = 'clickable' style= "cursor: Pointer;" onclick="window.open('{{ url_for('views.contested_race_detail', race_type='gubernatorial', district=0) }}'); setAttribute('target','_blank');">
-            <td class='text-left' style="white-space:nowrap;color:#000;">
+            <td class='text-left' style="white-space:nowrap;color:#000;font-weight:bold;">
                 {{ row[0] }}
             </td>
-            <td>
             <td class="text-right" style="white-space:nowrap;">
                 {{ row[1]|format_money }}
             </td>
-            <td class="text-right" style="white-space:nowrap;">
+            <td class="text-right" style="white-space:nowrap;font-weight:bold;">
                 {{ row[2]|format_money }}
             </td>
         </tr>

@@ -127,11 +127,10 @@ def getAllCandidateFunds(district, branch):
     is_after_primary = primary_details["is_after_primary"]
 
     contested_races_sql = '''
-        SELECT cr.*, c.name as committee_committee_name
-        FROM contested_races cr
-        LEFT JOIN committees c ON (c.id = cr.committee_id)
-        WHERE cr.district = :district
-          AND cr.branch = :branch
+        SELECT committee_id, last_name, first_name, party, incumbent
+        FROM contested_races
+        WHERE district = :district AND branch = :branch
+        GROUP BY committee_id, last_name, first_name, party, incumbent
     '''
 
     races = list(g.engine.execute(sa.text(contested_races_sql),district=district,branch=branch))
@@ -154,7 +153,7 @@ def getAllCandidateFunds(district, branch):
     if not output:
         return []
 
-    return sorted(output, key=lambda x: -x[1])
+    return sorted(output, key=lambda x: -x[2])
 
 #============================================================================
 def getCommitteeFundsData(committee_id, pre_primary_start, primary_start, post_primary_start):
