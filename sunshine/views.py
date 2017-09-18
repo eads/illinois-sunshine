@@ -1334,11 +1334,11 @@ def admin_news():
 
     if request.method != 'POST':
         exist_sql = "select * from news_table"
-        news_records = list(g.engine.execute(sa.text(exist_sql), **sql_params))
+        news_records = list(g.engine.execute(sa.text(exist_sql)))
 
-        for (record in news_records):
+        for record in news_records:
             news_content[record["key"]] = record["content"]
-            
+
         return render_template('admin/news.html', news_content=news_content)
 
     for key in news_content:
