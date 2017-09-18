@@ -9,7 +9,7 @@
     <img src="/static/images/illinois_state_seal.png" class="fa fa-fw" />
     <a class="header-link" href='{{ url_for('views.contested_race_detail', race_type='gubernatorial', district=0) }}' target='_blank'>Race for Illinois Governor</a>
 </h3>
-<p>Funds raised, including independent expenditures, in the 2018 race for Illinois governor, updated daily.</p>
+<p>Funds raised in 2018 Race for Illinois Governor, as of {{ current_date.strftime('%b %d, %Y')  }}</p>
 <table class = "table table-striped table-hover">
     <thead>
         <tr>
@@ -24,6 +24,7 @@
             <td class='text-left' style="white-space:nowrap;color:#000;">
                 {{ row[0] }}
             </td>
+            <td>
             <td class="text-right" style="white-space:nowrap;">
                 {{ row[1]|format_money }}
             </td>

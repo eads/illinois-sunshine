@@ -1187,8 +1187,9 @@ def widgets_gov_contested_race():
     hideHeaders = request.args.get('hideHeaders')
 
     contested_race_data = sslib.getAllCandidateFunds(0, "G")
+    current_date = datetime.now()
 
-    return render_template('widgets/gov-contested-race.html',
+    return render_template('widgets/gov-contested-race.html', current_date=current_date,
                            contested_race_data=contested_race_data, hideHeaders=hideHeaders)
 
 
