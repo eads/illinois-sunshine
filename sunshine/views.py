@@ -1341,7 +1341,7 @@ def admin_news():
     news_content = { '1': '', '2': '', '3': '' }
 
     if request.method != 'POST':
-        exist_sql = "select * from news_table"
+        exist_sql = "select key, content from news_table"
         news_records = list(g.engine.execute(sa.text(exist_sql)))
 
         for record in news_records:
@@ -1370,10 +1370,11 @@ def admin_news():
 
             cache.clear()
 
-        except sa.exc.ProgrammingError as e:
-            current_app.logger.error("Unexpected error encountered: " + str(e))
+            update_message = 'Saved successfully.'
 
-    update_message = 'Saved successfully.'
+        except sa.exc.ProgrammingError as e:
+            update_message = "Save failed: " + str(e)
+            current_app.logger.error(update_message)
 
     return render_template('admin/news.html', code=update_message, news_content=news_content)
 

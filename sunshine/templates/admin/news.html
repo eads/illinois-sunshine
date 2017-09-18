@@ -16,15 +16,18 @@
             </div>
         </div>
         <div class="ckeditor-div">
-
             <div class="col-sm-8">
                 <h3 class="text-left" style="width:100%;">News Editor 1</h3>
-                <textarea id="editor1" name="editor1" class="ckeditor-textbox"></textarea>
+                <textarea id="editor1" name="editor1" class="ckeditor-textbox">
+                    {{ news_content["1"]|safe }}
+                </textarea>
             </div>
             <div class="col-sm-4">
                 <h3 class="text-left">Preview</h3>
                 <div class="news-box-wrapper">
-                    <div id="editor1-preview" class="news-box"></div>
+                    <div id="editor1-preview" class="ckeditor-preview news-box">
+                        {{ news_content["1"]|safe }}
+                    </div>
                 </div>
             </div>
         </div>
@@ -32,12 +35,16 @@
 
             <div class="col-sm-8">
                 <h3 class="text-left" style="width: 100%;">News Editor 2</h3>
-                <textarea id="editor2" name="editor2" class="ckeditor-textbox"></textarea>
+                <textarea id="editor2" name="editor2" class="ckeditor-textbox">
+                    {{ news_content["2"]|safe }}
+                </textarea>
             </div>
             <div class="col-sm-4">
                 <h3 class="text-left">Preview</h3>
                 <div class="news-box-wrapper">
-                    <div id="editor2-preview" class="news-box"></div>
+                    <div id="editor2-preview" class="ckeditor-preview news-box">
+                        {{ news_content["2"]|safe }}
+                    </div>
                 </div>
             </div>
         </div>
@@ -45,12 +52,16 @@
 
             <div class="col-sm-8">
                 <h3 class="text-left" style="width: 100%;">News Editor 3</h3>
-                <textarea id="editor3" name="editor3" class="ckeditor-textbox"></textarea>
+                <textarea id="editor3" name="editor3" class="ckeditor-textbox">
+                    {{ news_content["3"]|safe }}
+                </textarea>
             </div>
             <div class="col-sm-4">
                 <h3 class="text-left">Preview</h3>
                 <div class="news-box-wrapper">
-                    <div id="editor3-preview" class="news-box"></div>
+                    <div id="editor3-preview" class="ckeditor-preview news-box">
+                        {{ news_content["3"]|safe }}
+                    </div>
                 </div>
             </div>
         </div>

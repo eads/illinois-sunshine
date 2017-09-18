@@ -373,7 +373,7 @@ table.uneven tr:last-of-type td {
 }
 
 .ckeditor-div {
-    padding: 10px;
+    padding: 10px 0;
 }
 
 .ckeditor-div,
