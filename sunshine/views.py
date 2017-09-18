@@ -176,6 +176,13 @@ def index():
     news_sql = """SELECT key, content FROM news_table ORDER BY key"""
     news_content = list(g.engine.execute(sa.text(news_sql)))
 
+    if (not news_content):
+        news_content = [
+            {'key': '1', 'content': ''},
+            {'key': '2', 'content': ''},
+            {'key': '3', 'content': ''}
+        ]
+
     return render_template('index.html',
                            # top_races=top_races,
                            # maxc=maxc,
