@@ -138,6 +138,7 @@ def getAllCandidateFunds(district, branch):
 
     for race in races:
         committee_funds_data = getCommitteeFundsData(race.committee_id, pre_primary_start, primary_start, post_primary_start)
+        funds_available = (committee_funds_data[0][1] if committee_funds_data else 0.0)
         total_funds = (committee_funds_data[-1][1] if committee_funds_data else 0.0)
 
         display = (race.first_name or "") + " " + (race.last_name or "") + " (" + (race.party or "") + ")"
@@ -148,7 +149,7 @@ def getAllCandidateFunds(district, branch):
         elif (race.incumbent != "N"):
             display += " " + race.incumbent
 
-        output.append([display, total_funds])
+        output.append([display, funds_available, total_funds])
 
     if not output:
         return []

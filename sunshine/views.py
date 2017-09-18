@@ -31,9 +31,6 @@ def index():
 
     totals = list(g.engine.execute(sa.text(totals_sql)))
 
-    # Contested Races Chart
-    contested_race_data = sslib.getAllCandidateFunds(0, "G")
-
     # donations chart
     donations_by_month_sql = '''
       SELECT * FROM receipts_by_month WHERE month >= :start_date
@@ -194,7 +191,6 @@ def index():
                            donations_by_month=donations_by_month,
                            donations_by_year=donations_by_year,
                            days_donations=days_donations,
-                           contested_race_data=contested_race_data,
                            news_content=news_content)
 
 
