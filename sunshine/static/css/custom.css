@@ -403,3 +403,11 @@ table.uneven tr:last-of-type td {
     font-size: 10px;
     background-color: #fff;
 }
+
+.header-image {
+    display: inline-block;
+    height: 60px;
+    vertical-align: top;
+    margin-top: 10px;
+    margin-right: 10px;
+}
