@@ -386,15 +386,6 @@ table.uneven tr:last-of-type td {
     margin-bottom: 50px;
 }
 
-.ckeditor-preview {
-    width: 100%;
-    height: 200px;
-    border: 1px solid #ccc;
-    overflow: hidden;
-    padding: 6px;
-    color: #000;
-}
-
 .news-box-wrapper {
     width: 100%;
     height: 160px;
