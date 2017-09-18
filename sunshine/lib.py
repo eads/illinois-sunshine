@@ -148,7 +148,9 @@ def getAllCandidateFunds(district, branch):
         elif (race.incumbent != "N"):
             display += " " + race.incumbent
 
-        output.append([display, total_funds])
+        funds_available = (committee_funds_data[1][0] if committee_funds_data else 0.0)
+
+        output.append([display, funds_available, total_funds])
 
     if not output:
         return []
