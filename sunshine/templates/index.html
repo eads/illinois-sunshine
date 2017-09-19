@@ -87,6 +87,10 @@
             </tr>
         </thead>
         <tbody>
+            <tr style="font-weight: bold;">
+                <td>Committee Name</td>
+                <td class='text-right'>Cash on Hand</td>
+            </tr>
             {% for committee in democratic_committees %}
                 {% set committee_slug = [committee.committee_name|slugify, committee.committee_id|string]|join('-') %}
                 <tr class="clickable" style="cursor:pointer;" onclick="window.open('{{ url_for('views.committee', committee_id=committee_slug) }}'); setAttribute('target', '_blank');">
@@ -106,6 +110,10 @@
             </tr>
         </thead>
         <tbody>
+            <tr style="font-weight: bold;">
+                <td>Committee Name</td>
+                <td class='text-right'>Cash on Hand</td>
+            </tr>
             {% for committee in republican_committees %}
                 {% set committee_slug = [committee.committee_name|slugify, committee.committee_id|string]|join('-') %}
                 <tr class="clickable" style="cursor:pointer;" onclick="window.open('{{ url_for('views.committee', committee_id=committee_slug) }}'); setAttribute('target', '_blank');">
