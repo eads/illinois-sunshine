@@ -23,7 +23,7 @@
 <div class='row'>
     <div class='col-sm-10'>
         <div class='jumbotron'>
-            <p style="font-size:27px;color:#000000;padding:0;">Keep an eye on money in Illinois politics <span style="color:#666666; font-size:16px;">updated daily</span></p>
+            <p style="font-size:27px;color:#000000;padding:0;">Keep an Eye on Money in Illinois Politics <span style="color:#666666; font-size:16px;">updated daily</span></p>
             <form action='/search' method='GET'>
                 <div class="input-group input-group-lg">
                     <input type="text" class="form-control" placeholder="Search for names of candidates, committees and donors in Illinois" name="term">
@@ -55,6 +55,7 @@
 <!-- News Content Div -->
 <div class="col-sm-4">
     <h3 style="color: black;">News </h3>
+    <p>Click below for the latest articles</p>
     <div id="news-1" class="news-box-wrapper">
         <div class="news-box">
             {{ news_content[0].content|safe }}
@@ -80,13 +81,17 @@
 <p>Funds available for top Democratic and Republican political parties in Illinois, updated daily</p>
 
 <div class="col-sm-6" style="padding: 0;">
-    <table class="table table-striped dem uneven" id='democratic-committee-funds-table'>
+    <table class="table table-striped dem uneven table-border table-merge" id='democratic-committee-funds-table'>
         <thead>
             <tr>
                 <th colspan="2" class="text-center" style="background-color: #99afff;">Democratic State Party Committees</th>
             </tr>
         </thead>
         <tbody>
+            <tr style="font-weight: bold;">
+                <td>Committee Name</td>
+                <td class='text-right'>Cash on Hand</td>
+            </tr>
             {% for committee in democratic_committees %}
                 {% set committee_slug = [committee.committee_name|slugify, committee.committee_id|string]|join('-') %}
                 <tr class="clickable" style="cursor:pointer;" onclick="window.open('{{ url_for('views.committee', committee_id=committee_slug) }}'); setAttribute('target', '_blank');">
@@ -94,18 +99,26 @@
                     <td class='text-right'>{{ committee.total|format_money  }}</td>
                 </tr>
             {% endfor %}
+            <tr>
+                <td style="color:rgba(0,0,0,0);">hidden</td>
+                <td style="color:rgba(0,0,0,0);" class='text-right'>hidden</td>
+            </tr>
         </tbody>
     </table>
 </div>
 
 <div class="col-sm-6" style="padding: 0;">
-    <table class="table table-striped rep" id='republican-committee-funds-table'>
+    <table class="table table-striped rep table-border" id='republican-committee-funds-table'>
         <thead>
             <tr>
                 <th colspan='2' class="text-center" style="background-color: #ff9999;">Republican State Party Committees</th>
             </tr>
         </thead>
         <tbody>
+            <tr style="font-weight: bold;">
+                <td>Committee Name</td>
+                <td class='text-right'>Cash on Hand</td>
+            </tr>
             {% for committee in republican_committees %}
                 {% set committee_slug = [committee.committee_name|slugify, committee.committee_id|string]|join('-') %}
                 <tr class="clickable" style="cursor:pointer;" onclick="window.open('{{ url_for('views.committee', committee_id=committee_slug) }}'); setAttribute('target', '_blank');">
@@ -126,7 +139,7 @@
 </h3>
 
 <p>Top donations to Illinois political committees in the last 7 days, updated daily</p>
-<table class="table table-striped" id='donations-table'>
+<table class="table table-striped table-border" id='donations-table'>
     <thead>
         <tr>
             <th>Donor</th>
@@ -172,7 +185,7 @@
 </h2>
 
 <p>Political committees operate by receiving donations, transfers and loans from people, organizations, and other committees. Here's who's raised the most money in the last month.</p>
-<table class="table table-striped">
+<table class="table table-striped table-border">
     <thead>
         <tr>
             <th>Rank</th>
@@ -209,7 +222,7 @@
 
 <h2><i class='fa fa-group fa-fw'></i> <a class="header-link" href='{{ url_for('views.committees') }}'>Top Political Committees</a> <small>highest current funds, updated daily</small></h2>
 <p>Political committees must report their current funds, along with donations and expenditures <a href='/about/#how-is-campaign-finance-disclosed'>every quarter</a>. Here's the committees that have the most investments and cash on hand.</p>
-<table class="table table-hover">
+<table class="table table-hover table-border">
     <thead>
         <tr>
             <th>Rank</th>
