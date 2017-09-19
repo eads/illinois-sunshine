@@ -341,7 +341,8 @@ class SunshineCommittees(SunshineTransformLoad):
     update_conversions = {
         "Status": "CASE WHEN s.\"Status\" = 'A' THEN True ELSE False END",
         "CanSuppOpp": "(CASE s.\"CanSuppOpp\" WHEN 'O' THEN 'oppose' WHEN 'S' THEN 'support' ELSE null END)::committee_position",
-        "PolicySuppOpp": "(CASE s.\"PolicySuppOpp\" WHEN 'O' THEN 'oppose' WHEN 'S' THEN 'support' ELSE null END)::committee_position"
+        "PolicySuppOpp": "(CASE s.\"PolicySuppOpp\" WHEN 'O' THEN 'oppose' WHEN 'S' THEN 'support' ELSE null END)::committee_position",
+        "TypeOfCommittee": "CASE s.\"TypeOfCommittee\" WHEN 'Independent Expenditure' THEN 'Super PAC' ELSE s.\"TypeOfCommittee\" END"
     }
 
     def addNameColumn(self):
@@ -413,7 +414,6 @@ class SunshineCommittees(SunshineTransformLoad):
                     row['TypeOfCommittee'] = 'Super PAC'
 
             yield OrderedDict(zip(self.header, list(row.values())))
-
 
 class SunshineCandidates(SunshineTransformLoad):
 
