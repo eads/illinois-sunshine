@@ -8,6 +8,7 @@ from csvkit.cleanup import RowChecker
 from collections import OrderedDict
 from typeinferer import TypeInferer
 import psycopg2
+import traceback
 from psycopg2.extensions import AsIs
 
 import logging
@@ -340,7 +341,8 @@ class SunshineCommittees(SunshineTransformLoad):
     update_conversions = {
         "Status": "CASE WHEN s.\"Status\" = 'A' THEN True ELSE False END",
         "CanSuppOpp": "(CASE s.\"CanSuppOpp\" WHEN 'O' THEN 'oppose' WHEN 'S' THEN 'support' ELSE null END)::committee_position",
-        "PolicySuppOpp": "(CASE s.\"PolicySuppOpp\" WHEN 'O' THEN 'oppose' WHEN 'S' THEN 'support' ELSE null END)::committee_position"
+        "PolicySuppOpp": "(CASE s.\"PolicySuppOpp\" WHEN 'O' THEN 'oppose' WHEN 'S' THEN 'support' ELSE null END)::committee_position",
+        "TypeOfCommittee": "CASE s.\"TypeOfCommittee\" WHEN 'Independent Expenditure' THEN 'Super PAC' ELSE s.\"TypeOfCommittee\" END"
     }
 
     def addNameColumn(self):
@@ -412,7 +414,6 @@ class SunshineCommittees(SunshineTransformLoad):
                     row['TypeOfCommittee'] = 'Super PAC'
 
             yield OrderedDict(zip(self.header, list(row.values())))
-
 
 class SunshineCandidates(SunshineTransformLoad):
 
@@ -731,36 +732,66 @@ class SunshineViews(object):
             pass
 
     def dropViews(self):
+        print("Dropping receipts_by_month...")
         self.executeTransaction(
             'DROP MATERIALIZED VIEW IF EXISTS receipts_by_month'
         )
+
+        print("Dropping committee_receipts_by_week...")
         self.executeTransaction(
             'DROP MATERIALIZED VIEW IF EXISTS committee_receipts_by_week'
         )
+
+        print("Dropping incumbent_candidates...")
         self.executeTransaction(
             'DROP MATERIALIZED VIEW IF EXISTS incumbent_candidates'
         )
+
+        print("Dropping most_recent_filings...")
         self.executeTransaction(
             'DROP MATERIALIZED VIEW IF EXISTS most_recent_filings CASCADE'
         )
+        self.executeTransaction('DROP INDEX IF EXISTS most_recent_filings_idx CASCADE')
+
+        print("Dropping expenditures_by_candidate...")
         self.executeTransaction(
             'DROP MATERIALIZED VIEW IF EXISTS expenditures_by_candidate'
         )
+
+        print("Dropping contested_races...")
         self.executeTransaction('DROP TABLE IF EXISTS contested_races')
+
+        print("Dropping muni_contested_races...")
         self.executeTransaction('DROP TABLE IF EXISTS muni_contested_races')
 
     def makeAllViews(self):
+        print("Creating view - incumbent_candidates")
         self.incumbentCandidates()
+        print("Creating view - most_recent_filings")
         self.mostRecentFilings()
+        print("Creating view - condensed_receipts")
         self.condensedReceipts()
+        print("Creating view - condensed_expenditures")
         self.condensedExpenditures()
+        print("Creating view - expenditures_by_candidate")
         self.expendituresByCandidate()  # relies on condensed_expenditures
+        print("Creating view - receipts_by_month")
         self.receiptsAggregates()  # relies on condensedReceipts
+        print("Creating view - committee_receipts_by_week")
         self.committeeReceiptAggregates()  # relies on condensedReceipts
+        print("Creating view - committee_money")
         self.committeeMoney()  # relies on mostRecentFilings
+        print("Creating view - candidate_money")
         self.candidateMoney()  # relies on committeeMoney and mostRecentFilings
+        print("Creating table - users_table")
+        self.usersTable()
+        print("Creating table - news_table")
+        self.newsTable()
+        print("Creating table - contested_races")
         self.contestedRaces()  # relies on sunshine/contested_races.csv, sunshine/gubernatorial_contested_races.csv, and sunshine/comptroller_contested_race.csv
+        print("Creating table - muni_contested_races")
         self.muniContestedRaces()  # relies on sunshine/muni_contested_races.csv
+
 
     def condensedExpenditures(self):
 
@@ -1074,7 +1105,11 @@ class SunshineViews(object):
         Creates the contested races view table from csv files
         hard saved in sunsine folder
         """
+
+        contested_races = []
+
         try:
+            print('Generating contested race data...')
             gubernatorial_input_file = csv.DictReader(open(
                 os.getcwd() + '/sunshine/gubernatorial_contested_races.csv'
             ))
@@ -1096,7 +1131,6 @@ class SunshineViews(object):
                 row["Senate/House"] = "G"
                 entries.append(row)
 
-            contested_races = []
             for e in entries:
                 supporting_funds = 0
                 opposing_funds = 0
@@ -1182,6 +1216,13 @@ class SunshineViews(object):
                     'reporting_period_end': latest_filing['reporting_period_end'] if latest_filing else None,
                     'alternate_names': ';'.join(cand_names)
                 })
+        except:
+            print('Problem in generating contested_races table data: ')
+            print(traceback.print_exc())
+
+        try:
+            trans = self.connection.begin()
+            curs = self.connection.connection.cursor()
 
             exp = '''
                 CREATE TABLE contested_races(
@@ -1207,9 +1248,21 @@ class SunshineViews(object):
                 )
             '''
 
+            curs.execute(exp)
+            trans.commit()
+        except psycopg2.ProgrammingError:
+            trans.rollback()
+            print('Problem in creating contested_races table: ')
+            print(traceback.print_exc())
+        except sa.exc.ProgrammingError:
+            trans.rollback()
+            print('Problem in creating contested_races table: ')
+            print(traceback.print_exc())
+
+        try:
             trans = self.connection.begin()
             curs = self.connection.connection.cursor()
-            curs.execute(exp)
+
             insert_statement = 'INSERT INTO contested_races (%s) VALUES %s'
             cols = [
                 'last_name',
@@ -1232,16 +1285,71 @@ class SunshineViews(object):
                 'reporting_period_end',
                 'alternate_names'
             ]
-            for cr in contested_races:
 
+            for cr in contested_races:
                 values = [cr[column] for column in cols]
-                curs.execute(
-                    insert_statement, (AsIs(','.join(cols)), tuple(values))
-                )
+                curs.execute(insert_statement, (AsIs(','.join(cols)), tuple(values)))
 
             trans.commit()
+        except psycopg2.ProgrammingError:
+            print('Problem inserting contested_races data: ')
+            print(traceback.print_exc())
+            trans.rollback()
         except sa.exc.ProgrammingError:
-            print('Problem in creating contested_races table')
+            print('Problem inserting contested_races data: ')
+            print(traceback.print_exc())
+            trans.rollback()
+
+    def usersTable(self):
+
+        try:
+            trans = self.connection.begin()
+            curs = self.connection.connection.cursor()
+
+            exp = '''
+                CREATE TABLE IF NOT EXISTS users_table (
+                    id SERIAL NOT NULL PRIMARY KEY,
+                    username VARCHAR(255) UNIQUE NOT NULL,
+                    email VARCHAR(255),
+                    password VARCHAR(100) NOT NULL,
+                    is_active BOOLEAN,
+                    is_admin BOOLEAN,
+                    created_date TIMESTAMP,
+                    updated_date TIMESTAMP
+                )
+            '''
+
+            curs.execute(exp)
+            trans.commit()
+        except (sa.exc.ProgrammingError, psycopg2.ProgrammingError) as e:
+            trans.rollback()
+            print('Problem in creating users_table table: ')
+            print(traceback.print_exc())
+            logger.error(e, exc_info=True)
+
+    def newsTable(self):
+
+        try:
+            trans = self.connection.begin()
+            curs = self.connection.connection.cursor()
+
+            exp = '''
+                CREATE TABLE IF NOT EXISTS news_table (
+                    id SERIAL NOT NULL PRIMARY KEY,
+                    key VARCHAR(50) UNIQUE NOT NULL,
+                    content TEXT,
+                    created_date TIMESTAMP,
+                    updated_date TIMESTAMP
+                )
+            '''
+
+            curs.execute(exp)
+            trans.commit()
+        except (sa.exc.ProgrammingError, psycopg2.ProgrammingError) as e:
+            trans.rollback()
+            print('Problem in creating news_table table: ')
+            print(traceback.print_exc())
+            logger.error(e, exc_info=True)
 
     def get_candidate_name(self, candidate_id):
 
@@ -1815,6 +1923,7 @@ class SunshineIndexes(object):
             pass
 
     def makeAllIndexes(self):
+        print("Creating indices...")
         self.receiptsDate()
         self.receiptsCommittee()
         self.receiptsFiledDocs()
@@ -1823,6 +1932,7 @@ class SunshineIndexes(object):
         self.officersCommittee()
         self.filedDocsCommittee()
         self.receiptsName()
+        self.receiptsDateAmount()
         self.expendituresName()
 
     def receiptsDate(self):
@@ -1894,6 +2004,14 @@ class SunshineIndexes(object):
         index = '''
              CREATE INDEX CONCURRENTLY condensed_receipts_search_index ON condensed_receipts
              USING gin(search_name)
+        '''
+
+        self.executeOutsideTransaction(index)
+
+    def receiptsDateAmount(self):
+        index = '''
+             CREATE INDEX CONCURRENTLY condensed_receipts_date_amounts_index ON condensed_receipts
+             USING gin(received_date, amount)
         '''
 
         self.executeOutsideTransaction(index)
