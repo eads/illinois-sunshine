@@ -413,5 +413,11 @@ table.uneven tr:last-of-type td {
 }
 
 .table-border {
-    border: 2px solid #ccc !important;
+    border: 2px solid #ccc;
+}
+
+@media screen and (min-width: 993px) {
+    .table-merge {
+        border-right: 0;
+    }
 }
