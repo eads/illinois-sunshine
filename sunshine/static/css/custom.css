@@ -411,3 +411,7 @@ table.uneven tr:last-of-type td {
     margin-top: 10px;
     margin-right: 10px;
 }
+
+.table-border {
+    border: 2px solid #ccc !important;
+}
