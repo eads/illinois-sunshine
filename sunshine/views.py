@@ -940,7 +940,6 @@ def committee(committee_id):
                            opposed_candidates=opposed_candidates,
                            current_officers=current_officers,
                            related_committees=related_committees,
-                           recent_receipts=recent_receipts,
                            recent_total=recent_total,
                            latest_filing=latest_filing,
                            controlled_amount=controlled_amount,
