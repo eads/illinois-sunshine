@@ -706,53 +706,8 @@ def committee(committee_id):
     if not committee:
         return abort(404)
 
-    latest_filing = '''
-        SELECT * FROM most_recent_filings
-        WHERE committee_id = :committee_id
-        ORDER BY received_datetime DESC
-        LIMIT 1
-    '''
+    latest_filing, recent_total, controlled_amount, params = sslib.getCommitteeRecentFilingData(committee_id)
 
-    latest_filing = dict(g.engine.execute(sa.text(latest_filing),
-                                   committee_id=committee_id).first())
-
-    params = {'committee_id': committee_id}
-
-    if not latest_filing['reporting_period_end']:
-      latest_filing['reporting_period_end'] = datetime.now().date() - timedelta(days=90)
-
-
-    if latest_filing['end_funds_available'] \
-        or latest_filing['end_funds_available'] == 0:
-
-        recent_receipts = '''
-            SELECT
-              COALESCE(SUM(receipts.amount), 0) AS amount
-            FROM condensed_receipts AS receipts
-            JOIN filed_docs AS filed
-              ON receipts.filed_doc_id = filed.id
-            WHERE receipts.committee_id = :committee_id
-              AND receipts.received_date > :end_date
-        '''
-        controlled_amount = latest_filing['end_funds_available']
-
-        params['end_date'] = latest_filing['reporting_period_end']
-
-    else:
-
-        recent_receipts = '''
-            SELECT
-              COALESCE(SUM(receipts.amount), 0) AS amount
-            FROM condensed_receipts AS receipts
-            JOIN filed_docs AS filed
-              ON receipts.filed_doc_id = filed.id
-            WHERE receipts.committee_id = :committee_id
-        '''
-
-        controlled_amount = 0
-
-    recent_total = g.engine.execute(sa.text(recent_receipts),**params).first().amount
-    controlled_amount += recent_total
     candidate_ids = tuple(c.id for c in committee.candidates)
 
     related_committees = '''

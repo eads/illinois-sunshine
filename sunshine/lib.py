@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, abort, request, redirect, \
-    session as flask_session, g
+    session as flask_session, g, current_app
 from sunshine.database import db_session
 from sunshine.models import Receipt, FiledDoc, D2Report
 from sunshine.cache import cache, make_cache_key, CACHE_TIMEOUT
@@ -138,7 +138,9 @@ def getAllCandidateFunds(district, branch):
     for race in races:
         committee_funds_data = getCommitteeFundsData(race.committee_id, pre_primary_start, primary_start, post_primary_start)
         funds_available = (committee_funds_data[0][1] if committee_funds_data else 0.0)
-        total_funds = (committee_funds_data[-1][1] if committee_funds_data else 0.0)
+        total_funds_raised = (committee_funds_data[-1][1] if committee_funds_data else 0.0)
+
+        cash_on_hand = getCommitteeCashOnHand(race.committee_id)
 
         display = (race.first_name or "") + " " + (race.last_name or "") + " (" + (race.party or "") + ")"
         if not race.incumbent:
@@ -148,12 +150,73 @@ def getAllCandidateFunds(district, branch):
         elif (race.incumbent != "N"):
             display += " " + race.incumbent
 
-        output.append([display, funds_available, total_funds])
+        output.append([display, cash_on_hand, total_funds_raised, funds_available])
 
     if not output:
         return []
 
     return sorted(output, key=lambda x: -x[2])
+
+#============================================================================
+def getCommitteeCashOnHand(committee_id):
+    latest_filing, recent_total, controlled_amount, params = getCommitteeRecentFilingData(committee_id)
+    return controlled_amount
+
+#============================================================================
+def getCommitteeRecentFilingData(committee_id):
+
+    if not committee_id:
+        return [None, 0, 0, {}]
+
+    latest_filing = '''
+        SELECT * FROM most_recent_filings
+        WHERE committee_id = :committee_id
+        ORDER BY received_datetime DESC
+        LIMIT 1
+    '''
+
+    latest_filing = g.engine.execute(sa.text(latest_filing), committee_id=committee_id)
+
+    if not latest_filing:
+        return [None, 0, 0, {}]
+
+    latest_filing = dict(latest_filing.first())
+    params = {'committee_id': committee_id}
+
+    if not latest_filing['reporting_period_end']:
+      latest_filing['reporting_period_end'] = datetime.now().date() - timedelta(days=90)
+
+    if latest_filing['end_funds_available'] or latest_filing['end_funds_available'] == 0:
+        recent_receipts = '''
+            SELECT
+              COALESCE(SUM(receipts.amount), 0) AS amount
+            FROM condensed_receipts AS receipts
+            JOIN filed_docs AS filed
+              ON receipts.filed_doc_id = filed.id
+            WHERE receipts.committee_id = :committee_id
+              AND receipts.received_date > :end_date
+        '''
+        controlled_amount = latest_filing['end_funds_available']
+
+        params['end_date'] = latest_filing['reporting_period_end']
+
+    else:
+
+        recent_receipts = '''
+            SELECT
+              COALESCE(SUM(receipts.amount), 0) AS amount
+            FROM condensed_receipts AS receipts
+            JOIN filed_docs AS filed
+              ON receipts.filed_doc_id = filed.id
+            WHERE receipts.committee_id = :committee_id
+        '''
+
+        controlled_amount = 0
+
+    recent_total = g.engine.execute(sa.text(recent_receipts),**params).first().amount
+    controlled_amount += recent_total
+
+    return [latest_filing, recent_total, controlled_amount, params]
 
 #============================================================================
 def getCommitteeFundsData(committee_id, pre_primary_start, primary_start, post_primary_start):
