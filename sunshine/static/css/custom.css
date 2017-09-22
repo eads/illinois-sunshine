@@ -142,7 +142,7 @@ a.header-link:active {text-decoration: none; color: #000000 !important;}
 a.header-link{color: #000000 !important;}
 a.header-link:focus {text-decoration: none; color: #000000 !important;}
 
-a, a:active, a:hover, a:focus { color: #48d; }
+a, a:active, a:hover, a:focus { color: #0123b4; }
 /* Custom page footer */
 .footer {
   padding: 20px 0 20px 0;
@@ -388,7 +388,7 @@ table.uneven tr:last-of-type td {
 
 .news-box-wrapper {
     width: 100%;
-    height: 160px;
+    height: 106px;
     border: 2px solid #ccc;
     border-radius: 10px;
     padding: 10px;
@@ -414,6 +414,10 @@ table.uneven tr:last-of-type td {
 
 .table-border {
     border: 2px solid #ccc;
+}
+
+.subtitle {
+    color: #333333;
 }
 
 @media screen and (min-width: 993px) {

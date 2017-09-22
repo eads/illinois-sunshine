@@ -23,7 +23,7 @@
 <div class='row'>
     <div class='col-sm-10'>
         <div class='jumbotron'>
-            <p style="font-size:27px;color:#000000;padding:0;">Keep an Eye on Money in Illinois Politics <span style="color:#666666; font-size:16px;">updated daily</span></p>
+            <p style="font-size:27px;color:#000000;padding:0;">Keep an Eye on Money in Illinois Politics <span style="color:#666; font-size:16px;">updated daily</span></p>
             <form action='/search' method='GET'>
                 <div class="input-group input-group-lg">
                     <input type="text" class="form-control" placeholder="Search for names of candidates, committees and donors in Illinois" name="term">
@@ -48,14 +48,14 @@
     </div>
 </div>
 
-<div class="col-sm-8" style="height: 500px; padding: 0; margin: 0;">
+<div class="col-sm-8" style="height: 470px; padding: 0; margin: 0;">
     <iframe style="border-style: none; width: 100%; height: 100%;" scrolling="no" src="{{ url_for('views.widgets_gov_contested_race', hideHeaders=True) }}"></iframe>
 </div>
 
 <!-- News Content Div -->
 <div class="col-sm-4">
     <h3 style="color: black;">News </h3>
-    <p>Click below for the latest articles</p>
+    <p class="subtitle">Click below for the latest articles</p>
     <div id="news-1" class="news-box-wrapper">
         <div class="news-box">
             {{ news_content[0].content|safe }}
@@ -74,11 +74,14 @@
 </div>
 
 <!-- Add table for "Political Funds in Illinois" here -->
-<h3 style="color: black;">
-    Party Funds in Illinois
-</h3>
-
-<p>Funds available for top Democratic and Republican political parties in Illinois, updated daily</p>
+<div class="col-sm-12">
+    <img src="/static/images/icon_dem.png" class="header-image" />
+    <div style="display:inline-block;">
+        <h3 style="color: black;">Party Funds in Illinois</h3>
+        <p class="subtitle">Funds available for top Democratic and Republican political parties in Illinois, updated daily</p>
+    </div>
+    <img src="/static/images/icon_rep.png" class="header-image" style="float: right;"/>
+</div>
 
 <div class="col-sm-6" style="padding: 0;">
     <table class="table table-striped dem uneven table-border table-merge" id='democratic-committee-funds-table'>
@@ -135,10 +138,11 @@
 <br />
 
 <h3>
+    <i class="fa fa-dollar fa-fw"></i>
     <a class="header-link" href='{{ url_for('views.donations') }}' target='_blank'>Recent Political Donations</a>
 </h3>
 
-<p>Top donations to Illinois political committees in the last 7 days, updated daily</p>
+<p class="subtitle">Top donations to Illinois political committees in the last 7 days, updated daily</p>
 <table class="table table-striped table-border" id='donations-table'>
     <thead>
         <tr>
@@ -184,7 +188,7 @@
     <a class="header-link" href='{{ url_for('views.top_earners') }}'>Top Earners</a> <small>last 30 days, updated daily</small>
 </h2>
 
-<p>Political committees operate by receiving donations, transfers and loans from people, organizations, and other committees. Here's who's raised the most money in the last month.</p>
+<p class="subtitle">Political committees operate by receiving donations, transfers and loans from people, organizations, and other committees. Here's who's raised the most money in the last month.</p>
 <table class="table table-striped table-border">
     <thead>
         <tr>
@@ -221,7 +225,7 @@
 <br /><br />
 
 <h2><i class='fa fa-group fa-fw'></i> <a class="header-link" href='{{ url_for('views.committees') }}'>Top Political Committees</a> <small>highest current funds, updated daily</small></h2>
-<p>Political committees must report their current funds, along with donations and expenditures <a href='/about/#how-is-campaign-finance-disclosed'>every quarter</a>. Here's the committees that have the most investments and cash on hand.</p>
+<p class="subtitle">Political committees must report their current funds, along with donations and expenditures <a href='/about/#how-is-campaign-finance-disclosed'>every quarter</a>. Here's the committees that have the most investments and cash on hand.</p>
 <table class="table table-hover table-border">
     <thead>
         <tr>
@@ -252,7 +256,7 @@
     <a class="header-link" href='{{ url_for('views.donations') }}'>Tracking Political Donations</a> <small>by month and year</small>
 </h2>
 
-<p>The chart below shows political donations since 1994. <i class='fa fa-fw fa-hand-pointer-o'></i> Hover over a month to see total donations and transfers during that time period. To see total donations and transfers by year, decrease the size of your browser window until you see dark green bars.</p>
+<p class="subtitle">The chart below shows political donations since 1994. <i class='fa fa-fw fa-hand-pointer-o'></i> Hover over a month to see total donations and transfers during that time period. To see total donations and transfers by year, decrease the size of your browser window until you see dark green bars.</p>
 
 <div class='hidden-sm hidden-xs' id='donation-chart'></div>
 <br />
@@ -262,11 +266,11 @@
 
 <h2><i class='fa fa-info-circle fa-fw'></i> <a class="header-link" href='{{ url_for('views.about') }}'>About</a></h2>
 
-<p><strong>Illinois Sunshine</strong> is a tool by the <a href='http://www.ilcampaign.org/' title='Illinois Campaign for Political Reform'>Illinois Campaign for Political Reform</a> for browsing political contributions in the state of Illinois.</p>
+<p class="subtitle"><strong>Illinois Sunshine</strong> is a tool by the <a href='http://www.ilcampaign.org/' title='Illinois Campaign for Political Reform'>Illinois Campaign for Political Reform</a> for browsing political contributions in the state of Illinois.</p>
 
-<p>The data comes from the <a href='http://www.elections.il.gov/'>Illinois State Board of Elections</a>, which has been collecting this data electronically since 1994. We built Illinois Sunshine to give journalists, activists and citizens better access to and documentation for this data.</p>
+<p class="subtitle">The data comes from the <a href='http://www.elections.il.gov/'>Illinois State Board of Elections</a>, which has been collecting this data electronically since 1994. We built Illinois Sunshine to give journalists, activists and citizens better access to and documentation for this data.</p>
 
-<p><a class='btn btn-primary' href='{{ url_for('views.about') }}'><i class='fa fa-info-circle fa-fw'></i> Read more &raquo;</a></p>
+<p class="subtitle"><a class='btn btn-primary' href='{{ url_for('views.about') }}'><i class='fa fa-info-circle fa-fw'></i> Read more &raquo;</a></p>
 
 {% endblock %}
 
