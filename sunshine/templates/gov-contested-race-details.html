@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% from 'macros.html' import pager, header %}
+{% block header_social %}
+    {{ header(contested_races_title, contested_races_type | contested_races_description, request.path) }}
+{% endblock %}
+{% block content %}
+
+{% if is_single %}
+<style>
+    body {
+        color: #000;
+    }
+    table.table-striped.table-hover tr.nohighlight td {
+        background-color: #f9f9f9 !important;
+    }
+    table.table-striped.table-hover td {
+        border-top: 0 !important;
+    }
+</style>
+{% endif %}
+
+<div class="row">
+    <div class="col-sm-8">
+    </div>
+   </div>
+<div class="row">
+    <div class="col-sm-8">
+        <img src="/static/images/illinois_state_seal.png" style="width: 80px; height: 80px;" class="header-image"/>
+        <div style="display:inline-block;">
+            <h1 style="color: #000; font-size: 36px;">Contested State Races</h1>
+            <p style="color: #000; font-size:20px; padding-left: 2px;">Updated Daily</p>
+        </div>
+
+
+        <br />
+        <ul class="nav nav-pills">
+          <li role="presentation" {% if contested_races_type == "House of Representatives"%}class="active"{% else %}class="inactive"{% endif %}><a href="">House of Representatives  </a></li>
+          <li role="presentation" {% if contested_races_type == "Senate"%}class="active"{% else %}class="inactive"{% endif %}><a href="{{ url_for('views.contested_races') }}?type=senate">  Senate  </a></li>
+          <li role="presentation" {% if contested_races_type == "State Comptroller"%}class="active"{% else %}class="inactive"{% endif %}><a href="{{ url_for('views.contested_races') }}?type=comptroller">  Statewide Offices  </a></li>
+          <li role="presentation" {% if contested_races_type == "Gubernatorial"%}class="active"{% else %}class="inactive"{% endif %}><a href="{{ url_for('views.contested_races') }}?type=gubernatorial">  Governor  </a></li>
+        </ul>
+
+    </div>
+    <div class="col-sm-4">
+        <p style="margin-left: 30px; margin-top:25px;">Brought to you by:</p>
+        <img src='/static/images/mccormick-foundation-logo_2x.png' class='img-responsive center-block' style="width: 85%; height: 85%;"/>
+    </div>
+ </div>
+
+ <div class="col-sm-12" style="height: 470px; padding: 0; margin: 0;">
+     <iframe style="border-style: none; width: 100%; height: 100%;" scrolling="no" src="{{ url_for('views.widgets_gov_contested_race', hideHeaders=True, showImage=False) }}"></iframe>
+ </div>
+
+{% endblock %}

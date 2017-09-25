@@ -522,6 +522,17 @@ def contested_races():
     else:
         page_count = flask_session['%s_page_count' % type_arg]
 
+    if cr_type== "Gubernatorial":
+        return render_template('gov-contested-race-details.html',
+                                is_single=(len(contested_dict) == 1),
+                                cand_span=cand_span,
+                                contested_dict=contested_dict,
+                                contested_races_type=cr_type,
+                                contested_races_title=cr_title,
+                                page_count=page_count)
+
+
+
     return render_template('contested-races.html',
                             is_single=(len(contested_dict) == 1),
                             cand_span=cand_span,
@@ -1139,12 +1150,18 @@ def widget_top_earners():
 def widgets_gov_contested_race():
 
     hideHeaders = request.args.get('hideHeaders')
+    showImageString = request.args.get('showImage')
+    if showImageString == "True":
+        showImage = True
+    else:
+        showImage = False
 
     contested_race_data = sslib.getAllCandidateFunds(0, "G")
     current_date = datetime.now()
 
     return render_template('widgets/gov-contested-race.html', current_date=current_date,
-                           contested_race_data=contested_race_data, hideHeaders=hideHeaders)
+                           contested_race_data=contested_race_data, hideHeaders=hideHeaders,
+                           showImage=showImage)
 
 
 @views.route('/widgets/top-donations/')
