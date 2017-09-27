@@ -33,7 +33,7 @@ def getPrimaryDetails(branch):
 
 #============================================================================
 def getContestedRacesCsvData(type_arg):
-    is_comptroller = (type_arg == "comptroller")
+    is_comptroller = (type_arg == "statewide_office")
     is_gubernatorial = (type_arg == "gubernatorial")
     input_filename = "contested_races.csv"
 
@@ -60,18 +60,21 @@ def getCandidateDataFromCsvRow(row):
 def getContestedRacesData(type_arg):
     is_house = (type_arg == "house_of_representatives")
     is_senate = (type_arg == "senate")
-    is_comptroller = (type_arg == "comptroller")
+    is_statewide_office = (type_arg == "statewide_office")
     is_gubernatorial = (type_arg == "gubernatorial")
 
     if is_senate:
         contested_races_type = "Senate"
         contested_races_title = "Illinois Senate Contested Races"
-    elif is_comptroller:
-        contested_races_type = "State Comptroller"
-        contested_races_title = "Illinois State Comptroller Contested Race"
+    elif is_statewide_office:
+        contested_races_type = "Statewide Offices"
+        contested_races_title = "Illinois Statewide Officers Contested Race"
     elif is_gubernatorial:
         contested_races_type = "Gubernatorial"
         contested_races_title = "Race for Illinois Governor"
+    else:
+        contested_races_type = "House of Representatives"
+        contested_races_title = "Illinois House of Representatives Contested Races"
 
     contested_races = getContestedRacesCsvData(type_arg)
 
@@ -87,7 +90,7 @@ def getContestedRacesData(type_arg):
     cand_span = 0
 
     for e in contested_races:
-        if is_comptroller or is_gubernatorial:
+        if is_statewide_office or is_gubernatorial:
             district = 0
         else:
             district = int(e['District'])

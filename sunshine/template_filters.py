@@ -56,11 +56,11 @@ def expense_popover(s):
 
 def contested_races_description(s):
   if s == "House of Representatives":
-    description = "Contested 2016 General Election Races for the Illinois State House of Representatives in all districts."
+    description = "Contested 2018 General Election Races for the Illinois State House of Representatives in all districts."
   elif s == "Senate":
-    description = "Contested 2016 General Election Races for the Illinois Senate in all districts."
-  elif s == "State Comptroller":
-    description = "Contested 2016 Race for Illinois State Comptroller."
+    description = "Contested 2018 General Election Races for the Illinois Senate in all districts."
+  elif s == "Statewide Offices":
+    description = "2018 General Election Races for Illinois Constitutional Offices Statewide."
   elif s == "Gubernatorial":
     description = "Funds raised and spent in the 2018 Race for Illinois Governor."
   else:

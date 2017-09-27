@@ -509,10 +509,11 @@ def muni_contested_race_detail(district):
 @cache.cached(timeout=CACHE_TIMEOUT, key_prefix=make_cache_key)
 def contested_races():
 
-    contested_races_type = "House of Representatives"
-    contested_races_title = "Illinois House of Representatives Contested Races"
     # TODO: Update the default argument here when the other pages are enabled again.
     type_arg = 'gubernatorial' if not request.args.get('type') else request.args.get('type', 'gubernatorial')
+
+    if type_arg == "gubernatorial":
+        return render_template('gov-contested-race-details.html', contested_races_type=type_arg)
 
     cr_type, cr_title, cand_span, contested_dict = sslib.getContestedRacesData(type_arg)
 
@@ -521,17 +522,6 @@ def contested_races():
         flask_session['%s_page_count' % type_arg] = page_count
     else:
         page_count = flask_session['%s_page_count' % type_arg]
-
-    if cr_type== "Gubernatorial":
-        return render_template('gov-contested-race-details.html',
-                                is_single=(len(contested_dict) == 1),
-                                cand_span=cand_span,
-                                contested_dict=contested_dict,
-                                contested_races_type=cr_type,
-                                contested_races_title=cr_title,
-                                page_count=page_count)
-
-
 
     return render_template('contested-races.html',
                             is_single=(len(contested_dict) == 1),
@@ -1350,3 +1340,25 @@ def admin_news():
 def admin_logout():
     logout_user()
     return redirect('/admin/login/')
+
+def getRaceData(branch):
+
+    contested_races_sql = '''
+        SELECT cr.*, c.name as committee_committee_name
+        FROM contested_races cr
+        LEFT JOIN committees c ON (c.id = cr.committee_id)
+        WHERE cr.branch = :branch
+        ORDER BY cr.last_name, cr.first_name
+    '''
+
+    races = list(g.engine.execute(sa.text(contested_races_sql),branch=branch))
+
+    contested_races = []
+    for race in races:
+        committee_funds_data = sslib.getCommitteeFundsData(race.committee_id, pre_primary_start, primary_start, post_primary_start)
+        primary_funds_raised = sslib.getFundsRaisedTotal(race.committee_id, pre_primary_start, primary_start, primary_end) if is_after_primary else None
+
+        if race.incumbent == 'N':
+            contested_races.append({'table_display_data': committee_funds_data, 'primary_funds_raised': primary_funds_raised, 'last': race.last_name, 'first': race.first_name,'committee_name': race.committee_committee_name if race.committee_committee_name else race.committee_name,'incumbent': race.incumbent,'committee_id': race.committee_id,'party': race.party,'investments': race.investments, 'debts': race.debts, 'supporting_funds': race.supporting_funds, 'opposing_funds': race.opposing_funds, 'contributions' : race.contributions, 'total_funds' : race.total_funds, 'funds_available' : race.funds_available, 'total_money' : race.total_money, 'candidate_id' : race.candidate_id, 'reporting_period_end' : race.reporting_period_end})
+        else:
+            contested_races.insert(0,{'table_display_data': committee_funds_data, 'primary_funds_raised': primary_funds_raised, 'last': race.last_name, 'first': race.first_name,'committee_name': race.committee_committee_name if race.committee_committee_name else race.committee_name,'incumbent': race.incumbent,'committee_id': race.committee_id,'party': race.party,'investments': race.investments, 'debts': race.debts, 'supporting_funds': race.supporting_funds, 'opposing_funds': race.opposing_funds, 'contributions' : race.contributions, 'total_funds' : race.total_funds, 'funds_available' : race.funds_available, 'total_money' : race.total_money, 'candidate_id' : race.candidate_id, 'reporting_period_end' : race.reporting_period_end})
