@@ -393,3 +393,62 @@ def getReceiptsTotal(committee_id, doc_name, last_period_end, last_receipt_date=
 
     total_receipts = total_receipts.scalar()
     return total_receipts if total_receipts is not None else 0.0
+
+#============================================================================
+def getContestedRacesInformation(type_arg):
+    is_house = (type_arg == "house_of_representatives")
+    is_senate = (type_arg == "senate")
+    is_statewide_office = (type_arg == "statewide_office")
+
+    if is_senate:
+        contested_races_type = "Senate"
+        contested_races_title = "Illinois Senate Contested Races"
+        branch = "S"
+    elif is_statewide_office:
+        contested_races_type = "Statewide Offices"
+        contested_races_title = "Illinois Statewide Officers Contested Race"
+        branch = "C"
+    else:
+        contested_races_type = "House of Representatives"
+        contested_races_title = "Illinois House of Representatives Contested Races"
+        branch = "H"
+
+    contested_races_sql = '''
+        SELECT cr.*, c.name as committee_committee_name
+        FROM contested_races cr
+        LEFT JOIN committees c ON (c.id = cr.committee_id)
+        WHERE cr.branch = :branch
+        ORDER BY cr.district
+    '''
+
+    contest_race_list = list(g.engine.execute(sa.text(contested_races_sql), branch=branch))
+
+    contested_count = []
+    total_candidates = 0
+    total_race_money = 0
+    previous_district = None
+    for c in contest_race_list:
+        if previous_district is None:
+            total_candidates += 1
+            total_race_money += c.total_money
+        elif previous_district == c.district:
+            total_candidates += 1
+            total_race_money += c.total_money
+        else:
+
+            if branch == "C":
+                contested_count.append(["Comptroller", total_candidates, total_race_money])
+            else:
+                contested_count.append([previous_district, total_candidates, total_race_money])
+
+            total_candidates = 1
+            total_race_money = c.total_money
+
+        previous_district = c.district
+
+    if branch == "C":
+        contested_count.append(["Comptroller", total_candidates, total_race_money])
+    else:
+        contested_count.append([previous_district, total_candidates, total_race_money])
+
+    return [contested_races_type, contested_races_title, contest_race_list, contested_count]

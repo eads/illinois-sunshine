@@ -515,21 +515,21 @@ def contested_races():
     if type_arg == "gubernatorial":
         return render_template('gov-contested-race-details.html', contested_races_type=type_arg)
 
-    cr_type, cr_title, cand_span, contested_dict = sslib.getContestedRacesData(type_arg)
+    cr_type, cr_title, contested_race_info, count = sslib.getContestedRacesInformation(type_arg)
 
-    if not flask_session.get('%s_page_count' % type_arg):
-        page_count = int(round(len(contested_dict), -2) / 50)
-        flask_session['%s_page_count' % type_arg] = page_count
+    district_label = ""
+    if type_arg == "senate":
+        district_label = "Senate District"
     else:
-        page_count = flask_session['%s_page_count' % type_arg]
+        district_label = "House District"
 
     return render_template('contested-races.html',
-                            is_single=(len(contested_dict) == 1),
-                            cand_span=cand_span,
-                            contested_dict=contested_dict,
+                            is_single=False,
                             contested_races_type=cr_type,
                             contested_races_title=cr_title,
-                            page_count=page_count)
+                            contested_race_info=contested_race_info,
+                            district_label=district_label,
+                            count=count)
 
 
 @views.route('/contested-race-detail/<race_type>-<district>/')
