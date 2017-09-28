@@ -73,7 +73,7 @@
         </thead>
         <tbody>
             {% for row in count %}
-            <tr>
+            <tr class="clickable" style="cursor:pointer;" onclick="display({{row[0]}})">
                 {% if r_type != "statewide_office" %}
                     {% if row[0] == 1 %}
                     <td style="width: 33.3%;">{{ row[0] }}st {{ district_label }}</td>
@@ -90,9 +90,69 @@
                 <td style="width: 33.3%;" class="text-center">{{ row[1] }}</td>
                 <td style="width: 33.3%;" class="text-right">{{ row[2] | format_money }}</td>
             </tr>
+            <tr id="{{row[0]}}" style="display: none;">
+                <td colspan="3" style="padding: 0;">
+                    <div class="col-sm-6" style="padding: 0;">
+                        <table class="table table-striped dem uneven table-border table-merge" style="padding-bottom: 0; margin-bottom: 0;">
+                            <thead>
+                                <tr>
+                                    <th style="background-color: #99afff;">Democratic Candidates</th>
+                                    <th class="text-right" style="background-color: #99afff;">Funds Raised</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Committee Name</td>
+                                    <td class='text-right'>Cash on Hand</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="col-sm-6" style="padding: 0;">
+                        <table class="table table-striped rep table-border" style="padding-bottom: 0;  margin-bottom: 0;">
+                            <thead>
+                                <tr>
+                                    <th style="background-color: #ff9999;" >Republican Candidates</th>
+                                    <th class="text-right" style="background-color: #ff9999;" >Funds Raised</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Committee Name</td>
+                                    <td class='text-right'>Cash on Hand</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </td>
+            </tr>
+
             {% endfor %}
         </tbody>
     </table>
 </div>
 
+<script>
+
+
+
+</script>
+
+{% endblock %}
+
+{% block extra_javascript %}
+<script>
+
+    function display(id) {
+        var attr = "#" + id;
+        if ( $(attr).css('display') == 'none' ){
+            $(attr).show();
+        }
+        else {
+            $(attr).hide();
+        }
+    }
+
+</script>
 {% endblock %}
