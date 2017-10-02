@@ -510,7 +510,7 @@ def muni_contested_race_detail(district):
 def contested_races():
 
     # TODO: Update the default argument here when the other pages are enabled again.
-    type_arg = 'gubernatorial' if not request.args.get('type') else request.args.get('type', 'gubernatorial')
+    type_arg = 'house_of_representatives' if not request.args.get('type') else request.args.get('type', 'house_of_representatives')
 
     if type_arg == "gubernatorial":
         return render_template('gov-contested-race-details.html', contested_races_type=type_arg)
@@ -524,7 +524,6 @@ def contested_races():
         district_label = "House District"
 
     return render_template('contested-races.html',
-                            is_single=False,
                             contested_races_type=cr_type,
                             contested_races_title=cr_title,
                             contested_race_info=contested_race_info,

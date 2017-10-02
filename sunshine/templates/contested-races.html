@@ -45,7 +45,7 @@
 
         <p>
             {{ contested_races_type | contested_races_description }}
-            {% if not is_single %}<br />Click on a row to see detailed information.{% endif %}
+            <br />Click on a row to see detailed information.
         </p>
     </div>
     <div class="col-sm-4">
@@ -73,7 +73,7 @@
         </thead>
         <tbody>
             {% for row in count %}
-            <tr class="clickable" style="cursor:pointer;" onclick="display({{row[0]}})">
+            <tr class="clickable" style="cursor:pointer;" onclick="display('{{row[0]}}')">
                 {% if r_type != "statewide_office" %}
                     {% if row[0] == 1 %}
                     <td style="width: 33.3%;">{{ row[0] }}st {{ district_label }}</td>
