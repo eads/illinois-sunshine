@@ -1335,6 +1335,46 @@ def admin_news():
     return render_template('admin/news.html', code=update_message, news_content=news_content)
 
 
+@views.route('/admin/contested-races/')
+@login_required
+def admin_contested_races():
+
+    type_arg = 'house_of_representatives' if not request.args.get('type') \
+        else request.args.get('type', 'house_of_representatives')
+
+    if type_arg == "senate":
+        contested_races_type = "Senate"
+        contested_races_title = "Illinois Senate Contested Races"
+        branch = "S"
+    elif type_arg == "statewide_office":
+        contested_races_type = "Statewide Offices"
+        contested_races_title = "Illinois Statewide Officers Contested Race"
+        branch = "C"
+    elif type_arg == "house_of_representatives":
+        contested_races_type = "House of Representatives"
+        contested_races_title = "Illinois House of Representatives Contested \
+                                 Races"
+        branch = "H"
+    else:
+        contested_races_type = "Gubernatorial"
+        contested_races_title = "Illinois Gubernatorial Contested Race"
+        branch = "G"
+
+    contested_race_sql = '''
+        SELECT *
+        FROM contested_races
+        WHERE branch = :branch
+    '''
+
+    contested_race_data = list(g.engine.execute(sa.text(contested_race_sql),
+                                                branch=branch))
+
+    return render_template('admin/contested-races.html',
+                           contested_races_type=contested_races_type,
+                           contested_races_title=contested_races_title,
+                           contested_race_data=contested_race_data)
+
+
 @views.route('/admin/logout/')
 def admin_logout():
     logout_user()

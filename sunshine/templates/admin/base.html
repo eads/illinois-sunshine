@@ -44,6 +44,7 @@
             <ul class="nav navbar-nav">
               <li class="{% if request.path == url_for('views.index') %}active{% endif %}"><a href='{{ url_for('views.index') }}'><i class='fa fa-home fa-fw'></i> Home</a></li>
               <li class="{% if request.path == url_for('views.admin_dashboard') %}active{% endif %}"><a href='{{ url_for('views.admin_dashboard') }}'><i class='fa fa-gear fa-fw'></i> Dashboard</a></li>
+              <li class="{% if request.path == url_for('views.admin_contested_races') %}active{% endif %}"><a href='{{ url_for('views.admin_contested_races') }}'><i class='fa fa-times-circle fa-fw'></i> Contested Races</a></li>
               <li class="{% if request.path == url_for('views.admin_news') %}active{% endif %}"><a href='{{ url_for('views.admin_news') }}'><i class='fa fa-newspaper-o fa-fw'></i> News</a></li>
               {% if current_user.is_authenticated() %}
                     <li class="{% if request.path == url_for('views.admin_logout') %}active{% endif %}"><a href='{{ url_for('views.admin_logout') }}'><i class='fa fa-sign-out fa-fw'></i> Sign Out</a></li>
