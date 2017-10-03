@@ -1,0 +1,15 @@
+{% extends 'admin/base.html' %}
+{% from 'macros.html' import pager, header %}
+{% block header_social %}
+    {{ header(contested_races_title, contested_races_type | contested_races_description, request.path) }}
+{% endblock %}
+{% block content %}
+
+{% for c in candidate_info %}
+
+<p> {{c.first_name}} </p>
+<p> {{c.last_name}} </p>
+
+{% endfor %}
+
+{% endblock %}

@@ -1375,29 +1375,35 @@ def admin_contested_races():
                            contested_race_data=contested_race_data)
 
 
+@views.route('/admin/contested-race-detail/', methods=['GET', 'POST'])
+@login_required
+def admin_contested_race_details():
+
+    if request.method != 'POST':
+        first_name = request.args.get('first_name')
+        last_name = request.args.get('last_name')
+
+        if first_name is None:
+            return render_template('admin/contested-race-detail.html',
+                                   new_candidate=True)
+
+        candidate_sql = '''
+            SELECT *
+            FROM contested_races
+            WHERE first_name = :first_name
+            AND last_name = :last_name
+        '''
+
+        candidate_info = g.engine.execute(sa.text(candidate_sql),
+                                          first_name=first_name,
+                                          last_name=last_name)
+
+        return render_template('admin/contested-race-detail.html',
+                               new_candidate=False,
+                               candidate_info=candidate_info)
+
+
 @views.route('/admin/logout/')
 def admin_logout():
     logout_user()
     return redirect('/admin/login/')
-
-def getRaceData(branch):
-
-    contested_races_sql = '''
-        SELECT cr.*, c.name as committee_committee_name
-        FROM contested_races cr
-        LEFT JOIN committees c ON (c.id = cr.committee_id)
-        WHERE cr.branch = :branch
-        ORDER BY cr.last_name, cr.first_name
-    '''
-
-    races = list(g.engine.execute(sa.text(contested_races_sql),branch=branch))
-
-    contested_races = []
-    for race in races:
-        committee_funds_data = sslib.getCommitteeFundsData(race.committee_id, pre_primary_start, primary_start, post_primary_start)
-        primary_funds_raised = sslib.getFundsRaisedTotal(race.committee_id, pre_primary_start, primary_start, primary_end) if is_after_primary else None
-
-        if race.incumbent == 'N':
-            contested_races.append({'table_display_data': committee_funds_data, 'primary_funds_raised': primary_funds_raised, 'last': race.last_name, 'first': race.first_name,'committee_name': race.committee_committee_name if race.committee_committee_name else race.committee_name,'incumbent': race.incumbent,'committee_id': race.committee_id,'party': race.party,'investments': race.investments, 'debts': race.debts, 'supporting_funds': race.supporting_funds, 'opposing_funds': race.opposing_funds, 'contributions' : race.contributions, 'total_funds' : race.total_funds, 'funds_available' : race.funds_available, 'total_money' : race.total_money, 'candidate_id' : race.candidate_id, 'reporting_period_end' : race.reporting_period_end})
-        else:
-            contested_races.insert(0,{'table_display_data': committee_funds_data, 'primary_funds_raised': primary_funds_raised, 'last': race.last_name, 'first': race.first_name,'committee_name': race.committee_committee_name if race.committee_committee_name else race.committee_name,'incumbent': race.incumbent,'committee_id': race.committee_id,'party': race.party,'investments': race.investments, 'debts': race.debts, 'supporting_funds': race.supporting_funds, 'opposing_funds': race.opposing_funds, 'contributions' : race.contributions, 'total_funds' : race.total_funds, 'funds_available' : race.funds_available, 'total_money' : race.total_money, 'candidate_id' : race.candidate_id, 'reporting_period_end' : race.reporting_period_end})

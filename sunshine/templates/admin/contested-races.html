@@ -5,24 +5,6 @@
 {% endblock %}
 {% block content %}
 
-{% if is_single %}
-<style>
-    body {
-        color: #000;
-    }
-    table.table-striped.table-hover tr.nohighlight td {
-        background-color: #f9f9f9 !important;
-    }
-    table.table-striped.table-hover td {
-        border-top: 0 !important;
-    }
-</style>
-{% endif %}
-
-<div class="row">
-    <div class="col-sm-8">
-    </div>
-   </div>
 <div class="row">
     <div class="col-sm-8">
         <br />
@@ -40,10 +22,6 @@
             {{ contested_races_type }}
         </p>
     </div>
-    <!-- <div class="col-sm-4">
-        <p style="margin-left: 30px; margin-top:25px;">Brought to you by:</p>
-        <img src='/static/images/mccormick-foundation-logo_2x.png' class='img-responsive center-block' style="width: 85%; height: 85%;"/>
-    </div> -->
  </div>
 
 
@@ -81,7 +59,7 @@
         </thead>
         <tbody>
             {% for c in contested_race_data %}
-            <tr>
+            <tr class="clickable" style="cursor:pointer;" onclick="window.open('{{ url_for('views.admin_contested_race_details', first_name= c.first_name, last_name=c.last_name) }}'); setAttribute('target', '_blank');">
                 <td>{{c.total_money}}</td>
                 <td>{{c.branch}}</td>
                 <td>{{c.last_name}}</td>
@@ -108,26 +86,4 @@
     </table>
 </div>
 
-<script>
-
-
-
-</script>
-
-{% endblock %}
-
-{% block extra_javascript %}
-<script>
-
-    function display(id) {
-        var attr = "#" + id;
-        if ( $(attr).css('display') == 'none' ){
-            $(attr).show();
-        }
-        else {
-            $(attr).hide();
-        }
-    }
-
-</script>
 {% endblock %}
