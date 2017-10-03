@@ -759,7 +759,7 @@ class SunshineViews(object):
         )
 
         print("Dropping contested_races...")
-        self.executeTransaction('DROP TABLE IF EXISTS contested_races')
+        #self.executeTransaction('DROP TABLE IF EXISTS contested_races')
 
         print("Dropping muni_contested_races...")
         self.executeTransaction('DROP TABLE IF EXISTS muni_contested_races')
@@ -1102,130 +1102,15 @@ class SunshineViews(object):
 
     def contestedRaces(self):
         """
-        Creates the contested races view table from csv files
-        hard saved in sunsine folder
+        Creates the contested_races table.
         """
-
-        contested_races = []
-
-        try:
-            print('Generating contested race data...')
-            gubernatorial_input_file = csv.DictReader(open(
-                os.getcwd() + '/sunshine/gubernatorial_contested_races.csv'
-            ))
-            comptroller_input_file = csv.DictReader(open(
-                os.getcwd() + '/sunshine/comptroller_contested_race.csv'
-            ))
-            races_input_file = csv.DictReader(open(
-                os.getcwd() + '/sunshine/contested_races.csv'
-            ))
-
-            entries = []
-            for row in races_input_file:
-                entries.append(row)
-
-            for row in comptroller_input_file:
-                entries.append(row)
-
-            for row in gubernatorial_input_file:
-                row["Senate/House"] = "G"
-                entries.append(row)
-
-            for e in entries:
-                supporting_funds = 0
-                opposing_funds = 0
-                controlled_amount = 0
-                funds_available = 0
-                contributions = 0
-                total_funds = 0
-                investments = 0
-                debts = 0
-                total_money = 0
-                candidate_names = []  # list of all possible candidate name possibilities
-
-                try:
-                    candidate_id = int(float(e['Candidate ID']))
-                except:
-                    candidate_id = None
-
-                try:
-                    committee_id = int(float(e['ID']))
-                except:
-                    committee_id = None
-
-                try:
-                    district = int(float(e['District']))
-                except:
-                    district = 0
-
-                first_names = e['First'].split(';')
-                last_names = e['Last'].split(';')
-
-                first_name = first_names[0].strip()
-                last_name = last_names[0].strip()
-
-                if candidate_id:
-                    first_name, last_name = \
-                        self.get_candidate_name(candidate_id)
-                    if first_name and last_name:
-                        candidate_names.append(first_name + " " + last_name)
-
-                for fn in first_names:
-                    for ln in last_names:
-                        candidate_names.append(fn.strip() + " " + ln.strip())
-                        candidate_names.append(ln.strip() + " " + fn.strip())
-                        candidate_names.append(ln.strip())
-
-                cand_names = set(candidate_names)
-
-                for cn in cand_names:
-                    supp_funds, opp_funds = self.get_candidate_funds_byname(cn)
-                    supporting_funds = supporting_funds + supp_funds
-                    opposing_funds = opposing_funds + opp_funds
-
-
-                if committee_id:
-                    committee, recent_receipts, recent_total, latest_filing, controlled_amount, ending_funds, investments, debts, expenditures, total_expenditures = self.get_committee_details(committee_id)
-
-                    funds_available = latest_filing['end_funds_available'] if latest_filing else 0
-                    contributions = recent_total
-                    total_funds = controlled_amount
-                    investments = latest_filing['total_investments'] if latest_filing else 0
-                    debts = latest_filing['total_debts'] if latest_filing else 0
-
-                total_money = \
-                    supporting_funds + opposing_funds + controlled_amount
-                contested_races.append({
-                    'district': district,
-                    'branch': e['Senate/House'],
-                    'last_name': last_name,
-                    'first_name': first_name,
-                    'committee_name': e['Committee'],
-                    'incumbent': e['Incumbent'],
-                    'committee_id': committee_id,
-                    'party': e['Party'],
-                    'funds_available': funds_available,
-                    'contributions': contributions,
-                    'total_funds': total_funds,
-                    'investments': investments,
-                    'debts': debts,
-                    'supporting_funds': supporting_funds,
-                    'opposing_funds': opposing_funds,
-                    'candidate_id': candidate_id,
-                    'total_money': total_money,
-                    'reporting_period_end': latest_filing['reporting_period_end'] if latest_filing else None,
-                    'alternate_names': ';'.join(cand_names)
-                })
-        except:
-            print('Problem in generating contested_races table data: ')
-            print(traceback.print_exc())
 
         try:
             trans = self.connection.begin()
             curs = self.connection.connection.cursor()
 
             exp = '''
-                CREATE TABLE contested_races(
+                CREATE TABLE IF NOT EXISTS contested_races(
                     total_money DOUBLE PRECISION,
                     branch TEXT,
                     last_name TEXT,
@@ -1262,41 +1147,28 @@ class SunshineViews(object):
         try:
             trans = self.connection.begin()
             curs = self.connection.connection.cursor()
-
-            insert_statement = 'INSERT INTO contested_races (%s) VALUES %s'
-            cols = [
-                'last_name',
-                'committee_id',
-                'incumbent',
-                'district',
-                'first_name',
-                'total_funds',
-                'candidate_id',
-                'investments',
-                'committee_name',
-                'supporting_funds',
-                'opposing_funds',
-                'party',
-                'branch',
-                'contributions',
-                'debts',
-                'total_money',
-                'funds_available',
-                'reporting_period_end',
-                'alternate_names'
-            ]
-
-            for cr in contested_races:
-                values = [cr[column] for column in cols]
-                curs.execute(insert_statement, (AsIs(','.join(cols)), tuple(values)))
-
+            curs.execute('''ALTER TABLE contested_races ADD COLUMN id SERIAL PRIMARY KEY''')
             trans.commit()
         except psycopg2.ProgrammingError:
-            print('Problem inserting contested_races data: ')
+            print('Problem adding contested_races id column: ')
             print(traceback.print_exc())
             trans.rollback()
         except sa.exc.ProgrammingError:
-            print('Problem inserting contested_races data: ')
+            print('Problem inserting contested_races id column: ')
+            print(traceback.print_exc())
+            trans.rollback()
+
+        try:
+            trans = self.connection.begin()
+            curs = self.connection.connection.cursor()
+            curs.execute('''ALTER TABLE contested_races ALTER COLUMN district TYPE varchar (50)''')
+            trans.commit()
+        except psycopg2.ProgrammingError:
+            print('Problem updating contested_races district column type: ')
+            print(traceback.print_exc())
+            trans.rollback()
+        except sa.exc.ProgrammingError:
+            print('Problem updating contested_races district column type: ')
             print(traceback.print_exc())
             trans.rollback()
 
