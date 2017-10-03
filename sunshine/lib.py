@@ -262,7 +262,7 @@ def getCommitteeFundsData(committee_id, pre_primary_start, primary_start, post_p
             # Add rows for each primary quarterly report.
             for i, rpt in enumerate(primary_quarterlies):
 
-                # If the reporting period being date equals the temporary start date, skip the record
+                # If the reporting period begin date equals the temporary start date, skip the record
                 if temp_dtstart == rpt.filed_doc.reporting_period_begin:
                     continue
 
@@ -322,7 +322,7 @@ def getCommitteeFundsData(committee_id, pre_primary_start, primary_start, post_p
                                             .filter(D2Report.committee_id==committee_id)\
                                             .filter(FiledDoc.doc_name=="Quarterly")\
                                             .filter(FiledDoc.reporting_period_end <= last_quarterly_date)\
-                                            .order_by(FiledDoc.reporting_period_begin)\
+                                            .order_by(FiledDoc.reporting_period_begin.desc())\
                                             .order_by(FiledDoc.reporting_period_end)\
                                             .order_by(FiledDoc.received_datetime.desc())\
                                             .first()
