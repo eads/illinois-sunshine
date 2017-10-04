@@ -19,7 +19,6 @@ def getPrimaryDetails(branch):
     primary_details = {}
 
     # Check to see if these dates are the same
-    #if (branch == "G"):
     primary_details["pre_primary_start"] = "2017-01-01"
     primary_details["primary_start"] = "2018-01-01"
     primary_details["primary_end"] = "2018-03-20"
@@ -416,13 +415,22 @@ def getContestedRacesInformation(type_arg):
         contested_races_title = "Illinois House of Representatives Contested Races"
         branch = "H"
 
-    contested_races_sql = '''
-        SELECT cr.*, c.name as committee_committee_name
-        FROM contested_races cr
-        LEFT JOIN committees c ON (c.id = cr.committee_id)
-        WHERE cr.branch = :branch
-        ORDER BY cr.district
-    '''
+    if branch == "O":
+        contested_races_sql = '''
+            SELECT cr.*, c.name as committee_committee_name
+            FROM contested_races cr
+            LEFT JOIN committees c ON (c.id = cr.committee_id)
+            WHERE cr.branch = :branch
+            ORDER BY cr.district
+        '''
+    else:
+        contested_races_sql = '''
+            SELECT cr.*, c.name as committee_committee_name
+            FROM contested_races cr
+            LEFT JOIN committees c ON (c.id = cr.committee_id)
+            WHERE cr.branch = :branch
+            ORDER BY cast(cr.district as integer)
+        '''
 
     contest_race_list = list(g.engine.execute(sa.text(contested_races_sql), branch=branch))
 
@@ -439,20 +447,14 @@ def getContestedRacesInformation(type_arg):
             total_race_money += c.total_money
         else:
 
-            if branch == "C":
-                contested_count.append(["Comptroller", total_candidates, total_race_money])
-            else:
-                contested_count.append([previous_district, total_candidates, total_race_money])
+            contested_count.append([previous_district, total_candidates, total_race_money])
 
             total_candidates = 1
             total_race_money = c.total_money
 
         previous_district = c.district
 
-    if branch == "C":
-        contested_count.append(["Comptroller", total_candidates, total_race_money])
-    else:
-        contested_count.append([previous_district, total_candidates, total_race_money])
+    contested_count.append([previous_district, total_candidates, total_race_money])
 
     return [contested_races_type, contested_races_title, contest_race_list, contested_count]
 
