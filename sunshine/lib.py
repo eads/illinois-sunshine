@@ -16,6 +16,7 @@ import os
 def getPrimaryDetails(branch):
     primary_details = {}
 
+    # Check to see if these dates are the same
     if (branch == "G"):
         primary_details["pre_primary_start"] = "2017-01-01"
         primary_details["primary_start"] = "2018-01-01"
@@ -407,7 +408,7 @@ def getContestedRacesInformation(type_arg):
     elif is_statewide_office:
         contested_races_type = "Statewide Offices"
         contested_races_title = "Illinois Statewide Officers Contested Race"
-        branch = "C"
+        branch = "O"
     else:
         contested_races_type = "House of Representatives"
         contested_races_title = "Illinois House of Representatives Contested Races"

@@ -59,7 +59,7 @@
         </thead>
         <tbody>
             {% for c in contested_race_data %}
-            <tr class="clickable" style="cursor:pointer;" onclick="window.open('{{ url_for('views.admin_contested_race_details', first_name= c.first_name, last_name=c.last_name) }}'); setAttribute('target', '_blank');">
+            <tr class="clickable" style="cursor:pointer;" onclick="window.location.href='{{ url_for('views.admin_contested_race_details', id=c.id) }}';">
                 <td>{{c.total_money}}</td>
                 <td>{{c.branch}}</td>
                 <td>{{c.last_name}}</td>
@@ -84,6 +84,8 @@
             {% endfor %}
         </tbody>
     </table>
+
+    <a class="btn btn-default" href="{{ url_for('views.admin_contested_race_details') }}">Add Candidate</a>
 </div>
 
 {% endblock %}

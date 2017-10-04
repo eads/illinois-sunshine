@@ -5,11 +5,84 @@
 {% endblock %}
 {% block content %}
 
-{% for c in candidate_info %}
+{% if new_candidate %}
+<h2>New Candidate Details </h2>
+{% else %}
+<h2>Edit Candidate Details </h2>
+{% endif %}
 
-<p> {{c.first_name}} </p>
-<p> {{c.last_name}} </p>
+<div class = "col-sm-12" style="padding: 0;">
+    <form method="POST" action="/admin/contested-race-detail/">
+        <input type="hidden" name="id" value="{{id}}">
+        <table  class="table table-striped table-hover table-border">
+            <thead>
+                <th style="width: 50%;">Column</th>
+                <th style="width: 50%;">Value</th>
+            </thead>
 
-{% endfor %}
+            <tr>
+                <td>Branch: </td>
+                <td>
+                    <select name="branch" class="form-control">
+                        <option value=""></option>
+                        <option value="G" {% if candidate.branch == "G" %} selected {% endif %}>Gubernatorial</option>
+                        <option value="H" {% if candidate.branch == "H" %} selected {% endif %}>House of Representatives</option>
+                        <option value="S" {% if candidate.branch == "S" %} selected {% endif %}>Senate</option>
+                        <option value="O" {% if candidate.branch == "O" %} selected {% endif %}>Statewide Offices</option>
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <td>First Name: </td>
+                <td><input type="text" class="form-control" name="first_name" value="{{candidate.first_name}}" style="color: black;"></td>
+            </tr>
+
+            <tr>
+                <td>Last Name: </td>
+                <td><input type="text" class="form-control" name="last_name" value="{{candidate.last_name}}" style="color: black;"></td>
+            </tr>
+
+            <tr>
+                <td>Incumbent: </td>
+                <td><input type="checkbox" class="form-control" name="incumbent" {% if candidate.incumbent == 'Y'%} checked {% endif %}></td>
+            </tr>
+
+            <tr>
+                <td>Committee: </td>
+                <td>
+                    <select name="committee" class="form-control">
+                        <option value=""></option>
+                        {% for co in committees %}
+                        <option value="{{co.id}}" {% if candidate.committee_id == co.id %} selected {% endif %}>{{co.name}}</option>
+                        {% endfor %}
+                    </select>
+                </td>
+            </tr>
+
+            <tr>
+                <td>Party: </td>
+                <td>
+                    <select name="party" class="form-control">
+                        <option value="D" {% if candidate.party == 'D'%} selected {% endif %}>Democrat</option>
+                        <option value="R" {% if candidate.party == 'R'%} selected {% endif %}>Republican</option>
+                    </select>
+                </td>
+            </tr>
+
+            <tr>
+                <td>Alternative Names: </td>
+                <td><input type="text" class="form-control" name="alternate_names" value="{{candidate.alternate_names}}" style="color: black;"></td>
+            </tr>
+        </table>
+        <div class="col-sm-12">
+            <button type="submit" class="btn btn-default float-sm-right" style="width: 75px; float: right; margin: 10px;">Save</button>
+            {% if not new_candidate %}<button type="button" class="btn btn-default float-sm-right" style="width: 75px; float: right; margin: 10px;">Delete</button>{% endif %}
+        </div>
+    </form>
+
+    <br/>
+    <br/>
+
+</div>
 
 {% endblock %}
