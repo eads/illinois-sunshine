@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, abort, request, redirect, \
-    session as flask_session, g, current_app
+    session as flask_session, g, current_app, flash
 from flask_login import login_required, login_user, logout_user, \
     current_user
 from sunshine.database import db_session
@@ -1347,7 +1347,7 @@ def admin_contested_races():
     elif type_arg == "statewide_office":
         contested_races_type = "Statewide Offices"
         contested_races_title = "Illinois Statewide Officers Contested Race"
-        branch = "C"
+        branch = "O"
     elif type_arg == "house_of_representatives":
         contested_races_type = "House of Representatives"
         contested_races_title = "Illinois House of Representatives Contested \
@@ -1362,6 +1362,7 @@ def admin_contested_races():
         SELECT *
         FROM contested_races
         WHERE branch = :branch
+        ORDER BY district, party, last_name, first_name
     '''
 
     contested_race_data = list(g.engine.execute(sa.text(contested_race_sql),
@@ -1373,50 +1374,92 @@ def admin_contested_races():
                            contested_race_data=contested_race_data)
 
 
+@views.route('/admin/contested-race-delete/', methods=['POST'])
+@login_required
+def admin_contested_race_delete():
+    id = request.form.get("id")
+
+    if not id:
+        return redirect('/admin/contested-races/')
+
+    race = sslib.getContestedRace(id)
+    race_types = {
+        'H': 'house_of_representatives',
+        'S': 'senate',
+        'O': 'statewide_office',
+        'G': 'gubernatorial'
+    }
+
+    sslib.deleteContestedRace(id)
+
+    if not race or not race.branch or not race_types.get(race.branch):
+        return redirect('/admin/contested-races/')
+
+    return redirect('/admin/contested-races/?type=' + race_types.get(race.branch))
+
+
 @views.route('/admin/contested-race-detail/', methods=['GET', 'POST'])
 @login_required
 def admin_contested_race_details():
 
-    committees = getAllCommitteeInfo()
+    race_types = {
+        'H': 'house_of_representatives',
+        'S': 'senate',
+        'O': 'statewide_office',
+        'G': 'gubernatorial'
+    }
+    id = None if (not request.args.get("id") or request.args.get("id") == "None") else request.args.get("id")
+
+    if not id:
+        id = None if (not request.form.get("id") or request.form.get("id") == "None") else request.form.get("id")
+
+    new_candidate = True if id is None else False
+    statewide_districts = ['Attorney General', 'Comptroller', 'Secretary of State', 'Treasurer']
 
     if request.method != 'POST':
-        id = request.args.get('id')
-
-        new_candidate = True if id is None else False
-
         info = getCandidateInfo(id)
-
-
         return render_template('admin/contested-race-detail.html',
                                id=id,
                                new_candidate=new_candidate,
                                candidate=info,
-                               committees=committees)
+                               statewide_districts=statewide_districts)
 
+    # Handle the cancel button.
+    if request.form.get("cancel"):
+        if not id:
+            return redirect('/admin/contested-races/')
+
+        race = sslib.getContestedRace(id)
+        if not race:
+            return redirect('/admin/contested-races/')
+
+        return redirect('/admin/contested-races/?type=' + race_types.get(race.branch))
+
+    candidate_info = {}
+    candidate_info["branch"] = request.form.get("branch")
+    candidate_info["district"] = request.form.get("district_statewide") if candidate_info["branch"] == "O" else request.form.get("district")
+    candidate_info["first_name"] = request.form.get("first_name")
+    candidate_info["last_name"] = request.form.get("last_name")
+    candidate_info["incumbent"] = 'N' if request.form.get("incumbent") is None else 'Y',
+    candidate_info["committee_id"] = None if request.form.get("committee") == "" else request.form.get("committee")
+    candidate_info["candidate_id"] = None if request.form.get("candidate") == "" else request.form.get("candidate")
+    candidate_info["committee_name"] = getCommitteeName(candidate_info["committee_id"])
+    candidate_info["party"] = request.form.get("party")
+    candidate_info["alternate_names"] = str(request.form.get("alternate_names")).strip()
+
+    id, messages = insertCandidate(id, candidate_info, statewide_districts)
+
+    if not messages:
+        flash('Candidate saved successfully', 'success')
     else:
-        id = request.form.get("id")
+        flash('<br />'.join(messages), 'error')
 
-        candidate_info = {}
-
-        candidate_info["branch"]= request.form.get("branch"),
-        candidate_info["first_name"]= request.form.get("first_name"),
-        candidate_info["last_name"]= request.form.get("last_name"),
-        candidate_info["incumbent"]= 'N' if request.form.get("incumbent") is None else 'Y',
-        candidate_info["committee_id"]= None if request.form.get("committee") == "" else request.form.get("committee"),
-        candidate_info["party"]= request.form.get("party"),
-        candidate_info["alternate_names"] = str(request.form.get("alternate_names")).strip()
-
-
-        committee_name = getCommitteeName(candidate_info["committee_id"])
-
-        insertCandidate(id, candidate_info, committee_name)
-        info = getCandidateInfo(id)
-
-        return render_template('admin/contested-race-detail.html',
-                               id=id,
-                               new_candidate=False,
-                               candidate=info,
-                               committees=committees)
+    return render_template('admin/contested-race-detail.html',
+                           id=id,
+                           new_candidate=False,
+                           candidate=candidate_info,
+                           committees=committees,
+                           statewide_districts=statewide_districts)
 
 
 @views.route('/admin/logout/')
@@ -1428,61 +1471,26 @@ def admin_logout():
 # helper methods
 def getCandidateInfo(id):
 
+    if id == "None":
+        id = None
+
     info = {}
+    info['branch'] = None
+    info['last_name'] = None
+    info['first_name'] = None
+    info['committee_name'] = None
+    info['incumbent'] = None
+    info['committee_id'] = None
+    info['party'] = None
+    info['district'] = None
+    info['candidate_id'] = None
+    info['alternate_names'] = None
 
-    if id is None:
-        info['total_money'] = None
-        info['branch'] = None
-        info['last_name'] = None
-        info['first_name'] = None
-        info['committee_name'] = None
-        info['incumbent'] = None
-        info['committee_id'] = None
-        info['party'] = None
-        info['funds_available'] = None
-        info['contributions'] = None
-        info['total_funds'] = None
-        info['investments'] = None
-        info['debts'] = None
-        info['supporting_funds'] = None
-        info['opposing_funds'] = None
-        info['reporting_period_end'] = None
-        info['district'] = None
-        info['candidate_id'] = None
-        info['alternate_names'] = None
-
-    elif id == "None":
-        info['total_money'] = None
-        info['branch'] = None
-        info['last_name'] = None
-        info['first_name'] = None
-        info['committee_name'] = None
-        info['incumbent'] = None
-        info['committee_id'] = None
-        info['party'] = None
-        info['funds_available'] = None
-        info['contributions'] = None
-        info['total_funds'] = None
-        info['investments'] = None
-        info['debts'] = None
-        info['supporting_funds'] = None
-        info['opposing_funds'] = None
-        info['reporting_period_end'] = None
-        info['district'] = None
-        info['candidate_id'] = None
-        info['alternate_names'] = None
-
-    else:
-        candidate_sql = '''
-            SELECT *
-            FROM contested_races
-            WHERE id = :id
-        '''
-        candidate_info = g.engine.execute(sa.text(candidate_sql),
-                                          id=id)
+    if id is not None:
+        candidate_sql = '''SELECT * FROM contested_races WHERE id = :id'''
+        candidate_info = g.engine.execute(sa.text(candidate_sql), id=id)
 
         for c in candidate_info:
-            info['total_money'] = c.total_money
             info['branch'] = c.branch
             info['last_name'] = c.last_name
             info['first_name'] = c.first_name
@@ -1490,31 +1498,11 @@ def getCandidateInfo(id):
             info['incumbent'] = c.incumbent
             info['committee_id'] = c.committee_id
             info['party'] = c.party
-            info['funds_available'] = c.funds_available
-            info['contributions'] = c.contributions
-            info['total_funds'] = c.total_funds
-            info['investments'] = c.investments
-            info['debts'] = c.debts
-            info['supporting_funds'] = c.supporting_funds
-            info['opposing_funds'] = c.opposing_funds
-            info['reporting_period_end'] = c.reporting_period_end
             info['district'] = c.district
             info['candidate_id'] = c.candidate_id
             info['alternate_names'] = c.alternate_names
 
     return info
-
-
-def getAllCommitteeInfo():
-
-    committee_sql = '''
-        SELECT id, name
-        FROM committees
-        ORDER BY name
-    '''
-
-    return list(g.engine.execute(sa.text(committee_sql)))
-
 
 def getCommitteeName(committee_id):
 
@@ -1524,54 +1512,119 @@ def getCommitteeName(committee_id):
     if committee_id is None:
         return committee_name
 
-    else:
-        committee_sql = '''
-            SELECT name
-            FROM committees
-            WHERE id = :committee_id
-        '''
+    committee_sql = '''SELECT name FROM committees WHERE id = :committee_id'''
+    committee_list = list(g.engine.execute(sa.text(committee_sql), committee_id=committee_id))
 
-        committee_list = list(g.engine.execute(sa.text(committee_sql), committee_id=committee_id))
-
-        for c in committee_list:
-            committee_name = c.name
+    for c in committee_list:
+        committee_name = c.name
 
     return committee_name
 
+def isValidCommittee(committee_id):
+    sql = '''SELECT count(*) as total FROM committees WHERE id = :committee_id'''
+    total = list(g.engine.execute(sa.text(sql), committee_id=committee_id))
+    return total and total[0]["total"] > 0
 
-def insertCandidate(id, candidate_info, committee_name):
+def isValidCandidate(candidate_id):
+    sql = '''SELECT count(*) as total FROM candidates WHERE id = :candidate_id'''
+    total = list(g.engine.execute(sa.text(sql), candidate_id=candidate_id))
+    return total and total[0]["total"] > 0
 
-    if id == "None":
+def insertCandidate(id, candidate_info, statewide_districts):
+
+    messages = []
+
+    # Branch
+    if not candidate_info["branch"] or candidate_info["branch"] not in ["G", "H", "S", "O"]:
+        messages.append("Branch: Please select a valid option")
+
+    # District
+    if candidate_info["branch"] == "G":
+        candidate_info["district"] = "0"
+    elif candidate_info["branch"] == "S" or candidate_info["branch"] == "H":
+        try:
+            if int(candidate_info["district"]) <= 0:
+                messages.append("District: Please enter a positive integer")
+        except ValueError:
+            messages.append("District: Please enter a positive integer")
+    elif candidate_info["branch"] == "O":
+        if candidate_info["district"] not in statewide_districts:
+            messages.append("District: Please select a valid option")
+
+    # First name
+    if not candidate_info["first_name"]:
+        messages.append("First Name: Field is required")
+
+    # Last name
+    if not candidate_info["last_name"]:
+        messages.append("Last Name: Field is required")
+
+    # Setup the alternate_names field
+    if candidate_info["first_name"] is not None and candidate_info["last_name"] is not None:
+        fname = candidate_info["first_name"].strip()
+        lname = candidate_info["last_name"].strip()
+        alt_names = "{0} {1};{1} {0};{1}".format(fname, lname).split(";")
+        ci_alt_names = [] if not candidate_info["alternate_names"] else (candidate_info["alternate_names"].strip(";").split(";"))
+
+        # Combine the names and filter out the duplicates
+        ci_alt_names += alt_names
+        candidate_info["alternate_names"] = ";".join(list(set(ci_alt_names)))
+
+    # Party
+    if not candidate_info["party"] or candidate_info["party"] not in ["R", "D"]:
+        messages.append("Party: Field is required")
+
+    # Candidate ID
+    if candidate_info["candidate_id"] and not isValidCandidate(candidate_info["candidate_id"]):
+        messages.append("Candidate ID: Unknown ID, please check that the value was entered correctly")
+
+    # Committee ID
+    if candidate_info["committee_id"] and not isValidCommittee(candidate_info["committee_id"]):
+        messages.append("Committee ID: Unknown ID, please check that the value was entered correctly")
+
+    if messages:
+        return id, messages
+
+    if not id or id == "None":
         candidate_update_sql = '''
             INSERT INTO contested_races
-            (branch, first_name, last_name, incumbent, committee_id, committee_name, party, alternate_names)
-            VALUES (:branch, :first_name, :last_name, :incumbent, :committee_id, :committee_name, :party, :alternate_names)
+            (branch, district, first_name, last_name, incumbent, committee_id, committee_name, party, alternate_names)
+            VALUES (:branch, :district, :first_name, :last_name, :incumbent, :committee_id, :committee_name, :party, :alternate_names)
+            RETURNING id
         '''
 
-        g.engine.execute(sa.text(candidate_update_sql),
+        id_result = g.engine.execute(sa.text(candidate_update_sql),
                          branch=candidate_info["branch"],
+                         district=candidate_info["district"],
                          first_name=candidate_info["first_name"],
                          last_name=candidate_info["last_name"],
                          incumbent=candidate_info["incumbent"],
                          committee_id=candidate_info["committee_id"],
-                         committee_name=committee_name,
+                         committee_name=candidate_info["committee_name"],
                          party=candidate_info["party"],
                          alternate_names=candidate_info["alternate_names"])
+        id_result = id_result.fetchone()
+        id = None if not id_result else id_result[0]
     else:
         candidate_update_sql = '''
             UPDATE contested_races
-            SET (branch, first_name, last_name, incumbent, committee_id, committee_name, party, alternate_names)
-            = (:branch, :first_name, :last_name, :incumbent, :committee_id, :committee_name, :party, :alternate_names)
+            SET (branch, district, first_name, last_name, incumbent, committee_id, committee_name, party, alternate_names)
+            = (:branch, :district, :first_name, :last_name, :incumbent, :committee_id, :committee_name, :party, :alternate_names)
             WHERE id = :id
         '''
 
         g.engine.execute(sa.text(candidate_update_sql),
                          id=id,
                          branch=candidate_info["branch"],
+                         district=candidate_info["district"],
                          first_name=candidate_info["first_name"],
                          last_name=candidate_info["last_name"],
                          incumbent=candidate_info["incumbent"],
                          committee_id=candidate_info["committee_id"],
-                         committee_name=committee_name,
+                         committee_name=candidate_info["committee_name"],
                          party=candidate_info["party"],
                          alternate_names=candidate_info["alternate_names"])
+
+    sslib.updateContestedRaceFunds(g.engine, id)
+
+    return id, []
