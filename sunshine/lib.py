@@ -11,6 +11,8 @@ from dateutil.parser import parse
 import collections
 import csv
 import os
+import psycopg2
+import traceback
 
 #============================================================================
 def getPrimaryDetails(branch):
@@ -455,3 +457,336 @@ def getContestedRacesInformation(type_arg):
     contested_count.append([previous_district, total_candidates, total_race_money])
 
     return [contested_races_type, contested_races_title, contest_race_list, contested_count]
+
+#============================================================================
+def getContestedRace(id):
+    contested_races_sql = '''SELECT * FROM contested_races WHERE id = :id'''
+    return g.engine.execute(sa.text(contested_races_sql), id=id).fetchone()
+
+#============================================================================
+def deleteContestedRace(id):
+    contested_races_sql = '''DELETE FROM contested_races WHERE id = :id'''
+    try:
+        g.engine.execute(sa.text(contested_races_sql), id=id)
+    except (sa.exc.ProgrammingError, psycopg2.ProgrammingError):
+        return False
+    return True
+
+#============================================================================
+def updateContestedRacesFunds(connection, races = []):
+
+    # Get candidate funds data
+    try:
+        if not races:
+            races_sql = '''SELECT * FROM contested_races'''
+            races = list(connection.execute(sa.text(races_sql)))
+    except (psycopg2.ProgrammingError, sa.exc.ProgrammingError):
+        current_app.logger.error('Problem retrieving contested_race funds data: ')
+        current_app.logger.error(traceback.print_exc())
+
+    races_data = []
+    for race in races:
+        updateContestedRaceFunds(connection, race.id, race)
+
+
+#============================================================================
+def updateContestedRaceFunds(connection, id, race = None):
+    race_data = None
+
+    try:
+        if not race:
+            race_sql = '''SELECT * FROM contested_races WHERE id = :id'''
+            race = connection.execute(sa.text(race_sql), id=id).fetchone()
+    except (psycopg2.ProgrammingError, sa.exc.ProgrammingError):
+        current_app.logger.error('Problem retrieving contested_races funds data: ')
+        current_app.logger.error(traceback.print_exc())
+
+    if not race:
+        return
+
+    try:
+        primary_details = getPrimaryDetails(race.branch)
+        pre_primary_start = primary_details.get("pre_primary_start")
+        primary_start = primary_details.get("primary_start")
+        primary_end = primary_details.get("primary_end")
+        primary_quarterly_end = primary_details.get("primary_quarterly_end")
+        post_primary_start = primary_details.get("post_primary_start")
+        is_after_primary = primary_details.get("is_after_primary")
+
+        # If there are no dates for this race, then go to the next race.
+        if not pre_primary_start:
+            return
+
+        supporting_funds = 0
+        opposing_funds = 0
+        controlled_amount = 0
+        funds_available = 0
+        contributions = 0
+        total_funds = 0
+        investments = 0
+        debts = 0
+        total_money = 0
+
+        # Get supporting/opposing funds
+        cand_names = race.alternate_names.split(";")
+        for name in cand_names:
+            supp_funds, opp_funds = get_candidate_funds_byname(connection, name)
+            supporting_funds += supp_funds
+            opposing_funds += opp_funds
+
+        # Get candidate contested race funds
+        if race.committee_id:
+            committee_funds_data = getCommitteeFundsData(race.committee_id, pre_primary_start, primary_start, post_primary_start)
+            funds_available = getFundsRaisedTotal(race.committee_id, pre_primary_start, primary_start, primary_end) if is_after_primary else 0
+            total_funds = (committee_funds_data[-1][1] if committee_funds_data else 0.0)
+
+            committee, recent_receipts, recent_total, latest_filing, controlled_amount, ending_funds, investments, debts, expenditures, total_expenditures = get_committee_details(connection, race.committee_id)
+            contributions = recent_total
+            investments = latest_filing['total_investments'] if latest_filing else 0
+            debts = latest_filing['total_debts'] if latest_filing else 0
+
+        total_money = supporting_funds + opposing_funds + total_funds
+
+        race_data = {
+            "id": race.id,
+            "total_money": total_money,
+            "total_funds": total_funds,
+            "funds_available": funds_available,
+            "contributions": contributions,
+            "investments": investments,
+            "debts": debts,
+            "supporting_funds": supporting_funds,
+            "opposing_funds": opposing_funds
+        }
+    except (psycopg2.ProgrammingError, sa.exc.ProgrammingError):
+        current_app.logger.error('Problem calculating contested_race funds data: ')
+        current_app.logger.error(traceback.print_exc())
+
+    if not race_data:
+        return
+
+    # Update candidate funds data
+    try:
+        connection.execute(sa.text('''
+            UPDATE contested_races SET
+                total_money = :total_money,
+                total_funds = :total_funds,
+                funds_available = :funds_available,
+                contributions = :contributions,
+                investments = :investments,
+                debts = :debts,
+                supporting_funds = :supporting_funds,
+                opposing_funds = :opposing_funds
+            WHERE id = :id
+        '''), **race_data)
+    except (psycopg2.ProgrammingError, sa.exc.ProgrammingError):
+        current_app.logger.error('Problem updating contested_races funds data: ')
+        current_app.logger.error(traceback.print_exc())
+
+#============================================================================
+def get_candidate_funds_byname(connection, candidate_name):
+
+    d2_part = '9B'
+    expended_date = datetime(2017, 1, 1, 0, 0)
+
+    supporting_funds_sql = '''(
+        SELECT
+          COALESCE(SUM(e.amount), 0) AS amount
+        FROM condensed_expenditures AS e
+        WHERE e.candidate_name = :candidate_name
+          AND e.d2_part = :d2_part
+          AND e.expended_date > :expended_date
+          AND e.supporting = 'true'
+        )
+    '''
+
+    try:
+        supporting_funds = connection.execute(
+            sa.text(supporting_funds_sql),
+            candidate_name=candidate_name,
+            d2_part=d2_part,
+            expended_date=expended_date
+        ).fetchone().amount
+    except (sa.exc.ProgrammingError, psycopg2.ProgrammingError) as e:
+        raise e
+
+    opposing_funds_sql = '''(
+        SELECT
+          COALESCE(SUM(e.amount), 0) AS amount
+        FROM condensed_expenditures AS e
+        WHERE e.candidate_name = :candidate_name
+          AND e.d2_part = :d2_part
+          AND e.expended_date > :expended_date
+          AND e.opposing = 'true'
+        )
+    '''
+
+    try:
+        opposing_funds = connection.execute(
+            sa.text(opposing_funds_sql),
+            candidate_name=candidate_name,
+            d2_part=d2_part,
+            expended_date=expended_date
+        ).fetchone().amount
+    except (sa.exc.ProgrammingError, psycopg2.ProgrammingError) as e:
+        raise e
+
+    return supporting_funds, opposing_funds
+
+#============================================================================
+def get_committee_details(connection, committee_id):
+    default_return = [None, None, 0, None, 0, 0, None, None, None, 0]
+
+    default_return = [None, None, 0, None, 0, 0, 0, 0, 0, 0]
+
+    try:
+        committee_id = int(committee_id)
+    except ValueError:
+        return default_return
+
+    comm_sql = '''(
+        SELECT *
+        FROM committees
+        WHERE id = :committee_id
+        )
+    '''
+    committee = executeTransaction(
+        connection,
+        sa.text(comm_sql),
+        committee_id=committee_id
+    ).fetchone()
+
+    if not committee:
+        return default_return
+
+    latest_filing = '''(
+        SELECT * FROM most_recent_filings
+        WHERE committee_id = :committee_id
+        ORDER BY received_datetime DESC
+        LIMIT 1
+        )
+    '''
+
+    latest_filing = dict(executeTransaction(
+        connection,
+        sa.text(latest_filing),
+        committee_id=committee_id
+    ).fetchone())
+
+    params = {'committee_id': committee_id}
+
+    if not latest_filing['reporting_period_end']:
+        latest_filing['reporting_period_end'] = \
+            datetime.now().date() - timedelta(days=90)
+
+    if (
+        latest_filing['end_funds_available'] or
+        latest_filing['end_funds_available'] == 0
+    ):
+
+        recent_receipts = '''(
+            SELECT
+              COALESCE(SUM(receipts.amount), 0) AS amount
+            FROM condensed_receipts AS receipts
+            JOIN filed_docs AS filed
+              ON receipts.filed_doc_id = filed.id
+            WHERE receipts.committee_id = :committee_id
+              AND receipts.received_date > :end_date
+            )
+        '''
+        controlled_amount = latest_filing['end_funds_available'] if latest_filing else 0
+
+        params['end_date'] = latest_filing['reporting_period_end'] if latest_filing else None
+        end_date = latest_filing['reporting_period_end'] if latest_filing else None
+
+    else:
+
+        recent_receipts = '''(
+            SELECT
+              COALESCE(SUM(receipts.amount), 0) AS amount
+            FROM condensed_receipts AS receipts
+            JOIN filed_docs AS filed
+              ON receipts.filed_doc_id = filed.id
+            WHERE receipts.committee_id = :committee_id
+            )
+        '''
+
+        controlled_amount = 0
+
+    recent_total = executeTransaction(
+        connection,
+        sa.text(recent_receipts),
+        **params
+    ).fetchone().amount
+    controlled_amount += recent_total
+
+    quarterlies = '''(
+        SELECT DISTINCT ON (f.doc_name, f.reporting_period_end)
+          r.end_funds_available,
+          r.total_investments,
+          r.total_receipts,
+          (r.debts_itemized * -1) as debts_itemized,
+          (r.debts_non_itemized * -1) as debts_non_itemized,
+          (r.total_expenditures * -1) as total_expenditures,
+          f.reporting_period_end
+        FROM d2_reports AS r
+        JOIN filed_docs AS f
+          ON r.filed_doc_id = f.id
+        WHERE r.committee_id = :committee_id
+          AND f.reporting_period_end IS NOT NULL
+          AND f.doc_name = 'Quarterly'
+        ORDER BY f.reporting_period_end ASC
+        )
+    '''
+
+    quarterlies = executeTransaction(
+        connection,
+        sa.text(quarterlies),
+        committee_id=committee_id
+    )
+
+    ending_funds = [
+        [
+            r.end_funds_available,
+            r.reporting_period_end.year,
+            r.reporting_period_end.month,
+            r.reporting_period_end.day
+        ] for r in quarterlies
+    ]
+
+    investments = [
+        [
+            r.total_investments,
+            r.reporting_period_end.year,
+            r.reporting_period_end.month,
+            r.reporting_period_end.day
+        ] for r in quarterlies
+    ]
+
+    debts = [
+        [
+            (r.debts_itemized + r.debts_non_itemized),
+            r.reporting_period_end.year,
+            r.reporting_period_end.month,
+            r.reporting_period_end.day
+        ] for r in quarterlies
+    ]
+
+    expenditures = [
+        [
+            r.total_expenditures,
+            r.reporting_period_end.year,
+            r.reporting_period_end.month,
+            r.reporting_period_end.day
+        ] for r in quarterlies
+    ]
+
+    # accomodate for independent expenditures past last filing date
+
+    total_expenditures = sum([r.total_expenditures for r in quarterlies])
+
+    return committee, recent_receipts, recent_total, latest_filing, controlled_amount, ending_funds, investments, debts, expenditures, total_expenditures
+
+#============================================================================
+def executeTransaction(connection, query, **kwargs):
+    return connection.execute(query, **kwargs)

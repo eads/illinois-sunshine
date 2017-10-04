@@ -10,6 +10,7 @@ from typeinferer import TypeInferer
 import psycopg2
 import traceback
 from psycopg2.extensions import AsIs
+from sunshine import lib as sslib
 
 import logging
 logger = logging.getLogger(__name__)
@@ -1135,11 +1136,7 @@ class SunshineViews(object):
 
             curs.execute(exp)
             trans.commit()
-        except psycopg2.ProgrammingError:
-            trans.rollback()
-            print('Problem in creating contested_races table: ')
-            print(traceback.print_exc())
-        except sa.exc.ProgrammingError:
+        except (psycopg2.ProgrammingError, sa.exc.ProgrammingError):
             trans.rollback()
             print('Problem in creating contested_races table: ')
             print(traceback.print_exc())
@@ -1149,13 +1146,7 @@ class SunshineViews(object):
             curs = self.connection.connection.cursor()
             curs.execute('''ALTER TABLE contested_races ADD COLUMN id SERIAL PRIMARY KEY''')
             trans.commit()
-        except psycopg2.ProgrammingError:
-            print('Problem adding contested_races id column: ')
-            print(traceback.print_exc())
-            trans.rollback()
-        except sa.exc.ProgrammingError:
-            print('Problem inserting contested_races id column: ')
-            print(traceback.print_exc())
+        except (psycopg2.ProgrammingError, sa.exc.ProgrammingError):
             trans.rollback()
 
         try:
@@ -1163,14 +1154,13 @@ class SunshineViews(object):
             curs = self.connection.connection.cursor()
             curs.execute('''ALTER TABLE contested_races ALTER COLUMN district TYPE varchar (50)''')
             trans.commit()
-        except psycopg2.ProgrammingError:
+        except (psycopg2.ProgrammingError, sa.exc.ProgrammingError):
             print('Problem updating contested_races district column type: ')
             print(traceback.print_exc())
             trans.rollback()
-        except sa.exc.ProgrammingError:
-            print('Problem updating contested_races district column type: ')
-            print(traceback.print_exc())
-            trans.rollback()
+
+        # Update the contested races data.
+        sslib.updateContestedRacesFunds(self.connection)
 
     def usersTable(self):
 
@@ -1247,196 +1237,10 @@ class SunshineViews(object):
             return candidate.first_name, candidate.last_name
 
     def get_candidate_funds_byname(self, candidate_name):
-
-        d2_part = '9B'
-        expended_date = datetime(2017, 1, 1, 0, 0)
-
-        supporting_funds_sql = '''(
-            SELECT
-              COALESCE(SUM(e.amount), 0) AS amount
-            FROM condensed_expenditures AS e
-            WHERE e.candidate_name = :candidate_name
-              AND e.d2_part = :d2_part
-              AND e.expended_date > :expended_date
-              AND e.supporting = 'true'
-            )
-        '''
-
-        supporting_funds = self.executeTransaction(
-            sa.text(supporting_funds_sql),
-            candidate_name=candidate_name,
-            d2_part=d2_part,
-            expended_date=expended_date
-        ).fetchone().amount
-
-        opposing_funds_sql = '''(
-            SELECT
-              COALESCE(SUM(e.amount), 0) AS amount
-            FROM condensed_expenditures AS e
-            WHERE e.candidate_name = :candidate_name
-              AND e.d2_part = :d2_part
-              AND e.expended_date > :expended_date
-              AND e.opposing = 'true'
-            )
-        '''
-
-        opposing_funds = self.executeTransaction(
-            sa.text(opposing_funds_sql),
-            candidate_name=candidate_name,
-            d2_part=d2_part,
-            expended_date=expended_date
-        ).fetchone().amount
-
-        return supporting_funds, opposing_funds
+        return sslib.get_candidate_funds_byname(self.connection, candidate_name)
 
     def get_committee_details(self, committee_id):
-        default_return = [None, None, 0, None, 0, 0, None, None, None, 0]
-
-        default_return = [None, None, 0, None, 0, 0, 0, 0, 0, 0]
-
-        try:
-            committee_id = int(committee_id)
-        except ValueError:
-            return default_return
-
-        comm_sql = '''(
-            SELECT *
-            FROM committees
-            WHERE id = :committee_id
-            )
-        '''
-        committee = self.executeTransaction(
-            sa.text(comm_sql),
-            committee_id=committee_id
-        ).fetchone()
-
-        if not committee:
-            return default_return
-
-        latest_filing = '''(
-            SELECT * FROM most_recent_filings
-            WHERE committee_id = :committee_id
-            ORDER BY received_datetime DESC
-            LIMIT 1
-            )
-        '''
-
-        latest_filing = dict(self.executeTransaction(
-            sa.text(latest_filing),
-            committee_id=committee_id
-        ).fetchone())
-
-        params = {'committee_id': committee_id}
-
-        if not latest_filing['reporting_period_end']:
-            latest_filing['reporting_period_end'] = \
-                datetime.now().date() - timedelta(days=90)
-
-        if (
-            latest_filing['end_funds_available'] or
-            latest_filing['end_funds_available'] == 0
-        ):
-
-            recent_receipts = '''(
-                SELECT
-                  COALESCE(SUM(receipts.amount), 0) AS amount
-                FROM condensed_receipts AS receipts
-                JOIN filed_docs AS filed
-                  ON receipts.filed_doc_id = filed.id
-                WHERE receipts.committee_id = :committee_id
-                  AND receipts.received_date > :end_date
-                )
-            '''
-            controlled_amount = latest_filing['end_funds_available'] if latest_filing else 0
-
-            params['end_date'] = latest_filing['reporting_period_end'] if latest_filing else None
-            end_date = latest_filing['reporting_period_end'] if latest_filing else None
-
-        else:
-
-            recent_receipts = '''(
-                SELECT
-                  COALESCE(SUM(receipts.amount), 0) AS amount
-                FROM condensed_receipts AS receipts
-                JOIN filed_docs AS filed
-                  ON receipts.filed_doc_id = filed.id
-                WHERE receipts.committee_id = :committee_id
-                )
-            '''
-
-            controlled_amount = 0
-
-        recent_total = self.executeTransaction(
-            sa.text(recent_receipts),
-            **params
-        ).fetchone().amount
-        controlled_amount += recent_total
-
-        quarterlies = '''(
-            SELECT DISTINCT ON (f.doc_name, f.reporting_period_end)
-              r.end_funds_available,
-              r.total_investments,
-              r.total_receipts,
-              (r.debts_itemized * -1) as debts_itemized,
-              (r.debts_non_itemized * -1) as debts_non_itemized,
-              (r.total_expenditures * -1) as total_expenditures,
-              f.reporting_period_end
-            FROM d2_reports AS r
-            JOIN filed_docs AS f
-              ON r.filed_doc_id = f.id
-            WHERE r.committee_id = :committee_id
-              AND f.reporting_period_end IS NOT NULL
-              AND f.doc_name = 'Quarterly'
-            ORDER BY f.reporting_period_end ASC
-            )
-        '''
-
-        quarterlies = self.executeTransaction(
-            sa.text(quarterlies),
-            committee_id=committee_id
-        )
-
-        ending_funds = [
-            [
-                r.end_funds_available,
-                r.reporting_period_end.year,
-                r.reporting_period_end.month,
-                r.reporting_period_end.day
-            ] for r in quarterlies
-        ]
-
-        investments = [
-            [
-                r.total_investments,
-                r.reporting_period_end.year,
-                r.reporting_period_end.month,
-                r.reporting_period_end.day
-            ] for r in quarterlies
-        ]
-
-        debts = [
-            [
-                (r.debts_itemized + r.debts_non_itemized),
-                r.reporting_period_end.year,
-                r.reporting_period_end.month,
-                r.reporting_period_end.day
-            ] for r in quarterlies
-        ]
-
-        expenditures = [
-            [
-                r.total_expenditures,
-                r.reporting_period_end.year,
-                r.reporting_period_end.month,
-                r.reporting_period_end.day
-            ] for r in quarterlies
-        ]
-
-        # accomodate for independent expenditures past last filing date
-
-        total_expenditures = sum([r.total_expenditures for r in quarterlies])
-
-        return committee, recent_receipts, recent_total, latest_filing, controlled_amount, ending_funds, investments, debts, expenditures, total_expenditures
+        return sslib.get_committee_details(self.connection, committee_id)
 
     def receiptsAggregates(self):
 

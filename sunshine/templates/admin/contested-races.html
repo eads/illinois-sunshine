@@ -13,14 +13,10 @@
           <li role="presentation" {% if contested_races_type == "Senate"%}class="active"{% else %}class="inactive"{% endif %}><a href="{{ url_for('views.admin_contested_races') }}?type=senate">  Senate  </a></li>
           <li role="presentation" {% if contested_races_type == "Statewide Offices"%}class="active"{% else %}class="inactive"{% endif %}><a href="{{ url_for('views.admin_contested_races') }}?type=statewide_office">  Statewide Offices  </a></li>
           <li role="presentation" {% if contested_races_type == "Gubernatorial"%}class="active"{% else %}class="inactive"{% endif %}><a href="{{ url_for('views.admin_contested_races') }}?type=gubernatorial">  Governor  </a></li>
+          <li><a class="btn btn-default" style="margin-left:20px;" href="{{ url_for('views.admin_contested_race_details') }}">Add Candidate</a></li>
         </ul>
-
-
         <h2 style="color:#222; font-size:32px;">{{contested_races_title}}</h2>
-
-        <p>
-            {{ contested_races_type }}
-        </p>
+        <p>{{ contested_races_type }}</p>
     </div>
  </div>
 
@@ -37,55 +33,33 @@
     {% endif %}
     <table class="table table-striped table-hover">
         <thead>
-            <th>total_money</th>
-            <th>branch</th>
-            <th>last_name</th>
-            <th>first_name</th>
-            <th>committee_name</th>
-            <th>incumbent</th>
-            <th>committee_id</th>
-            <th>party</th>
-            <th>funds_available</th>
-            <th>contributions</th>
-            <th>total_funds</th>
-            <th>investments</th>
-            <th>debts</th>
-            <th>supporting_funds</th>
-            <th>opposing_funds</th>
-            <th>reporting_period_end</th>
-            <th>district</th>
-            <th>candidate_id</th>
-            <th>alternate_names</th>
+            <th>Branch</th>
+            <th>District</th>
+            <th style="white-space:nowrap;">Candidate ID</th>
+            <th>Name</th>
+            <th style="white-space:nowrap;">Committee ID</th>
+            <th>Committee</th>
+            <th>Incumbent</th>
+            <th>Party</th>
+            <th style="white-space:nowrap;">Alt Names</th>
         </thead>
         <tbody>
             {% for c in contested_race_data %}
             <tr class="clickable" style="cursor:pointer;" onclick="window.location.href='{{ url_for('views.admin_contested_race_details', id=c.id) }}';">
-                <td>{{c.total_money}}</td>
                 <td>{{c.branch}}</td>
-                <td>{{c.last_name}}</td>
-                <td>{{c.first_name}}</td>
-                <td>{{c.committee_name}}</td>
-                <td>{{c.incumbent}}</td>
-                <td>{{c.committee_id}}</td>
-                <td>{{c.party}}</td>
-                <td>{{c.funds_available}}</td>
-                <td>{{c.contributions}}</td>
-                <td>{{c.total_funds}}</td>
-                <td>{{c.investments}}</td>
-                <td>{{c.debts}}</td>
-                <td>{{c.supporting_funds}}</td>
-                <td>{{c.opposing_funds}}</td>
-                <td>{{c.reporting_period_end}}</td>
                 <td>{{c.district}}</td>
-                <td>{{c.candidate_id}}</td>
+                <td>{% if c.committee_id %}{{c.candidate_id}}{% endif %}</td>
+                <td>{{c.first_name}} {{c.last_name}}</td>
+                <td>{% if c.committee_id %}{{c.committee_id}}{% endif %}</td>
+                <td>{% if c.committee_name %}{{c.committee_name}}{% endif %}</td>
+                <td>{{c.incumbent}}</td>
+                <td>{{c.party}}</td>
                 <td>{{c.alternate_names}}</td>
             </tr>
-
             {% endfor %}
         </tbody>
     </table>
 
-    <a class="btn btn-default" href="{{ url_for('views.admin_contested_race_details') }}">Add Candidate</a>
 </div>
 
 {% endblock %}
