@@ -116,6 +116,9 @@ def index():
 
     top_ten = g.engine.execute(sa.text(committee_sql))
 
+    # contested races funds for house/senate
+    house_senate_count = getHouseSenateContestedRacesCount()
+
     # democratic committee funds
     democratic_sql = '''
         SELECT * FROM (
@@ -191,7 +194,8 @@ def index():
                            donations_by_month=donations_by_month,
                            donations_by_year=donations_by_year,
                            days_donations=days_donations,
-                           news_content=news_content)
+                           news_content=news_content,
+                           house_senate_count=house_senate_count)
 
 
 @views.route('/donations/')
@@ -1575,3 +1579,42 @@ def insertCandidate(id, candidate_info, committee_name):
                          committee_name=committee_name,
                          party=candidate_info["party"],
                          alternate_names=candidate_info["alternate_names"])
+
+
+def getHouseSenateContestedRacesCount():
+    contested_races_sql = '''
+        SELECT *
+        FROM contested_races
+        WHERE branch = 'H'
+        OR branch = 'S'
+        ORDER BY branch, cast(district as integer)
+    '''
+
+    candidates_list = g.engine.execute(sa.text(contested_races_sql))
+
+    contested_count = []
+    total_candidates = 0
+    total_race_money = 0
+    previous_district = None
+    branch = None
+
+    for c in candidates_list:
+        if previous_district is None:
+            total_candidates += 1
+            total_race_money += c.total_money
+        elif previous_district == c.district:
+            total_candidates += 1
+            total_race_money += c.total_money
+        else:
+
+            contested_count.append([branch, previous_district, total_candidates, total_race_money])
+
+            total_candidates = 1
+            total_race_money = c.total_money
+
+        previous_district = c.district
+        branch = c.branch
+
+    contested_count.append([branch, previous_district, total_candidates, total_race_money])
+
+    return contested_count
