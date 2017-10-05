@@ -456,7 +456,7 @@ def getContestedRacesInformation(type_arg):
 
         contested_races_output[key]["total_candidates"] += 1
         contested_races_output[key]["total_race_money"] += c.total_money
-        contested_races_output[key][c.party].append(c)
+        contested_races_output[key].get(c.party, []).append(c)
 
     # Convert from dict to list.
     contested_races_output = list(contested_races_output.values())
