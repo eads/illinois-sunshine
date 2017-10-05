@@ -440,14 +440,14 @@ def getContestedRacesInformation(type_arg):
     contested_races_output = {}
 
     for c in contest_race_list:
-        key = c.branch + "__" + c.district
+        key = c.branch + "__" + str(c.district)
         if not contested_races_output.get(key):
             contested_races_output[key] = {
                 "branch": c.branch,
                 "district": c.district,
                 "total_candidates": 0,
                 "total_race_money": 0,
-                "district_id": "_".join(c.district.split()),
+                "district_id": "_".join(str(c.district).split()),
                 "district_label": ("Senate" if c.branch == "S" else "House") + " District",
                 "district_sort": int(c.district) if c.branch in ["H", "S"] else c.district,
                 "R": [],
