@@ -434,32 +434,48 @@ def getContestedRacesInformation(type_arg):
 
     contest_race_list = list(g.engine.execute(sa.text(contested_races_sql), branch=branch))
 
-    contested_count = []
     total_candidates = 0
     total_race_money = 0
     previous_district = None
+    contested_races_output = {}
+
     for c in contest_race_list:
-        if previous_district is None:
-            total_candidates += 1
-            total_race_money += c.total_money
-        elif previous_district == c.district:
-            total_candidates += 1
-            total_race_money += c.total_money
-        else:
-            district_id = "_".join(previous_district.split())
+        key = c.branch + "__" + c.district
+        if not contested_races_output.get(key):
+            contested_races_output[key] = {
+                "branch": c.branch,
+                "district": c.district,
+                "total_candidates": 0,
+                "total_race_money": 0,
+                "district_id": "_".join(c.district.split()),
+                "district_label": ("Senate" if c.branch == "S" else "House") + " District",
+                "district_sort": int(c.district) if c.branch in ["H", "S"] else c.district,
+                "R": [],
+                "D": []
+            }
 
-            contested_count.append([previous_district, total_candidates, total_race_money, district_id])
+        contested_races_output[key]["total_candidates"] += 1
+        contested_races_output[key]["total_race_money"] += c.total_money
+        contested_races_output[key][c.party].append(c)
 
-            total_candidates = 1
-            total_race_money = c.total_money
+    # Convert from dict to list.
+    contested_races_output = list(contested_races_output.values())
 
-        previous_district = c.district
+    # Sort list.
+    contested_races_output = sorted(contested_races_output, key=lambda k: (k["branch"], k["district_sort"]))
 
-    district_id = "_".join(previous_district.split())
+    # Sort the Rep and Dem lists and make them equal lengths.
+    for race in contested_races_output:
+        race["D"] = sorted(race["D"], key=lambda k: k["total_funds"], reverse=True)
+        race["R"] = sorted(race["R"], key=lambda k: k["total_funds"], reverse=True)
 
-    contested_count.append([previous_district, total_candidates, total_race_money, district_id])
+        while len(race["D"]) < len(race["R"]):
+            race["D"].append({})
 
-    return [contested_races_type, contested_races_title, contest_race_list, contested_count]
+        while len(race["R"]) < len(race["D"]):
+            race["R"].append({})
+
+    return [contested_races_type, contested_races_title, contested_races_output]
 
 #============================================================================
 def getContestedRace(id):

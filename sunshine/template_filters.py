@@ -87,6 +87,12 @@ def committee_description(s):
 def format_number(s):
     return '{:,}'.format(s)
 
+def number_suffix(n):
+    # This will add "st", "nd", "rd", etc... to the end of a given integer.
+    import math
+    n = int(n)
+    return "%d%s" % (n,"tsnrhtdd"[(math.floor(n/10)%10!=1) * (n%10<4) * n%10::4])
+
 def format_large_number(n):
     import math
     millnames=['','Thousand','Million','Billion','Trillion']

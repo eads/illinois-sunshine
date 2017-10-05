@@ -54,27 +54,19 @@
             <th style="width: 33.3%;" class="text-right">Total Funds in Race</th>
         </thead>
         <tbody>
-            {% for row in count %}
+            {% for row in contested_race_info %}
 
-            {% if row[0] != None %}
-            <tr class="clickable" style="cursor:pointer;" onclick="display('{{row[3]}}')">
+            {% if row.district != None %}
+            <tr class="clickable" style="cursor:pointer;" onclick="display('{{row.district_id}}')">
                 {% if r_type != "statewide_office" %}
-                    {% if row[0] == 1 %}
-                    <td style="width: 33.3%;">{{ row[0] }}st {{ district_label }}</td>
-                    {% elif row[0] == 2 %}
-                    <td style="width: 33.3%;">{{ row[0] }}nd {{ district_label }}</td>
-                    {% elif row[0] == 3 %}
-                    <td style="width: 33.3%;">{{ row[0] }}rd {{ district_label }}</td>
-                    {% else %}
-                    <td style="width: 33.3%;">{{ row[0] }}th {{ district_label }}</td>
-                    {% endif %}
+                    <td style="width: 33.3%;">{{ row.district|number_suffix }} {{ row.district_label }}</td>
                 {% else %}
-                    <td style="width: 33.3%;">{{ row[0] }}</td>
+                    <td style="width: 33.3%;">{{ row.district }}</td>
                 {% endif %}
-                <td style="width: 33.3%;" class="text-center">{{ row[1] }}</td>
-                <td style="width: 33.3%;" class="text-right">{{ row[2] | format_money }}</td>
+                <td style="width: 33.3%;" class="text-center">{{ row.total_candidates }}</td>
+                <td style="width: 33.3%;" class="text-right">{{ row.total_race_money | format_money }}</td>
             </tr>
-            <tr id="{{row[3]}}" {% if visible != row[0] %} style="display: none;" {% endif %}>
+            <tr id="{{row.district_id}}" {% if visible != row.district %} style="display: none;" {% endif %}>
                 <td colspan="3" style="padding: 0;">
                     <div class="col-sm-6" style="padding: 0;">
                         <table class="table table-striped table-border table-merge" style="padding-bottom: 0; margin-bottom: 0;">
@@ -85,23 +77,25 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                {% for c in contested_race_info %}
-
-                                    {% if c.district == row[0] and c.party == 'D' %}
+                                {% for c in row.D %}
                                     <tr style="background-color: #d0ecff;">
-                                        <td>{{c.first_name}} {{c.last_name}}</td>
-                                        <td class='text-right'>{{ c.total_funds | format_money }}</td>
+                                        <td>
+                                            {% if not c.first_name and not c.last_name %}
+                                                &nbsp;
+                                            {% else %}
+                                                {{c.first_name}} {{c.last_name}}
+                                            {% endif %}
+                                        </td>
+                                        <td class='text-right'>{% if c.total_funds is number %}{{ c.total_funds | format_money }}{% endif %}</td>
                                     </tr>
                                     <tr style="background-color: #e0f5ff;">
-                                        <td>&nbsp;&nbsp;&nbsp;&nbsp; Ind. Expenditures Supporting</td>
-                                        <td class='text-right'> {{ c.supporting_funds | format_money }}</td>
+                                        <td>&nbsp;&nbsp;&nbsp;&nbsp; {% if c.opposing_funds is number %}Ind. Expenditures Supporting{% endif %}</td>
+                                        <td class='text-right'>{% if c.supporting_funds is number %}{{ c.supporting_funds | format_money }}{% endif %}</td>
                                     </tr>
                                     <tr style="background-color: #e0f5ff;">
-                                        <td>&nbsp;&nbsp;&nbsp;&nbsp; Ind. Expenditures Opposing</td>
-                                        <td class='text-right'> {{ c.opposing_funds | format_money }}</td>
+                                        <td>&nbsp;&nbsp;&nbsp;&nbsp; {% if c.opposing_funds is number %}Ind. Expenditures Opposing{% endif %}</td>
+                                        <td class='text-right'>{% if c.opposing_funds is number %}{{ c.opposing_funds | format_money }}{% endif %}</td>
                                     </tr>
-                                    {% endif %}
-
                                 {% endfor %}
                             </tbody>
                         </table>
@@ -116,23 +110,25 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                {% for c in contested_race_info %}
-
-                                    {% if c.district == row[0] and c.party == 'R' %}
+                                {% for c in row.R %}
                                     <tr style="background-color: #ffe0e0;">
-                                        <td>{{c.first_name}} {{c.last_name}}</td>
-                                        <td class='text-right'>{{ c.total_funds | format_money }}</td>
+                                        <td>
+                                            {% if not c.first_name and not c.last_name %}
+                                                &nbsp;
+                                            {% else %}
+                                                {{c.first_name}} {{c.last_name}}
+                                            {% endif %}
+                                        </td>
+                                        <td class='text-right'>{% if c.total_funds is number %}{{ c.total_funds | format_money }}{% endif %}</td>
                                     </tr>
                                     <tr style="background-color: #ffefef;">
-                                        <td>&nbsp;&nbsp;&nbsp;&nbsp; Ind. Expenditures Supporting</td>
-                                        <td class='text-right'> {{ c.supporting_funds | format_money }}</td>
+                                        <td>&nbsp;&nbsp;&nbsp;&nbsp; {% if c.opposing_funds is number %}Ind. Expenditures Supporting{% endif %}</td>
+                                        <td class='text-right'>{% if c.supporting_funds is number %}{{ c.supporting_funds | format_money }}{% endif %}</td>
                                     </tr>
                                     <tr style="background-color: #ffefef;">
-                                        <td>&nbsp;&nbsp;&nbsp;&nbsp; Ind. Expenditures Opposing</td>
-                                        <td class='text-right'> {{ c.opposing_funds | format_money }}</td>
+                                        <td>&nbsp;&nbsp;&nbsp;&nbsp; {% if c.opposing_funds is number %}Ind. Expenditures Opposing{% endif %}</td>
+                                        <td class='text-right'>{% if c.opposing_funds is number %}{{ c.opposing_funds | format_money }}{% endif %}</td>
                                     </tr>
-                                    {% endif %}
-
                                 {% endfor %}
                             </tbody>
                         </table>

@@ -1757,12 +1757,6 @@ def main(args):
 
     connection = engine.connect()
 
-    views = SunshineViews(connection)
-
-    logger.info("creating views %s..." % datetime.now().isoformat())
-    views.contestedRaces()
-    return
-
     if args.download:
         print("download start %s ..." % datetime.now().isoformat())
         logger.info("download start %s ..." % datetime.now().isoformat())

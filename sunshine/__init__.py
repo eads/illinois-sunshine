@@ -63,6 +63,7 @@ def create_app():
     app.jinja_env.filters['format_money_short'] = tf.format_money_short
     app.jinja_env.filters['format_number'] = tf.format_number
     app.jinja_env.filters['format_large_number'] = tf.format_large_number
+    app.jinja_env.filters['number_suffix'] = tf.number_suffix
     app.jinja_env.filters['donation_verb'] = tf.donation_verb
     app.jinja_env.filters['donation_name'] = tf.donation_name
     app.jinja_env.filters['expense_verb'] = tf.expense_verb

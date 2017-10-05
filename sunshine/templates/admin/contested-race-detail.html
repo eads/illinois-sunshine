@@ -42,7 +42,7 @@
             <tr class="branch-slave branch-H branch-S branch-O">
                 <th>District</th>
                 <td>
-                    <input type="text" class="form-control branch-slave branch-H branch-S" name="district" value="{% if candidate.district == 'Y'%}{{candidate.district}}{% endif %}" />
+                    <input type="text" class="form-control branch-slave branch-H branch-S" name="district" value="{% if candidate.district %}{{candidate.district}}{% endif %}" />
                     <select class="form-control branch-slave branch-O" name="district_statewide">
                         <option value=""></option>
                         {% for opt in statewide_districts %}

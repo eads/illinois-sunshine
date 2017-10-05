@@ -520,20 +520,12 @@ def contested_races():
     if type_arg == "gubernatorial":
         return render_template('gov-contested-race-details.html', contested_races_type=type_arg)
 
-    cr_type, cr_title, contested_race_info, count = sslib.getContestedRacesInformation(type_arg)
-
-    district_label = ""
-    if type_arg == "senate":
-        district_label = "Senate District"
-    else:
-        district_label = "House District"
+    cr_type, cr_title, contested_race_info = sslib.getContestedRacesInformation(type_arg)
 
     return render_template('contested-races.html',
                             contested_races_type=cr_type,
                             contested_races_title=cr_title,
                             contested_race_info=contested_race_info,
-                            district_label=district_label,
-                            count=count,
                             visible=visible)
 
 
@@ -1642,10 +1634,10 @@ def insertCandidate(id, candidate_info, statewide_districts):
 
 def getHouseSenateContestedRacesCount():
     contested_races_sql = '''
-        SELECT *
+        SELECT branch, district, count(*) as total_candidates, sum(total_money) as total_race_money
         FROM contested_races
-        WHERE branch = 'H'
-        OR branch = 'S'
+        WHERE branch IN ('H', 'S')
+        GROUP BY branch, district
         ORDER BY branch, cast(district as integer)
     '''
 
@@ -1658,25 +1650,8 @@ def getHouseSenateContestedRacesCount():
     branch = None
 
     for c in candidates_list:
-        if previous_district is None:
-            total_candidates += 1
-            total_race_money += c.total_money
-        elif previous_district == c.district:
-            total_candidates += 1
-            total_race_money += c.total_money
-        else:
-            branch_label = "House" if branch == "H" else "Senate"
-            type_arg = "house_of_representatives" if branch == "H" else "senate"
-            contested_count.append([branch, previous_district, total_candidates, total_race_money, branch_label, type_arg])
-
-            total_candidates = 1
-            total_race_money = c.total_money
-
-        previous_district = c.district
-        branch = c.branch
-
-    branch_label = "House" if branch == "H" else "Senate"
-    type_arg = "house_of_representatives" if branch == "H" else "senate"
-    contested_count.append([branch, previous_district, total_candidates, total_race_money, branch_label, type_arg])
+        branch_label = "House" if c.branch == "H" else "Senate"
+        type_arg = "house_of_representatives" if c.branch == "H" else "senate"
+        contested_count.append([c.branch, c.district, c.total_candidates, c.total_race_money, branch_label, type_arg])
 
     return contested_count
