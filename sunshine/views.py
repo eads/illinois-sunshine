@@ -515,6 +515,7 @@ def contested_races():
 
     # TODO: Update the default argument here when the other pages are enabled again.
     type_arg = 'house_of_representatives' if not request.args.get('type') else request.args.get('type', 'house_of_representatives')
+    visible = request.args.get('visible')
 
     if type_arg == "gubernatorial":
         return render_template('gov-contested-race-details.html', contested_races_type=type_arg)
@@ -532,7 +533,8 @@ def contested_races():
                             contested_races_title=cr_title,
                             contested_race_info=contested_race_info,
                             district_label=district_label,
-                            count=count)
+                            count=count,
+                            visible=visible)
 
 
 @views.route('/contested-race-detail/<race_type>-<district>/')
@@ -1396,6 +1398,8 @@ def admin_contested_race_delete():
 
     sslib.deleteContestedRace(id)
 
+    cache.clear()
+
     if not race or not race.branch or not race_types.get(race.branch):
         return redirect('/admin/contested-races/')
 
@@ -1457,6 +1461,8 @@ def admin_contested_race_details():
         flash('Candidate saved successfully', 'success')
     else:
         flash('<br />'.join(messages), 'error')
+
+    cache.clear()
 
     return render_template('admin/contested-race-detail.html',
                            id=id,
@@ -1659,8 +1665,9 @@ def getHouseSenateContestedRacesCount():
             total_candidates += 1
             total_race_money += c.total_money
         else:
-
-            contested_count.append([branch, previous_district, total_candidates, total_race_money])
+            branch_label = "House" if branch == "H" else "Senate"
+            type_arg = "house_of_representatives" if branch == "H" else "senate"
+            contested_count.append([branch, previous_district, total_candidates, total_race_money, branch_label, type_arg])
 
             total_candidates = 1
             total_race_money = c.total_money
@@ -1668,6 +1675,8 @@ def getHouseSenateContestedRacesCount():
         previous_district = c.district
         branch = c.branch
 
-    contested_count.append([branch, previous_district, total_candidates, total_race_money])
+    branch_label = "House" if branch == "H" else "Senate"
+    type_arg = "house_of_representatives" if branch == "H" else "senate"
+    contested_count.append([branch, previous_district, total_candidates, total_race_money, branch_label, type_arg])
 
     return contested_count

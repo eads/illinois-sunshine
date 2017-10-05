@@ -57,7 +57,7 @@
             {% for row in count %}
 
             {% if row[0] != None %}
-            <tr class="clickable" style="cursor:pointer;" onclick="display('{{row[0]}}')">
+            <tr class="clickable" style="cursor:pointer;" onclick="display('{{row[3]}}')">
                 {% if r_type != "statewide_office" %}
                     {% if row[0] == 1 %}
                     <td style="width: 33.3%;">{{ row[0] }}st {{ district_label }}</td>
@@ -74,7 +74,7 @@
                 <td style="width: 33.3%;" class="text-center">{{ row[1] }}</td>
                 <td style="width: 33.3%;" class="text-right">{{ row[2] | format_money }}</td>
             </tr>
-            <tr id="{{row[0]}}" style="display: none;">
+            <tr id="{{row[3]}}" {% if visible != row[0] %} style="display: none;" {% endif %}>
                 <td colspan="3" style="padding: 0;">
                     <div class="col-sm-6" style="padding: 0;">
                         <table class="table table-striped table-border table-merge" style="padding-bottom: 0; margin-bottom: 0;">

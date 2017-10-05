@@ -95,6 +95,14 @@
             </tr>
         </thead>
         <tbody>
+            {% for a in house_senate_count %}
+            <tr class="clickable" style="cursor:pointer;" onclick="window.open('{{ url_for('views.contested_races', type=a[5], visible=a[1]) }}'); setAttribute('target', '_blank');">
+                <td>{{a[4]}}</td>
+                <td class='text-center'>{{a[1]}}th</td>
+                <td class='text-center'>{{a[2]}}</td>
+                <td class='text-right'>{{a[3]|format_money}}</td>
+            </tr>
+            {% endfor %}
 
         </tbody>
     </table>

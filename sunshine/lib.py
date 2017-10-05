@@ -446,15 +446,18 @@ def getContestedRacesInformation(type_arg):
             total_candidates += 1
             total_race_money += c.total_money
         else:
+            district_id = "_".join(previous_district.split())
 
-            contested_count.append([previous_district, total_candidates, total_race_money])
+            contested_count.append([previous_district, total_candidates, total_race_money, district_id])
 
             total_candidates = 1
             total_race_money = c.total_money
 
         previous_district = c.district
 
-    contested_count.append([previous_district, total_candidates, total_race_money])
+    district_id = "_".join(previous_district.split())
+
+    contested_count.append([previous_district, total_candidates, total_race_money, district_id])
 
     return [contested_races_type, contested_races_title, contest_race_list, contested_count]
 
