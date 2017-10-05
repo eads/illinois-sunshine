@@ -83,7 +83,7 @@
                                             {% if not c.first_name and not c.last_name %}
                                                 &nbsp;
                                             {% else %}
-                                                {{c.first_name}} {{c.last_name}}
+                                                {{c.first_name}} {{c.last_name}} {% if c.incumbent == 'Y' %} (Incumbent) {% endif %}
                                             {% endif %}
                                         </td>
                                         <td class='text-right'>{% if c.total_funds is number %}{{ c.total_funds | format_money }}{% endif %}</td>
