@@ -1360,8 +1360,13 @@ def admin_contested_races():
         SELECT *
         FROM contested_races
         WHERE branch = :branch
-        ORDER BY district, party, last_name, first_name
+
     '''
+
+    if branch in ["H", "S"]:
+        contested_race_sql += " ORDER BY cast(district as integer), party, last_name, first_name"
+    else:
+        contested_race_sql += " ORDER BY district, party, last_name, first_name"
 
     contested_race_data = list(g.engine.execute(sa.text(contested_race_sql),
                                                 branch=branch))
