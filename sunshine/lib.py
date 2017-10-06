@@ -132,20 +132,20 @@ def getAllCandidateFunds(district, branch):
     is_after_primary = primary_details["is_after_primary"]
 
     contested_races_sql = '''
-        SELECT committee_id, last_name, first_name, party, incumbent
+        SELECT committee_id, last_name, first_name, party, incumbent, sum(total_funds) as total_funds, sum(funds_available) as funds_available
         FROM contested_races
         WHERE district = :district AND branch = :branch
         GROUP BY committee_id, last_name, first_name, party, incumbent
     '''
 
     races = list(g.engine.execute(sa.text(contested_races_sql),district=district,branch=branch))
+    committees_cash_on_hand = getCommitteesCashOnHand([race.committee_id for race in races])
 
     for race in races:
-        committee_funds_data = getCommitteeFundsData(race.committee_id, pre_primary_start, primary_start, post_primary_start)
-        funds_available = (committee_funds_data[0][1] if committee_funds_data else 0.0)
-        total_funds_raised = (committee_funds_data[-1][1] if committee_funds_data else 0.0)
+        funds_available = race.funds_available
+        total_funds_raised = race.total_funds
 
-        cash_on_hand = getCommitteeCashOnHand(race.committee_id)
+        cash_on_hand = committees_cash_on_hand.get(race.committee_id, 0)
 
         display = (race.first_name or "") + " " + (race.last_name or "") + " (" + (race.party or "") + ")"
         if not race.incumbent:
@@ -166,6 +166,75 @@ def getAllCandidateFunds(district, branch):
 def getCommitteeCashOnHand(committee_id):
     latest_filing, recent_total, controlled_amount, params = getCommitteeRecentFilingData(committee_id)
     return controlled_amount
+
+#============================================================================
+def getCommitteesCashOnHand(committee_ids):
+    committees_data = getCommitteesRecentFilingData(committee_ids)
+    return dict([(k, v[2]) for k, v in committees_data.items()])
+
+#============================================================================
+def getCommitteesRecentFilingData(committee_ids=[]):
+    if not committee_ids:
+        return {}
+
+    latest_filings_sql = '''
+        SELECT mrf.*
+        FROM most_recent_filings mrf
+        JOIN (
+            SELECT committee_id, max(received_datetime) as received_datetime
+            FROM most_recent_filings
+            GROUP BY committee_id
+        ) mrf_sub ON (mrf_sub.received_datetime = mrf.received_datetime and mrf_sub.committee_id = mrf.committee_id)
+        WHERE mrf.committee_id IN :committee_ids
+    '''
+
+    latest_filings = list(g.engine.execute(sa.text(latest_filings_sql), committee_ids=tuple(committee_ids)))
+
+    if not latest_filings:
+        return {}
+
+    processed_committee_ids = {}
+
+    for latest_filing in latest_filings:
+        if not latest_filing:
+            continue
+
+        params = {'committee_id': latest_filing.committee_id}
+
+        if not latest_filing['reporting_period_end']:
+          latest_filing['reporting_period_end'] = datetime.now().date() - timedelta(days=90)
+
+        if latest_filing['end_funds_available'] or latest_filing['end_funds_available'] == 0:
+            recent_receipts = '''
+                SELECT
+                  COALESCE(SUM(receipts.amount), 0) AS amount
+                FROM condensed_receipts AS receipts
+                JOIN filed_docs AS filed
+                  ON receipts.filed_doc_id = filed.id
+                WHERE receipts.committee_id = :committee_id
+                  AND receipts.received_date > :end_date
+            '''
+            controlled_amount = latest_filing['end_funds_available']
+
+            params['end_date'] = latest_filing['reporting_period_end']
+
+        else:
+            recent_receipts = '''
+                SELECT
+                  COALESCE(SUM(receipts.amount), 0) AS amount
+                FROM condensed_receipts AS receipts
+                JOIN filed_docs AS filed
+                  ON receipts.filed_doc_id = filed.id
+                WHERE receipts.committee_id = :committee_id
+            '''
+
+            controlled_amount = 0
+
+        recent_total = g.engine.execute(sa.text(recent_receipts),**params).first().amount
+        controlled_amount += recent_total
+        processed_committee_ids[latest_filing.committee_id] = [latest_filing, recent_total, controlled_amount, params]
+
+    return processed_committee_ids
 
 #============================================================================
 def getCommitteeRecentFilingData(committee_id):

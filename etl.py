@@ -753,6 +753,7 @@ class SunshineViews(object):
             'DROP MATERIALIZED VIEW IF EXISTS most_recent_filings CASCADE'
         )
         self.executeTransaction('DROP INDEX IF EXISTS most_recent_filings_idx CASCADE')
+        self.executeTransaction('DROP INDEX IF EXISTS most_recent_filings_committee_received CASCADE')
 
         print("Dropping expenditures_by_candidate...")
         self.executeTransaction(
@@ -1501,6 +1502,13 @@ class SunshineViews(object):
 
         self.executeOutsideTransaction(index)
 
+        index = '''
+            CREATE INDEX CONCURRENTLY condensed_receipts_committee_received_doc_amount
+            ON condensed_receipts(committee_id, received_date, filed_doc_id, amount)
+        '''
+
+        self.executeOutsideTransaction(index)
+
     def condensedExpendituresDateIndex(self):
         index = '''
             CREATE INDEX CONCURRENTLY condensed_expenditures_date_idx
@@ -1570,6 +1578,13 @@ class SunshineViews(object):
         index = '''
             CREATE UNIQUE INDEX CONCURRENTLY most_recent_filings_idx
             ON most_recent_filings(committee_id, reporting_period_end)
+        '''
+
+        self.executeOutsideTransaction(index)
+
+        index = '''
+            CREATE INDEX CONCURRENTLY most_recent_filings_committee_received
+            ON most_recent_filings(committee_id, received_datetime)
         '''
 
         self.executeOutsideTransaction(index)

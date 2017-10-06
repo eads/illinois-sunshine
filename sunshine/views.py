@@ -1135,10 +1135,7 @@ def widgets_gov_contested_race():
 
     hideHeaders = request.args.get('hideHeaders')
     showImageString = request.args.get('showImage')
-    if showImageString == "True":
-        showImage = True
-    else:
-        showImage = False
+    showImage = showImageString == "True"
 
     contested_race_data = sslib.getAllCandidateFunds('0', "G")
     current_date = datetime.now()
@@ -1661,5 +1658,4 @@ def getHouseSenateContestedRacesCount():
         type_arg = "house_of_representatives" if c.branch == "H" else "senate"
         contested_count.append([c.branch, c.district, c.total_candidates, c.total_race_money, branch_label, type_arg, c.candidates])
 
-    current_app.logger.info(contested_count)
     return contested_count
