@@ -3,6 +3,11 @@
 {% block header_social %}
     {{ header("Contested Races", None, request.path) }}
 {% endblock %}
+
+{% block extra_styles %}
+<link href="{{ url_for('static', filename='css/widget.css') }}" rel="stylesheet" />
+{% endblock %}
+
 {% block content %}
 <base target='_blank' />
 {% if showImage %}
@@ -13,7 +18,7 @@
     <h3>
         <a class="header-link" href='{{ url_for('views.contested_race_detail', race_type='gubernatorial', district=0) }}' target='_blank'>Race for Illinois Governor</a>
     </h3>
-    <p>Funds raised in 2018 Race for Illinois Governor, as of {{ current_date.strftime('%b %d, %Y')  }}</p>
+    <p class="widget-resize-subheader">Funds raised in 2018 Race for Illinois Governor, as of {{ current_date.strftime('%b %d, %Y')  }}</p>
 </div>
 <div style="clear:both;"></div>
 

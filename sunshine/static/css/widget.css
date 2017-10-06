@@ -1,0 +1,5 @@
+p.widget-resize-subheader { font-size: 16px }
+
+@media screen and (max-width: 626px) {
+	p.widget-resize-subheader { font-size: 12px }
+}
