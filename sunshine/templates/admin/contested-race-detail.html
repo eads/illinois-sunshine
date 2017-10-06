@@ -10,7 +10,7 @@
     table th, table td { padding-bottom: 10px; }
     table th { font-weight: bold; text-align: right; padding-right: 20px;}
     table tr td input.form-control,table tr td select.form-control { color: #000; }
-    table td input[type="checkbox"] { width: 0; margin: 0; }
+    table td input[type="checkbox"] { width: 16px; margin: 0; }
     table td input[type="checkbox"]:focus { outline: 0; }
     .branch-slave { display: none; }
 </style>
@@ -65,7 +65,7 @@
             </tr>
             <tr>
                 <th>Incumbent</th>
-                <td><input type="checkbox" class="form-control" name="incumbent" {% if candidate.incumbent == 'Y'%} checked {% endif %}></td>
+                <td><input type="checkbox" class="form-control text-center" name="incumbent" {% if candidate.incumbent == 'Y'%} checked {% endif %}></td>
             </tr>
             <tr>
                 <th>Committee ID</th>
