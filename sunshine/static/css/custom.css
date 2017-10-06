@@ -7,6 +7,14 @@ body {
   background-color: #fcfcfc;
 }
 
+h3 {
+    color: #000;
+}
+
+h3 + p {
+    color: #333;
+}
+
 table, label,.control-label,.help-block,.checkbox,.radio { font-size: 14px; }
 .alert { font-size: 1em; font-weight: 500; }
 

@@ -568,9 +568,8 @@ def contested_race_detail(race_type, district):
     is_after_primary = primary_details["is_after_primary"]
 
     contested_races_sql = '''
-        SELECT cr.*, c.name as committee_committee_name
+        SELECT cr.*
         FROM contested_races cr
-        LEFT JOIN committees c ON (c.id = cr.committee_id)
         WHERE cr.district = :district
           AND cr.branch = :branch
         ORDER BY cr.last_name, cr.first_name
@@ -587,9 +586,9 @@ def contested_race_detail(race_type, district):
         total_money += race.supporting_funds + race.opposing_funds
 
         if race.incumbent == 'N':
-            contested_races.append({'table_display_data': committee_funds_data, 'primary_funds_raised': primary_funds_raised, 'last': race.last_name, 'first': race.first_name,'committee_name': race.committee_committee_name if race.committee_committee_name else race.committee_name,'incumbent': race.incumbent,'committee_id': race.committee_id,'party': race.party,'investments': race.investments, 'debts': race.debts, 'supporting_funds': race.supporting_funds, 'opposing_funds': race.opposing_funds, 'contributions' : race.contributions, 'total_funds' : race.total_funds, 'funds_available' : race.funds_available, 'total_money' : race.total_money, 'candidate_id' : race.candidate_id, 'reporting_period_end' : race.reporting_period_end})
+            contested_races.append({'table_display_data': committee_funds_data, 'primary_funds_raised': primary_funds_raised, 'last': race.last_name, 'first': race.first_name,'committee_name': race.committee_name if race.committee_name else '', 'incumbent': race.incumbent,'committee_id': race.committee_id,'party': race.party,'investments': race.investments, 'debts': race.debts, 'supporting_funds': race.supporting_funds, 'opposing_funds': race.opposing_funds, 'contributions' : race.contributions, 'total_funds' : race.total_funds, 'funds_available' : race.funds_available, 'total_money' : race.total_money, 'candidate_id' : race.candidate_id, 'reporting_period_end' : race.reporting_period_end})
         else:
-            contested_races.insert(0,{'table_display_data': committee_funds_data, 'primary_funds_raised': primary_funds_raised, 'last': race.last_name, 'first': race.first_name,'committee_name': race.committee_committee_name if race.committee_committee_name else race.committee_name,'incumbent': race.incumbent,'committee_id': race.committee_id,'party': race.party,'investments': race.investments, 'debts': race.debts, 'supporting_funds': race.supporting_funds, 'opposing_funds': race.opposing_funds, 'contributions' : race.contributions, 'total_funds' : race.total_funds, 'funds_available' : race.funds_available, 'total_money' : race.total_money, 'candidate_id' : race.candidate_id, 'reporting_period_end' : race.reporting_period_end})
+            contested_races.insert(0,{'table_display_data': committee_funds_data, 'primary_funds_raised': primary_funds_raised, 'last': race.last_name, 'first': race.first_name,'committee_name': race.committee_name if race.committee_name else '', 'incumbent': race.incumbent,'committee_id': race.committee_id,'party': race.party,'investments': race.investments, 'debts': race.debts, 'supporting_funds': race.supporting_funds, 'opposing_funds': race.opposing_funds, 'contributions' : race.contributions, 'total_funds' : race.total_funds, 'funds_available' : race.funds_available, 'total_money' : race.total_money, 'candidate_id' : race.candidate_id, 'reporting_period_end' : race.reporting_period_end})
 
     return render_template(template,
                             race_type=race_type,
@@ -1639,11 +1638,14 @@ def insertCandidate(id, candidate_info, statewide_districts):
 
 def getHouseSenateContestedRacesCount():
     contested_races_sql = '''
-        SELECT branch, district, count(*) as total_candidates, sum(total_money) as total_race_money
-        FROM contested_races
+        SELECT
+            cr.branch, cr.district, count(*) as total_candidates, sum(cr.total_money) as total_race_money,
+            string_agg(concat(cr.first_name, ' ', cr.last_name, CASE WHEN cr.incumbent = 'Y' THEN ' (i)' ELSE '' END), ', ' ORDER BY cr.incumbent DESC, cr.last_name, cr.first_name) as candidates
+        FROM contested_races cr
         WHERE branch IN ('H', 'S')
-        GROUP BY branch, district
-        ORDER BY branch, cast(district as integer)
+        GROUP BY cr.branch, cr.district
+        ORDER BY total_race_money desc, cr.branch, cast(cr.district as integer)
+        LIMIT 10
     '''
 
     candidates_list = g.engine.execute(sa.text(contested_races_sql))
@@ -1657,6 +1659,7 @@ def getHouseSenateContestedRacesCount():
     for c in candidates_list:
         branch_label = "House" if c.branch == "H" else "Senate"
         type_arg = "house_of_representatives" if c.branch == "H" else "senate"
-        contested_count.append([c.branch, c.district, c.total_candidates, c.total_race_money, branch_label, type_arg])
+        contested_count.append([c.branch, c.district, c.total_candidates, c.total_race_money, branch_label, type_arg, c.candidates])
 
+    current_app.logger.info(contested_count)
     return contested_count

@@ -88,10 +88,11 @@
     <table class = "table table-striped table-hover table-border">
         <thead>
             <tr>
-                <th style="width:25%;" class='text-left'>Chamber</th>
-                <th style="width:25%;" class='text-center'>District</th>
-                <th style="width:25%;" class='text-center'>Number of Candidates</th>
-                <th style="width:25%;" class='text-right'>Total Funds in Race</th>
+                <th style="min-width:10%;" class='text-left'>Chamber</th>
+                <th style="min-width:10%;" class='text-center'>District</th>
+                <th style="min-width:10%;white-space:nowrap;" class='text-center'>Total Candidates</th>
+                <th class='text-center'>Candidates</th>
+                <th style="min-width:10%; white-space:nowrap;" class='text-right'>Total Funds in Race</th>
             </tr>
         </thead>
         <tbody>
@@ -100,6 +101,7 @@
                 <td style="font-weight:bold;">{{a[4]}}</td>
                 <td style="font-weight:bold;" class='text-center'>{{a[1]}}th</td>
                 <td style="font-weight:bold;" class='text-center'>{{a[2]}}</td>
+                <td class='text-left'>{{a[6]}}</td>
                 <td style="font-weight:bold;" class='text-right'>{{a[3]|format_money}}</td>
             </tr>
             {% endfor %}

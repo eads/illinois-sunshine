@@ -6,36 +6,35 @@
 {% block content %}
 
 <div class="row">
-    <div class="col-sm-8">
-        <img src="/static/images/illinois_state_seal.png" style="width: 80px; height: 80px;" class="header-image"/>
-        <div style="display:inline-block;">
-            <h1 style="color: #000; font-size: 36px;">Contested State Races</h1>
-            <p style="color: #000; font-size:20px; padding-left: 2px;">Updated Daily</p>
+    <div class="col-sm-12">
+        <div class="col-sm-8">
+            <img src="/static/images/illinois_state_seal.png" style="width: 80px; height: 80px;" class="header-image"/>
+            <div style="display:inline-block;">
+                <h1 style="color: #000; font-size: 36px;">Contested State Races</h1>
+                <p style="color: #000; font-size:20px; padding-left: 2px;">Updated Daily</p>
+            </div>
+
+            <br />
+            <ul class="nav nav-pills">
+              <li role="presentation" {% if contested_races_type == "House of Representatives"%}class="active"{% else %}class="inactive"{% endif %}><a href="{{ url_for('views.contested_races') }}?type=house_of_representatives">House of Representatives  </a></li>
+              <li role="presentation" {% if contested_races_type == "Senate"%}class="active"{% else %}class="inactive"{% endif %}><a href="{{ url_for('views.contested_races') }}?type=senate">  Senate  </a></li>
+              <li role="presentation" {% if contested_races_type == "Statewide Offices"%}class="active"{% else %}class="inactive"{% endif %}><a href="{{ url_for('views.contested_races') }}?type=statewide_office">  Statewide Offices  </a></li>
+              <li role="presentation" {% if contested_races_type == "gubernatorial"%}class="active"{% else %}class="inactive"{% endif %}><a href="{{ url_for('views.contested_races') }}?type=gubernatorial">  Governor  </a></li>
+            </ul>
         </div>
-
-
-        <br />
-        <ul class="nav nav-pills">
-          <li role="presentation" {% if contested_races_type == "House of Representatives"%}class="active"{% else %}class="inactive"{% endif %}><a href="{{ url_for('views.contested_races') }}?type=house_of_representatives">House of Representatives  </a></li>
-          <li role="presentation" {% if contested_races_type == "Senate"%}class="active"{% else %}class="inactive"{% endif %}><a href="{{ url_for('views.contested_races') }}?type=senate">  Senate  </a></li>
-          <li role="presentation" {% if contested_races_type == "Statewide Offices"%}class="active"{% else %}class="inactive"{% endif %}><a href="{{ url_for('views.contested_races') }}?type=statewide_office">  Statewide Offices  </a></li>
-          <li role="presentation" {% if contested_races_type == "gubernatorial"%}class="active"{% else %}class="inactive"{% endif %}><a href="{{ url_for('views.contested_races') }}?type=gubernatorial">  Governor  </a></li>
-        </ul>
-
-
-        <h2 style="color:#222; font-size:32px;">{{contested_races_title}}</h2>
-
+        <div class="col-sm-4">
+            <p style="margin-left: 30px; margin-top:25px;">Brought to you by:</p>
+            <img src='/static/images/mccormick-foundation-logo_2x.png' class='img-responsive center-block' style="width: 85%; height: 85%;"/>
+        </div>
+    </div>
+    <div class="col-sm-12">
+        <h3>{{contested_races_title}}</h2>
         <p>
             {{ contested_races_type | contested_races_description }}
             <br />Click on a row to see detailed information.
         </p>
     </div>
-    <div class="col-sm-4">
-        <p style="margin-left: 30px; margin-top:25px;">Brought to you by:</p>
-        <img src='/static/images/mccormick-foundation-logo_2x.png' class='img-responsive center-block' style="width: 85%; height: 85%;"/>
-    </div>
- </div>
-
+</div>
 
 <div class="col-sm-12" style="padding: 0;">
     {% if contested_races_type == "House of Representatives" %}
@@ -49,25 +48,29 @@
     {% endif %}
     <table class="table table-striped table-hover">
         <thead>
-            <th style="width: 33.3%;">District</th>
-            <th style="width: 33.3%;" class="text-center">No. of Candidates</th>
-            <th style="width: 33.3%;" class="text-right">Total Funds in Race</th>
+            <th style="min-width:10%;">District</th>
+            <th style="min-width:10%; white-space:nowrap;" class="text-center">Total Candidates</th>
+            <th class='text-center'>Candidates</th>
+            <th style="min-width:10%; white-space:nowrap;" class="text-right">Total Funds in Race</th>
         </thead>
         <tbody>
             {% for row in contested_race_info %}
 
             {% if row.district != None %}
             <tr class="clickable" style="cursor:pointer;" onclick="display('{{row.district_id}}')">
-                {% if r_type != "statewide_office" %}
-                    <td style="width: 33.3%;">{{ row.district|number_suffix }} {{ row.district_label }}</td>
-                {% else %}
-                    <td style="width: 33.3%;">{{ row.district }}</td>
-                {% endif %}
-                <td style="width: 33.3%;" class="text-center">{{ row.total_candidates }}</td>
-                <td style="width: 33.3%;" class="text-right">{{ row.total_race_money | format_money }}</td>
+                <td style="white-space:nowrap;">
+                    {% if r_type != "statewide_office" %}
+                        {{ row.district|number_suffix }} {{ row.district_label }}
+                    {% else %}
+                        {{ row.district }}
+                    {% endif %}
+                </td>
+                <td class="text-center">{{ row.total_candidates }}</td>
+                <td class="text-left">{{ row.candidate_names }}</td>
+                <td class="text-right">{{ row.total_race_money | format_money }}</td>
             </tr>
             <tr id="{{row.district_id}}" {% if visible != row.district %} style="display: none;" {% endif %}>
-                <td colspan="3" style="padding: 0;">
+                <td colspan="4" style="padding: 0;">
                     <div class="col-sm-6" style="padding: 0;">
                         <table class="table table-striped table-border table-merge" style="padding-bottom: 0; margin-bottom: 0;">
                             <thead>
@@ -83,7 +86,7 @@
                                             {% if not c.first_name and not c.last_name %}
                                                 &nbsp;
                                             {% else %}
-                                                {{c.first_name}} {{c.last_name}}
+                                                {{c.first_name}} {{c.last_name}} {% if c.incumbent == "Y" %}(i){% endif %}
                                             {% endif %}
                                         </td>
                                         <td class='text-right'>{% if c.total_funds is number %}{{ c.total_funds | format_money }}{% endif %}</td>
@@ -116,7 +119,7 @@
                                             {% if not c.first_name and not c.last_name %}
                                                 &nbsp;
                                             {% else %}
-                                                {{c.first_name}} {{c.last_name}}
+                                                {{c.first_name}} {{c.last_name}} {% if c.incumbent == "Y" %}(i){% endif %}
                                             {% endif %}
                                         </td>
                                         <td class='text-right'>{% if c.total_funds is number %}{{ c.total_funds | format_money }}{% endif %}</td>

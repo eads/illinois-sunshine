@@ -415,22 +415,14 @@ def getContestedRacesInformation(type_arg):
         contested_races_title = "Illinois House of Representatives Contested Races"
         branch = "H"
 
-    if branch == "O":
-        contested_races_sql = '''
-            SELECT cr.*, c.name as committee_committee_name
-            FROM contested_races cr
-            LEFT JOIN committees c ON (c.id = cr.committee_id)
-            WHERE cr.branch = :branch
-            ORDER BY cr.district
-        '''
-    else:
-        contested_races_sql = '''
-            SELECT cr.*, c.name as committee_committee_name
-            FROM contested_races cr
-            LEFT JOIN committees c ON (c.id = cr.committee_id)
-            WHERE cr.branch = :branch
-            ORDER BY cast(cr.district as integer)
-        '''
+    order_by = "cr.district" if branch == "O" else "cast(cr.district as integer)"
+
+    contested_races_sql = '''
+        SELECT cr.*, concat_ws(' ', cr.first_name, cr.last_name, CASE WHEN cr.incumbent = 'Y' THEN ' (i)' ELSE NULL END) as pretty_name
+        FROM contested_races cr
+        WHERE cr.branch = :branch
+        ORDER BY {0}
+    '''.format(order_by)
 
     contest_race_list = list(g.engine.execute(sa.text(contested_races_sql), branch=branch))
 
@@ -446,6 +438,7 @@ def getContestedRacesInformation(type_arg):
                 "branch": c.branch,
                 "district": c.district,
                 "total_candidates": 0,
+                "candidate_names": "",
                 "total_race_money": 0,
                 "district_id": "_".join(str(c.district).split()),
                 "district_label": ("Senate" if c.branch == "S" else "House") + " District",
@@ -466,6 +459,8 @@ def getContestedRacesInformation(type_arg):
 
     # Sort the Rep and Dem lists and make them equal lengths.
     for race in contested_races_output:
+        sorted_cands = sorted((race["D"] + race["R"]), key = lambda k: (k["incumbent"] != "Y", k["last_name"], k["first_name"]))
+        race["candidate_names"] = "; ".join([cand["pretty_name"] for cand in sorted_cands])
         race["D"] = sorted(race["D"], key=lambda k: k["total_funds"], reverse=True)
         race["R"] = sorted(race["R"], key=lambda k: k["total_funds"], reverse=True)
 
