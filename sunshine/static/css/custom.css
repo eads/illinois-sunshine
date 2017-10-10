@@ -470,6 +470,16 @@ table.uneven tr:last-of-type td {
     border: 2px solid #ccc;
 }
 
+.table-border div:first-child .table-border {
+    border-left: 0;
+    border-top: 0;
+}
+
+.table-border div:last-child .table-border {
+    border-right: 0;
+    border-top: 0;
+}
+
 .subtitle {
     color: #333333;
 }
