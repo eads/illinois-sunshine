@@ -56,20 +56,20 @@
         <tbody>
             {% for row in contested_race_info %}
 
-            {% if row.district != None %}
+            {% if row.district_name != None %}
             <tr class="clickable" style="cursor:pointer;" onclick="display('{{row.district_id}}')">
                 <td style="white-space:nowrap;">
                     {% if r_type != "statewide_office" %}
                         {{ row.district|number_suffix }} {{ row.district_label }}
                     {% else %}
-                        {{ row.district }}
+                        {{ row.district_name }}
                     {% endif %}
                 </td>
                 <td class="text-center">{{ row.total_candidates }}</td>
                 <td class="text-left">{{ row.candidate_names }}</td>
                 <td class="text-right">{{ row.total_race_money | format_money }}</td>
             </tr>
-            <tr id="{{row.district_id}}" {% if visible != row.district %} style="display: none;" {% endif %}>
+            <tr id="{{row.district_id}}" {% if visible != row.district_name %} style="display: none;" {% endif %}>
                 <td colspan="4" style="padding: 0;">
                     <div class="col-sm-6" style="padding: 0;">
                         <table class="table table-striped table-border table-merge" style="padding-bottom: 0; margin-bottom: 0;">

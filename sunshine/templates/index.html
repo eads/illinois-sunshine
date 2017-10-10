@@ -101,7 +101,7 @@
             {% for a in house_senate_count %}
             <tr class="clickable" style="cursor:pointer;" onclick="window.open('{{ url_for('views.contested_races', type=a[5], visible=a[1]) }}'); setAttribute('target', '_blank');">
                 <td style="font-weight:bold;">{{a[4]}}</td>
-                <td style="font-weight:bold;" class='text-center'>{{a[1]}}th</td>
+                <td style="font-weight:bold;" class='text-center'>{{a[1]|number_suffix}}</td>
                 <td style="font-weight:bold;" class='text-center'>{{a[2]}}</td>
                 <td class='text-left'>{{a[6]}}</td>
                 <td style="font-weight:bold;" class='text-right'>{{a[3]|format_money}}</td>
