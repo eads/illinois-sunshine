@@ -47,7 +47,7 @@
             {% for c in contested_race_data %}
             <tr class="clickable" style="cursor:pointer;" onclick="window.location.href='{{ url_for('views.admin_contested_race_details', id=c.id) }}';">
                 <td>{{c.branch}}</td>
-                <td>{{c.district}}</td>
+                <td>{{c.district_name}}</td>
                 <td>{% if c.candidate_id %}{{c.candidate_id}}{% endif %}</td>
                 <td>{{c.first_name}} {{c.last_name}}</td>
                 <td>{% if c.committee_id %}{{c.committee_id}}{% endif %}</td>

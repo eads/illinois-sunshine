@@ -43,10 +43,10 @@
                 <th>District</th>
                 <td>
                     <input type="text" class="form-control branch-slave branch-H branch-S" name="district" value="{% if candidate.district %}{{candidate.district}}{% endif %}" />
-                    <select class="form-control branch-slave branch-O" name="district_statewide">
+                    <select class="form-control branch-slave branch-O" name="district_name">
                         <option value=""></option>
                         {% for opt in statewide_districts %}
-                        <option value="{{opt}}" {% if candidate.district == opt %}selected{% endif %}>{{opt}}</option>
+                        <option value="{{opt}}" {% if candidate.district_name == opt %}selected{% endif %}>{{opt}}</option>
                         {% endfor %}
                     </select>
                 </td>

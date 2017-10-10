@@ -59,67 +59,6 @@ def getCandidateDataFromCsvRow(row):
     return {'last': last_name, 'first': first_name,'incumbent': row['Incumbent'],'party': row['Party']}
 
 #============================================================================
-def getContestedRacesData(type_arg):
-    is_house = (type_arg == "house_of_representatives")
-    is_senate = (type_arg == "senate")
-    is_statewide_office = (type_arg == "statewide_office")
-    is_gubernatorial = (type_arg == "gubernatorial")
-
-    if is_senate:
-        contested_races_type = "Senate"
-        contested_races_title = "Illinois Senate Contested Races"
-    elif is_statewide_office:
-        contested_races_type = "Statewide Offices"
-        contested_races_title = "Illinois Statewide Officers Contested Race"
-    elif is_gubernatorial:
-        contested_races_type = "Gubernatorial"
-        contested_races_title = "Race for Illinois Governor"
-    else:
-        contested_races_type = "House of Representatives"
-        contested_races_title = "Illinois House of Representatives Contested Races"
-
-    contested_races = getContestedRacesCsvData(type_arg)
-
-    if is_house or is_senate:
-        race_sig = "H" if is_house else "S"
-
-        contested_races = filter(
-            lambda race: race['Senate/House'] == race_sig,
-            contested_races
-        )
-
-    contested_dict = {}
-    cand_span = 0
-
-    for e in contested_races:
-        if is_statewide_office or is_gubernatorial:
-            district = 0
-        else:
-            district = int(e['District'])
-
-        first_names = e['First'].split(';')
-        last_names = e['Last'].split(';')
-
-        first_name = first_names[0].strip()
-        last_name = last_names[0].strip()
-
-        candidate_data = {'last': last_name, 'first': first_name,'incumbent': e['Incumbent'],'party': e['Party']}
-
-        if district in contested_dict:
-            if e['Incumbent'] == 'N':
-                contested_dict[district].append(candidate_data)
-            else:
-                contested_dict[district].insert(0, candidate_data)
-        else:
-            contested_dict[district] = []
-            contested_dict[district].append(candidate_data)
-
-        district_candidates = len(contested_dict[district])
-        cand_span = cand_span if cand_span >= district_candidates else district_candidates
-
-    return [contested_races_type, contested_races_title, cand_span, contested_dict]
-
-#============================================================================
 def getAllCandidateFunds(district, branch):
     output = []
 
@@ -134,11 +73,11 @@ def getAllCandidateFunds(district, branch):
     contested_races_sql = '''
         SELECT committee_id, last_name, first_name, party, incumbent, sum(total_funds) as total_funds, sum(funds_available) as funds_available
         FROM contested_races
-        WHERE district = :district AND branch = :branch
+        WHERE district_name = :district AND branch = :branch
         GROUP BY committee_id, last_name, first_name, party, incumbent
     '''
 
-    races = list(g.engine.execute(sa.text(contested_races_sql),district=district,branch=branch))
+    races = list(g.engine.execute(sa.text(contested_races_sql),district=str(district),branch=branch))
     committees_cash_on_hand = getCommitteesCashOnHand([race.committee_id for race in races])
 
     for race in races:
@@ -484,7 +423,7 @@ def getContestedRacesInformation(type_arg):
         contested_races_title = "Illinois House of Representatives Contested Races"
         branch = "H"
 
-    order_by = "cr.district" if branch == "O" else "cast(cr.district as integer)"
+    order_by = "cr.district_name" if branch == "O" else "cr.district"
 
     contested_races_sql = '''
         SELECT cr.*, concat_ws(' ', cr.first_name, cr.last_name, CASE WHEN cr.incumbent = 'Y' THEN ' (i)' ELSE NULL END) as pretty_name
@@ -501,17 +440,17 @@ def getContestedRacesInformation(type_arg):
     contested_races_output = {}
 
     for c in contest_race_list:
-        key = c.branch + "__" + str(c.district)
+        key = c.branch + "__" + str(c.district_name)
         if not contested_races_output.get(key):
             contested_races_output[key] = {
                 "branch": c.branch,
-                "district": c.district,
+                "district": c.district_name,
                 "total_candidates": 0,
                 "candidate_names": "",
                 "total_race_money": 0,
-                "district_id": "_".join(str(c.district).split()),
+                "district_id": "_".join(str(c.district_name).split()),
                 "district_label": ("Senate" if c.branch == "S" else "House") + " District",
-                "district_sort": int(c.district) if c.branch in ["H", "S"] else c.district,
+                "district_sort": c.district if c.branch in ["H", "S"] else c.district_name,
                 "R": [],
                 "D": []
             }

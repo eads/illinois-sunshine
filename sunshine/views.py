@@ -513,7 +513,6 @@ def muni_contested_race_detail(district):
 @cache.cached(timeout=CACHE_TIMEOUT, key_prefix=make_cache_key)
 def contested_races():
 
-    # TODO: Update the default argument here when the other pages are enabled again.
     type_arg = 'house_of_representatives' if not request.args.get('type') else request.args.get('type', 'house_of_representatives')
     visible = request.args.get('visible')
 
@@ -1360,9 +1359,9 @@ def admin_contested_races():
     '''
 
     if branch in ["H", "S"]:
-        contested_race_sql += " ORDER BY cast(district as integer), party, last_name, first_name"
-    else:
         contested_race_sql += " ORDER BY district, party, last_name, first_name"
+    else:
+        contested_race_sql += " ORDER BY district_name, party, last_name, first_name"
 
     contested_race_data = list(g.engine.execute(sa.text(contested_race_sql),
                                                 branch=branch))
@@ -1438,7 +1437,8 @@ def admin_contested_race_details():
 
     candidate_info = {}
     candidate_info["branch"] = request.form.get("branch")
-    candidate_info["district"] = request.form.get("district_statewide") if candidate_info["branch"] == "O" else request.form.get("district")
+    candidate_info["district"] = 0 if candidate_info["branch"] == "O" else int(request.form.get("district"))
+    candidate_info["district_name"] = request.form.get("district_name") if candidate_info["branch"] == "O" else str(request.form.get("district"))
     candidate_info["first_name"] = request.form.get("first_name")
     candidate_info["last_name"] = request.form.get("last_name")
     candidate_info["incumbent"] = 'N' if request.form.get("incumbent") is None else 'Y',
@@ -1486,6 +1486,7 @@ def getCandidateInfo(id):
     info['committee_id'] = None
     info['party'] = None
     info['district'] = None
+    info['district_name'] = None
     info['candidate_id'] = None
     info['alternate_names'] = None
 
@@ -1502,6 +1503,7 @@ def getCandidateInfo(id):
             info['committee_id'] = c.committee_id
             info['party'] = c.party
             info['district'] = c.district
+            info['district_name'] = c.district_name
             info['candidate_id'] = c.candidate_id
             info['alternate_names'] = c.alternate_names
 
@@ -1543,16 +1545,21 @@ def insertCandidate(id, candidate_info, statewide_districts):
 
     # District
     if candidate_info["branch"] == "G":
-        candidate_info["district"] = "0"
+        candidate_info["district"] = 0
+        candidate_info["district_name"] = "0"
     elif candidate_info["branch"] == "S" or candidate_info["branch"] == "H":
         try:
             if int(candidate_info["district"]) <= 0:
                 messages.append("District: Please enter a positive integer")
+            else:
+                candidate_info["district_name"] = str(candidate_info["district"])
         except ValueError:
             messages.append("District: Please enter a positive integer")
     elif candidate_info["branch"] == "O":
-        if candidate_info["district"] not in statewide_districts:
+        if candidate_info["district_name"] not in statewide_districts:
             messages.append("District: Please select a valid option")
+        else:
+            candidate_info["district"] = 0
 
     # First name
     if not candidate_info["first_name"]:
@@ -1591,14 +1598,15 @@ def insertCandidate(id, candidate_info, statewide_districts):
     if not id or id == "None":
         candidate_update_sql = '''
             INSERT INTO contested_races
-            (branch, district, first_name, last_name, incumbent, committee_id, committee_name, party, alternate_names)
-            VALUES (:branch, :district, :first_name, :last_name, :incumbent, :committee_id, :committee_name, :party, :alternate_names)
+            (branch, district, district_name, first_name, last_name, incumbent, committee_id, committee_name, party, alternate_names)
+            VALUES (:branch, :district, :district_name, :first_name, :last_name, :incumbent, :committee_id, :committee_name, :party, :alternate_names)
             RETURNING id
         '''
 
         id_result = g.engine.execute(sa.text(candidate_update_sql),
                          branch=candidate_info["branch"],
                          district=candidate_info["district"],
+                         district_name=candidate_info["district_name"],
                          first_name=candidate_info["first_name"],
                          last_name=candidate_info["last_name"],
                          incumbent=candidate_info["incumbent"],
@@ -1611,8 +1619,8 @@ def insertCandidate(id, candidate_info, statewide_districts):
     else:
         candidate_update_sql = '''
             UPDATE contested_races
-            SET (branch, district, first_name, last_name, incumbent, committee_id, committee_name, party, alternate_names)
-            = (:branch, :district, :first_name, :last_name, :incumbent, :committee_id, :committee_name, :party, :alternate_names)
+            SET (branch, district, district_name, first_name, last_name, incumbent, committee_id, committee_name, party, alternate_names)
+            = (:branch, :district, :district_name, :first_name, :last_name, :incumbent, :committee_id, :committee_name, :party, :alternate_names)
             WHERE id = :id
         '''
 
@@ -1620,6 +1628,7 @@ def insertCandidate(id, candidate_info, statewide_districts):
                          id=id,
                          branch=candidate_info["branch"],
                          district=candidate_info["district"],
+                         district_name=candidate_info["district_name"],
                          first_name=candidate_info["first_name"],
                          last_name=candidate_info["last_name"],
                          incumbent=candidate_info["incumbent"],
@@ -1641,7 +1650,7 @@ def getHouseSenateContestedRacesCount():
         FROM contested_races cr
         WHERE branch IN ('H', 'S')
         GROUP BY cr.branch, cr.district
-        ORDER BY total_race_money desc, cr.branch, cast(cr.district as integer)
+        ORDER BY total_race_money desc, cr.branch, cr.district
         LIMIT 10
     '''
 
