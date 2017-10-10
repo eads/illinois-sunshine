@@ -1153,10 +1153,10 @@ class SunshineViews(object):
         try:
             trans = self.connection.begin()
             curs = self.connection.connection.cursor()
-            curs.execute('''ALTER TABLE contested_races ALTER COLUMN district TYPE varchar (50)''')
+            curs.execute('''ALTER TABLE contested_races ADD COLUMN district_name varchar(50)''')
             trans.commit()
         except (psycopg2.ProgrammingError, sa.exc.ProgrammingError):
-            print('Problem updating contested_races district column type: ')
+            print('Problem adding contested_races district_name column: ')
             print(traceback.print_exc())
             trans.rollback()
 
