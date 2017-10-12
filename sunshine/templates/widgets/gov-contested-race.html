@@ -33,7 +33,7 @@
     <tbody>
     {% for row in contested_race_data %}
         <tr class = 'clickable' style= "cursor: Pointer;" onclick="window.open('{{ url_for('views.contested_race_detail', race_type='gubernatorial', district=0) }}'); setAttribute('target','_blank');">
-            <td class='text-left' style="white-space:nowrap;color:#000;font-weight:bold;">
+            <td class='text-left' style="color:#000;font-weight:bold;">
                 {{ row[0] }}
             </td>
             <td class="text-right" style="white-space:nowrap;">

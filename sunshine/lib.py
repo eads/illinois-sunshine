@@ -444,7 +444,8 @@ def getContestedRacesInformation(type_arg):
         if not contested_races_output.get(key):
             contested_races_output[key] = {
                 "branch": c.branch,
-                "district": c.district_name,
+                "district": c.district,
+                "district_name": c.district_name,
                 "total_candidates": 0,
                 "candidate_names": "",
                 "total_race_money": 0,
