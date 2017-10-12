@@ -32,6 +32,9 @@
         <p>
             {{ contested_races_type | contested_races_description }}
             <br />Click on a row to see detailed information.
+            {% if contested_races_type != "gubernatorial" %}
+                (i) indicates an incumbent candidate.
+            {% endif %}
         </p>
     </div>
 </div>
