@@ -85,6 +85,10 @@
                                         <td>
                                             {% if not c.first_name and not c.last_name %}
                                                 &nbsp;
+                                            {% elif c.committee_id %}
+                                                <a href='{{ url_for('views.committee', committee_id = c.committee_id) }}'>
+                                                    {{c.first_name}} {{c.last_name}} {% if c.incumbent == "Y" %}(i){% endif %}
+                                                </a>
                                             {% else %}
                                                 {{c.first_name}} {{c.last_name}} {% if c.incumbent == "Y" %}(i){% endif %}
                                             {% endif %}
@@ -118,6 +122,10 @@
                                         <td>
                                             {% if not c.first_name and not c.last_name %}
                                                 &nbsp;
+                                            {% elif c.committee_id %}
+                                                <a href='{{ url_for('views.committee', committee_id = c.committee_id) }}'>
+                                                    {{c.first_name}} {{c.last_name}} {% if c.incumbent == "Y" %}(i){% endif %}
+                                                </a>
                                             {% else %}
                                                 {{c.first_name}} {{c.last_name}} {% if c.incumbent == "Y" %}(i){% endif %}
                                             {% endif %}

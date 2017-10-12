@@ -1650,6 +1650,7 @@ def getHouseSenateContestedRacesCount():
         FROM contested_races cr
         WHERE branch IN ('H', 'S')
         GROUP BY cr.branch, cr.district
+        HAVING count(*) > 1
         ORDER BY total_race_money desc, cr.branch, cr.district
         LIMIT 10
     '''
