@@ -1137,6 +1137,7 @@ class SunshineViews(object):
 
             curs.execute(exp)
             trans.commit()
+
         except (psycopg2.ProgrammingError, sa.exc.ProgrammingError):
             trans.rollback()
             print('Problem in creating contested_races table: ')
@@ -1164,7 +1165,6 @@ class SunshineViews(object):
         sslib.updateContestedRacesFunds(self.connection)
 
     def usersTable(self):
-
         try:
             trans = self.connection.begin()
             curs = self.connection.connection.cursor()
@@ -1206,8 +1206,10 @@ class SunshineViews(object):
                 )
             '''
 
+
             curs.execute(exp)
             trans.commit()
+
         except (sa.exc.ProgrammingError, psycopg2.ProgrammingError) as e:
             trans.rollback()
             print('Problem in creating news_table table: ')
