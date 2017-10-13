@@ -60,7 +60,7 @@ def contested_races_description(s):
   elif s == "Senate":
     description = "2018 Races for the Illinois Senate in all districts."
   elif s == "Statewide Offices":
-    description = "2018 General Election Races for Illinois Constitutional Officers Statewide."
+    description = "2018 Races for Illinois Constitutional Officers Statewide."
   elif s == "Gubernatorial":
     description = "Funds raised and spent in the 2018 Race for Illinois Governor."
   else:
