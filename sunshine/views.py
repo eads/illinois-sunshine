@@ -592,6 +592,7 @@ def contested_race_detail(race_type, district):
     return render_template(template,
                             race_type=race_type,
                             district=district,
+                            current_date=datetime.now(),
                             contested_race_type=contested_race_type,
                             contested_race_title=contested_race_title,
                             contested_race_description=contested_race_description,
@@ -1335,20 +1336,19 @@ def admin_contested_races():
 
     if type_arg == "senate":
         contested_races_type = "Senate"
-        contested_races_title = "Illinois Senate Contested Races"
+        contested_races_title = "Illinois Senate Races"
         branch = "S"
     elif type_arg == "statewide_office":
         contested_races_type = "Statewide Offices"
-        contested_races_title = "Illinois Statewide Officers Contested Race"
+        contested_races_title = "Illinois Constitutional Officer Races"
         branch = "O"
     elif type_arg == "house_of_representatives":
         contested_races_type = "House of Representatives"
-        contested_races_title = "Illinois House of Representatives Contested \
-                                 Races"
+        contested_races_title = "Illinois House of Representatives Races"
         branch = "H"
     else:
         contested_races_type = "Gubernatorial"
-        contested_races_title = "Illinois Gubernatorial Contested Race"
+        contested_races_title = "Illinois Gubernatorial Races"
         branch = "G"
 
     contested_race_sql = '''

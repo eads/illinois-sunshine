@@ -412,15 +412,15 @@ def getContestedRacesInformation(type_arg):
 
     if is_senate:
         contested_races_type = "Senate"
-        contested_races_title = "Illinois Senate Contested Races"
+        contested_races_title = "Illinois Senate Races"
         branch = "S"
     elif is_statewide_office:
         contested_races_type = "Statewide Offices"
-        contested_races_title = "Illinois Statewide Officers Contested Race"
+        contested_races_title = "Illinois Constitutional Officer Races"
         branch = "O"
     else:
         contested_races_type = "House of Representatives"
-        contested_races_title = "Illinois House of Representatives Contested Races"
+        contested_races_title = "Illinois House of Representatives Races"
         branch = "H"
 
     order_by = "cr.district_name" if branch == "O" else "cr.district"

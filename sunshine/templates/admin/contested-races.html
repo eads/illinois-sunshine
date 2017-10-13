@@ -11,12 +11,11 @@
         <ul class="nav nav-pills">
           <li role="presentation" {% if contested_races_type == "House of Representatives"%}class="active"{% else %}class="inactive"{% endif %}><a href="{{ url_for('views.admin_contested_races') }}?type=house_of_representatives">  House of Representatives  </a></li>
           <li role="presentation" {% if contested_races_type == "Senate"%}class="active"{% else %}class="inactive"{% endif %}><a href="{{ url_for('views.admin_contested_races') }}?type=senate">  Senate  </a></li>
-          <li role="presentation" {% if contested_races_type == "Statewide Offices"%}class="active"{% else %}class="inactive"{% endif %}><a href="{{ url_for('views.admin_contested_races') }}?type=statewide_office">  Statewide Offices  </a></li>
+          <li role="presentation" {% if contested_races_type == "Statewide Offices"%}class="active"{% else %}class="inactive"{% endif %}><a href="{{ url_for('views.admin_contested_races') }}?type=statewide_office"> Constitutional Officers </a></li>
           <li role="presentation" {% if contested_races_type == "Gubernatorial"%}class="active"{% else %}class="inactive"{% endif %}><a href="{{ url_for('views.admin_contested_races') }}?type=gubernatorial">  Governor  </a></li>
           <li><a class="btn btn-default" style="margin-left:20px;" href="{{ url_for('views.admin_contested_race_details') }}">Add Candidate</a></li>
         </ul>
         <h2 style="color:#222; font-size:32px;">{{contested_races_title}}</h2>
-        <p>{{ contested_races_type }}</p>
     </div>
  </div>
 
