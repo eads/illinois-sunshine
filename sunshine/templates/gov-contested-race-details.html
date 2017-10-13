@@ -36,7 +36,7 @@
         <ul class="nav nav-pills">
           <li role="presentation" {% if contested_races_type == "House of Representatives"%}class="active"{% else %}class="inactive"{% endif %}><a href="{{ url_for('views.contested_races') }}?type=house_of_representatives">  House of Representatives  </a></li>
           <li role="presentation" {% if contested_races_type == "Senate"%}class="active"{% else %}class="inactive"{% endif %}><a href="{{ url_for('views.contested_races') }}?type=senate">  Senate  </a></li>
-          <li role="presentation" {% if contested_races_type == "Statewide Offices"%}class="active"{% else %}class="inactive"{% endif %}><a href="{{ url_for('views.contested_races') }}?type=statewide_office">  Statewide Offices  </a></li>
+          <li role="presentation" {% if contested_races_type == "Statewide Offices"%}class="active"{% else %}class="inactive"{% endif %}><a href="{{ url_for('views.contested_races') }}?type=statewide_office"> Constitutional Officers </a></li>
           <li role="presentation" {% if contested_races_type == "gubernatorial"%}class="active"{% else %}class="inactive"{% endif %}><a href="{{ url_for('views.contested_races') }}?type=gubernatorial">  Governor  </a></li>
         </ul>
 
