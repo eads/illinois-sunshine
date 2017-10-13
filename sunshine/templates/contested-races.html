@@ -72,7 +72,7 @@
                 <td class="text-left">{{ row.candidate_names }}</td>
                 <td class="text-right">{{ row.total_race_money | format_money }}</td>
             </tr>
-            <tr id="{{row.district_id}}" {% if visible != row.district_name %} style="display: none;" {% endif %}>
+            <tr id="{{row.district_id}}" class="race_subtable" {% if visible != row.district_name %} style="display: none;" {% endif %}>
                 <td colspan="4" style="padding: 0;">
                     <div class="col-sm-6" style="padding: 0;">
                         <table class="table table-striped table-border table-merge" style="padding-bottom: 0; margin-bottom: 0;">
@@ -164,16 +164,14 @@
 
 {% block extra_javascript %}
 <script>
+    $(document).ready(function() {
+        if ($(".race_subtable:visible").length) {
+            $(document).scrollTop($(".race_subtable:visible").offset().top - 50);
+        }
+    });
 
     function display(id) {
-        var attr = "#" + id;
-        if ( $(attr).css('display') == 'none' ){
-            $(attr).show();
-        }
-        else {
-            $(attr).hide();
-        }
+        $("#" + id).toggle();
     }
-
 </script>
 {% endblock %}
