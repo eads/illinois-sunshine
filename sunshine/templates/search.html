@@ -28,19 +28,19 @@
                         <span>Search for</span>
                     </div>
                     <div class="col-md-10">
-                        <label data-title='Candidates' data-content='Any person who seeks nomination for election, election to, or retention in public office'>
+                        <label data-title='Candidates' class="ss-popunder" data-content='Any person who seeks nomination for election, election to, or retention in public office'>
                             <input type="checkbox" name="table_name" value="candidates" {% if 'candidates' in table_name %}checked='checked'{% endif %}> Candidates
                         </label>
-                        <label data-title='Committees' data-content='Includes committees for political candidates, political parties, political action committees (PACs), and ballot initiatives'>
+                        <label data-title='Committees' class="ss-popunder" data-content='Includes committees for political candidates, political parties, political action committees (PACs), and ballot initiatives'>
                             <input type="checkbox" name="table_name" value="committees" {% if 'committees' in table_name %}checked='checked'{% endif %}> Committees
                         </label>
-                        <label data-title='Committee officers' data-content='Chairmen and treasurerers for political committees'>
+                        <label data-title='Committee officers' class="ss-popunder" data-content='Chairmen and treasurerers for political committees'>
                             <input type="checkbox" name="table_name" value="officers" {% if 'officers' in table_name %}checked='checked'{% endif %}> Committee officers
                         </label>
-                        <label data-title='Donations' data-content='Any person or organization who has given to a political committee'>
+                        <label data-title='Donations' class="ss-popunder" data-content='Any person or organization who has given to a political committee'>
                             <input type="checkbox" name="table_name" value="receipts" {% if 'receipts' in table_name %}checked='checked'{% endif %}> Donations to committees
                         </label>
-                        <label data-title='Expenditures' data-content='Any person or organization who was given money by a political committee'>
+                        <label data-title='Expenditures' class="ss-popunder" data-content='Any person or organization who was given money by a political committee'>
                             <input type="checkbox" name="table_name" value="expenditures" {% if 'expenditures' in table_name %}checked='checked'{% endif %}> Expenditures by committees
                         </label>
                     </div>
@@ -168,9 +168,6 @@
     <script src="{{ url_for('static', filename='js/jquery-ui.min.js')}}"></script>
 <script type="text/javascript">
     $(document).ready(function(){
-
-        $('#filter-results label').popover({trigger: "hover", placement: "bottom"});
-
         $('.date-filter').datepicker({
             dayNamesMin: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
             prevText: '',

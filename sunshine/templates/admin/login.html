@@ -1,0 +1,32 @@
+{% extends 'admin/base.html' %}
+://www.youtube.com/agrant@127.0.0.1
+{% from 'macros.html' import header %}
+{% block header_social %}
+    {{ header("Admin Login", "", request.path) }}
+{% endblock %}
+{% block content %}
+
+<div class="container" style="height: 65vh;">
+    <div class="text-left col-sm-4 col-md-offset-4">
+        <h1 class="fa fa-gear fa-2x" style="margin-bottom: 50px;">Admin Login</h1>
+        <form method="POST" action="/admin/login/">
+            <div class="form-group">
+                <input type="text" class="form-control" id="username" name="username" placeholder="Username" style="color: black;">
+            </div>
+            <div class="form-group">
+                <input type="password" class="form-control" id="password" name="password" placeholder="Password" style="color: black;">
+            </div>
+            <div class="checkbox">
+                <label><input type="checkbox" name="rememberMe"> Remember me</label>
+            </div>
+            <button type="submit" class="btn btn-default" style="width: 100%;">Login</button>
+        </form>
+        <div class="text-center">
+            <p style="color: red; padding: 10px;">{{ invalid }}</p>
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

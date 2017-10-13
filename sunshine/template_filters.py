@@ -45,17 +45,22 @@ def expense_name(s):
         '6B': 'Transfer out',
         '7B': 'Loan made',
         '8B': 'Expenditure',
-        '9B': 'Independent Expenditure',
+        '9B': 'Independent Expenditure'
     }
     return verbs.get(s, 'spent')
 
+def expense_popover(s):
+    if (s != "Independent Expenditure"):
+        return s
+    return '<span class="ss-popover" data-content="Independent expenditures are ad buys made supporting or opposing candidates, without any collaboration or coordination with the candidate. These ad buys are often made by Super PACs or Party Committees.">Independent Expenditure</span>'
+
 def contested_races_description(s):
   if s == "House of Representatives":
-    description = "Contested 2016 General Election Races for the Illinois State House of Representatives in all districts."
+    description = "2018 Races for the Illinois State House of Representatives in all districts."
   elif s == "Senate":
-    description = "Contested 2016 General Election Races for the Illinois Senate in all districts."
-  elif s == "State Comptroller":
-    description = "Contested 2016 Race for Illinois State Comptroller."
+    description = "2018 Races for the Illinois Senate in all districts."
+  elif s == "Statewide Offices":
+    description = "2018 Races for Illinois Constitutional Officers Statewide."
   elif s == "Gubernatorial":
     description = "Funds raised and spent in the 2018 Race for Illinois Governor."
   else:
@@ -81,6 +86,12 @@ def committee_description(s):
 
 def format_number(s):
     return '{:,}'.format(s)
+
+def number_suffix(n):
+    # This will add "st", "nd", "rd", etc... to the end of a given integer.
+    import math
+    n = int(n)
+    return "%d%s" % (n,"tsnrhtdd"[(math.floor(n/10)%10!=1) * (n%10<4) * n%10::4])
 
 def format_large_number(n):
     import math

@@ -1,0 +1,128 @@
+{% extends 'admin/base.html' %}
+{% from 'macros.html' import pager, header %}
+{% block header_social %}
+    {{ header(contested_races_title, contested_races_type | contested_races_description, request.path) }}
+{% endblock %}
+
+{% block extra_styles %}
+<style>
+    table { margin-top: 40px; border-collapse: collapse; }
+    table th, table td { padding-bottom: 10px; }
+    table th { font-weight: bold; text-align: right; padding-right: 20px;}
+    table tr td input.form-control,table tr td select.form-control { color: #000; }
+    table td input[type="checkbox"] { width: 16px; margin: 0; }
+    table td input[type="checkbox"]:focus { outline: 0; }
+    .branch-slave { display: none; }
+</style>
+{% endblock %}
+
+{% block content %}
+{% if new_candidate %}
+<h2>New Candidate </h2>
+{% else %}
+<h2>Edit Candidate: {{candidate.first_name}} {{candidate.last_name}}</h2>
+{% endif %}
+
+<div class = "col-sm-12" style="padding: 0;">
+    <form method="POST" action="/admin/contested-race-detail/">
+        <input type="hidden" name="id" value="{{id}}">
+        <table>
+            <tr>
+                <th>Branch</th>
+                <td>
+                    <select name="branch" class="form-control">
+                        <option value=""></option>
+                        <option value="G" {% if candidate.branch == "G" %} selected {% endif %}>Gubernatorial</option>
+                        <option value="H" {% if candidate.branch == "H" %} selected {% endif %}>House of Representatives</option>
+                        <option value="S" {% if candidate.branch == "S" %} selected {% endif %}>Senate</option>
+                        <option value="O" {% if candidate.branch == "O" %} selected {% endif %}>Constitutional Officers</option>
+                    </select>
+                </td>
+            </tr>
+            <tr class="branch-slave branch-H branch-S branch-O">
+                <th>District</th>
+                <td>
+                    <input type="text" class="form-control branch-slave branch-H branch-S" name="district" value="{% if candidate.district %}{{candidate.district}}{% endif %}" />
+                    <select class="form-control branch-slave branch-O" name="district_name">
+                        <option value=""></option>
+                        {% for opt in statewide_districts %}
+                        <option value="{{opt}}" {% if candidate.district_name == opt %}selected{% endif %}>{{opt}}</option>
+                        {% endfor %}
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <th>Candidate ID</th>
+                <td><input type="text" class="form-control" name="candidate" value="{% if candidate.candidate_id %}{{candidate.candidate_id}}{% endif %}" /></td>
+            </tr>
+            <tr>
+                <th>First Name</th>
+                <td><input type="text" class="form-control" name="first_name" value="{% if candidate.first_name %}{{candidate.first_name}}{% endif %}" /></td>
+            </tr>
+            <tr>
+                <th>Last Name</th>
+                <td><input type="text" class="form-control" name="last_name" value="{% if candidate.last_name %}{{candidate.last_name}}{% endif %}" /></td>
+            </tr>
+            <tr>
+                <th>Incumbent</th>
+                <td><input type="checkbox" class="form-control text-center" name="incumbent" {% if candidate.incumbent == 'Y'%} checked {% endif %}></td>
+            </tr>
+            <tr>
+                <th>Committee ID</th>
+                <td><input type="text" class="form-control" name="committee" value="{% if candidate.committee_id %}{{candidate.committee_id}}{% endif %}" /></td>
+            </tr>
+            <tr>
+                <th>Party</th>
+                <td>
+                    <select name="party" class="form-control">
+                        <option value=""></option>
+                        <option value="D" {% if candidate.party == 'D'%} selected {% endif %}>Democrat</option>
+                        <option value="R" {% if candidate.party == 'R'%} selected {% endif %}>Republican</option>
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <th>Alternative Names</th>
+                <td><input type="text" class="form-control" name="alternate_names" value="{% if candidate.alternate_names %}{{candidate.alternate_names}}{% endif %}" /></td>
+            </tr>
+        </table>
+        <div class="col-sm-12">
+            {% if not new_candidate %}<button type="button" class="btn btn-default float-sm-right btn-delete" style="width: 75px; float: right; margin: 10px;">Delete</button>{% endif %}
+            <input type="submit" name="cancel" class="btn btn-default float-sm-right" style="width: 75px; float: right; margin: 10px 0;" value="Cancel" />
+            <button type="submit" class="btn btn-default float-sm-right" style="width: 75px; float: right; margin: 10px;">Save</button>
+        </div>
+    </form>
+    <form id="frmDelete" method="post" action="{{ url_for('views.admin_contested_race_delete') }}">
+        <input name="id" type="hidden" value="{{id}}" />
+    </form>
+    <br/>
+    <br/>
+
+</div>
+
+{% endblock %}
+
+{% block extra_javascript %}
+<script type="text/javascript">
+    $(document).ready(function() {
+        $("select[name='branch']").change(toggleDistrict);
+        $("button.btn-delete").click(deleteRace);
+        toggleDistrict();
+    });
+
+    function toggleDistrict() {
+        $('.branch-slave').hide();
+        var branch = $('select[name="branch"]').val();
+        var slaveSelector = ".branch-" + branch;
+        $(slaveSelector).show();
+    }
+
+    function deleteRace() {
+        if (!confirm("Are you sure you wish to delete this race candidate?")) {
+            return;
+        }
+
+        $("#frmDelete").submit();
+    }
+</script>
+{% endblock %}

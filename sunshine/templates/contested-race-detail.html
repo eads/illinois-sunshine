@@ -8,8 +8,13 @@
     body { color: #000; }
     h2 small { color: #000; }
 </style>
-
-<h1><i class='fa fa-flag-checkered'></i> {% if district %}District {{ district }} - {% endif %}Contested Race<small>{% if contested_race_type %} <strong>{{ contested_race_type }}</strong>{% endif %}, updated daily</small></h1>
+<div class="row col-sm-12">
+    <img src="/static/images/illinois_state_seal.gif" style="width: 80px; height: 80px;" class="header-image" />
+    <div style="display:inline-block;">
+        <h1 style="color: #000; font-size: 36px;">Race for Illinois Governor</h1>
+        <p style="color: #000; font-size:20px; padding-left: 2px;">Funds raised and spent in the 2018 Race for Illinois Governor.</p>
+    </div>
+</div>
 <div class="row">
     <div class="col-sm-12">
         <div class="panel panel-default">
@@ -50,6 +55,11 @@
                         {% endif %}
                         {% endfor %}
                     </table>
+                    <div class="row">
+                        <div class="col-sm-9">
+                            <h3 style="font-size:18px; margin:0;"><a href='{{ url_for('views.committee', committee_id = c.committee_id) }}'>Click here for current funds on hand</a></h3>
+                        </div>
+                    </div>
                     <br />
                     <div class="row">
                         <div class="col-sm-9">
@@ -70,7 +80,7 @@
 
                     <h2>
                         <small>
-                            Total Independent Expenditures Supporting:
+                            Total <span class="ss-popover" data-content="Independent expenditures are ad buys made supporting or opposing candidates, without any collaboration or coordination with the candidate. These ad buys are often made by Super PACs or Party Committees.">Independent Expenditures</span> Supporting:
                             {% if c.supporting_funds and c.candidate_id %}
                             <a href="{{ url_for('views.independent_expenditures', candidate_id=c.candidate_id, stance="supporting" )}}">
                                 <strong>{{ c.supporting_funds|format_money }}</strong>
@@ -79,7 +89,7 @@
                             <strong>$0</strong>
                             {% endif %}
                             <br />
-                            Total Independent Expenditures Opposing:
+                            Total <span class="ss-popover" data-content="Independent expenditures are ad buys made supporting or opposing candidates, without any collaboration or coordination with the candidate. These ad buys are often made by Super PACs or Party Committees.">Independent Expenditures</span> Opposing:
                             {% if c.opposing_funds and c.candidate_id %}
                             <a href="{{ url_for('views.independent_expenditures', candidate_id=c.candidate_id,stance="opposing" )}}">
                                 <strong>{{ c.opposing_funds|format_money }}</strong>

@@ -1,7 +1,11 @@
+from flask import current_app
 from .database import Base, db_session as session
 import sqlalchemy as sa
 from sqlalchemy.orm import synonym
 from sqlalchemy.dialects.postgresql import ENUM, DOUBLE_PRECISION
+import sys
+import bcrypt
+
 
 class Candidate(Base):
     __tablename__ = 'candidates'
@@ -20,32 +24,33 @@ class Candidate(Base):
     residence_county = sa.Column(sa.String)
     party = sa.Column(sa.String)
     redaction_requested = sa.Column(sa.Boolean)
-    
+
     date_added = sa.Column(sa.DateTime, server_default=sa.text('NOW()'))
     last_update = sa.Column(sa.DateTime, onupdate=sa.func.now())
 
     def __repr__(self):
         return '<Candidate %r %r>' % (self.first_name, self.last_name)
-    
+
     def as_dict(self):
         d = {c.name: getattr(self, c.name) for c in self.__table__.columns}
         d['candidacies'] = [c.as_dict() for c in self.candidacies]
         return d
 
+
 class Candidacy(Base):
     __tablename__ = 'candidacies'
     id = sa.Column(sa.Integer, primary_key=True)
-    
+
     candidate_id = sa.Column(sa.Integer)
-    candidate = sa.orm.relationship('Candidate', 
+    candidate = sa.orm.relationship('Candidate',
                                     primaryjoin='Candidacy.candidate_id==Candidate.id',
                                     foreign_keys='Candidacy.candidate_id',
                                     remote_side='Candidate.id',
                                     backref='candidacies')
-    
+
     election_type = sa.Column(sa.String)
     election_year = sa.Column(sa.Integer)
-    
+
     # Incumbent, challenger, open seat
     race_type = sa.Column(ENUM('incumbent', 'challenger', 'open seat', 'retired',
                             name='candidacy_race_type'))
@@ -55,11 +60,11 @@ class Candidacy(Base):
     limits_off_reason = sa.Column(sa.String)
 
     def __repr__(self):
-        return '<Candidacy %r %r, (%r %r)>' % (self.candidate.first_name, 
-                                               self.candidate.last_name, 
+        return '<Candidacy %r %r, (%r %r)>' % (self.candidate.first_name,
+                                               self.candidate.last_name,
                                                self.election_year,
                                                self.election_type)
-    
+
     def as_dict(self):
         return {c.name: getattr(self, c.name) for c in self.__table__.columns}
 
@@ -72,6 +77,7 @@ officer_committees = sa.Table('officer_committees', Base.metadata,
                        sa.Column('officer_id', sa.Integer),
                        sa.Column('committee_id', sa.Integer)
 )
+
 
 class Committee(Base):
     __tablename__ = 'committees'
@@ -98,12 +104,12 @@ class Committee(Base):
     disp_funds_charity = sa.Column(sa.Boolean)
     disp_funds_95 = sa.Column(sa.Boolean)
     disp_funds_description = sa.Column(sa.Text)
-    
+
     # These use the same ENUM. Need to create it separately
-    candidate_position = sa.Column(ENUM('support', 'oppose', 
+    candidate_position = sa.Column(ENUM('support', 'oppose',
                                         name='committee_position',
                                         create_type=False))
-    policy_position = sa.Column(ENUM('support', 'oppose', 
+    policy_position = sa.Column(ENUM('support', 'oppose',
                                      name='committee_position',
                                      create_type=False))
     party = sa.Column(sa.String)
@@ -114,7 +120,7 @@ class Committee(Base):
                                      secondaryjoin='candidate_committees.c.candidate_id==Candidate.id',
                                      secondary=candidate_committees,
                                      backref='committees')
-    
+
     officers = sa.orm.relationship('Officer',
                                     primaryjoin='Committee.id==officer_committees.c.committee_id',
                                     secondaryjoin='officer_committees.c.officer_id==Officer.id',
@@ -149,21 +155,22 @@ class Officer(Base):
 
     def __repr__(self):
         return '<Officer %r %r>' % (self.first_name, self.last_name)
-    
+
     def as_dict(self):
         return {c.name: getattr(self, c.name) for c in self.__table__.columns}
+
 
 class FiledDoc(Base):
     __tablename__ = 'filed_docs'
     id = sa.Column(sa.Integer, primary_key=True)
 
     committee_id = sa.Column(sa.Integer)
-    committee = sa.orm.relationship('Committee', 
+    committee = sa.orm.relationship('Committee',
                                     primaryjoin='FiledDoc.committee_id==Committee.id',
                                     foreign_keys='FiledDoc.committee_id',
                                     remote_side='Committee.id',
                                     backref='filed_docs')
-    
+
     doc_type = sa.Column(sa.String(10))
     doc_name = sa.Column(sa.String(30))
     amended = sa.Column(sa.Boolean)
@@ -195,26 +202,27 @@ class FiledDoc(Base):
     def __repr__(self):
         return '<FiledDoc %r>' % (self.id)
 
+
 class D2Report(Base):
     __tablename__ = 'd2_reports'
     id = sa.Column(sa.Integer, primary_key=True)
-    
+
     # Not making an explicit relations here because there are reports
     # that have related filed_docs and committees that don't exist, apparently
     committee_id = sa.Column(sa.Integer)
-    committee = sa.orm.relationship('Committee', 
+    committee = sa.orm.relationship('Committee',
                                     primaryjoin='D2Report.committee_id==Committee.id',
                                     foreign_keys='D2Report.committee_id',
                                     remote_side='Committee.id',
                                     backref='d2_reports')
-    
+
     filed_doc_id = sa.Column(sa.Integer)
-    filed_doc = sa.orm.relationship('FiledDoc', 
+    filed_doc = sa.orm.relationship('FiledDoc',
                                     primaryjoin='D2Report.filed_doc_id==FiledDoc.id',
                                     foreign_keys='D2Report.filed_doc_id',
                                     remote_side='FiledDoc.id',
                                     backref='d2_reports')
-    
+
     beginning_funds_avail = sa.Column(DOUBLE_PRECISION)
     individual_itemized_contrib = sa.Column(DOUBLE_PRECISION)
     individual_non_itemized_contrib = sa.Column(DOUBLE_PRECISION)
@@ -251,21 +259,21 @@ class D2Report(Base):
 class Receipt(Base):
     __tablename__ = 'receipts'
     id = sa.Column(sa.Integer, primary_key=True)
-    
+
     committee_id = sa.Column(sa.Integer)
-    committee = sa.orm.relationship('Committee', 
+    committee = sa.orm.relationship('Committee',
                                     primaryjoin='Receipt.committee_id==Committee.id',
                                     foreign_keys='Receipt.committee_id',
                                     remote_side='Committee.id',
                                     backref='receipts')
 
     filed_doc_id = sa.Column(sa.Integer)
-    filed_doc = sa.orm.relationship('FiledDoc', 
+    filed_doc = sa.orm.relationship('FiledDoc',
                                     primaryjoin='Receipt.filed_doc_id==FiledDoc.id',
                                     foreign_keys='Receipt.filed_doc_id',
                                     remote_side='FiledDoc.id',
                                     backref='receipts')
-    
+
     etrans_id = sa.Column(sa.String)
     last_name = sa.Column(sa.String)
     first_name = sa.Column(sa.String)
@@ -296,10 +304,11 @@ class Receipt(Base):
     def __repr__(self):
         return '<Receipt %r>' % self.id
 
+
 class Expenditure(Base):
     __tablename__ = 'expenditures'
     id = sa.Column(sa.Integer, primary_key=True)
-    
+
     committee_id = sa.Column(sa.Integer)
     committee = sa.orm.relationship('Committee',
                                     primaryjoin='Expenditure.committee_id==Committee.id',
@@ -308,7 +317,7 @@ class Expenditure(Base):
                                     backref='expenditures')
 
     filed_doc_id = sa.Column(sa.Integer)
-    filed_doc = sa.orm.relationship('FiledDoc', 
+    filed_doc = sa.orm.relationship('FiledDoc',
                                     primaryjoin='Expenditure.filed_doc_id==FiledDoc.id',
                                     foreign_keys='Expenditure.filed_doc_id',
                                     remote_side='FiledDoc.id',
@@ -338,19 +347,20 @@ class Expenditure(Base):
     def __repr__(self):
         return '<Expenditure %r>' % self.id
 
+
 class Investment(Base):
     __tablename__ = 'investments'
     id = sa.Column(sa.Integer, primary_key=True)
-    
+
     committee_id = sa.Column(sa.Integer)
-    committee = sa.orm.relationship('Committee', 
+    committee = sa.orm.relationship('Committee',
                                     primaryjoin="Investment.committee_id==Committee.id",
                                     foreign_keys='Investment.committee_id',
                                     remote_side='Committee.id',
                                     backref='investments')
-    
+
     filed_doc_id = sa.Column(sa.Integer)
-    filed_doc = sa.orm.relationship('FiledDoc', 
+    filed_doc = sa.orm.relationship('FiledDoc',
                                     primaryjoin='Investment.filed_doc_id==FiledDoc.id',
                                     foreign_keys='Investment.filed_doc_id',
                                     remote_side='FiledDoc.id',
@@ -376,3 +386,50 @@ class Investment(Base):
     def __repr__(self):
         return '<Investment %r>' % self.id
 
+
+class User(Base):
+    __tablename__ = 'users_table'
+    id = sa.Column(sa.Integer, primary_key=True)
+    username = sa.Column(sa.String)
+    email = sa.Column(sa.String)
+    password = sa.Column(sa.String)
+    is_active = sa.Column(sa.Boolean)
+    is_admin = sa.Column(sa.Boolean)
+    created_date = sa.Column(sa.Date)
+    updated_date = sa.Column(sa.Date)
+
+    def is_authenticated(self):
+        return True
+
+    def is_active(self):
+        return True
+
+    def is_anonymous(self):
+        return False
+
+    def get_id(self):
+        return str(self.id)
+
+    @classmethod
+    def get(cls, id):
+        return session.query(cls).get(int(id))
+
+    @classmethod
+    def validate(cls, username, password):
+        try:
+            user = session.query(cls).filter(User.username == username).first()
+
+            if user is None:
+                return None
+
+            if bcrypt.hashpw(password, user.password) == user.password:
+                return user
+            else:
+                return None
+
+        except Exception as e:
+            current_app.logger.error(e)
+            return None
+
+    def __repr__(self):
+        return '<User %r>' % self.id

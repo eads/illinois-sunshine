@@ -5,96 +5,171 @@
 {% endblock %}
 {% block content %}
 
-{% if is_single %}
-<style>
-    body {
-        color: #000;
-    }
-    table.table-striped.table-hover tr.nohighlight td {
-        background-color: #f9f9f9 !important;
-    }
-    table.table-striped.table-hover td {
-        border-top: 0 !important;
-    }
-</style>
-{% endif %}
+<div class="row">
+    <div class="col-sm-8">
+        <img src="/static/images/illinois_state_seal.gif" style="width: 80px; height: 80px;" class="header-image"/>
+        <div style="display:inline-block;">
+            <h1 style="color: #000; font-size: 36px;">2018 State Races</h1>
+            <p style="color: #000; font-size:20px; padding-left: 2px;">Updated Daily</p>
+        </div>
 
-<div class="row">
-    <div class="col-sm-8">
-    </div>
-   </div>
-<div class="row">
-    <div class="col-sm-8">
-        <h1 style="margin-bottom:30px;"><i class='fa fa-times-circle fa-fw'></i>Contested State Races <small>Updated Daily</small></h1>
-            <!--
-            <br />
+        <br />
         <ul class="nav nav-pills">
           <li role="presentation" {% if contested_races_type == "House of Representatives"%}class="active"{% else %}class="inactive"{% endif %}><a href="{{ url_for('views.contested_races') }}?type=house_of_representatives">House of Representatives  </a></li>
           <li role="presentation" {% if contested_races_type == "Senate"%}class="active"{% else %}class="inactive"{% endif %}><a href="{{ url_for('views.contested_races') }}?type=senate">  Senate  </a></li>
-          <li role="presentation" {% if contested_races_type == "State Comptroller"%}class="active"{% else %}class="inactive"{% endif %}><a href="{{ url_for('views.contested_races') }}?type=comptroller">  State Comptroller  </a></li>
-          <li role="presentation" {% if contested_races_type == "Gubernatorial"%}class="active"{% else %}class="inactive"{% endif %}><a href="{{ url_for('views.contested_races') }}?type=gubernatorial">  Gubernatorial  </a></li>
+          <li role="presentation" {% if contested_races_type == "Statewide Offices"%}class="active"{% else %}class="inactive"{% endif %}><a href="{{ url_for('views.contested_races') }}?type=statewide_office"> Constitutional Officers </a></li>
+          <li role="presentation" {% if contested_races_type == "gubernatorial"%}class="active"{% else %}class="inactive"{% endif %}><a href="{{ url_for('views.contested_races') }}?type=gubernatorial">  Governor  </a></li>
         </ul>
-          -->
-
-        <h2 style="color:#222; font-size:32px;">{{contested_races_title}}</h3>
-
-        <p>
-            {{ contested_races_type | contested_races_description }}
-            {% if not is_single %}<br />Click on a row to see detailed information.{% endif %}
-        </p>
     </div>
     <div class="col-sm-4">
-        <img src='/static/images/illinois_state_seal.png' class='img-responsive center-block'/>
+        <p style="margin-left: 30px; margin-top:25px;">Sponsored by the:</p>
+        <img src='/static/images/mccormick-foundation-logo_2x.png' class='img-responsive center-block' style="width: 85%; height: 85%;"/>
     </div>
- </div>
-<div class="row">
     <div class="col-sm-12">
-        {% if contested_races_type == "House of Representatives" %}
-            {% set r_type = "house" %}
-        {% elif contested_races_type == "Senate" %}
-            {% set r_type = "senate" %}
-        {% elif contested_races_type == "Gubernatorial" %}
-            {% set r_type = "gubernatorial" %}
-        {% else %}
-            {% set r_type = "comptroller" %}
-        {% endif %}
-        <table class = "table table-striped table-hover">
-            <thead>
-                <tr>
-                    <th class = 'text-center'>District</th>
-                    <th class = 'text-left' colspan ="{{ cand_span }}">Candidates</th>
-                </tr>
-            </thead>
-            <tbody>
-            {% if is_single %}
-                <tr class="nohighlight">
-                    <td colspan="{{ cand_span + 1 }}" style="text-align:left;font-style:italic;padding-bottom:0;">
-                        Click anywhere on this row to view detailed information on all candidates.
-                    </td>
-                </tr>
+        <h3>{{contested_races_title}}</h2>
+        <p>
+            {{ contested_races_type | contested_races_description }}
+            <br />Click on a row to see detailed information.
+            {% if contested_races_type != "gubernatorial" %}
+                (i) indicates an incumbent candidate.
             {% endif %}
-            {% for key,value in contested_dict | dictsort %}
-                <tr class = 'clickable' style= "cursor: Pointer;" onclick="window.location.href = '{{ url_for('views.contested_race_detail', race_type=r_type, district=key) }}';">
-                    <td class='text-center'>
-                        <a href= '{{ url_for('views.contested_race_detail', race_type=r_type, district=key) }}'>{{ key or "N/A" }}</a>
-                    </td>
-
-                    {% for c in value %}
-                        <td class='text-left'>
-                            {{ c.first }} {{ c.last }} ({{ c.party }}) {% if c.incumbent|string() == 'Y' %} *INCUMBENT {% elif (c.incumbent|string() != "N") %} *{{ c.incumbent|string() }} {% endif %}
-                        </td>
-                    {% endfor %}
-
-                    {% set remaining_cols = cand_span - (value|length) %}
-
-                    {% if remaining_cols > 0 %}
-                        <td colspan="{{ remaining_cols }}">&nbsp;</td>
-                    {% endif %}
-                </tr>
-            {% endfor %}
-            </tbody>
-        </table>
+        </p>
     </div>
 </div>
 
+<div class="col-sm-12" style="padding: 0;">
+    {% if contested_races_type == "House of Representatives" %}
+        {% set r_type = "house" %}
+    {% elif contested_races_type == "Senate" %}
+        {% set r_type = "senate" %}
+    {% elif contested_races_type == "Gubernatorial" %}
+        {% set r_type = "gubernatorial" %}
+    {% else %}
+        {% set r_type = "statewide_office" %}
+    {% endif %}
+    <table class="table table-striped table-hover table-border">
+        <thead>
+            <th style="min-width:10%;">District</th>
+            <th style="min-width:10%; white-space:nowrap;" class="text-center">Total Candidates</th>
+            <th class='text-center'>Candidates</th>
+            <th style="min-width:10%; white-space:nowrap;" class="text-right">Total Funds in Race</th>
+        </thead>
+        <tbody>
+            {% for row in contested_race_info %}
+
+            {% if row.district_name != None %}
+            <tr class="clickable" style="cursor:pointer;" onclick="display('{{row.district_id}}')">
+                <td style="white-space:nowrap;">
+                    {% if r_type != "statewide_office" %}
+                        {{ row.district|number_suffix }} {{ row.district_label }}
+                    {% else %}
+                        {{ row.district_name }}
+                    {% endif %}
+                </td>
+                <td class="text-center">{{ row.total_candidates }}</td>
+                <td class="text-left">{{ row.candidate_names }}</td>
+                <td class="text-right">{{ row.total_race_money | format_money }}</td>
+            </tr>
+            <tr id="{{row.district_id}}" class="race_subtable" {% if visible != row.district_name %} style="display: none;" {% endif %}>
+                <td colspan="4" style="padding: 0;">
+                    <div class="col-sm-6" style="padding: 0;">
+                        <table class="table table-striped table-border table-merge" style="padding-bottom: 0; margin-bottom: 0;">
+                            <thead>
+                                <tr>
+                                    <th style="background-color: #99afff;">Democratic Candidates</th>
+                                    <th class="text-right" style="background-color: #99afff;">Funds Raised</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for c in row.D %}
+                                    <tr style="background-color: #d0ecff;">
+                                        <td>
+                                            {% if not c.first_name and not c.last_name %}
+                                                &nbsp;
+                                            {% elif c.committee_id %}
+                                                <a href='{{ url_for('views.committee', committee_id = c.committee_id) }}'>
+                                                    {{c.first_name}} {{c.last_name}} {% if c.incumbent == "Y" %}(i){% endif %}
+                                                </a>
+                                            {% else %}
+                                                {{c.first_name}} {{c.last_name}} {% if c.incumbent == "Y" %}(i){% endif %}
+                                            {% endif %}
+                                        </td>
+                                        <td class='text-right'>{% if c.total_funds is number %}{{ c.total_funds | format_money }}{% endif %}</td>
+                                    </tr>
+                                    <tr style="background-color: #e0f5ff;">
+                                        <td>&nbsp;&nbsp;&nbsp;&nbsp; {% if c.opposing_funds is number %}Ind. Expenditures Supporting{% endif %}</td>
+                                        <td class='text-right'>{% if c.supporting_funds is number %}{{ c.supporting_funds | format_money }}{% endif %}</td>
+                                    </tr>
+                                    <tr style="background-color: #e0f5ff;">
+                                        <td>&nbsp;&nbsp;&nbsp;&nbsp; {% if c.opposing_funds is number %}Ind. Expenditures Opposing{% endif %}</td>
+                                        <td class='text-right'>{% if c.opposing_funds is number %}{{ c.opposing_funds | format_money }}{% endif %}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="col-sm-6" style="padding: 0;">
+                        <table class="table table-striped table-border" style="padding-bottom: 0;  margin-bottom: 0;">
+                            <thead>
+                                <tr>
+                                    <th style="background-color: #ff9999;" >Republican Candidates</th>
+                                    <th class="text-right" style="background-color: #ff9999;" >Funds Raised</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for c in row.R %}
+                                    <tr style="background-color: #ffe0e0;">
+                                        <td>
+                                            {% if not c.first_name and not c.last_name %}
+                                                &nbsp;
+                                            {% elif c.committee_id %}
+                                                <a href='{{ url_for('views.committee', committee_id = c.committee_id) }}'>
+                                                    {{c.first_name}} {{c.last_name}} {% if c.incumbent == "Y" %}(i){% endif %}
+                                                </a>
+                                            {% else %}
+                                                {{c.first_name}} {{c.last_name}} {% if c.incumbent == "Y" %}(i){% endif %}
+                                            {% endif %}
+                                        </td>
+                                        <td class='text-right'>{% if c.total_funds is number %}{{ c.total_funds | format_money }}{% endif %}</td>
+                                    </tr>
+                                    <tr style="background-color: #ffefef;">
+                                        <td>&nbsp;&nbsp;&nbsp;&nbsp; {% if c.opposing_funds is number %}Ind. Expenditures Supporting{% endif %}</td>
+                                        <td class='text-right'>{% if c.supporting_funds is number %}{{ c.supporting_funds | format_money }}{% endif %}</td>
+                                    </tr>
+                                    <tr style="background-color: #ffefef;">
+                                        <td>&nbsp;&nbsp;&nbsp;&nbsp; {% if c.opposing_funds is number %}Ind. Expenditures Opposing{% endif %}</td>
+                                        <td class='text-right'>{% if c.opposing_funds is number %}{{ c.opposing_funds | format_money }}{% endif %}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </td>
+            </tr>
+            {% endif %}
+
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div style="font-size:90%; font-style:italic; color:#666;">
+    This candidate list is updated regularly, and is based off of public statements and filings with the State Board of Elections. If you believe there is a candidate that should be added or removed, please contact us at <a href="mailto:outreach@ilcampaign.org">outreach@ilcampaign.org</a>.
+</div>
+
+{% endblock %}
+
+{% block extra_javascript %}
+<script>
+    $(document).ready(function() {
+        if ($(".race_subtable:visible").length) {
+            $(document).scrollTop($(".race_subtable:visible").offset().top - 50);
+        }
+    });
+
+    function display(id) {
+        $("#" + id).toggle();
+    }
+</script>
 {% endblock %}

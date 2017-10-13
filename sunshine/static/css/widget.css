@@ -1,0 +1,12 @@
+p.widget-resize-subheader { font-size: 16px }
+
+@media screen and (max-width: 515px) {
+	table td,
+	table th {
+		font-size: 10px;
+	}
+}
+
+@media screen and (max-width: 626px) {
+	p.widget-resize-subheader { font-size: 12px }
+}

@@ -24,6 +24,7 @@
   </head>
 
   <body>
+      {% if not hideHeaders %}
       <div class="navbar navbar-default navbar-static-top" role="navigation" style='height:60px;'>
         <div class="container-fluid">
           <div class="navbar-header">
@@ -33,10 +34,17 @@
           </div>
         </div>
       </div>
+      {% endif %}
 
+      {% if not hideHeaders %}
       <div class="container-fluid text-center">
+      {% else %}
+      <div class="container-fluid" style="padding-left: 0; padding-right: 0;">
+      {% endif %}
 
+        {% if not hideHeaders %}
         <a href='http://ilcampaign.org' target='_blank'><img src='/static/images/icpr-logo.png' alt='Illinois Campaign for Political Reform' title='Illinois Campaign for Political Reform' class='img-responsive center-block' style='height: 100px;'/></a>
+        {% endif %}
 
         {% block content %}{% endblock %}
 
@@ -50,6 +58,7 @@
     <script src="{{ url_for('static', filename='js/analytics_lib.js') }}"></script>
 
     <script src="{{ url_for('static', filename='js/moment.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/popupmenu.js') }}"></script>
     {% block extra_javascript %}{% endblock %}
 
   </body>

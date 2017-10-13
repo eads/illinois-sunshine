@@ -1,7 +1,10 @@
 from flask import Blueprint, render_template, abort, request, redirect, \
-    session as flask_session, g
+    session as flask_session, g, current_app, flash
+from flask_login import login_required, login_user, logout_user, \
+    current_user
 from sunshine.database import db_session
-from sunshine.models import Candidate, Committee, Receipt, Expenditure
+from sunshine.models import Candidate, Committee, Receipt, Expenditure, \
+    User
 from sunshine.cache import cache, make_cache_key, CACHE_TIMEOUT
 from sunshine.app_config import FLUSH_KEY
 from sunshine import lib as sslib
@@ -27,9 +30,6 @@ def index():
       FROM receipts_by_month'''
 
     totals = list(g.engine.execute(sa.text(totals_sql)))
-
-    # Contested Races Chart
-    contested_race_data = sslib.getAllCandidateFunds(0, "G")
 
     # donations chart
     donations_by_month_sql = '''
@@ -116,6 +116,37 @@ def index():
 
     top_ten = g.engine.execute(sa.text(committee_sql))
 
+    # contested races funds for house/senate
+    house_senate_count = getHouseSenateContestedRacesCount()
+
+    # democratic committee funds
+    democratic_sql = '''
+        SELECT * FROM (
+          SELECT *
+          FROM committee_money
+          WHERE committee_active = TRUE
+          AND committee_id IN (6239, 23189, 21318, 665, 124)
+          ORDER BY committee_name
+        ) AS committees
+        ORDER BY committees.total DESC NULLS LAST
+    '''
+
+    democratic_committees = g.engine.execute(sa.text(democratic_sql))
+
+    # republican committee funds
+    republican_sql = '''
+        SELECT * FROM (
+          SELECT *
+          FROM committee_money
+          WHERE committee_active = TRUE
+          AND committee_id IN (292, 17218, 17589, 7516, 7537, 25185)
+          ORDER BY committee_name
+        ) AS committees
+        ORDER BY committees.total DESC NULLS LAST
+    '''
+
+    republican_committees = g.engine.execute(sa.text(republican_sql))
+
     date = datetime.now().date()
 
     days_donations_sql = '''
@@ -141,16 +172,31 @@ def index():
         ))
         date = date - timedelta(days=1)
 
-    return render_template('tests/index.html',
-                           #top_races=top_races,
-                           #maxc=maxc,
+    # News Content sql
+    news_sql = """SELECT key, content FROM news_table ORDER BY key"""
+    news_content = list(g.engine.execute(sa.text(news_sql)))
+
+    if (not news_content):
+        news_content = [
+            {'key': '1', 'content': ''},
+            {'key': '2', 'content': ''},
+            {'key': '3', 'content': ''}
+        ]
+
+    return render_template('index.html',
+                           # top_races=top_races,
+                           # maxc=maxc,
                            top_earners=top_earners,
                            top_ten=top_ten,
+                           democratic_committees=democratic_committees,
+                           republican_committees=republican_committees,
                            totals=totals,
                            donations_by_month=donations_by_month,
                            donations_by_year=donations_by_year,
                            days_donations=days_donations,
-                           contested_race_data=contested_race_data)
+                           news_content=news_content,
+                           house_senate_count=house_senate_count)
+
 
 @views.route('/donations/')
 @cache.cached(timeout=CACHE_TIMEOUT, key_prefix=make_cache_key)
@@ -467,26 +513,19 @@ def muni_contested_race_detail(district):
 @cache.cached(timeout=CACHE_TIMEOUT, key_prefix=make_cache_key)
 def contested_races():
 
-    contested_races_type = "House of Representatives"
-    contested_races_title = "Illinois House of Representatives Contested Races"
-    # TODO: Update the default argument here when the other pages are enabled again.
-    type_arg = 'gubernatorial' if not request.args.get('type') else request.args.get('type', 'gubernatorial')
+    type_arg = 'house_of_representatives' if not request.args.get('type') else request.args.get('type', 'house_of_representatives')
+    visible = request.args.get('visible')
 
-    cr_type, cr_title, cand_span, contested_dict = sslib.getContestedRacesData(type_arg)
+    if type_arg == "gubernatorial":
+        return render_template('gov-contested-race-details.html', contested_races_type=type_arg)
 
-    if not flask_session.get('%s_page_count' % type_arg):
-        page_count = int(round(len(contested_dict), -2) / 50)
-        flask_session['%s_page_count' % type_arg] = page_count
-    else:
-        page_count = flask_session['%s_page_count' % type_arg]
+    cr_type, cr_title, contested_race_info = sslib.getContestedRacesInformation(type_arg)
 
     return render_template('contested-races.html',
-                            is_single=(len(contested_dict) == 1),
-                            cand_span=cand_span,
-                            contested_dict=contested_dict,
                             contested_races_type=cr_type,
                             contested_races_title=cr_title,
-                            page_count=page_count)
+                            contested_race_info=contested_race_info,
+                            visible=visible)
 
 
 @views.route('/contested-race-detail/<race_type>-<district>/')
@@ -527,12 +566,9 @@ def contested_race_detail(race_type, district):
     post_primary_start = primary_details["post_primary_start"]
     is_after_primary = primary_details["is_after_primary"]
 
-    district = int(float(district))
-
     contested_races_sql = '''
-        SELECT cr.*, c.name as committee_committee_name
+        SELECT cr.*
         FROM contested_races cr
-        LEFT JOIN committees c ON (c.id = cr.committee_id)
         WHERE cr.district = :district
           AND cr.branch = :branch
         ORDER BY cr.last_name, cr.first_name
@@ -549,13 +585,14 @@ def contested_race_detail(race_type, district):
         total_money += race.supporting_funds + race.opposing_funds
 
         if race.incumbent == 'N':
-            contested_races.append({'table_display_data': committee_funds_data, 'primary_funds_raised': primary_funds_raised, 'last': race.last_name, 'first': race.first_name,'committee_name': race.committee_committee_name if race.committee_committee_name else race.committee_name,'incumbent': race.incumbent,'committee_id': race.committee_id,'party': race.party,'investments': race.investments, 'debts': race.debts, 'supporting_funds': race.supporting_funds, 'opposing_funds': race.opposing_funds, 'contributions' : race.contributions, 'total_funds' : race.total_funds, 'funds_available' : race.funds_available, 'total_money' : race.total_money, 'candidate_id' : race.candidate_id, 'reporting_period_end' : race.reporting_period_end})
+            contested_races.append({'table_display_data': committee_funds_data, 'primary_funds_raised': primary_funds_raised, 'last': race.last_name, 'first': race.first_name,'committee_name': race.committee_name if race.committee_name else '', 'incumbent': race.incumbent,'committee_id': race.committee_id,'party': race.party,'investments': race.investments, 'debts': race.debts, 'supporting_funds': race.supporting_funds, 'opposing_funds': race.opposing_funds, 'contributions' : race.contributions, 'total_funds' : race.total_funds, 'funds_available' : race.funds_available, 'total_money' : race.total_money, 'candidate_id' : race.candidate_id, 'reporting_period_end' : race.reporting_period_end})
         else:
-            contested_races.insert(0,{'table_display_data': committee_funds_data, 'primary_funds_raised': primary_funds_raised, 'last': race.last_name, 'first': race.first_name,'committee_name': race.committee_committee_name if race.committee_committee_name else race.committee_name,'incumbent': race.incumbent,'committee_id': race.committee_id,'party': race.party,'investments': race.investments, 'debts': race.debts, 'supporting_funds': race.supporting_funds, 'opposing_funds': race.opposing_funds, 'contributions' : race.contributions, 'total_funds' : race.total_funds, 'funds_available' : race.funds_available, 'total_money' : race.total_money, 'candidate_id' : race.candidate_id, 'reporting_period_end' : race.reporting_period_end})
+            contested_races.insert(0,{'table_display_data': committee_funds_data, 'primary_funds_raised': primary_funds_raised, 'last': race.last_name, 'first': race.first_name,'committee_name': race.committee_name if race.committee_name else '', 'incumbent': race.incumbent,'committee_id': race.committee_id,'party': race.party,'investments': race.investments, 'debts': race.debts, 'supporting_funds': race.supporting_funds, 'opposing_funds': race.opposing_funds, 'contributions' : race.contributions, 'total_funds' : race.total_funds, 'funds_available' : race.funds_available, 'total_money' : race.total_money, 'candidate_id' : race.candidate_id, 'reporting_period_end' : race.reporting_period_end})
 
     return render_template(template,
                             race_type=race_type,
                             district=district,
+                            current_date=datetime.now(),
                             contested_race_type=contested_race_type,
                             contested_race_title=contested_race_title,
                             contested_race_description=contested_race_description,
@@ -664,53 +701,8 @@ def committee(committee_id):
     if not committee:
         return abort(404)
 
-    latest_filing = '''
-        SELECT * FROM most_recent_filings
-        WHERE committee_id = :committee_id
-        ORDER BY received_datetime DESC
-        LIMIT 1
-    '''
+    latest_filing, recent_total, controlled_amount, params = sslib.getCommitteeRecentFilingData(committee_id)
 
-    latest_filing = dict(g.engine.execute(sa.text(latest_filing),
-                                   committee_id=committee_id).first())
-
-    params = {'committee_id': committee_id}
-
-    if not latest_filing['reporting_period_end']:
-      latest_filing['reporting_period_end'] = datetime.now().date() - timedelta(days=90)
-
-
-    if latest_filing['end_funds_available'] \
-        or latest_filing['end_funds_available'] == 0:
-
-        recent_receipts = '''
-            SELECT
-              COALESCE(SUM(receipts.amount), 0) AS amount
-            FROM condensed_receipts AS receipts
-            JOIN filed_docs AS filed
-              ON receipts.filed_doc_id = filed.id
-            WHERE receipts.committee_id = :committee_id
-              AND receipts.received_date > :end_date
-        '''
-        controlled_amount = latest_filing['end_funds_available']
-
-        params['end_date'] = latest_filing['reporting_period_end']
-
-    else:
-
-        recent_receipts = '''
-            SELECT
-              COALESCE(SUM(receipts.amount), 0) AS amount
-            FROM condensed_receipts AS receipts
-            JOIN filed_docs AS filed
-              ON receipts.filed_doc_id = filed.id
-            WHERE receipts.committee_id = :committee_id
-        '''
-
-        controlled_amount = 0
-
-    recent_total = g.engine.execute(sa.text(recent_receipts),**params).first().amount
-    controlled_amount += recent_total
     candidate_ids = tuple(c.id for c in committee.candidates)
 
     related_committees = '''
@@ -943,7 +935,6 @@ def committee(committee_id):
                            opposed_candidates=opposed_candidates,
                            current_officers=current_officers,
                            related_committees=related_committees,
-                           recent_receipts=recent_receipts,
                            recent_total=recent_total,
                            latest_filing=latest_filing,
                            controlled_amount=controlled_amount,
@@ -975,15 +966,18 @@ def independent_expenditures(candidate_id, stance):
     cname = [candidate.first_name, candidate.last_name]
     candidate_name = " ".join(cname)
 
+    ie_popover_span = "<span class='ss-popover' data-content='Independent expenditures are ad buys made supporting or opposing candidates, without any collaboration or coordination with the candidate. These ad buys are often made by Super PACs or Party Committees.'>Independent expenditures</span>"
+    ie_popunder_span = "<span class='ss-popunder' data-content='Independent expenditures are ad buys made supporting or opposing candidates, without any collaboration or coordination with the candidate. These ad buys are often made by Super PACs or Party Committees.'>Independent Expenditures</span>"
+
     independent_expenditures_type = 'Supporting'
-    independent_expenditures_title = "Supporting Independent Expenditures"
-    independent_expenditures_description = "Independent expenditures in support of " + candidate_name + " since March 16, 2016"
+    independent_expenditures_title = "Supporting " + ie_popunder_span
+    independent_expenditures_description = ie_popover_span + " in support of " + candidate_name + " since March 16, 2016"
     type_arg = 'supporting'
 
     if stance == 'opposing':
         independent_expenditures_type = 'Opposing'
-        independent_expenditures_title = "Opposing Independent Expenditures"
-        independent_expenditures_description = "Independent expenditures in opposition to " + candidate_name + " since March 16, 2016"
+        independent_expenditures_title = "Opposing " + ie_popunder_span
+        independent_expenditures_description = ie_popover_span + " in opposition to " + candidate_name + " since March 16, 2016"
 
     all_names = []
     all_names.append(candidate_name)
@@ -1135,6 +1129,22 @@ def widget_top_earners():
                             calc_days_ago=calc_days_ago)
 
 
+@views.route('/widgets/gov-contested-race')
+@cache.cached(timeout=CACHE_TIMEOUT, key_prefix=make_cache_key)
+def widgets_gov_contested_race():
+
+    hideHeaders = request.args.get('hideHeaders')
+    showImageString = request.args.get('showImage')
+    showImage = showImageString == "True"
+
+    contested_race_data = sslib.getAllCandidateFunds('0', "G")
+    current_date = datetime.now()
+
+    return render_template('widgets/gov-contested-race.html', current_date=current_date,
+                           contested_race_data=contested_race_data, hideHeaders=hideHeaders,
+                           showImage=showImage)
+
+
 @views.route('/widgets/top-donations/')
 @cache.cached(timeout=CACHE_TIMEOUT, key_prefix=make_cache_key)
 def widgets_top_donations():
@@ -1245,3 +1255,417 @@ def developers():
 @views.route('/sunshine/<path:the_rest>/')
 def sunshine_the_rest(the_rest):
     return redirect("/", code=301)
+
+@views.route('/admin/login/', methods=['GET', 'POST'])
+def admin_login():
+    invalid = "Incorrect username or password"
+
+    if request.method != 'POST':
+        return render_template('admin/login.html')
+
+    # Add logic that will check to see if the user exists
+    # and verify hashed password is correct, if true direct to dashboard
+    username = request.form.get("username")
+    password = request.form.get("password")
+
+    user = User.validate(username, password)
+
+    if user is None:
+        return render_template('admin/login.html', invalid=invalid)
+
+    login_user(user, request.form.get("rememberMe"))
+    return redirect('/admin/dashboard/')
+
+
+@views.route('/admin/dashboard/')
+@login_required
+def admin_dashboard():
+    return render_template('admin/dashboard.html')
+
+
+@views.route('/admin/news/', methods=['GET', 'POST'])
+@login_required
+def admin_news():
+    news_content = { '1': '', '2': '', '3': '' }
+
+    if request.method != 'POST':
+        exist_sql = "select key, content from news_table"
+        news_records = list(g.engine.execute(sa.text(exist_sql)))
+
+        for record in news_records:
+            news_content[record["key"]] = record["content"]
+
+        return render_template('admin/news.html', news_content=news_content)
+
+    for key in news_content:
+        news_content[key] = request.form.get("editor" + key)
+
+        try:
+            sql_params = {
+                'key': key,
+                'content': news_content[key]
+            }
+
+            exist_sql = """select * from news_table where key = :key"""
+            exists = len(list(g.engine.execute(sa.text(exist_sql), **sql_params))) > 0
+
+            if not exists:
+                sql = """INSERT INTO news_table (key, content, created_date, updated_date) VALUES (:key, :content, now(), now())"""
+                g.engine.execute(sa.sql.text(sql), **sql_params)
+            else:
+                sql = """UPDATE news_table SET content = :content, updated_date = now() WHERE key = :key"""
+                g.engine.execute(sa.sql.text(sql), **sql_params)
+
+            cache.clear()
+
+            update_message = 'Saved successfully.'
+
+        except sa.exc.ProgrammingError as e:
+            update_message = "Save failed: " + str(e)
+            current_app.logger.error(update_message)
+
+    return render_template('admin/news.html', code=update_message, news_content=news_content)
+
+
+@views.route('/admin/contested-races/')
+@login_required
+def admin_contested_races():
+
+    type_arg = 'house_of_representatives' if not request.args.get('type') \
+        else request.args.get('type', 'house_of_representatives')
+
+    if type_arg == "senate":
+        contested_races_type = "Senate"
+        contested_races_title = "Illinois Senate Races"
+        branch = "S"
+    elif type_arg == "statewide_office":
+        contested_races_type = "Statewide Offices"
+        contested_races_title = "Illinois Constitutional Officer Races"
+        branch = "O"
+    elif type_arg == "house_of_representatives":
+        contested_races_type = "House of Representatives"
+        contested_races_title = "Illinois House of Representatives Races"
+        branch = "H"
+    else:
+        contested_races_type = "Gubernatorial"
+        contested_races_title = "Illinois Gubernatorial Races"
+        branch = "G"
+
+    contested_race_sql = '''
+        SELECT *
+        FROM contested_races
+        WHERE branch = :branch
+
+    '''
+
+    if branch in ["H", "S"]:
+        contested_race_sql += " ORDER BY district, party, last_name, first_name"
+    else:
+        contested_race_sql += " ORDER BY district_name, party, last_name, first_name"
+
+    contested_race_data = list(g.engine.execute(sa.text(contested_race_sql),
+                                                branch=branch))
+
+    return render_template('admin/contested-races.html',
+                           contested_races_type=contested_races_type,
+                           contested_races_title=contested_races_title,
+                           contested_race_data=contested_race_data)
+
+
+@views.route('/admin/contested-race-delete/', methods=['POST'])
+@login_required
+def admin_contested_race_delete():
+    id = request.form.get("id")
+
+    if not id:
+        return redirect('/admin/contested-races/')
+
+    race = sslib.getContestedRace(id)
+    race_types = {
+        'H': 'house_of_representatives',
+        'S': 'senate',
+        'O': 'statewide_office',
+        'G': 'gubernatorial'
+    }
+
+    sslib.deleteContestedRace(id)
+
+    cache.clear()
+
+    if not race or not race.branch or not race_types.get(race.branch):
+        return redirect('/admin/contested-races/')
+
+    return redirect('/admin/contested-races/?type=' + race_types.get(race.branch))
+
+
+@views.route('/admin/contested-race-detail/', methods=['GET', 'POST'])
+@login_required
+def admin_contested_race_details():
+
+    race_types = {
+        'H': 'house_of_representatives',
+        'S': 'senate',
+        'O': 'statewide_office',
+        'G': 'gubernatorial'
+    }
+    id = None if (not request.args.get("id") or request.args.get("id") == "None") else request.args.get("id")
+
+    if not id:
+        id = None if (not request.form.get("id") or request.form.get("id") == "None") else request.form.get("id")
+
+    new_candidate = True if id is None else False
+    statewide_districts = ['Attorney General', 'Comptroller', 'Secretary of State', 'Treasurer']
+
+    if request.method != 'POST':
+        info = getCandidateInfo(id)
+        return render_template('admin/contested-race-detail.html',
+                               id=id,
+                               new_candidate=new_candidate,
+                               candidate=info,
+                               statewide_districts=statewide_districts)
+
+    # Handle the cancel button.
+    if request.form.get("cancel"):
+        if not id:
+            return redirect('/admin/contested-races/')
+
+        race = sslib.getContestedRace(id)
+        if not race:
+            return redirect('/admin/contested-races/')
+
+        return redirect('/admin/contested-races/?type=' + race_types.get(race.branch))
+
+    candidate_info = {}
+    candidate_info["branch"] = request.form.get("branch")
+    candidate_info["district"] = 0 if candidate_info["branch"] == "O" else int(request.form.get("district"))
+    candidate_info["district_name"] = request.form.get("district_name") if candidate_info["branch"] == "O" else str(request.form.get("district"))
+    candidate_info["first_name"] = request.form.get("first_name")
+    candidate_info["last_name"] = request.form.get("last_name")
+    candidate_info["incumbent"] = 'N' if request.form.get("incumbent") is None else 'Y',
+    candidate_info["committee_id"] = None if request.form.get("committee") == "" else request.form.get("committee")
+    candidate_info["candidate_id"] = None if request.form.get("candidate") == "" else request.form.get("candidate")
+    candidate_info["committee_name"] = getCommitteeName(candidate_info["committee_id"])
+    candidate_info["party"] = request.form.get("party")
+    candidate_info["alternate_names"] = str(request.form.get("alternate_names")).strip()
+
+    id, messages = insertCandidate(id, candidate_info, statewide_districts)
+
+    if not messages:
+        flash('Candidate saved successfully', 'success')
+    else:
+        flash('<br />'.join(messages), 'error')
+
+    cache.clear()
+
+    return render_template('admin/contested-race-detail.html',
+                           id=id,
+                           new_candidate=False,
+                           candidate=candidate_info,
+                           committees=committees,
+                           statewide_districts=statewide_districts)
+
+
+@views.route('/admin/logout/')
+def admin_logout():
+    logout_user()
+    return redirect('/admin/login/')
+
+
+# helper methods
+def getCandidateInfo(id):
+
+    if id == "None":
+        id = None
+
+    info = {}
+    info['branch'] = None
+    info['last_name'] = None
+    info['first_name'] = None
+    info['committee_name'] = None
+    info['incumbent'] = None
+    info['committee_id'] = None
+    info['party'] = None
+    info['district'] = None
+    info['district_name'] = None
+    info['candidate_id'] = None
+    info['alternate_names'] = None
+
+    if id is not None:
+        candidate_sql = '''SELECT * FROM contested_races WHERE id = :id'''
+        candidate_info = g.engine.execute(sa.text(candidate_sql), id=id)
+
+        for c in candidate_info:
+            info['branch'] = c.branch
+            info['last_name'] = c.last_name
+            info['first_name'] = c.first_name
+            info['committee_name'] = c.committee_name
+            info['incumbent'] = c.incumbent
+            info['committee_id'] = c.committee_id
+            info['party'] = c.party
+            info['district'] = c.district
+            info['district_name'] = c.district_name
+            info['candidate_id'] = c.candidate_id
+            info['alternate_names'] = c.alternate_names
+
+    return info
+
+def getCommitteeName(committee_id):
+
+    committee_name = ""
+
+    # Negative value indicates no committee selected
+    if committee_id is None:
+        return committee_name
+
+    committee_sql = '''SELECT name FROM committees WHERE id = :committee_id'''
+    committee_list = list(g.engine.execute(sa.text(committee_sql), committee_id=committee_id))
+
+    for c in committee_list:
+        committee_name = c.name
+
+    return committee_name
+
+def isValidCommittee(committee_id):
+    sql = '''SELECT count(*) as total FROM committees WHERE id = :committee_id'''
+    total = list(g.engine.execute(sa.text(sql), committee_id=committee_id))
+    return total and total[0]["total"] > 0
+
+def isValidCandidate(candidate_id):
+    sql = '''SELECT count(*) as total FROM candidates WHERE id = :candidate_id'''
+    total = list(g.engine.execute(sa.text(sql), candidate_id=candidate_id))
+    return total and total[0]["total"] > 0
+
+def insertCandidate(id, candidate_info, statewide_districts):
+
+    messages = []
+
+    # Branch
+    if not candidate_info["branch"] or candidate_info["branch"] not in ["G", "H", "S", "O"]:
+        messages.append("Branch: Please select a valid option")
+
+    # District
+    if candidate_info["branch"] == "G":
+        candidate_info["district"] = 0
+        candidate_info["district_name"] = "0"
+    elif candidate_info["branch"] == "S" or candidate_info["branch"] == "H":
+        try:
+            if int(candidate_info["district"]) <= 0:
+                messages.append("District: Please enter a positive integer")
+            else:
+                candidate_info["district_name"] = str(candidate_info["district"])
+        except ValueError:
+            messages.append("District: Please enter a positive integer")
+    elif candidate_info["branch"] == "O":
+        if candidate_info["district_name"] not in statewide_districts:
+            messages.append("District: Please select a valid option")
+        else:
+            candidate_info["district"] = 0
+
+    # First name
+    if not candidate_info["first_name"]:
+        messages.append("First Name: Field is required")
+
+    # Last name
+    if not candidate_info["last_name"]:
+        messages.append("Last Name: Field is required")
+
+    # Setup the alternate_names field
+    if candidate_info["first_name"] is not None and candidate_info["last_name"] is not None:
+        fname = candidate_info["first_name"].strip()
+        lname = candidate_info["last_name"].strip()
+        alt_names = "{0} {1};{1} {0};{1}".format(fname, lname).split(";")
+        ci_alt_names = [] if not candidate_info["alternate_names"] else (candidate_info["alternate_names"].strip(";").split(";"))
+
+        # Combine the names and filter out the duplicates
+        ci_alt_names += alt_names
+        candidate_info["alternate_names"] = ";".join(list(set(ci_alt_names)))
+
+    # Party
+    if not candidate_info["party"] or candidate_info["party"] not in ["R", "D"]:
+        messages.append("Party: Field is required")
+
+    # Candidate ID
+    if candidate_info["candidate_id"] and not isValidCandidate(candidate_info["candidate_id"]):
+        messages.append("Candidate ID: Unknown ID, please check that the value was entered correctly")
+
+    # Committee ID
+    if candidate_info["committee_id"] and not isValidCommittee(candidate_info["committee_id"]):
+        messages.append("Committee ID: Unknown ID, please check that the value was entered correctly")
+
+    if messages:
+        return id, messages
+
+    if not id or id == "None":
+        candidate_update_sql = '''
+            INSERT INTO contested_races
+            (branch, district, district_name, first_name, last_name, incumbent, committee_id, committee_name, party, alternate_names)
+            VALUES (:branch, :district, :district_name, :first_name, :last_name, :incumbent, :committee_id, :committee_name, :party, :alternate_names)
+            RETURNING id
+        '''
+
+        id_result = g.engine.execute(sa.text(candidate_update_sql),
+                         branch=candidate_info["branch"],
+                         district=candidate_info["district"],
+                         district_name=candidate_info["district_name"],
+                         first_name=candidate_info["first_name"],
+                         last_name=candidate_info["last_name"],
+                         incumbent=candidate_info["incumbent"],
+                         committee_id=candidate_info["committee_id"],
+                         committee_name=candidate_info["committee_name"],
+                         party=candidate_info["party"],
+                         alternate_names=candidate_info["alternate_names"])
+        id_result = id_result.fetchone()
+        id = None if not id_result else id_result[0]
+    else:
+        candidate_update_sql = '''
+            UPDATE contested_races
+            SET (branch, district, district_name, first_name, last_name, incumbent, committee_id, committee_name, party, alternate_names)
+            = (:branch, :district, :district_name, :first_name, :last_name, :incumbent, :committee_id, :committee_name, :party, :alternate_names)
+            WHERE id = :id
+        '''
+
+        g.engine.execute(sa.text(candidate_update_sql),
+                         id=id,
+                         branch=candidate_info["branch"],
+                         district=candidate_info["district"],
+                         district_name=candidate_info["district_name"],
+                         first_name=candidate_info["first_name"],
+                         last_name=candidate_info["last_name"],
+                         incumbent=candidate_info["incumbent"],
+                         committee_id=candidate_info["committee_id"],
+                         committee_name=candidate_info["committee_name"],
+                         party=candidate_info["party"],
+                         alternate_names=candidate_info["alternate_names"])
+
+    sslib.updateContestedRaceFunds(g.engine, id)
+
+    return id, []
+
+
+def getHouseSenateContestedRacesCount():
+    contested_races_sql = '''
+        SELECT
+            cr.branch, cr.district, count(*) as total_candidates, sum(cr.total_money) as total_race_money,
+            string_agg(concat(cr.first_name, ' ', cr.last_name, CASE WHEN cr.incumbent = 'Y' THEN ' (i)' ELSE '' END), ', ' ORDER BY cr.incumbent DESC, cr.last_name, cr.first_name) as candidates
+        FROM contested_races cr
+        WHERE branch IN ('H', 'S')
+        GROUP BY cr.branch, cr.district
+        HAVING count(*) > 1
+        ORDER BY total_race_money desc, cr.branch, cr.district
+        LIMIT 10
+    '''
+
+    candidates_list = g.engine.execute(sa.text(contested_races_sql))
+
+    contested_count = []
+    total_candidates = 0
+    total_race_money = 0
+    previous_district = None
+    branch = None
+
+    for c in candidates_list:
+        branch_label = "House" if c.branch == "H" else "Senate"
+        type_arg = "house_of_representatives" if c.branch == "H" else "senate"
+        contested_count.append([c.branch, c.district, c.total_candidates, c.total_race_money, branch_label, type_arg, c.candidates])
+
+    return contested_count

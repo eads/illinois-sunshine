@@ -1,0 +1,13 @@
+{% extends 'admin/base.html' %}
+://www.youtube.com/agrant@127.0.0.1
+{% from 'macros.html' import header %}
+{% block header_social %}
+    {{ header("Admin Dashboard", "", request.path) }}
+{% endblock %}
+{% block content %}
+
+<div style="min-height:50vh;">
+    <h3 style="color:black;">Dashboard</h3>
+</div>
+
+{% endblock %}

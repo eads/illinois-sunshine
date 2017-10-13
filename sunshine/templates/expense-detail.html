@@ -165,7 +165,7 @@
                     </tr>
                     <tr>
                         <td>Expenditure type</td>
-                        <td>{{ expense.d2_part|expense_name }}</td>
+                        <td>{{ expense.d2_part|expense_name|expense_popover|safe }}</td>
                     </tr>
                     <tr>
                         <td>Amount</td>

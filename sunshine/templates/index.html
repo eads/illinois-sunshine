@@ -6,6 +6,14 @@
 {% endblock %}
 {% block content %}
 
+<div class="alert alert-info sidebar_newsletter" role="alert">
+    <i class="fa fa-times"></i>
+    <a href="https://ilcampaign.wufoo.com/forms/mznomyv130ae9w/" class="alert-link" target="_blank">
+        Get the Illinois Sunshine Weekly update!<br />
+        <span style="font-weight:normal;">Click here to receive in-depth updates on Illinois campaign finance.</span>
+    </a>
+</div>
+
 <div class='visible-xs-inline visible-sm-inline'>
     <p class='text-center'>
         <a href='http://www.ilcampaign.org/donate/' target='_blank'><img src='/static/images/icpr-logo-horizontal-donate.png' style='height:130px; padding-bottom: 5px;' class='img-responsive center-block' /></a>
@@ -13,10 +21,19 @@
 </div>
 
 <div class='row'>
-    <div class='col-sm-10'>
+    <div class='col-md-2 col-sm-0 visible-lg-inline visible-md-inline'>
+        <p class='text-center'><small>Brought to you by</small></p>
+        <a href='http://ilcampaign.org'><img src='/static/images/icpr-logo.png' style='height:130px; padding-bottom: 5px;' class='img-responsive center-block' /></a>
+        <p class='text-center'><a class='btn btn-primary btn-sm' href='http://www.ilcampaign.org/donate/' target='_blank'>
+          Please donate!
+        </a></p>
+    </div>
+    <div class='col-lg-8 col-md-10 col-sm-12'>
         <div class='jumbotron'>
-            <p style="font-size:27px;color:#171771;">Keep an eye on money in Illinois politics</p>
-
+            <p style="font-size:27px;color:#000000;padding:0;">
+                Keep an Eye on Money in Illinois Politics <br />
+                <span style="color:#666; font-size:16px;">updated daily</span>
+            </p>
             <form action='/search' method='GET'>
                 <div class="input-group input-group-lg">
                     <input type="text" class="form-control" placeholder="Search for names of candidates, committees and donors in Illinois" name="term">
@@ -32,64 +49,148 @@
             </form>
         </div>
     </div>
-    <div class='col-sm-2 visible-lg-inline visible-md-inline'>
-        <p class='text-center'><small>Brought to you by</small></p>
-        <a href='http://ilcampaign.org'><img src='/static/images/icpr-logo.png' style='height:130px; padding-bottom: 5px;' class='img-responsive center-block' /></a>
-        <p class='text-center'><a class='btn btn-primary btn-sm' href='http://www.ilcampaign.org/donate/' target='_blank'>
-          Please donate!
-        </a></p>
+    <div class='col-lg-2 visible-lg-inline'>
+        <p style='padding-top:70px;'><small>Sponsored by the:</small></p>
+        <img src='/static/images/mccormick-foundation-logo_2x.png' class='img-responsive center-block' />
     </div>
 </div>
-<div class="col-sm-8">
-    <h2>
-        <a class="header-link" href='{{ url_for('views.contested_race_detail', race_type='gubernatorial', district=0) }}' target='_blank'>Race for Illinois Governor</a>
-    </h2>
-    <p>Funds raised and spent in the 2018 Race for Illinois Governor.</p>
-    <table class = "table table-striped table-hover">
+
+<div class="col-sm-8" style="height: 470px; padding: 0; margin: 0;">
+    <iframe style="border-style: none; width: 100%; height: 100%;" scrolling="no" src="{{ url_for('views.widgets_gov_contested_race', hideHeaders=True, showImage=True) }}"></iframe>
+</div>
+
+<!-- News Content Div -->
+<div class="col-sm-4">
+    <h3 style="color: black;">News </h3>
+    <p class="subtitle">Click below for the latest articles</p>
+    <div id="news-1" class="news-box-wrapper">
+        <div class="news-box">
+            {{ news_content[0].content|safe }}
+        </div>
+    </div>
+    <div id="news-2" class="news-box-wrapper">
+        <div class="news-box">
+            {{ news_content[1].content|safe }}
+        </div>
+    </div>
+    <div id="news-3" class="news-box-wrapper">
+        <div class="news-box">
+            {{ news_content[2].content|safe }}
+        </div>
+    </div>
+</div>
+
+<!-- House/Senate Contested Races Table -->
+<div class="col-sm-12">
+    <img src="/static/images/illinois_state_seal.gif" class="header-image" />
+    <div style="display:inline-block;">
+        <h3>
+            <a class='header-link' href='{{ url_for('views.contested_races') }}'>
+                Top Contested Races for Illinois General Assembly
+            </a>
+        </h3>
+        <p>Click on a row to see individual race details</p>
+    </div>
+</div>
+
+<div class="col-12">
+    <table class = "table table-striped table-hover table-border">
         <thead>
             <tr>
-                <th style="max-width:250px;" class = 'text-center'>Candidate</th>
-                <th style="max-width:200px;" class = 'text-center'>Total Funds Raised</th>
+                <th style="min-width:10%;" class='text-left'>Chamber</th>
+                <th style="min-width:10%;" class='text-center'>District</th>
+                <th style="min-width:10%;white-space:nowrap;" class='text-center'>Total Candidates</th>
+                <th class='text-center'>Candidates</th>
+                <th style="min-width:10%; white-space:nowrap;" class='text-right'>Total Funds in Race</th>
             </tr>
         </thead>
         <tbody>
-        {% for row in contested_race_data %}
-            <tr class = 'clickable' style= "cursor: Pointer;" onclick="window.location.href='{{ url_for('views.contested_race_detail', race_type='gubernatorial', district=0) }}';">
-                <td class='text-left' style="white-space:nowrap;color:#000;">
-                    {{ row[0] }}
-                </td>
-                <td class="text-right" style="white-space:nowrap;">
-                    {{ row[1]|format_money }}
-                </td>
+            {% for a in house_senate_count %}
+            <tr class="clickable" style="cursor:pointer;" onclick="window.open('{{ url_for('views.contested_races', type=a[5], visible=a[1]) }}'); setAttribute('target', '_blank');">
+                <td style="font-weight:bold;">{{a[4]}}</td>
+                <td style="font-weight:bold;" class='text-center'>{{a[1]|number_suffix}}</td>
+                <td style="font-weight:bold;" class='text-center'>{{a[2]}}</td>
+                <td class='text-left'>{{a[6]}}</td>
+                <td style="font-weight:bold;" class='text-right'>{{a[3]|format_money}}</td>
             </tr>
-        {% endfor %}
+            {% endfor %}
+
         </tbody>
     </table>
 </div>
-<div class = 'col-sm-4'>
-    <h2>
-        <a class="header-link" href="https://twitter.com/ilsunshine" target='_blank'>Check out up-to-the-minute campaign finance filings with tweets from @ilsunshine</a>
-    </h2>
-    <a class="twitter-timeline" data-chrome="noheader" data-height=310 href="https://twitter.com/ilsunshine">Tweets by ilsunshine</a><script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+
+<div style="clear:both;"></div>
+<!-- Add table for "Political Funds in Illinois" here -->
+<div class="col-sm-12" style="white-space:nowrap;">
+    <img src="/static/images/icon_dem.png" class="header-image visible-lg-inline visible-md-inline visible-sm-inline" />
+    <div style="display:inline-block;">
+        <h3 style="color: black;">Party Funds in Illinois</h3>
+        <p class="subtitle">Funds available for top Democratic and Republican political parties in Illinois, updated daily</p>
+    </div>
+    <img src="/static/images/icon_rep.png" class="header-image visible-lg-inline visible-md-inline visible-sm-inline" />
 </div>
+
+<div class="col-sm-6" style="padding: 0;">
+    <table class="table table-striped dem uneven table-border table-merge" id='democratic-committee-funds-table'>
+        <thead>
+            <tr>
+                <th colspan="2" class="text-center" style="background-color: #99afff;">Democratic State Party Committees</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr style="font-weight: bold;">
+                <td>Committee Name</td>
+                <td class='text-right'>Cash on Hand</td>
+            </tr>
+            {% for committee in democratic_committees %}
+                {% set committee_slug = [committee.committee_name|slugify, committee.committee_id|string]|join('-') %}
+                <tr class="clickable" style="cursor:pointer;" onclick="window.open('{{ url_for('views.committee', committee_id=committee_slug) }}'); setAttribute('target', '_blank');">
+                    <td>{{ committee.committee_name }}</td>
+                    <td class='text-right'>{{ committee.total|format_money  }}</td>
+                </tr>
+            {% endfor %}
+            <tr>
+                <td style="color:rgba(0,0,0,0);">hidden</td>
+                <td style="color:rgba(0,0,0,0);" class='text-right'>hidden</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<div class="col-sm-6" style="padding: 0;">
+    <table class="table table-striped rep table-border" id='republican-committee-funds-table'>
+        <thead>
+            <tr>
+                <th colspan='2' class="text-center" style="background-color: #ff9999;">Republican State Party Committees</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr style="font-weight: bold;">
+                <td>Committee Name</td>
+                <td class='text-right'>Cash on Hand</td>
+            </tr>
+            {% for committee in republican_committees %}
+                {% set committee_slug = [committee.committee_name|slugify, committee.committee_id|string]|join('-') %}
+                <tr class="clickable" style="cursor:pointer;" onclick="window.open('{{ url_for('views.committee', committee_id=committee_slug) }}'); setAttribute('target', '_blank');">
+                    <td>{{ committee.committee_name }}</td>
+                    <td class='text-right'>{{ committee.total|format_money }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
 <div class="clear" style="clear:both;"></div>
-<br />
-<br />
-<div class="alert alert-info" role="alert">
-    <a href="http://www.ilcampaign.org/news/illinois-sunshine-news-updates/" class="alert-link" target="_blank">
-        Get the Illinois Sunshine Weekly update!
-    </a> <br />
-Every Thursday, we recap the week’s political contributions, top earners, and highest grossing committees from across the state.
-</div>
 <br />
 <br />
 
 <h3>
+    <i class="fa fa-dollar fa-fw"></i>
     <a class="header-link" href='{{ url_for('views.donations') }}' target='_blank'>Recent Political Donations</a>
 </h3>
 
-<p>Top donations to Illinois political committees in the last 7 days, updated daily.</p>
-<table class="table table-striped" id='donations-table'>
+<p class="subtitle">Top donations to Illinois political committees in the last 7 days, updated daily</p>
+<table class="table table-striped table-border" id='donations-table'>
     <thead>
         <tr>
             <th>Donor</th>
@@ -134,8 +235,8 @@ Every Thursday, we recap the week’s political contributions, top earners, and 
     <a class="header-link" href='{{ url_for('views.top_earners') }}'>Top Earners</a> <small>last 30 days, updated daily</small>
 </h2>
 
-<p>Political committees operate by receiving donations, transfers and loans from people, organizations, and other committees. Here's who's raised the most money in the last month</p>
-<table class="table table-striped">
+<p class="subtitle">Political committees operate by receiving donations, transfers and loans from people, organizations, and other committees. Here's who's raised the most money in the last month.</p>
+<table class="table table-striped table-border">
     <thead>
         <tr>
             <th>Rank</th>
@@ -171,8 +272,8 @@ Every Thursday, we recap the week’s political contributions, top earners, and 
 <br /><br />
 
 <h2><i class='fa fa-group fa-fw'></i> <a class="header-link" href='{{ url_for('views.committees') }}'>Top Political Committees</a> <small>highest current funds, updated daily</small></h2>
-<p>Political committees must report their current funds, along with donations and expenditures <a href='/about/#how-is-campaign-finance-disclosed'>every quarter</a>. Here's the committees that have the most investments and cash on hand.</p>
-<table class="table table-hover">
+<p class="subtitle">Political committees must report their current funds, along with donations and expenditures <a href='/about/#how-is-campaign-finance-disclosed'>every quarter</a>. Here's the committees that have the most investments and cash on hand.</p>
+<table class="table table-hover table-border">
     <thead>
         <tr>
             <th>Rank</th>
@@ -202,7 +303,7 @@ Every Thursday, we recap the week’s political contributions, top earners, and 
     <a class="header-link" href='{{ url_for('views.donations') }}'>Tracking Political Donations</a> <small>by month and year</small>
 </h2>
 
-<p>The chart below shows political donations since 1994. <i class='fa fa-fw fa-hand-pointer-o'></i> Hover over a month to see total donations and transfers during that time period. To see total donations and transfers by year, decrease the size of your browser window until you see dark green bars.</p>
+<p class="subtitle">The chart below shows political donations since 1994. <i class='fa fa-fw fa-hand-pointer-o'></i> Hover over a month to see total donations and transfers during that time period. To see total donations and transfers by year, decrease the size of your browser window until you see dark green bars.</p>
 
 <div class='hidden-sm hidden-xs' id='donation-chart'></div>
 <br />
@@ -212,11 +313,11 @@ Every Thursday, we recap the week’s political contributions, top earners, and 
 
 <h2><i class='fa fa-info-circle fa-fw'></i> <a class="header-link" href='{{ url_for('views.about') }}'>About</a></h2>
 
-<p><strong>Illinois Sunshine</strong> is a tool by the <a href='http://www.ilcampaign.org/' title='Illinois Campaign for Political Reform'>Illinois Campaign for Political Reform</a> for browsing political contributions in the state of Illinois.</p>
+<p class="subtitle"><strong>Illinois Sunshine</strong> is a tool by the <a href='http://www.ilcampaign.org/' title='Illinois Campaign for Political Reform'>Illinois Campaign for Political Reform</a> for browsing political contributions in the state of Illinois.</p>
 
-<p>The data comes from the <a href='http://www.elections.il.gov/'>Illinois State Board of Elections</a>, which has been collecting this data electronically since 1994. We built Illinois Sunshine to give journalists, activists and citizens better access to and documentation for this data.</p>
+<p class="subtitle">The data comes from the <a href='http://www.elections.il.gov/'>Illinois State Board of Elections</a>, which has been collecting this data electronically since 1994. We built Illinois Sunshine to give journalists, activists and citizens better access to and documentation for this data.</p>
 
-<p><a class='btn btn-primary' href='{{ url_for('views.about') }}'><i class='fa fa-info-circle fa-fw'></i> Read more &raquo;</a></p>
+<p class="subtitle"><a class='btn btn-primary' href='{{ url_for('views.about') }}'><i class='fa fa-info-circle fa-fw'></i> Read more &raquo;</a></p>
 
 {% endblock %}
 
@@ -224,6 +325,7 @@ Every Thursday, we recap the week’s political contributions, top earners, and 
     <script src="https://code.highcharts.com/highcharts.js"></script>
     <script src="/static/js/moment.min.js"></script>
     <script src="/static/js/chart_helper.js"></script>
+    <script src="/static/js/popupmenu.js"></script>
     <script>
 
         //money by month chart
