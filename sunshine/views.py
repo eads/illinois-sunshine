@@ -1437,7 +1437,7 @@ def admin_contested_race_details():
 
     candidate_info = {}
     candidate_info["branch"] = request.form.get("branch")
-    candidate_info["district"] = 0 if candidate_info["branch"] == "O" else int(request.form.get("district"))
+    candidate_info["district"] = 0 if candidate_info["branch"] not in ["H", "S"] else int(request.form.get("district"))
     candidate_info["district_name"] = request.form.get("district_name") if candidate_info["branch"] == "O" else str(request.form.get("district"))
     candidate_info["first_name"] = request.form.get("first_name")
     candidate_info["last_name"] = request.form.get("last_name")
