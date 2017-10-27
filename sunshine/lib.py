@@ -380,13 +380,17 @@ def getFundsRaisedTotal(committee_id, quarterly_start_date, next_quarterly_start
         .filter(FiledDoc.reporting_period_end < next_quarterly_start_date)\
         .scalar()
 
-    # If the Primary Quarterly report hasn't been filed yet, then return None.
-    if pre_primary_total_raised is None:
-        return None
+    quarterly_end_date = parse(next_quarterly_start_date) - timedelta(days=1)
+    contributions = 0
 
     # Add contributions since last quarterly report.
-    quarterly_end_date = parse(next_quarterly_start_date) - timedelta(days=1)
-    contributions = getReceiptsTotal(committee_id, "A-1", quarterly_end_date, receipt_end_date)
+    if pre_primary_total_raised is None:
+        # If there is no Quarterly report yet, then set pre_primary raised
+        # amount to 0 and get the A-1 amound since the quarterly_start_date.
+        pre_primary_total_raised = 0
+        contributions = getReceiptsTotal(committee_id, "A-1", quarterly_start_date, receipt_end_date)
+    else:
+        contributions = getReceiptsTotal(committee_id, "A-1", quarterly_end_date, receipt_end_date)
 
     return pre_primary_total_raised + contributions
 
