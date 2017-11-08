@@ -714,7 +714,7 @@ class SunshineViews(object):
         trans = self.connection.begin()
 
         try:
-            rows = self.connection.execute(query, **kwargs)
+            rows = trans.execute(query, **kwargs)
             rows = [] if not rows or not rows.returns_rows else list(rows)
             trans.commit()
             return rows
