@@ -2,6 +2,7 @@ from sunshine.models import Committee, Candidate, Officer, Candidacy, \
     D2Report, FiledDoc, Receipt, Expenditure, Investment
 import os
 from datetime import datetime, timedelta
+from dateutil.parser import parse
 import sqlalchemy as sa
 import csv
 from csvkit.cleanup import RowChecker
@@ -714,6 +715,7 @@ class SunshineViews(object):
 
         try:
             rows = self.connection.execute(query, **kwargs)
+            rows = [] if not rows or not rows.returns_rows else list(rows)
             trans.commit()
             return rows
         except (sa.exc.ProgrammingError, psycopg2.ProgrammingError) as e:
@@ -721,6 +723,10 @@ class SunshineViews(object):
             # logger.error(e, exc_info=True)
             trans.rollback()
             raise e
+
+    def first(self, query, **kwargs):
+        result = self.executeTransaction(query, **kwargs)
+        return result[0] if result else None
 
     def executeOutsideTransaction(self, query):
 
@@ -1006,12 +1012,12 @@ class SunshineViews(object):
                 cand_name = first_name + " " + last_name
 
                 supp_funds, opp_funds = \
-                    self.get_candidate_funds_byname(cand_name)
+                    self.ContestedRaces_get_candidate_funds_byname(cand_name)
                 supporting_funds = supporting_funds + supp_funds
                 opposing_funds = opposing_funds + opp_funds
 
                 if committee_id:
-                    committee, recent_receipts, recent_total, latest_filing, controlled_amount, ending_funds, investments, debts, expenditures, total_expenditures = self.get_committee_details(committee_id)
+                    committee, recent_receipts, recent_total, latest_filing, controlled_amount, ending_funds, investments, debts, expenditures, total_expenditures = self.ContestedRaces_get_committee_details(committee_id)
 
                     funds_available = latest_filing['end_funds_available'] if latest_filing else 0
                     contributions = recent_total
@@ -1157,13 +1163,522 @@ class SunshineViews(object):
             curs.execute('''ALTER TABLE contested_races ADD COLUMN district_name varchar(50)''')
             trans.commit()
         except (psycopg2.ProgrammingError, sa.exc.ProgrammingError):
-            print('Problem adding contested_races district_name column: ')
-            print(traceback.print_exc())
             trans.rollback()
 
         # Update the contested races data.
-        sslib.updateContestedRacesFunds(self.connection)
+        self.ContestedRaces_updateContestedRacesFunds()
 
+    #============================================================================
+    def ContestedRaces_updateContestedRacesFunds(self, races = []):
+
+        # Get candidate funds data
+        try:
+            races_sql = '''SELECT * FROM contested_races'''
+            races = self.executeTransaction(sa.text(races_sql))
+        except (psycopg2.ProgrammingError, sa.exc.ProgrammingError):
+            print('Problem retrieving contested_races data: ')
+            traceback.print_exc()
+            return
+        except Exception:
+            print('Unknown problem retrieving contested_races data: ')
+            traceback.print_exc()
+            return
+
+        for race in races:
+            self.ContestedRaces_updateContestedRaceFunds(race)
+
+    #============================================================================
+    def ContestedRaces_updateContestedRaceFunds(self, race):
+        race_data = None
+
+        if not race:
+            return
+
+        try:
+            id = race.id
+            primary_details = self.ContestedRaces_getPrimaryDetails(race.branch)
+            pre_primary_start = primary_details.get("pre_primary_start")
+            primary_start = primary_details.get("primary_start")
+            primary_end = primary_details.get("primary_end")
+            primary_quarterly_end = primary_details.get("primary_quarterly_end")
+            post_primary_start = primary_details.get("post_primary_start")
+            is_after_primary = primary_details.get("is_after_primary")
+
+            # If there are no dates for this race, then go to the next race.
+            if not pre_primary_start:
+                return
+
+            supporting_funds = 0
+            opposing_funds = 0
+            controlled_amount = 0
+            funds_available = 0
+            contributions = 0
+            total_funds = 0
+            investments = 0
+            debts = 0
+            total_money = 0
+
+            # Get supporting/opposing funds
+            cand_names = race.alternate_names.split(";")
+            for name in cand_names:
+                supp_funds, opp_funds = self.ContestedRaces_get_candidate_funds_byname(name)
+                supporting_funds += supp_funds
+                opposing_funds += opp_funds
+
+            # Get candidate contested race funds
+            if race.committee_id:
+                total_funds = self.ContestedRaces_getCommitteeFundsData(race.committee_id, pre_primary_start, primary_start, post_primary_start)
+                funds_available = self.ContestedRaces_getFundsRaisedTotal(race.committee_id, pre_primary_start, primary_start, primary_end) if is_after_primary else 0
+
+                committee, recent_receipts, recent_total, latest_filing, controlled_amount, ending_funds, investments, debts, expenditures, total_expenditures = self.ContestedRaces_get_committee_details(race.committee_id)
+                contributions = recent_total
+                investments = latest_filing['total_investments'] if latest_filing else 0
+                debts = latest_filing['total_debts'] if latest_filing else 0
+
+            total_money = supporting_funds + opposing_funds + total_funds
+
+            race_data = {
+                "id": race.id,
+                "total_money": total_money,
+                "total_funds": total_funds,
+                "funds_available": funds_available,
+                "contributions": contributions,
+                "investments": investments,
+                "debts": debts,
+                "supporting_funds": supporting_funds,
+                "opposing_funds": opposing_funds
+            }
+        except (psycopg2.ProgrammingError, sa.exc.ProgrammingError):
+            print('Problem calculating contested_race funds data: ')
+            print(traceback.print_exc())
+
+        if not race_data:
+            return
+
+        # Update candidate funds data
+        try:
+            self.executeTransaction(sa.text('''
+                UPDATE contested_races SET
+                    total_money = :total_money,
+                    total_funds = :total_funds,
+                    funds_available = :funds_available,
+                    contributions = :contributions,
+                    investments = :investments,
+                    debts = :debts,
+                    supporting_funds = :supporting_funds,
+                    opposing_funds = :opposing_funds
+                WHERE id = :id
+            '''), **race_data)
+        except (psycopg2.ProgrammingError, sa.exc.ProgrammingError):
+            print('Problem updating contested_races funds data: ')
+            print(traceback.print_exc())
+
+    #============================================================================
+    def ContestedRaces_getPrimaryDetails(self, branch):
+        primary_details = {}
+
+        # Check to see if these dates are the same
+        primary_details["pre_primary_start"] = "2017-01-01"
+        primary_details["primary_start"] = "2018-01-01"
+        primary_details["primary_end"] = "2018-03-20"
+        primary_details["primary_quarterly_end"] = "2018-03-31"
+
+        if not primary_details:
+            return {}
+
+        if "primary_end" in primary_details:
+            primary_details["post_primary_start"] = (parse(primary_details["primary_end"]) + timedelta(days=1)).strftime("%Y-%m-%d")
+            primary_details["is_after_primary"] = parse(primary_details["primary_end"]).date() < datetime.today().date()
+
+        return primary_details
+
+    #============================================================================
+    def ContestedRaces_get_candidate_funds_byname(self, candidate_name):
+        d2_part = '9B'
+        expended_date = datetime(2017, 1, 1, 0, 0)
+        supporting_funds = 0
+        opposing_funds = 0
+
+        supporting_funds_sql = '''(
+            SELECT
+              COALESCE(SUM(e.amount), 0) AS amount
+            FROM condensed_expenditures AS e
+            WHERE e.candidate_name = :candidate_name
+              AND e.d2_part = :d2_part
+              AND e.expended_date > :expended_date
+              AND e.supporting = 'true'
+            )
+        '''
+
+        try:
+            result = self.first(
+                sa.text(supporting_funds_sql),
+                candidate_name=candidate_name,
+                d2_part=d2_part,
+                expended_date=expended_date
+            )
+
+            if result is not None:
+                supporting_funds = result.amount
+        except (sa.exc.ProgrammingError, psycopg2.ProgrammingError) as e:
+            raise e
+
+        opposing_funds_sql = '''(
+            SELECT
+              COALESCE(SUM(e.amount), 0) AS amount
+            FROM condensed_expenditures AS e
+            WHERE e.candidate_name = :candidate_name
+              AND e.d2_part = :d2_part
+              AND e.expended_date > :expended_date
+              AND e.opposing = 'true'
+            )
+        '''
+
+        try:
+            result = self.first(
+                sa.text(opposing_funds_sql),
+                candidate_name=candidate_name,
+                d2_part=d2_part,
+                expended_date=expended_date
+            )
+
+            if result is not None:
+                opposing_funds = result.amount
+        except (sa.exc.ProgrammingError, psycopg2.ProgrammingError) as e:
+            raise e
+
+        return supporting_funds, opposing_funds
+
+    #============================================================================
+    def ContestedRaces_getCommitteeFundsData(self, committee_id, pre_primary_start, primary_start, post_primary_start):
+        current_date = datetime.now().strftime("%Y-%m-%d")
+        total_funds_raised = 0.0
+        primary_funds_raised = None
+        # Date used to eliminate duplicates
+        temp_dtstart = ""
+
+        sql = """SELECT
+                    d.total_receipts,
+                    d.total_inkind,
+                    d.end_funds_available,
+                    fd.reporting_period_begin,
+                    fd.reporting_period_end
+                 FROM d2_reports d
+                 JOIN filed_docs fd on (fd.id = d.filed_doc_id)
+                 WHERE
+                    d.archived = FALSE AND
+                    fd.archived = FALSE AND
+                    d.committee_id = :committee_id AND
+                    fd.doc_name = 'Quarterly' AND
+                    fd.reporting_period_begin >= :dt_start AND
+                    fd.reporting_period_end <= :dt_end
+                 ORDER BY fd.reporting_period_begin, fd.reporting_period_end, fd.received_datetime DESC"""
+
+        pre_primary_quarterlies = self.executeTransaction(sa.text(sql),
+            committee_id=committee_id,
+            dt_start=pre_primary_start,
+            dt_end=primary_start)
+
+        primary_quarterlies = self.executeTransaction(sa.text(sql),
+            committee_id=committee_id,
+            dt_start=primary_start,
+            dt_end=current_date)
+
+        if current_date >= post_primary_start:
+            if primary_quarterlies:
+                # Add rows for each primary quarterly report.
+                for i, rpt in enumerate(primary_quarterlies):
+
+                    # If the reporting period begin date equals the temporary start date, skip the record
+                    if temp_dtstart == rpt["reporting_period_begin"]:
+                        continue
+
+                    temp_dtstart = rpt["reporting_period_begin"]
+                    rpt_total = rpt["total_receipts"] + rpt["total_inkind"]
+
+                    # For the first quarterly (the primary quarterly) use the end_funds_available.
+                    if i == 0:
+                        rpt_total = rpt["end_funds_available"]
+
+                    last_quarterly_date = rpt["reporting_period_end"]
+                    total_funds_raised += rpt_total
+
+                # Add a row for funds raised since the last primary quarterly report (pulled from Receipt).
+                total_receipts = self.ContestedRaces_getReceiptsTotal(committee_id, "A-1", last_quarterly_date, current_date)
+                total_funds_raised += total_receipts
+            else:
+                if pre_primary_quarterlies:
+                    # Add the funds available from the last pre-primary quarterly report.
+                    pre_primary_end_date = "{dt:%b} {dt.day}, {dt.year}".format(dt = pre_primary_quarterlies[-1]["reporting_period_end"])
+                    total_funds_raised = pre_primary_quarterlies[-1]["end_funds_available"]
+                    last_quarterly_date = pre_primary_quarterlies[-1]["reporting_period_end"]
+                else:
+                    total_funds_raised = 0.0
+                    last_quarterly_date = parse(pre_primary_start)
+
+                # Add contributions since last quaterly report.
+                total_receipts = self.ContestedRaces_getReceiptsTotal(committee_id, "A-1", last_quarterly_date, current_date)
+                total_funds_raised += total_receipts
+
+        else:
+            # Default the last quarterly date to the day before the pre-primary starts.
+            last_quarterly_date = parse(pre_primary_start) - timedelta(days=1)
+
+            pre_pre_primary_sql = """
+                     SELECT
+                        d.total_receipts,
+                        d.end_funds_available,
+                        fd.reporting_period_begin,
+                        fd.reporting_period_end
+                     FROM d2_reports d
+                     JOIN filed_docs fd on (fd.id = d.filed_doc_id)
+                     WHERE
+                        d.archived = FALSE AND
+                        fd.archived = FALSE AND
+                        d.committee_id = :committee_id AND
+                        fd.doc_name = 'Quarterly' AND
+                        fd.reporting_period_end <= :dt_end
+                     ORDER BY fd.reporting_period_begin DESC, fd.reporting_period_end, fd.received_datetime DESC
+                     LIMIT 1"""
+
+            pre_pre_primary_quarterly = self.first(sa.text(pre_pre_primary_sql),
+                committee_id=committee_id,
+                dt_end=last_quarterly_date
+            )
+
+            # Add the funds available from the last quarterly report from before the pre-primary start date.
+            pre_pre_primary_end_date = "{dt:%b} {dt.day}, {dt.year}".format(dt = last_quarterly_date)
+            pre_pre_primary_funds = 0 if not pre_pre_primary_quarterly else pre_pre_primary_quarterly["end_funds_available"]
+            total_funds_raised += pre_pre_primary_funds
+
+            # Add rows for each pre-primary quarterly report.
+            for rpt in pre_primary_quarterlies:
+                # If the reporting period being date equals the temporary start date, skip the record
+                if temp_dtstart != rpt["reporting_period_begin"]:
+                    temp_dtstart = rpt["reporting_period_begin"]
+                    last_quarterly_date = rpt["reporting_period_end"]
+                    total_funds_raised += rpt["total_receipts"] + rpt["total_inkind"]
+
+            # Add funds raised since last quaterly report.
+            total_receipts = self.ContestedRaces_getReceiptsTotal(committee_id, "A-1", last_quarterly_date, current_date)
+            total_funds_raised += total_receipts if total_receipts else 0.0
+
+        return total_funds_raised
+
+    #============================================================================
+    def ContestedRaces_getReceiptsTotal(self, committee_id, doc_name, last_period_end, last_receipt_date=None):
+        sql = """
+             SELECT SUM(r.amount) as amount
+             FROM receipts r
+             JOIN filed_docs fd on (fd.id = r.filed_doc_id)
+             WHERE
+                r.archived = FALSE AND
+                r.committee_id = :committee_id AND
+                fd.archived = FALSE AND
+                fd.doc_name = :doc_name AND
+                fd.reporting_period_begin >= :last_period_end"""
+
+        query_params = {
+            "committee_id": committee_id,
+            "doc_name": doc_name,
+            "last_period_end": last_period_end
+        }
+
+        if last_receipt_date:
+            sql += " AND fd.received_datetime <= :last_receipt_date"
+            query_params["last_receipt_date"] = last_receipt_date
+
+        total_receipts = self.first(sa.text(sql), **query_params)
+        return total_receipts["amount"] if total_receipts is not None else 0.0
+
+
+    #============================================================================
+    def ContestedRaces_getFundsRaisedTotal(self, committee_id, quarterly_start_date, next_quarterly_start_date, receipt_end_date):
+        sql = """
+             SELECT SUM(d.total_receipts) as total
+             FROM d2_reports d
+             JOIN filed_docs fd on (fd.id = d.filed_doc_id)
+             WHERE
+                d.archived = FALSE AND
+                d.committee_id = :committee_id AND
+                fd.archived = FALSE AND
+                fd.doc_name = 'Quarterly' AND
+                fd.reporting_period_begin >= :dt_start AND
+                fd.reporting_period_end >= :dt_end"""
+
+        result = self.first(sa.text(sql),
+            committee_id=commitee_id,
+            dt_start=quarterly_start_date,
+            dt_end=next_quarterly_start_date)
+        pre_primary_total_raised = result.total if result is not None else 0.0
+        quarterly_end_date = parse(next_quarterly_start_date) - timedelta(days=1)
+        contributions = 0
+
+        # Add contributions since last quarterly report.
+        if pre_primary_total_raised is None:
+            # If there is no Quarterly report yet, then set pre_primary raised
+            # amount to 0 and get the A-1 amound since the quarterly_start_date.
+            pre_primary_total_raised = 0
+            contributions = self.ContestedRaces_getReceiptsTotal(committee_id, "A-1", quarterly_start_date, receipt_end_date)
+        else:
+            contributions = self.ContestedRaces_getReceiptsTotal(committee_id, "A-1", quarterly_end_date, receipt_end_date)
+
+        return pre_primary_total_raised + contributions
+
+    #============================================================================
+    def ContestedRaces_get_committee_details(self, committee_id):
+        default_return = [None, None, 0, None, 0, 0, 0, 0, 0, 0]
+
+        try:
+            committee_id = int(committee_id)
+        except ValueError:
+            return default_return
+
+        comm_sql = '''(
+            SELECT *
+            FROM committees
+            WHERE id = :committee_id
+            )
+        '''
+        committee = self.first(
+            sa.text(comm_sql),
+            committee_id=committee_id)
+
+        if not committee:
+            return default_return
+
+        latest_filing = '''(
+            SELECT * FROM most_recent_filings
+            WHERE committee_id = :committee_id
+            ORDER BY received_datetime DESC
+            LIMIT 1
+            )
+        '''
+
+        latest_filing = dict(self.first(
+            sa.text(latest_filing),
+            committee_id=committee_id))
+
+        params = {'committee_id': committee_id}
+
+        if not latest_filing['reporting_period_end']:
+            latest_filing['reporting_period_end'] = \
+                datetime.now().date() - timedelta(days=90)
+
+        if (
+            latest_filing['end_funds_available'] or
+            latest_filing['end_funds_available'] == 0
+        ):
+
+            recent_receipts = '''(
+                SELECT
+                  COALESCE(SUM(receipts.amount), 0) AS amount
+                FROM condensed_receipts AS receipts
+                JOIN filed_docs AS filed
+                  ON receipts.filed_doc_id = filed.id
+                WHERE receipts.committee_id = :committee_id
+                  AND receipts.received_date > :end_date
+                  AND receipts.archived = FALSE
+                  AND filed.archived = FALSE
+                )
+            '''
+            controlled_amount = latest_filing['end_funds_available'] if latest_filing else 0
+
+            params['end_date'] = latest_filing['reporting_period_end'] if latest_filing else None
+            end_date = latest_filing['reporting_period_end'] if latest_filing else None
+
+        else:
+
+            recent_receipts = '''(
+                SELECT
+                  COALESCE(SUM(receipts.amount), 0) AS amount
+                FROM condensed_receipts AS receipts
+                JOIN filed_docs AS filed
+                  ON receipts.filed_doc_id = filed.id
+                WHERE receipts.committee_id = :committee_id
+                    AND receipts.archived = FALSE
+                    AND filed.archived = FALSE
+                )
+            '''
+
+            controlled_amount = 0
+
+        recent_total = self.first(
+            sa.text(recent_receipts),
+            **params
+        )["amount"]
+        controlled_amount += recent_total
+
+        quarterlies = '''(
+            SELECT DISTINCT ON (f.doc_name, f.reporting_period_end)
+              r.end_funds_available,
+              r.total_investments,
+              r.total_receipts,
+              (r.debts_itemized * -1) as debts_itemized,
+              (r.debts_non_itemized * -1) as debts_non_itemized,
+              (r.total_expenditures * -1) as total_expenditures,
+              f.reporting_period_end
+            FROM d2_reports AS r
+            JOIN filed_docs AS f
+              ON r.filed_doc_id = f.id
+            WHERE r.committee_id = :committee_id
+              AND f.reporting_period_end IS NOT NULL
+              AND f.doc_name = 'Quarterly'
+              AND r.archived = FALSE
+              AND f.archived = FALSE
+            ORDER BY f.reporting_period_end ASC
+            )
+        '''
+
+        quarterlies = self.executeTransaction(
+            sa.text(quarterlies),
+            committee_id=committee_id
+        )
+
+        ending_funds = [
+            [
+                r.end_funds_available,
+                r.reporting_period_end.year,
+                r.reporting_period_end.month,
+                r.reporting_period_end.day
+            ] for r in quarterlies
+        ]
+
+        investments = [
+            [
+                r.total_investments,
+                r.reporting_period_end.year,
+                r.reporting_period_end.month,
+                r.reporting_period_end.day
+            ] for r in quarterlies
+        ]
+
+        debts = [
+            [
+                (r.debts_itemized + r.debts_non_itemized),
+                r.reporting_period_end.year,
+                r.reporting_period_end.month,
+                r.reporting_period_end.day
+            ] for r in quarterlies
+        ]
+
+        expenditures = [
+            [
+                r.total_expenditures,
+                r.reporting_period_end.year,
+                r.reporting_period_end.month,
+                r.reporting_period_end.day
+            ] for r in quarterlies
+        ]
+
+        # accomodate for independent expenditures past last filing date
+
+        total_expenditures = sum([r.total_expenditures for r in quarterlies])
+
+        return committee, recent_receipts, recent_total, latest_filing, controlled_amount, ending_funds, investments, debts, expenditures, total_expenditures
+
+
+    #============================================================================
     def usersTable(self):
         try:
             trans = self.connection.begin()
@@ -1215,35 +1730,6 @@ class SunshineViews(object):
             print('Problem in creating news_table table: ')
             print(traceback.print_exc())
             logger.error(e, exc_info=True)
-
-    def get_candidate_name(self, candidate_id):
-
-        try:
-            candidate_id = int(candidate_id)
-        except ValueError:
-            return [None, None]
-
-        cand_sql = '''(
-            SELECT *
-            FROM candidates
-            WHERE id = :candidate_id
-            )
-        '''
-        candidate = self.executeTransaction(
-            sa.text(cand_sql),
-            candidate_id=candidate_id
-        ).fetchone()
-
-        if not candidate:
-            return [None, None]
-        else:
-            return candidate.first_name, candidate.last_name
-
-    def get_candidate_funds_byname(self, candidate_name):
-        return sslib.get_candidate_funds_byname(self.connection, candidate_name)
-
-    def get_committee_details(self, committee_id):
-        return sslib.get_committee_details(self.connection, committee_id)
 
     def receiptsAggregates(self):
 
