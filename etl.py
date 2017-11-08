@@ -714,7 +714,7 @@ class SunshineViews(object):
         trans = self.connection.begin()
 
         try:
-            rows = trans.execute(query, **kwargs)
+            rows = self.connection.execute(query, **kwargs)
             rows = [] if not rows or not rows.returns_rows else list(rows)
             trans.commit()
             return rows
@@ -728,15 +728,22 @@ class SunshineViews(object):
         result = self.executeTransaction(query, **kwargs)
         return result[0] if result else None
 
-    def executeOutsideTransaction(self, query):
+    def executeOutsideTransaction(self, query, **kwargs):
 
         self.connection.connection.set_isolation_level(0)
         curs = self.connection.connection.cursor()
+        rows = []
 
         try:
-            curs.execute(query)
+            rows = curs.execute(query, kwargs)
+            rows = [] if not rows or not rows.returns_rows else list(rows)
         except psycopg2.ProgrammingError:
-            pass
+            rows = []
+
+        return rows
+
+    def firstOutsideTransaction(self, query, **kwargs):
+        return self.executeOutsideTransaction(query, **kwargs)
 
     def dropViews(self):
         print("Dropping receipts_by_month...")
@@ -766,9 +773,6 @@ class SunshineViews(object):
             'DROP MATERIALIZED VIEW IF EXISTS expenditures_by_candidate'
         )
 
-        print("Dropping contested_races...")
-        #self.executeTransaction('DROP TABLE IF EXISTS contested_races')
-
         print("Dropping muni_contested_races...")
         self.executeTransaction('DROP TABLE IF EXISTS muni_contested_races')
 
@@ -796,7 +800,7 @@ class SunshineViews(object):
         print("Creating table - news_table")
         self.newsTable()
         print("Creating table - contested_races")
-        self.contestedRaces()  # relies on sunshine/contested_races.csv, sunshine/gubernatorial_contested_races.csv, and sunshine/comptroller_contested_race.csv
+        self.contestedRaces() # relies on most_recent_filings, condensed_receipts, and condensed_expenditures
         print("Creating table - muni_contested_races")
         self.muniContestedRaces()  # relies on sunshine/muni_contested_races.csv
 
@@ -1140,7 +1144,7 @@ class SunshineViews(object):
             self.executeTransaction(sa.text(exp))
         except (psycopg2.ProgrammingError, sa.exc.ProgrammingError):
             print('Problem in creating contested_races table: ')
-            print(traceback.print_exc())
+            print(traceback.format_exc())
 
         try:
             self.executeTransaction(sa.text('''ALTER TABLE contested_races ADD COLUMN id SERIAL PRIMARY KEY'''))
@@ -1157,18 +1161,18 @@ class SunshineViews(object):
 
     #============================================================================
     def ContestedRaces_updateContestedRacesFunds(self, races = []):
-
         # Get candidate funds data
         try:
-            races_sql = '''SELECT * FROM contested_races'''
-            races = self.executeTransaction(sa.text(races_sql))
+            races_sql = '''SELECT id, branch, alternate_names, committee_id FROM contested_races'''
+            races = self.executeOutsideTransaction(races_sql)
         except (psycopg2.ProgrammingError, sa.exc.ProgrammingError):
             print('Problem retrieving contested_races data: ')
             traceback.print_exc()
-            return
         except Exception:
             print('Unknown problem retrieving contested_races data: ')
             traceback.print_exc()
+
+        if not races:
             return
 
         for race in races:
