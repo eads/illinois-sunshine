@@ -1114,9 +1114,6 @@ class SunshineViews(object):
         """
 
         try:
-            trans = self.connection.begin()
-            curs = self.connection.connection.cursor()
-
             exp = '''
                 CREATE TABLE IF NOT EXISTS contested_races(
                     total_money DOUBLE PRECISION,
@@ -1140,30 +1137,20 @@ class SunshineViews(object):
                     alternate_names TEXT
                 )
             '''
-
-            curs.execute(exp)
-            trans.commit()
-
+            self.executeTransaction(sa.text(exp))
         except (psycopg2.ProgrammingError, sa.exc.ProgrammingError):
-            trans.rollback()
             print('Problem in creating contested_races table: ')
             print(traceback.print_exc())
 
         try:
-            trans = self.connection.begin()
-            curs = self.connection.connection.cursor()
-            curs.execute('''ALTER TABLE contested_races ADD COLUMN id SERIAL PRIMARY KEY''')
-            trans.commit()
+            self.executeTransaction(sa.text('''ALTER TABLE contested_races ADD COLUMN id SERIAL PRIMARY KEY'''))
         except (psycopg2.ProgrammingError, sa.exc.ProgrammingError):
-            trans.rollback()
+            pass
 
         try:
-            trans = self.connection.begin()
-            curs = self.connection.connection.cursor()
-            curs.execute('''ALTER TABLE contested_races ADD COLUMN district_name varchar(50)''')
-            trans.commit()
+            self.executeTransaction(sa.text('''ALTER TABLE contested_races ADD COLUMN district_name varchar(50)'''))
         except (psycopg2.ProgrammingError, sa.exc.ProgrammingError):
-            trans.rollback()
+            pass
 
         # Update the contested races data.
         self.ContestedRaces_updateContestedRacesFunds()
@@ -1448,8 +1435,7 @@ class SunshineViews(object):
 
             # Add the funds available from the last quarterly report from before the pre-primary start date.
             pre_pre_primary_end_date = "{dt:%b} {dt.day}, {dt.year}".format(dt = last_quarterly_date)
-            pre_pre_primary_funds = 0 if not pre_pre_primary_quarterly else pre_pre_primary_quarterly["end_funds_available"]
-            total_funds_raised += pre_pre_primary_funds
+            total_funds_raised += 0 if not pre_pre_primary_quarterly else pre_pre_primary_quarterly["end_funds_available"]
 
             # Add rows for each pre-primary quarterly report.
             for rpt in pre_primary_quarterlies:
