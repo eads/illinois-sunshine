@@ -152,6 +152,8 @@ def getCommitteesRecentFilingData(committee_ids=[]):
                   ON receipts.filed_doc_id = filed.id
                 WHERE receipts.committee_id = :committee_id
                   AND receipts.received_date > :end_date
+                  AND receipts.archived = FALSE
+                  AND filed.archived = FALSE
             '''
             controlled_amount = latest_filing['end_funds_available']
 
@@ -165,6 +167,8 @@ def getCommitteesRecentFilingData(committee_ids=[]):
                 JOIN filed_docs AS filed
                   ON receipts.filed_doc_id = filed.id
                 WHERE receipts.committee_id = :committee_id
+                  AND receipts.archived = FALSE
+                  AND filed.archived = FALSE
             '''
 
             controlled_amount = 0
@@ -208,6 +212,8 @@ def getCommitteeRecentFilingData(committee_id):
               ON receipts.filed_doc_id = filed.id
             WHERE receipts.committee_id = :committee_id
               AND receipts.received_date > :end_date
+              AND receipts.archived = FALSE
+              AND filed.archived = FALSE
         '''
         controlled_amount = latest_filing['end_funds_available']
 
@@ -222,6 +228,8 @@ def getCommitteeRecentFilingData(committee_id):
             JOIN filed_docs AS filed
               ON receipts.filed_doc_id = filed.id
             WHERE receipts.committee_id = :committee_id
+              AND receipts.archived = FALSE
+              AND filed.archived = FALSE
         '''
 
         controlled_amount = 0
@@ -253,7 +261,6 @@ def getCommitteeFundsData(committee_id, pre_primary_start, primary_start, post_p
                                         .order_by(FiledDoc.received_datetime.desc())\
                                         .all()
 
-
     primary_quarterlies = db_session.query(D2Report)\
                                     .join(FiledDoc, D2Report.filed_doc_id==FiledDoc.id)\
                                     .filter(D2Report.archived == False)\
@@ -282,7 +289,7 @@ def getCommitteeFundsData(committee_id, pre_primary_start, primary_start, post_p
                     dtstart = rpt.filed_doc.reporting_period_begin,
                     dtend = rpt.filed_doc.reporting_period_end
                 )
-                rpt_total = rpt.total_receipts
+                rpt_total = rpt.total_receipts + rpt.total_inkind
 
                 # For the first quarterly (the primary quarterly) use the end_funds_available.
                 if i == 0:
@@ -305,8 +312,8 @@ def getCommitteeFundsData(committee_id, pre_primary_start, primary_start, post_p
             if pre_primary_quarterlies:
                 # Add the funds available from the last pre-primary quarterly report.
                 pre_primary_end_date = "{dt:%b} {dt.day}, {dt.year}".format(dt = pre_primary_quarterlies[-1].filed_doc.reporting_period_end)
-                table_display_data.append(["Funds Available on " + pre_primary_end_date + " Quarterly Report", pre_primary_quarterlies[-1].end_funds_available])
                 total_funds_raised = pre_primary_quarterlies[-1].end_funds_available
+                table_display_data.append(["Funds Available on " + pre_primary_end_date + " Quarterly Report", total_funds_raised])
                 last_quarterly_date = pre_primary_quarterlies[-1].filed_doc.reporting_period_end
             else:
                 total_funds_raised = 0.0
@@ -356,7 +363,7 @@ def getCommitteeFundsData(committee_id, pre_primary_start, primary_start, post_p
 
                 table_display_data.append([rpt_label, rpt.total_receipts])
                 last_quarterly_date = rpt.filed_doc.reporting_period_end
-                total_funds_raised += rpt.total_receipts
+                total_funds_raised += rpt.total_receipts + rpt.total_inkind
 
 
         # Add funds raised since last quaterly report.
@@ -375,6 +382,8 @@ def getFundsRaisedTotal(committee_id, quarterly_start_date, next_quarterly_start
     pre_primary_total_raised = db_session.query(func.sum(D2Report.total_receipts))\
         .join(FiledDoc, D2Report.filed_doc_id==FiledDoc.id)\
         .filter(D2Report.committee_id==committee_id)\
+        .filter(D2Report.archived==False)\
+        .filter(FiledDoc.archived==False)\
         .filter(FiledDoc.doc_name=="Quarterly")\
         .filter(FiledDoc.reporting_period_begin >= quarterly_start_date)\
         .filter(FiledDoc.reporting_period_end < next_quarterly_start_date)\
@@ -398,7 +407,9 @@ def getFundsRaisedTotal(committee_id, quarterly_start_date, next_quarterly_start
 def getReceiptsTotal(committee_id, doc_name, last_period_end, last_receipt_date=None):
     total_receipts = db_session.query(func.sum(Receipt.amount))\
                             .join(FiledDoc, Receipt.filed_doc_id==FiledDoc.id)\
+                            .filter(Receipt.archived==False)\
                             .filter(Receipt.committee_id==committee_id)\
+                            .filter(FiledDoc.archived==False)\
                             .filter(FiledDoc.doc_name==doc_name)\
                             .filter(FiledDoc.reporting_period_begin >= last_period_end)
 
@@ -498,23 +509,6 @@ def deleteContestedRace(id):
     except (sa.exc.ProgrammingError, psycopg2.ProgrammingError):
         return False
     return True
-
-#============================================================================
-def updateContestedRacesFunds(connection, races = []):
-
-    # Get candidate funds data
-    try:
-        if not races:
-            races_sql = '''SELECT * FROM contested_races'''
-            races = list(connection.execute(sa.text(races_sql)))
-    except (psycopg2.ProgrammingError, sa.exc.ProgrammingError):
-        current_app.logger.error('Problem retrieving contested_race funds data: ')
-        current_app.logger.error(traceback.print_exc())
-
-    races_data = []
-    for race in races:
-        updateContestedRaceFunds(connection, race.id, race)
-
 
 #============================================================================
 def updateContestedRaceFunds(connection, id, race = None):
@@ -719,6 +713,8 @@ def get_committee_details(connection, committee_id):
               ON receipts.filed_doc_id = filed.id
             WHERE receipts.committee_id = :committee_id
               AND receipts.received_date > :end_date
+              AND receipts.archived = FALSE
+              AND filed.archived = FALSE
             )
         '''
         controlled_amount = latest_filing['end_funds_available'] if latest_filing else 0
@@ -735,6 +731,8 @@ def get_committee_details(connection, committee_id):
             JOIN filed_docs AS filed
               ON receipts.filed_doc_id = filed.id
             WHERE receipts.committee_id = :committee_id
+                AND filed.archived = FALSE
+                AND receipts.archived = FALSE
             )
         '''
 
@@ -762,6 +760,8 @@ def get_committee_details(connection, committee_id):
         WHERE r.committee_id = :committee_id
           AND f.reporting_period_end IS NOT NULL
           AND f.doc_name = 'Quarterly'
+          AND r.archived = FALSE
+          AND f.archived = FALSE
         ORDER BY f.reporting_period_end ASC
         )
     '''
