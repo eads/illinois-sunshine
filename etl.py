@@ -9,6 +9,7 @@ from csvkit.cleanup import RowChecker
 from collections import OrderedDict
 from typeinferer import TypeInferer
 import psycopg2
+import psycopg2.extras
 import traceback
 from psycopg2.extensions import AsIs
 from sunshine import lib as sslib
@@ -728,15 +729,40 @@ class SunshineViews(object):
         result = self.executeTransaction(query, **kwargs)
         return result[0] if result else None
 
-    def executeOutsideTransaction(self, query):
-
+    def executeOutsideTransaction(self, query, **kwargs):
         self.connection.connection.set_isolation_level(0)
         curs = self.connection.connection.cursor()
 
         try:
-            curs.execute(query)
-        except psycopg2.ProgrammingError:
+            curs.execute(query, kwargs)
+        except (sa.exc.ProgrammingError, psycopg2.ProgrammingError):
             pass
+
+    def fetchOutsideTransaction(self, query, **kwargs):
+        self.connection.connection.set_isolation_level(0)
+        curs = self.connection.connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
+
+        try:
+            curs.execute(query, kwargs)
+            ret_data = []
+            results = curs.fetchall()
+
+            if not results:
+                return ret_data
+
+            for row in results:
+                ret_data.append(dict(row))
+
+            return ret_data
+        except (sa.exc.ProgrammingError, psycopg2.ProgrammingError):
+            print(traceback.format_exc())
+            pass
+
+        return []
+
+    def firstOutsideTransaction(self, query, **kwargs):
+        result = self.fetchOutsideTransaction(query, **kwargs)
+        return result[0] if result else None
 
     def dropViews(self):
         print("Dropping receipts_by_month...")
@@ -766,9 +792,6 @@ class SunshineViews(object):
             'DROP MATERIALIZED VIEW IF EXISTS expenditures_by_candidate'
         )
 
-        print("Dropping contested_races...")
-        #self.executeTransaction('DROP TABLE IF EXISTS contested_races')
-
         print("Dropping muni_contested_races...")
         self.executeTransaction('DROP TABLE IF EXISTS muni_contested_races')
 
@@ -796,7 +819,7 @@ class SunshineViews(object):
         print("Creating table - news_table")
         self.newsTable()
         print("Creating table - contested_races")
-        self.contestedRaces()  # relies on sunshine/contested_races.csv, sunshine/gubernatorial_contested_races.csv, and sunshine/comptroller_contested_race.csv
+        self.contestedRaces() # relies on most_recent_filings, condensed_receipts, and condensed_expenditures
         print("Creating table - muni_contested_races")
         self.muniContestedRaces()  # relies on sunshine/muni_contested_races.csv
 
@@ -1114,9 +1137,6 @@ class SunshineViews(object):
         """
 
         try:
-            trans = self.connection.begin()
-            curs = self.connection.connection.cursor()
-
             exp = '''
                 CREATE TABLE IF NOT EXISTS contested_races(
                     total_money DOUBLE PRECISION,
@@ -1140,48 +1160,38 @@ class SunshineViews(object):
                     alternate_names TEXT
                 )
             '''
-
-            curs.execute(exp)
-            trans.commit()
-
+            self.executeTransaction(sa.text(exp))
         except (psycopg2.ProgrammingError, sa.exc.ProgrammingError):
-            trans.rollback()
             print('Problem in creating contested_races table: ')
-            print(traceback.print_exc())
+            print(traceback.format_exc())
 
         try:
-            trans = self.connection.begin()
-            curs = self.connection.connection.cursor()
-            curs.execute('''ALTER TABLE contested_races ADD COLUMN id SERIAL PRIMARY KEY''')
-            trans.commit()
+            self.executeTransaction(sa.text('''ALTER TABLE contested_races ADD COLUMN id SERIAL PRIMARY KEY'''))
         except (psycopg2.ProgrammingError, sa.exc.ProgrammingError):
-            trans.rollback()
+            pass
 
         try:
-            trans = self.connection.begin()
-            curs = self.connection.connection.cursor()
-            curs.execute('''ALTER TABLE contested_races ADD COLUMN district_name varchar(50)''')
-            trans.commit()
+            self.executeTransaction(sa.text('''ALTER TABLE contested_races ADD COLUMN district_name varchar(50)'''))
         except (psycopg2.ProgrammingError, sa.exc.ProgrammingError):
-            trans.rollback()
+            pass
 
         # Update the contested races data.
         self.ContestedRaces_updateContestedRacesFunds()
 
     #============================================================================
     def ContestedRaces_updateContestedRacesFunds(self, races = []):
-
         # Get candidate funds data
         try:
-            races_sql = '''SELECT * FROM contested_races'''
-            races = self.executeTransaction(sa.text(races_sql))
+            races_sql = '''SELECT id, branch, alternate_names, committee_id, first_name, last_name FROM contested_races'''
+            races = self.fetchOutsideTransaction(races_sql)
         except (psycopg2.ProgrammingError, sa.exc.ProgrammingError):
             print('Problem retrieving contested_races data: ')
             traceback.print_exc()
-            return
         except Exception:
             print('Unknown problem retrieving contested_races data: ')
             traceback.print_exc()
+
+        if not races:
             return
 
         for race in races:
@@ -1195,8 +1205,8 @@ class SunshineViews(object):
             return
 
         try:
-            id = race.id
-            primary_details = self.ContestedRaces_getPrimaryDetails(race.branch)
+            id = race["id"]
+            primary_details = self.ContestedRaces_getPrimaryDetails(race["branch"])
             pre_primary_start = primary_details.get("pre_primary_start")
             primary_start = primary_details.get("primary_start")
             primary_end = primary_details.get("primary_end")
@@ -1219,18 +1229,25 @@ class SunshineViews(object):
             total_money = 0
 
             # Get supporting/opposing funds
-            cand_names = race.alternate_names.split(";")
+            cand_names = race["alternate_names"].split(";")
+
+            if not cand_names or (len(cand_names) == 1 and not cand_names[0]):
+                cand_names = [race["first_name"], race["last_name"]]
+
             for name in cand_names:
+                if not name:
+                    continue
+
                 supp_funds, opp_funds = self.ContestedRaces_get_candidate_funds_byname(name)
                 supporting_funds += supp_funds
                 opposing_funds += opp_funds
 
             # Get candidate contested race funds
-            if race.committee_id:
-                total_funds = self.ContestedRaces_getCommitteeFundsData(race.committee_id, pre_primary_start, primary_start, post_primary_start)
-                funds_available = self.ContestedRaces_getFundsRaisedTotal(race.committee_id, pre_primary_start, primary_start, primary_end) if is_after_primary else 0
+            if race["committee_id"]:
+                total_funds = self.ContestedRaces_getCommitteeFundsData(race["committee_id"], pre_primary_start, primary_start, post_primary_start)
+                funds_available = self.ContestedRaces_getFundsRaisedTotal(race["committee_id"], pre_primary_start, primary_start, primary_end) if is_after_primary else 0
 
-                committee, recent_receipts, recent_total, latest_filing, controlled_amount, ending_funds, investments, debts, expenditures, total_expenditures = self.ContestedRaces_get_committee_details(race.committee_id)
+                committee, recent_receipts, recent_total, latest_filing, controlled_amount, ending_funds, investments, debts, expenditures, total_expenditures = self.ContestedRaces_get_committee_details(race["committee_id"])
                 contributions = recent_total
                 investments = latest_filing['total_investments'] if latest_filing else 0
                 debts = latest_filing['total_debts'] if latest_filing else 0
@@ -1238,7 +1255,7 @@ class SunshineViews(object):
             total_money = supporting_funds + opposing_funds + total_funds
 
             race_data = {
-                "id": race.id,
+                "id": race["id"],
                 "total_money": total_money,
                 "total_funds": total_funds,
                 "funds_available": funds_available,
@@ -1303,23 +1320,23 @@ class SunshineViews(object):
             SELECT
               COALESCE(SUM(e.amount), 0) AS amount
             FROM condensed_expenditures AS e
-            WHERE e.candidate_name = :candidate_name
-              AND e.d2_part = :d2_part
-              AND e.expended_date > :expended_date
+            WHERE e.candidate_name = %(candidate_name)s
+              AND e.d2_part = %(d2_part)s
+              AND e.expended_date > %(expended_date)s
               AND e.supporting = 'true'
             )
         '''
 
         try:
-            result = self.first(
-                sa.text(supporting_funds_sql),
+            result = self.firstOutsideTransaction(
+                supporting_funds_sql,
                 candidate_name=candidate_name,
                 d2_part=d2_part,
                 expended_date=expended_date
             )
 
             if result is not None:
-                supporting_funds = result.amount
+                supporting_funds = result["amount"]
         except (sa.exc.ProgrammingError, psycopg2.ProgrammingError) as e:
             raise e
 
@@ -1327,23 +1344,23 @@ class SunshineViews(object):
             SELECT
               COALESCE(SUM(e.amount), 0) AS amount
             FROM condensed_expenditures AS e
-            WHERE e.candidate_name = :candidate_name
-              AND e.d2_part = :d2_part
-              AND e.expended_date > :expended_date
+            WHERE e.candidate_name = %(candidate_name)s
+              AND e.d2_part = %(d2_part)s
+              AND e.expended_date > %(expended_date)s
               AND e.opposing = 'true'
             )
         '''
 
         try:
-            result = self.first(
-                sa.text(opposing_funds_sql),
+            result = self.firstOutsideTransaction(
+                opposing_funds_sql,
                 candidate_name=candidate_name,
                 d2_part=d2_part,
                 expended_date=expended_date
             )
 
             if result is not None:
-                opposing_funds = result.amount
+                opposing_funds = result["amount"]
         except (sa.exc.ProgrammingError, psycopg2.ProgrammingError) as e:
             raise e
 
@@ -1368,18 +1385,18 @@ class SunshineViews(object):
                  WHERE
                     d.archived = FALSE AND
                     fd.archived = FALSE AND
-                    d.committee_id = :committee_id AND
+                    d.committee_id = %(committee_id)s AND
                     fd.doc_name = 'Quarterly' AND
-                    fd.reporting_period_begin >= :dt_start AND
-                    fd.reporting_period_end <= :dt_end
+                    fd.reporting_period_begin >= %(dt_start)s AND
+                    fd.reporting_period_end <= %(dt_end)s
                  ORDER BY fd.reporting_period_begin, fd.reporting_period_end, fd.received_datetime DESC"""
 
-        pre_primary_quarterlies = self.executeTransaction(sa.text(sql),
+        pre_primary_quarterlies = self.fetchOutsideTransaction(sql,
             committee_id=committee_id,
             dt_start=pre_primary_start,
             dt_end=primary_start)
 
-        primary_quarterlies = self.executeTransaction(sa.text(sql),
+        primary_quarterlies = self.fetchOutsideTransaction(sql,
             committee_id=committee_id,
             dt_start=primary_start,
             dt_end=current_date)
@@ -1435,21 +1452,20 @@ class SunshineViews(object):
                      WHERE
                         d.archived = FALSE AND
                         fd.archived = FALSE AND
-                        d.committee_id = :committee_id AND
+                        d.committee_id = %(committee_id)s AND
                         fd.doc_name = 'Quarterly' AND
-                        fd.reporting_period_end <= :dt_end
+                        fd.reporting_period_end <= %(dt_end)s
                      ORDER BY fd.reporting_period_begin DESC, fd.reporting_period_end, fd.received_datetime DESC
                      LIMIT 1"""
 
-            pre_pre_primary_quarterly = self.first(sa.text(pre_pre_primary_sql),
+            pre_pre_primary_quarterly = self.firstOutsideTransaction(pre_pre_primary_sql,
                 committee_id=committee_id,
                 dt_end=last_quarterly_date
             )
 
             # Add the funds available from the last quarterly report from before the pre-primary start date.
             pre_pre_primary_end_date = "{dt:%b} {dt.day}, {dt.year}".format(dt = last_quarterly_date)
-            pre_pre_primary_funds = 0 if not pre_pre_primary_quarterly else pre_pre_primary_quarterly["end_funds_available"]
-            total_funds_raised += pre_pre_primary_funds
+            total_funds_raised += 0 if not pre_pre_primary_quarterly else pre_pre_primary_quarterly["end_funds_available"]
 
             # Add rows for each pre-primary quarterly report.
             for rpt in pre_primary_quarterlies:
@@ -1473,10 +1489,10 @@ class SunshineViews(object):
              JOIN filed_docs fd on (fd.id = r.filed_doc_id)
              WHERE
                 r.archived = FALSE AND
-                r.committee_id = :committee_id AND
+                r.committee_id = %(committee_id)s AND
                 fd.archived = FALSE AND
-                fd.doc_name = :doc_name AND
-                fd.reporting_period_begin >= :last_period_end"""
+                fd.doc_name = %(doc_name)s AND
+                fd.reporting_period_begin >= %(last_period_end)s"""
 
         query_params = {
             "committee_id": committee_id,
@@ -1485,10 +1501,10 @@ class SunshineViews(object):
         }
 
         if last_receipt_date:
-            sql += " AND fd.received_datetime <= :last_receipt_date"
+            sql += " AND fd.received_datetime <= %(last_receipt_date)s"
             query_params["last_receipt_date"] = last_receipt_date
 
-        total_receipts = self.first(sa.text(sql), **query_params)
+        total_receipts = self.firstOutsideTransaction(sql, **query_params)
         return total_receipts["amount"] if total_receipts is not None else 0.0
 
 
@@ -1500,13 +1516,13 @@ class SunshineViews(object):
              JOIN filed_docs fd on (fd.id = d.filed_doc_id)
              WHERE
                 d.archived = FALSE AND
-                d.committee_id = :committee_id AND
+                d.committee_id = %(committee_id)s AND
                 fd.archived = FALSE AND
                 fd.doc_name = 'Quarterly' AND
-                fd.reporting_period_begin >= :dt_start AND
-                fd.reporting_period_end >= :dt_end"""
+                fd.reporting_period_begin >= %(dt_start)s AND
+                fd.reporting_period_end >= %(dt_end)s"""
 
-        result = self.first(sa.text(sql),
+        result = self.firstOutsideTransaction(sql,
             committee_id=commitee_id,
             dt_start=quarterly_start_date,
             dt_end=next_quarterly_start_date)
@@ -1537,27 +1553,23 @@ class SunshineViews(object):
         comm_sql = '''(
             SELECT *
             FROM committees
-            WHERE id = :committee_id
+            WHERE id = %(committee_id)s
             )
         '''
-        committee = self.first(
-            sa.text(comm_sql),
-            committee_id=committee_id)
+        committee = self.firstOutsideTransaction(comm_sql, committee_id=committee_id)
 
         if not committee:
             return default_return
 
         latest_filing = '''(
             SELECT * FROM most_recent_filings
-            WHERE committee_id = :committee_id
+            WHERE committee_id = %(committee_id)s
             ORDER BY received_datetime DESC
             LIMIT 1
             )
         '''
 
-        latest_filing = dict(self.first(
-            sa.text(latest_filing),
-            committee_id=committee_id))
+        latest_filing = self.firstOutsideTransaction(latest_filing, committee_id=committee_id)
 
         params = {'committee_id': committee_id}
 
@@ -1576,8 +1588,8 @@ class SunshineViews(object):
                 FROM condensed_receipts AS receipts
                 JOIN filed_docs AS filed
                   ON receipts.filed_doc_id = filed.id
-                WHERE receipts.committee_id = :committee_id
-                  AND receipts.received_date > :end_date
+                WHERE receipts.committee_id = %(committee_id)s
+                  AND receipts.received_date > %(end_date)s
                   AND receipts.archived = FALSE
                   AND filed.archived = FALSE
                 )
@@ -1595,7 +1607,7 @@ class SunshineViews(object):
                 FROM condensed_receipts AS receipts
                 JOIN filed_docs AS filed
                   ON receipts.filed_doc_id = filed.id
-                WHERE receipts.committee_id = :committee_id
+                WHERE receipts.committee_id = %(committee_id)s
                     AND receipts.archived = FALSE
                     AND filed.archived = FALSE
                 )
@@ -1603,10 +1615,7 @@ class SunshineViews(object):
 
             controlled_amount = 0
 
-        recent_total = self.first(
-            sa.text(recent_receipts),
-            **params
-        )["amount"]
+        recent_total = self.firstOutsideTransaction(recent_receipts, **params)["amount"]
         controlled_amount += recent_total
 
         quarterlies = '''(
@@ -1621,7 +1630,7 @@ class SunshineViews(object):
             FROM d2_reports AS r
             JOIN filed_docs AS f
               ON r.filed_doc_id = f.id
-            WHERE r.committee_id = :committee_id
+            WHERE r.committee_id = %(committee_id)s
               AND f.reporting_period_end IS NOT NULL
               AND f.doc_name = 'Quarterly'
               AND r.archived = FALSE
@@ -1630,50 +1639,50 @@ class SunshineViews(object):
             )
         '''
 
-        quarterlies = self.executeTransaction(
-            sa.text(quarterlies),
+        quarterlies = self.fetchOutsideTransaction(
+            quarterlies,
             committee_id=committee_id
         )
 
         ending_funds = [
             [
-                r.end_funds_available,
-                r.reporting_period_end.year,
-                r.reporting_period_end.month,
-                r.reporting_period_end.day
+                r["end_funds_available"],
+                r["reporting_period_end"].year,
+                r["reporting_period_end"].month,
+                r["reporting_period_end"].day
             ] for r in quarterlies
         ]
 
         investments = [
             [
-                r.total_investments,
-                r.reporting_period_end.year,
-                r.reporting_period_end.month,
-                r.reporting_period_end.day
+                r["total_investments"],
+                r["reporting_period_end"].year,
+                r["reporting_period_end"].month,
+                r["reporting_period_end"].day
             ] for r in quarterlies
         ]
 
         debts = [
             [
-                (r.debts_itemized + r.debts_non_itemized),
-                r.reporting_period_end.year,
-                r.reporting_period_end.month,
-                r.reporting_period_end.day
+                (r["debts_itemized"] + r["debts_non_itemized"]),
+                r["reporting_period_end"].year,
+                r["reporting_period_end"].month,
+                r["reporting_period_end"].day
             ] for r in quarterlies
         ]
 
         expenditures = [
             [
-                r.total_expenditures,
-                r.reporting_period_end.year,
-                r.reporting_period_end.month,
-                r.reporting_period_end.day
+                r["total_expenditures"],
+                r["reporting_period_end"].year,
+                r["reporting_period_end"].month,
+                r["reporting_period_end"].day
             ] for r in quarterlies
         ]
 
         # accomodate for independent expenditures past last filing date
 
-        total_expenditures = sum([r.total_expenditures for r in quarterlies])
+        total_expenditures = sum([r["total_expenditures"] for r in quarterlies])
 
         return committee, recent_receipts, recent_total, latest_filing, controlled_amount, ending_funds, investments, debts, expenditures, total_expenditures
 
