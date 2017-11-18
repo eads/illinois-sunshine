@@ -134,10 +134,11 @@ def getCommitteesRecentFilingData(committee_ids=[]):
 
     processed_committee_ids = {}
 
-    for latest_filing in latest_filings:
-        if not latest_filing:
+    for row_latest_filing in latest_filings:
+        if not row_latest_filing:
             continue
 
+        latest_filing = dict(row_latest_filing)
         params = {'committee_id': latest_filing.committee_id}
 
         if not latest_filing['reporting_period_end']:
