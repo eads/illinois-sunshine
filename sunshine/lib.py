@@ -119,9 +119,10 @@ def getCommitteesRecentFilingData(committee_ids=[]):
     latest_filings_sql = '''
         SELECT mrf.*
         FROM most_recent_filings mrf
-        JOIN (
+        LEFT JOIN (
             SELECT committee_id, max(received_datetime) as received_datetime
             FROM most_recent_filings
+            WHERE committee_id IN :committee_ids
             GROUP BY committee_id
         ) mrf_sub ON (mrf_sub.received_datetime = mrf.received_datetime and mrf_sub.committee_id = mrf.committee_id)
         WHERE mrf.committee_id IN :committee_ids
