@@ -139,7 +139,7 @@ def getCommitteesRecentFilingData(committee_ids=[]):
             continue
 
         latest_filing = dict(row_latest_filing)
-        params = {'committee_id': latest_filing.committee_id}
+        params = {'committee_id': latest_filing["committee_id"]}
 
         if not latest_filing['reporting_period_end']:
           latest_filing['reporting_period_end'] = datetime.now().date() - timedelta(days=90)
@@ -176,7 +176,7 @@ def getCommitteesRecentFilingData(committee_ids=[]):
 
         recent_total = g.engine.execute(sa.text(recent_receipts),**params).first().amount
         controlled_amount += recent_total
-        processed_committee_ids[latest_filing.committee_id] = [latest_filing, recent_total, controlled_amount, params]
+        processed_committee_ids[latest_filing["committee_id"]] = [latest_filing, recent_total, controlled_amount, params]
 
     return processed_committee_ids
 
