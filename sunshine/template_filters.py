@@ -68,6 +68,18 @@ def contested_races_description(s):
 
   return description
 
+
+def federal_races_description(s):
+  if s == "House of Representatives":
+    description = "2018 Races for the US House of Representatives."
+  elif s == "Senate":
+    description = "Includes individuals filed with the FEC as candidates for the 2020 Senate election."
+  elif s == "President":
+    description = "Includes individuals filed with the FEC as candidates for the 2020 Presidential election."
+  else:
+    description = ""
+  return description
+
 def committee_description(s):
   if s == "Candidate":
     description = "Candidate committees accept campaign contributions and make expenditures under the candidate's authority in order to further their bid for election or re-election to public office. They are subject to state and federal contribution limits."
