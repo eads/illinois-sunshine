@@ -677,7 +677,7 @@ class SunshineReceipts(SunshineTransformLoad):
     filename = 'Receipts.txt'
 
     # add receipt ids to omit because SBOE doesn't remove wrong data from db
-    omit_receipt_ids = (4506842, 4513719)
+    omit_receipt_ids = (4506842, 4513719, 4801127)
 
     def delete_id_rows_from_receipts(self, omit_receipt_ids):
         """
