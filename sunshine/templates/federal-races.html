@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+{% from 'macros.html' import pager, header %}
+{% block header_social %}
+    {{ header(contested_races_title, contested_races_type | contested_races_description, request.path) }}
+{% endblock %}
+{% block content %}
+
+<div class="row">
+    <div class="col-sm-8">
+        <img src="/static/images/USA-512.png" style="width: 120px; height: 80px;" class="header-image"/>
+        <div style="display:inline-block;">
+            <h1 style="color: #000; font-size: 36px;">Federal Offices Serving Illinois</h1>
+            <p style="color: #000; font-size:20px; padding-left: 2px;">Candidates and Incumbents, Updated Daily</p>
+        </div>
+
+        <br />
+        <ul class="nav nav-pills">
+          <li role="presentation" {% if contested_races_type == "President"%}class="active"{% else %}class="inactive"{% endif %}><a href="{{ url_for('views.federal_races') }}?type=president"> President </a></li>
+          <li role="presentation" {% if contested_races_type == "Senate"%}class="active"{% else %}class="inactive"{% endif %}><a href="{{ url_for('views.federal_races') }}?type=senate">  Senate  </a></li>
+          <li role="presentation" {% if contested_races_type == "House of Representatives"%}class="active"{% else %}class="inactive"{% endif %}><a href="{{ url_for('views.federal_races') }}?type=house_of_representatives"> House of Representatives </a></li>
+        </ul>
+    </div>
+    <div class="col-sm-4">
+        <p style="margin-left: 30px; margin-top:25px;">Sponsored by the:</p>
+        <img src='/static/images/mccormick-foundation-logo_2x.png' class='img-responsive center-block' style="width: 85%; height: 85%;"/>
+    </div>
+    <div class="col-sm-12">
+        <h3>{{contested_races_title}}</h2>
+        <p>
+            {{ description }}
+            <br />Links to campaign finance information available under campaign information. (i) indicates an incumbent candidate.
+        </p>
+    </div>
+</div>
+
+<div class="col-sm-12" style="padding: 0;">
+    {% if contested_races_type == "House of Representatives" %}
+        {% set r_type = "house" %}
+    {% elif contested_races_type == "Senate" %}
+        {% set r_type = "senate" %}
+    {% else %}
+        {% set r_type = "president" %}
+    {% endif %}
+    <table class="table table-striped table-hover table-border">
+        <thead>
+            {% if r_type == "house" %}
+                <th style="min-width:10%;">District</th>
+            {% endif %}
+            <th style="min-width:10%; white-space:nowrap;" class="text-left">Candidate(s)</th>
+            <th class='text-center'>Party</th>
+            <th style="min-width:10%; white-space:nowrap;" class="text-right">Candidate Information</th>
+        </thead>
+        <tbody>
+            {% for row in contested_race_info %}
+
+            <tr class="clickable" style="cursor:pointer;" onclick="display('{{row.district_id}}')">
+                {% if r_type == "house" %}
+                <td style="white-space:nowrap;">
+                    {{ row.district|number_suffix }} District
+                </td>
+                {% endif %}
+                <td class="text-left">{{ row.pretty_name }}</td>
+                <td class="text-center">{{ row.party }}</td>
+                {% if row.fec_link == None or row.fec_link == "" %}
+                    <td class="text-right"> No Campaign Data Available </td>
+                {% else %}
+                    <td class="text-right"><a href="{{row.fec_link}}"> Click Here for FEC Data </a></td>
+                {% endif %}
+            </tr>
+
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div style="font-size:90%; font-style:italic; color:#666;">
+    This candidate list is updated regularly, and is based off of public statements and filings with the State Board of Elections and the Federal Election Commission. If you believe there is a candidate that should be added or removed, please contact us at <a href="mailto:outreach@ilcampaign.org">outreach@ilcampaign.org</a>.
+</div>
+
+{% endblock %}
+
+{% block extra_javascript %}
+<script>
+    $(document).ready(function() {
+        if ($(".race_subtable:visible").length) {
+            $(document).scrollTop($(".race_subtable:visible").offset().top - 50);
+        }
+    });
+
+    function display(id) {
+        $("#" + id).toggle();
+    }
+</script>
+{% endblock %}

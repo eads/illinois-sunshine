@@ -176,7 +176,7 @@ a, a:active, a:hover, a:focus { color: #0123b4; }
   margin-top: 40px;
 }
 
-@media screen and (max-width: 992px) {
+@media screen and (max-width: 1052px) {
   body, table { font-size: 12px; color: #333;}
   .navbar-default .navbar-brand a {
     font-size: 22px;
@@ -188,13 +188,13 @@ a, a:active, a:hover, a:focus { color: #0123b4; }
 }
 
 /* === Responsive: Fix long navbar on smaller windows. === */
-@media screen and (max-width: 1275px) {
+@media screen and (max-width: 1365px) {
     .sub-credit.visible-lg-inline {
         display: none !important;
     }
 }
 
-@media screen and (max-width: 880px) {
+@media screen and (max-width: 960px) {
     .navbar-header {
         float: none;
     }
@@ -233,7 +233,7 @@ a, a:active, a:hover, a:focus { color: #0123b4; }
 /* ======================================================= */
 
 /* Responsive: Portrait tablets and up */
-@media screen and (min-width: 768px) {
+@media screen and (min-width: 625px) {
   /* Remove the padding we set earlier */
 
   .header,

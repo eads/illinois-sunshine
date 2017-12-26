@@ -498,15 +498,61 @@ def getContestedRacesInformation(type_arg):
     return [contested_races_type, contested_races_title, contested_races_output]
 
 #============================================================================
+def getFederalRacesInformation(type_arg):
+    is_house = (type_arg == "house_of_representatives")
+    is_senate = (type_arg == "senate")
+
+    if is_senate:
+        contested_races_type = "Senate"
+        contested_races_title = "Current US Senators from Illinois"
+        branch = "S"
+    elif is_house:
+        contested_races_type = "House of Representatives"
+        contested_races_title = "Illinois US House Races"
+        branch = "H"
+    else:
+        contested_races_type = "President"
+        contested_races_title = "Current President of the United States"
+        branch = "P"
+
+
+    # Fix order by
+    order_by = "fr.district"
+
+    contested_races_sql = '''
+        SELECT fr.*, concat_ws(' ', fr.name, CASE WHEN fr.incumbent = 'Y' THEN ' (i)' ELSE NULL END, CASE WHEN fr.on_ballot = 'N' THEN ' - (Not on 2018 Ballot)' ELSE NULL END) as pretty_name
+        FROM federal_races fr
+        WHERE fr.branch = :branch
+        ORDER BY {0}
+    '''.format(order_by)
+
+    contest_race_list = list(g.engine.execute(sa.text(contested_races_sql), branch=branch))
+    return [contested_races_type, contested_races_title, contest_race_list]
+
+#============================================================================
 def getContestedRace(id):
     contested_races_sql = '''SELECT * FROM contested_races WHERE id = :id'''
     return g.engine.execute(sa.text(contested_races_sql), id=id).fetchone()
+
+#============================================================================
+def getFederalRace(id):
+    federal_races_sql = '''SELECT * FROM federal_races WHERE id = :id'''
+    return g.engine.execute(sa.text(federal_races_sql), id=id).fetchone()
 
 #============================================================================
 def deleteContestedRace(id):
     contested_races_sql = '''DELETE FROM contested_races WHERE id = :id'''
     try:
         g.engine.execute(sa.text(contested_races_sql), id=id)
+    except (sa.exc.ProgrammingError, psycopg2.ProgrammingError):
+        return False
+    return True
+
+#============================================================================
+def deleteFederalRace(id):
+    federal_races_sql = '''DELETE FROM federal_races WHERE id = :id'''
+    try:
+        g.engine.execute(sa.text(federal_races_sql), id=id)
     except (sa.exc.ProgrammingError, psycopg2.ProgrammingError):
         return False
     return True

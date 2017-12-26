@@ -528,6 +528,32 @@ def contested_races():
                             visible=visible)
 
 
+@views.route('/federal-races/')
+@cache.cached(timeout=CACHE_TIMEOUT, key_prefix=make_cache_key)
+def federal_races():
+
+    type_arg = 'president' if not request.args.get('type') else request.args.get('type', 'president')
+    visible = request.args.get('visible')
+
+    cr_type, cr_title, contested_race_info = sslib.getFederalRacesInformation(type_arg)
+
+    description = ""
+
+    if cr_type == "House of Representatives":
+        description = "2018 Races for Seats in the US House of Representatives."
+    elif cr_type == "Senate":
+        description = "Includes individuals filed with the FEC as candidates for the 2020 Senate election."
+    elif cr_type == "President":
+        description = "Includes individuals filed with the FEC as candidates for the 2020 Presidential election."
+
+    return render_template('federal-races.html',
+                            description=description,
+                            contested_races_type=cr_type,
+                            contested_races_title=cr_title,
+                            contested_race_info=contested_race_info,
+                            visible=visible)
+
+
 @views.route('/contested-race-detail/<race_type>-<district>/')
 @cache.cached(timeout=CACHE_TIMEOUT, key_prefix=make_cache_key)
 def contested_race_detail(race_type, district):
@@ -946,6 +972,7 @@ def committee(committee_id):
                            total_donations=total_donations,
                            total_expenditures=total_expenditures)
 
+
 @views.route('/independent-expenditures/<candidate_id>-<stance>/')
 @cache.cached(timeout=CACHE_TIMEOUT, key_prefix=make_cache_key)
 def independent_expenditures(candidate_id, stance):
@@ -1051,6 +1078,7 @@ def independent_expenditures(candidate_id, stance):
                             independent_expenditures_description=independent_expenditures_description,
                             candidate_name=candidate_name,
                             candidate_id=candidate_id)
+
 
 @views.route('/contributions/<receipt_id>/')
 @cache.cached(timeout=CACHE_TIMEOUT, key_prefix=make_cache_key)
@@ -1372,6 +1400,47 @@ def admin_contested_races():
                            contested_race_data=contested_race_data)
 
 
+@views.route('/admin/federal-races/')
+@login_required
+def admin_federal_races():
+
+    type_arg = 'president' if not request.args.get('type') \
+        else request.args.get('type', 'president')
+
+    if type_arg == "senate":
+        contested_races_type = "Senate"
+        contested_races_title = "Illinois US Senate Races"
+        branch = "S"
+    elif type_arg == "house_of_representatives":
+        contested_races_type = "House of Representatives"
+        contested_races_title = "Illinois US House of Representatives Races"
+        branch = "H"
+    else:
+        contested_races_type = "President"
+        contested_races_title = "US Presidential Race"
+        branch = "P"
+
+    contested_race_sql = '''
+        SELECT *
+        FROM federal_races
+        WHERE branch = :branch
+
+    '''
+
+    if branch == "H":
+        contested_race_sql += " ORDER BY district, incumbent, name"
+    else:
+        contested_race_sql += " ORDER BY incumbent, name"
+
+    contested_race_data = list(g.engine.execute(sa.text(contested_race_sql),
+                                                branch=branch))
+
+    return render_template('admin/federal-races.html',
+                           contested_races_type=contested_races_type,
+                           contested_races_title=contested_races_title,
+                           contested_race_data=contested_race_data)
+
+
 @views.route('/admin/contested-race-delete/', methods=['POST'])
 @login_required
 def admin_contested_race_delete():
@@ -1396,6 +1465,31 @@ def admin_contested_race_delete():
         return redirect('/admin/contested-races/')
 
     return redirect('/admin/contested-races/?type=' + race_types.get(race.branch))
+
+
+@views.route('/admin/federal-race-delete/', methods=['POST'])
+@login_required
+def admin_federal_race_delete():
+    id = request.form.get("id")
+
+    if not id:
+        return redirect('/admin/federal-races/')
+
+    race = sslib.getFederalRace(id)
+    race_types = {
+        'H': 'house_of_representatives',
+        'S': 'senate',
+        'P': 'president',
+    }
+
+    sslib.deleteFederalRace(id)
+
+    cache.clear()
+
+    if not race or not race.branch or not race_types.get(race.branch):
+        return redirect('/admin/federal-races/')
+
+    return redirect('/admin/federal-races/?type=' + race_types.get(race.branch))
 
 
 @views.route('/admin/contested-race-detail/', methods=['GET', 'POST'])
@@ -1465,6 +1559,68 @@ def admin_contested_race_details():
                            statewide_districts=statewide_districts)
 
 
+@views.route('/admin/federal-race-detail/', methods=['GET', 'POST'])
+@login_required
+def admin_federal_race_details():
+
+    race_types = {
+        'H': 'house_of_representatives',
+        'S': 'senate',
+        'P': 'president'
+    }
+    id = None if (not request.args.get("id") or request.args.get("id") == "None") else request.args.get("id")
+
+    if not id:
+        id = None if (not request.form.get("id") or request.form.get("id") == "None") else request.form.get("id")
+
+    new_candidate = True if id is None else False
+    statewide_districts = ['Attorney General', 'Comptroller', 'Secretary of State', 'Treasurer']
+
+    if request.method != 'POST':
+        info = getFederalCandidateInfo(id)
+        return render_template('admin/federal-race-detail.html',
+                               id=id,
+                               new_candidate=new_candidate,
+                               candidate=info,
+                               statewide_districts=statewide_districts)
+
+    # Handle the cancel button.
+    if request.form.get("cancel"):
+        if not id:
+            return redirect('/admin/federal-races/')
+
+        race = sslib.getFederalRace(id)
+        if not race:
+            return redirect('/admin/federal-races/')
+
+        return redirect('/admin/federal-races/?type=' + race_types.get(race.branch))
+
+    candidate_info = {}
+    candidate_info["branch"] = request.form.get("branch")
+    candidate_info["district"] = 0 if candidate_info["branch"] != "H" else int(request.form.get("district"))
+    candidate_info["name"] = request.form.get("name")
+    candidate_info["incumbent"] = 'N' if request.form.get("incumbent") is None else 'Y'
+    candidate_info["party"] = request.form.get("party")
+    candidate_info["fec_link"] = str(request.form.get("fec_link")).strip()
+    candidate_info["on_ballot"] = 'N' if request.form.get("on_ballot") is None else 'Y'
+
+    id, messages = insertFederalCandidate(id, candidate_info)
+
+    if not messages:
+        flash('Candidate saved successfully', 'success')
+    else:
+        flash('<br />'.join(messages), 'error')
+
+    cache.clear()
+
+    return render_template('admin/federal-race-detail.html',
+                           id=id,
+                           new_candidate=False,
+                           candidate=candidate_info,
+                           committees=committees,
+                           statewide_districts=statewide_districts)
+
+
 @views.route('/admin/logout/')
 def admin_logout():
     logout_user()
@@ -1508,6 +1664,37 @@ def getCandidateInfo(id):
             info['alternate_names'] = c.alternate_names
 
     return info
+
+
+def getFederalCandidateInfo(id):
+
+    if id == "None":
+        id = None
+
+    info = {}
+    info['branch'] = None
+    info['district'] = None
+    info['name'] = None
+    info['incumbent'] = None
+    info['party'] = None
+    info['fec_link'] = None
+    info['on_ballot'] = None
+
+    if id is not None:
+        candidate_sql = '''SELECT * FROM federal_races WHERE id = :id'''
+        candidate_info = g.engine.execute(sa.text(candidate_sql), id=id)
+
+        for c in candidate_info:
+            info['branch'] = c.branch
+            info['district'] = c.district
+            info['name'] = c.name
+            info['incumbent'] = c.incumbent
+            info['party'] = c.party
+            info['fec_link'] = c.fec_link
+            info['on_ballot'] = c.on_ballot
+
+    return info
+
 
 def getCommitteeName(committee_id):
 
@@ -1638,6 +1825,74 @@ def insertCandidate(id, candidate_info, statewide_districts):
                          alternate_names=candidate_info["alternate_names"])
 
     sslib.updateContestedRaceFunds(g.engine, id)
+
+    return id, []
+
+
+def insertFederalCandidate(id, candidate_info):
+
+    messages = []
+
+    # Branch
+    if not candidate_info["branch"] or candidate_info["branch"] not in ["P", "H", "S"]:
+        messages.append("Branch: Please select a valid option")
+
+    # District
+    if candidate_info["branch"] == "P" or candidate_info["branch"] == "S":
+        candidate_info["district"] = 0
+    elif candidate_info["branch"] == "H":
+        try:
+            if int(candidate_info["district"]) <= 0:
+                messages.append("District: Please enter a positive integer")
+        except ValueError:
+            messages.append("District: Please enter a positive integer")
+
+    # Name
+    if not candidate_info["name"]:
+        messages.append("Name: Field is required")
+
+    # Party
+    if not candidate_info["party"] or candidate_info["party"] not in ["R", "D"]:
+        messages.append("Party: Field is required")
+
+    if messages:
+        return id, messages
+
+    if not id or id == "None":
+        candidate_update_sql = '''
+            INSERT INTO federal_races
+            (branch, district, name, incumbent, party, fec_link, on_ballot)
+            VALUES (:branch, :district, :name, :incumbent, :party, :fec_link, :on_ballot)
+            RETURNING id
+        '''
+
+        id_result = g.engine.execute(sa.text(candidate_update_sql),
+                         branch=candidate_info["branch"],
+                         district=candidate_info["district"],
+                         name=candidate_info["name"],
+                         incumbent=candidate_info["incumbent"],
+                         party=candidate_info["party"],
+                         fec_link=candidate_info["fec_link"],
+                         on_ballot=candidate_info["on_ballot"])
+        id_result = id_result.fetchone()
+        id = None if not id_result else id_result[0]
+    else:
+        candidate_update_sql = '''
+            UPDATE federal_races
+            SET (branch, district, name, incumbent, party, fec_link, on_ballot)
+            = (:branch, :district, :name, :incumbent, :party, :fec_link, :on_ballot)
+            WHERE id = :id
+        '''
+
+        g.engine.execute(sa.text(candidate_update_sql),
+                         id=id,
+                         branch=candidate_info["branch"],
+                         district=candidate_info["district"],
+                         name=candidate_info["name"],
+                         incumbent=candidate_info["incumbent"],
+                         party=candidate_info["party"],
+                         fec_link=candidate_info["fec_link"],
+                         on_ballot=candidate_info["on_ballot"])
 
     return id, []
 
