@@ -502,11 +502,13 @@ def getFederalRacesInformation(type_arg):
     is_house = (type_arg == "house_of_representatives")
     is_senate = (type_arg == "senate")
 
+    order_by = "fr.incumbent DESC, fr.name"
     if is_senate:
         contested_races_type = "Senate"
         contested_races_title = "Current US Senators from Illinois"
         branch = "S"
     elif is_house:
+        order_by = "fr.district, fr.incumbent DESC, fr.name"
         contested_races_type = "House of Representatives"
         contested_races_title = "Illinois US House Races"
         branch = "H"
@@ -514,10 +516,6 @@ def getFederalRacesInformation(type_arg):
         contested_races_type = "President"
         contested_races_title = "Current President of the United States"
         branch = "P"
-
-
-    # Fix order by
-    order_by = "fr.district"
 
     contested_races_sql = '''
         SELECT fr.*, concat_ws(' ', fr.name, CASE WHEN fr.incumbent = 'Y' THEN ' (i)' ELSE NULL END, CASE WHEN fr.on_ballot = 'N' THEN ' - (Not on 2018 Ballot)' ELSE NULL END) as pretty_name

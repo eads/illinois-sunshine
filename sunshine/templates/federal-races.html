@@ -53,7 +53,11 @@
         <tbody>
             {% for row in contested_race_info %}
 
-            <tr class="clickable" style="cursor:pointer;" onclick="display('{{row.district_id}}')">
+            {% if row.fec_link == None or row.fec_link == "" %}
+                <tr>
+            {% else %}
+                <tr class="clickable" style="cursor:pointer;" onclick="display('{{row.fec_link}}')">
+            {% endif %}
                 {% if r_type == "house" %}
                 <td style="white-space:nowrap;">
                     {{ row.district|number_suffix }} District
@@ -64,7 +68,7 @@
                 {% if row.fec_link == None or row.fec_link == "" %}
                     <td class="text-right"> No Campaign Data Available </td>
                 {% else %}
-                    <td class="text-right"><a href="{{row.fec_link}}"> Click Here for FEC Data </a></td>
+                    <td class="text-right"> Click Here for FEC Data </td>
                 {% endif %}
             </tr>
 
@@ -87,8 +91,8 @@
         }
     });
 
-    function display(id) {
-        $("#" + id).toggle();
+    function display(url) {
+        window.open(url);
     }
 </script>
 {% endblock %}
