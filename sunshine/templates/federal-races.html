@@ -46,8 +46,8 @@
             {% if r_type == "house" %}
                 <th style="min-width:10%;">District</th>
             {% endif %}
-            <th style="min-width:10%; white-space:nowrap;" class="text-left">Candidate(s)</th>
-            <th class='text-center'>Party</th>
+            <th style="min-width:60%; white-space:nowrap;" class="text-left">Candidate(s)</th>
+            <th class='text-center' style="min-width:10%;">Party</th>
             <th style="min-width:10%; white-space:nowrap;" class="text-right">Candidate Information</th>
         </thead>
         <tbody>
@@ -55,7 +55,7 @@
 
             <tr class="clickable" style="cursor:pointer;" onclick="display('{{row.district_id}}')">
                 {% if r_type == "house" %}
-                <td style="white-space:nowrap;">
+                <td>
                     {{ row.district|number_suffix }} District
                 </td>
                 {% endif %}
