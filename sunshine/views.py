@@ -532,7 +532,7 @@ def contested_races():
 @cache.cached(timeout=CACHE_TIMEOUT, key_prefix=make_cache_key)
 def federal_races():
 
-    type_arg = 'president' if not request.args.get('type') else request.args.get('type', 'president')
+    type_arg = 'house_of_representatives' if not request.args.get('type') else request.args.get('type', 'house_of_representatives')
     visible = request.args.get('visible')
 
     cr_type, cr_title, contested_race_info = sslib.getFederalRacesInformation(type_arg)
