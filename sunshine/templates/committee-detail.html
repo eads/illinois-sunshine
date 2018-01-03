@@ -76,20 +76,26 @@
                             <td class='text-right'>{{ latest_filing.end_funds_available|format_money }}</td>
                         </tr>
                         <tr>
-                            <td>Contributions since {{ latest_filing.reporting_period_end.strftime('%b %d, %Y')}}*</td>
+                            <td>Contributions since {{ latest_filing.reporting_period_end.strftime('%b %d, %Y') }}</td>
                             <td class='text-right'>{{ recent_total|format_money }}</td>
                         </tr>
                     {% endif %}
                 </tbody>
                 <tfoot>
                     <tr>
-                        <td><strong>Current cash on hand</strong></td>
+                        <td><strong>Cash on Hand*</strong></td>
                         <td class='text-right'><strong>{% if controlled_amount %}{{ controlled_amount|format_money }}{% else %}$0{% endif %}</strong></td>
                     </tr>
                 </tfoot>
             </table>
+            <div>
+                <label style="font-weight:200; font-family:Verdana,sans-serif; color:#777;">
+                    * This figure represents a committee's total available funds to spend this quarter. While committees are able to spend money continuously, they are only required to report spending figures once every three months. As soon as spending figures are available, they are reflected in the "Cash on Hand" amount for each candidate.
+                </label>
+            </div>
             <br />
-            <div class="col-sm-7">
+            <br />
+            <div style="width:55%;">
                <table class = "table table-striped table-bordered">
                     <tbody>
                          {% if committee.active and latest_filing and latest_filing.reporting_period_end %}
@@ -106,28 +112,8 @@
                </table>
             </div>
         {% endif %}
-	<br />
-	<div class="col-sm-8"></div>
-	<h1></h1>
-        <br />
         <h3 id="income-chart-title"><br />Net funds over time<small class='data-quality-note ss-popover' data-content='{{data_quality_note}}'><i class='fa fa-fw fa-info-circle'></i></small></h3>
         <div id="income-chart"></div>
-<!--
-        {% if total_donations > 0 or total_expenditures > 0 %}
-            <h3><br />Donations and expenditures over time<small class='data-quality-note ss-popover' data-content='{{data_quality_note}}'><i class='fa fa-fw fa-info-circle'></i></small></h3>
-            <table class='table'>
-                <tr>
-                    <td>Total donations since {{committee.creation_date.strftime('%b %d, %Y')}}</td>
-                    <td class='text-right'>{{total_donations|format_money}}</td>
-                </tr>
-                <tr>
-                    <td>Total expenditures since {{committee.creation_date.strftime('%b %d, %Y')}}</td>
-                    <td class='text-right'>{{total_expenditures|format_money}}</td>
-                </tr>
-            </table>
-            <div id="expend-chart"></div>
-        {% endif %}
--->
         <h3>
             <br />
             Donations &amp; Expenditures
@@ -136,7 +122,6 @@
         <ul class="nav nav-pills">
             <li role="presentation" class="active"><a class="transactions" href="javascript://" data-table_type="top_donors">Top 25 donors</a></li>
             <li role="presentation"><a class="transactions" href="javascript://" data-table_type="top_recipients">Top 25 expenses</a></li>
-            <!-- <li role="presentation"><a class="transactions" href="javascript://" data-table_type="largest_donations">Largest Donations</a></li> -->
             <li role="presentation"><a class="transactions" href="javascript://" data-table_type="receipts">All donations</a></li>
             <li role="presentation"><a class="transactions" href="javascript://" data-table_type="expenditures">All expenditures</a></li>
         </ul>
